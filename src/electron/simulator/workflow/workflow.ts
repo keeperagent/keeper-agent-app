@@ -242,6 +242,15 @@ export class Workflow {
       mainWindow?.webContents.send(MESSAGE.SCRIPT_RUN_COMPLETED, {
         isRunWithCampaign: Boolean(campaignId),
       });
+
+      // Report completion via Telegram (only if this campaign is being monitored)
+      if (campaignId && telegramBotService.isMonitoring(campaignId)) {
+        telegramBotService.reportWorkflowCompleted(
+          campaignId,
+          this.workflow?.name || "Unknown",
+          this.campaign?.name || "Unknown",
+        );
+      }
     }
 
     return isComplete;

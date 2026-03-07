@@ -67,7 +67,7 @@ const SnipeContractEVM = (props: Props) => {
     useGetListNodeEndpointGroup();
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   const TAB_NAME = useMemo(() => {
@@ -115,7 +115,7 @@ const SnipeContractEVM = (props: Props) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -137,11 +137,11 @@ const SnipeContractEVM = (props: Props) => {
   const listOutput = useMemo(() => {
     const parsedContractAbi = JSON.parse(contractAbi || "[]");
     const eventDetail = parsedContractAbi?.find(
-      (item: any) => item?.type === "event" && item?.name === eventName
+      (item: any) => item?.type === "event" && item?.name === eventName,
     );
     if (eventDetail) {
       return eventDetail?.inputs?.map((parameter: any) =>
-        parameter?.name?.trim()
+        parameter?.name?.trim(),
       );
     }
     return [];
@@ -223,12 +223,12 @@ const SnipeContractEVM = (props: Props) => {
       });
 
       onCloseModal();
-    } catch { }
+    } catch {}
   };
 
   const listValidNodeEndpointGroup = useMemo(() => {
     return listNodeEndpointGroup.filter(
-      (item) => item?.chainType === CHAIN_TYPE.EVM
+      (item) => item?.chainType === CHAIN_TYPE.EVM,
     );
   }, [listNodeEndpointGroup]);
 
@@ -252,8 +252,8 @@ const SnipeContractEVM = (props: Props) => {
                     onClick={() =>
                       add(
                         convertCamelCaseToVariable(
-                          listOutput?.[fields?.length] || ""
-                        )
+                          listOutput?.[fields?.length] || "",
+                        ),
                       )
                     }
                     style={{ marginLeft: "var(--margin-left)" }}
@@ -300,15 +300,17 @@ const SnipeContractEVM = (props: Props) => {
                     }}
                   >
                     <Input
-                      placeholder={translate("workflow.listVariablePlaceholder")}
+                      placeholder={translate(
+                        "workflow.listVariablePlaceholder",
+                      )}
                       className="custom-input"
                       size="large"
                       onInput={(e) =>
-                      ((e.target as HTMLInputElement).value = (
-                        e.target as HTMLInputElement
-                      )?.value
-                        .toUpperCase()
-                        ?.replaceAll(" ", ""))
+                        ((e.target as HTMLInputElement).value = (
+                          e.target as HTMLInputElement
+                        )?.value
+                          .toUpperCase()
+                          ?.replaceAll(" ", ""))
                       }
                     />
                   </Form.Item>
@@ -514,7 +516,7 @@ const SnipeContractEVM = (props: Props) => {
                 >
                   <InputNumber
                     placeholder={translate(
-                      "workflow.confirmationBlockPlaceholder"
+                      "workflow.confirmationBlockPlaceholder",
                     )}
                     className="custom-input-number"
                     size="large"
@@ -579,7 +581,7 @@ const SnipeContractEVM = (props: Props) => {
                         </OptionWrapper>
                       </Option>
                     );
-                  }
+                  },
                 )}
               </Select>
             </Form.Item>
@@ -638,5 +640,5 @@ export default connect(
   (state: RootState) => ({
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
   }),
-  {}
+  {},
 )(SnipeContractEVM);

@@ -146,7 +146,7 @@ const ManageProfile = (props: any) => {
   const { getListProfileGroup } = useGetListProfileGroup();
 
   useEffect(() => {
-    getListProfileGroup({ page: 1, pageSize: 10000 });
+    getListProfileGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   useEffect(() => {
@@ -363,7 +363,7 @@ const ManageProfile = (props: any) => {
       clearTimeout(searchProfileGroupTimeOut);
     }
     searchProfileGroupTimeOut = setTimeout(() => {
-      getListProfileGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListProfileGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

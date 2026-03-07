@@ -165,7 +165,7 @@ const ResourceGroup = (props: any) => {
     props?.actSaveGetListResource({
       data: [],
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
       totalData: 0,
     });
   }, []);

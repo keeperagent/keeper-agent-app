@@ -44,8 +44,8 @@ const ConfigForm = (props: IFormProps) => {
   const { getListResourceGroup } = useGetListResourceGroup();
 
   useEffect(() => {
-    getListWalletGroup({ page: 1, pageSize: 10000 });
-    getListResourceGroup({ page: 1, pageSize: 10000 });
+    getListWalletGroup({ page: 1, pageSize: 1000 });
+    getListResourceGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   const onChangeWalletGroup = (value: string) => {
@@ -101,7 +101,7 @@ const ConfigForm = (props: IFormProps) => {
       clearTimeout(searchWalletGroupTimeOut);
     }
     searchWalletGroupTimeOut = setTimeout(() => {
-      getListWalletGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListWalletGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -110,7 +110,7 @@ const ConfigForm = (props: IFormProps) => {
       clearTimeout(searchResourceGroupTimeOut);
     }
     searchResourceGroupTimeOut = setTimeout(() => {
-      getListResourceGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListResourceGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

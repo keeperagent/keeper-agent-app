@@ -114,7 +114,7 @@ const ProxyIp = (props: any) => {
   } = useDeleteProxyIp();
 
   useEffect(() => {
-    getListProxyIpGroup({ page: 1, pageSize: 10000 });
+    getListProxyIpGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   useEffect(() => {
@@ -222,7 +222,7 @@ const ProxyIp = (props: any) => {
       clearTimeout(searchProxyIpGroupTimeOut);
     }
     searchProxyIpGroupTimeOut = setTimeout(() => {
-      getListProxyIpGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListProxyIpGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

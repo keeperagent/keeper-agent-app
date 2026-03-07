@@ -772,6 +772,7 @@ export const TELEGRAM_BOT = {
   ACTION_BACK_TO_ENCRYPT: "back_encrypt_",
   ACTION_CONFIRM_RUN: "confirm_run_",
   ACTION_CANCEL_RUN: "cancel_run_",
+  ACTION_SEARCH_CAMPAIGN: "search_campaign_",
   ACTION_YES: "yes",
   ACTION_NO: "no",
 };

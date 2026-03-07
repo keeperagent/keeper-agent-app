@@ -72,7 +72,7 @@ const ModalProfile = (props: IModalProfileProps) => {
   useEffect(() => {
     getListProfileGroup({
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
     });
   }, []);
 

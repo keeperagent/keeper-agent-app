@@ -40,8 +40,8 @@ const InfoForm = (props: any) => {
     useGetListCampaignProfile();
 
   useEffect(() => {
-    getListProfileGroup({ page: 1, pageSize: 100000 });
-    getListWorkflow({ page: 1, pageSize: 100000 });
+    getListProfileGroup({ page: 1, pageSize: 1000 });
+    getListWorkflow({ page: 1, pageSize: 1000 });
 
     return () => {
       searchProfileGroupTimeOut = null;
@@ -88,7 +88,7 @@ const InfoForm = (props: any) => {
     searchCampaignProfileTimeout = setTimeout(() => {
       getListCampaignProfile({
         page: 1,
-        pageSize: 10000,
+        pageSize: 1000,
         searchText: text,
         campaignId: selectedCampaign?.id,
       });
@@ -100,7 +100,7 @@ const InfoForm = (props: any) => {
       clearTimeout(searchWorkflowTimeOut);
     }
     searchWorkflowTimeOut = setTimeout(() => {
-      getListWorkflow({ page: 1, pageSize: 10000, searchText: text });
+      getListWorkflow({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

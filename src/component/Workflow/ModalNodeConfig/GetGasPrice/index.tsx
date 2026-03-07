@@ -48,7 +48,7 @@ const GetGasPrice = (props: Props) => {
     useGetListNodeEndpointGroup();
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   const TAB_NAME = useMemo(() => {
@@ -80,7 +80,7 @@ const GetGasPrice = (props: Props) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -143,7 +143,7 @@ const GetGasPrice = (props: Props) => {
 
   const listValidNodeEndpointGroup = useMemo(() => {
     return listNodeEndpointGroup.filter(
-      (item) => item?.chainType === chainType
+      (item) => item?.chainType === chainType,
     );
   }, [listNodeEndpointGroup, chainType]);
 
@@ -212,7 +212,7 @@ const GetGasPrice = (props: Props) => {
             >
               <Input
                 placeholder={translate(
-                  "workflow.variableToSaveResultPlaceholder"
+                  "workflow.variableToSaveResultPlaceholder",
                 )}
                 className="custom-input"
                 size="large"
@@ -313,7 +313,7 @@ const GetGasPrice = (props: Props) => {
                         </OptionWrapper>
                       </Option>
                     );
-                  }
+                  },
                 )}
               </Select>
             </Form.Item>
@@ -346,5 +346,5 @@ export default connect(
   (state: RootState) => ({
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
   }),
-  {}
+  {},
 )(GetGasPrice);

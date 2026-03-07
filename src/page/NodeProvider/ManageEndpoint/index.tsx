@@ -129,7 +129,7 @@ const NodeEndpoint = (props: any) => {
   }, [group, listNodeEndpointGroup]);
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
 
     return () => {
       clearInterval(interval);
@@ -257,7 +257,7 @@ const NodeEndpoint = (props: any) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

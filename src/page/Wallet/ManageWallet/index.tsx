@@ -210,7 +210,7 @@ const ManageWallet = (props: any) => {
   }, [hasDependencyError, selectedRowKeys, selectedWalletGroup]);
 
   useEffect(() => {
-    getListWalletGroup({ page: 1, pageSize: 10000 });
+    getListWalletGroup({ page: 1, pageSize: 1000 });
 
     return () => {
       setHasDependencyError(false);
@@ -317,7 +317,7 @@ const ManageWallet = (props: any) => {
       clearTimeout(searchWalletGroupTimeOut);
     }
     searchWalletGroupTimeOut = setTimeout(() => {
-      getListWalletGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListWalletGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

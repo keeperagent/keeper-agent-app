@@ -56,7 +56,7 @@ export class ProxyProvider implements IProxyProvider {
   ): Promise<void> => {
     const [res, err] = await proxyDB.getListProxy({
       page: 0,
-      pageSize: 10000,
+      pageSize: 1000,
       type: this.serviceType,
     });
     if (err || !res) return;

@@ -504,7 +504,7 @@ const ManageCampaignProfile = (props: IProps) => {
 
   useEffect(() => {
     syncWorkflowData(0, selectedCampaign?.id!);
-    getListResourceGroup({ page: 1, pageSize: 10000 });
+    getListResourceGroup({ page: 1, pageSize: 1000 });
 
     return () => {
       window?.electron?.removeAllListeners(

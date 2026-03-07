@@ -42,6 +42,7 @@ const useHandleWorkflowUsingTelegram = () => {
     stopWorkflow(workflowId, campaignId);
     await sleep(200);
 
+    isCompletedResetProfile.current = false;
     updateListCampaignProfile({
       listID: [],
       resetAll: true,

@@ -64,7 +64,7 @@ const SelectWallet = (props: Props) => {
   useEffect(() => {
     getListWalletGroup({
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
     });
   }, []);
 
@@ -162,7 +162,7 @@ const SelectWallet = (props: Props) => {
       clearTimeout(searchWalletGroupTimeOut);
     }
     searchWalletGroupTimeOut = setTimeout(() => {
-      getListWalletGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListWalletGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

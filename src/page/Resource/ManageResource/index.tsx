@@ -119,7 +119,7 @@ const ManageResource = (props: any) => {
   }, [selectedResourceGroup, listResourceGroup]);
 
   useEffect(() => {
-    getListResourceGroup({ page: 1, pageSize: 10000 });
+    getListResourceGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   useEffect(() => {
@@ -271,7 +271,7 @@ const ManageResource = (props: any) => {
       clearTimeout(searchResourceGroupTimeOut);
     }
     searchResourceGroupTimeOut = setTimeout(() => {
-      getListResourceGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListResourceGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
