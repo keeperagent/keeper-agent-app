@@ -18,7 +18,7 @@ import {
 } from "@/electron/constant";
 import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 import { FormLabelWrapper } from "../style";
 
 type Props = {

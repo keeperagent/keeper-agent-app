@@ -7,7 +7,7 @@ import { useTranslation } from "@/hook";
 import { RETEET_TWITTER_ACTION } from "@/electron/constant";
 import { Wrapper } from "./style";
 import { TAB_NAME_EN, TAB } from "../util";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 import { FormLabelWrapper } from "../style";
 import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";

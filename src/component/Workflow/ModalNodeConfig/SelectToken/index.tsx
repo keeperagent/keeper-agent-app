@@ -26,7 +26,7 @@ import { Wrapper, OptionWrapper, ChainWrapper } from "./style";
 import { TAB_NAME_EN, TAB } from "../util";
 import TokenOption from "./TokenOption";
 import { FormLabelWrapper } from "../style";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 
 type Props = {
   onCloseModal: () => any;

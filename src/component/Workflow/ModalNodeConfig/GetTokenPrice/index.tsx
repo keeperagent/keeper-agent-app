@@ -20,7 +20,7 @@ import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
 import { Wrapper, ChainWrapper } from "./style";
 import { FormLabelWrapper } from "../style";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 
 const { Option } = Select;
 const { TextArea } = Input;

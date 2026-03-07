@@ -36,7 +36,7 @@ import { Wrapper, OptionWrapper, ChainWrapper } from "./style";
 import { TAB, TAB_NAME_EN } from "../util";
 import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 import { FormLabelWrapper } from "../style";
 
 const { TextArea } = Input;

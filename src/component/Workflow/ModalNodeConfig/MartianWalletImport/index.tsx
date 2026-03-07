@@ -12,7 +12,7 @@ import { TAB_NAME_EN, TAB } from "../util";
 import { WALLET_VARIABLE, NODE_STATUS } from "@/electron/constant";
 import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 import { FormLabelWrapper } from "../style";
 
 const { TextArea } = Input;
