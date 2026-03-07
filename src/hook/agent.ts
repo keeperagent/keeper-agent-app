@@ -623,4 +623,28 @@ const useDashboardAgent = () => {
   };
 };
 
-export { useDashboardAgent };
+const useAgentReadyStats = (active: boolean) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    const handleAgentReady = (_event: any, payload: any) => {
+      const { ready, subAgentsCount, toolsCount, skillsCount } = payload || {};
+      if (ready) {
+        dispatch(
+          actSaveAgentStats({ subAgentsCount, toolsCount, skillsCount }),
+        );
+      }
+    };
+    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_READY, handleAgentReady);
+
+    return () => {
+      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_READY);
+    };
+  }, [dispatch, active]);
+};
+
+export { useDashboardAgent, useAgentReadyStats };

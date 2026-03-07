@@ -6,6 +6,7 @@ import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
 import { IPreference } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
+import { useAgentReadyStats } from "@/hook/agent";
 import claudeLogo from "@/asset/claude.webp";
 import openaiLogo from "@/asset/openai.webp";
 import geminiLogo from "@/asset/gemini.webp";
@@ -73,6 +74,8 @@ const AgentPage = (props: any) => {
     const t = setTimeout(() => setContentReady(true), 0);
     return () => clearTimeout(t);
   }, []);
+
+  useAgentReadyStats(activeTab !== TAB.AGENT);
 
   const onChangeTab = (key: string) => {
     setActiveTab(key);
