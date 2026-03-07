@@ -6,6 +6,7 @@ import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
 import { IPreference } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
+import { useAgentReadyStats } from "@/hook/agent";
 import claudeLogo from "@/asset/claude.webp";
 import openaiLogo from "@/asset/openai.webp";
 import geminiLogo from "@/asset/gemini.webp";
@@ -15,11 +16,13 @@ import ChatAgent from "./ChatAgent";
 
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
+const ToolsManager = lazy(() => import("./ToolsManager"));
 
 const TAB = {
   AGENT: "AGENT",
   MCP_SERVER: "MCP_SERVER",
   SKILLS: "SKILLS",
+  TOOLS: "TOOLS",
 };
 
 const PROVIDERS: {
@@ -72,6 +75,8 @@ const AgentPage = (props: any) => {
     return () => clearTimeout(t);
   }, []);
 
+  useAgentReadyStats(activeTab !== TAB.AGENT);
+
   const onChangeTab = (key: string) => {
     setActiveTab(key);
   };
@@ -84,14 +89,19 @@ const AgentPage = (props: any) => {
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
-    if (provider === currentProvider) return;
+    if (provider === currentProvider) {
+      return;
+    }
     actSetLLMProvider(provider);
   };
 
   const currentModelName = useMemo(() => {
     const providerKey = currentProvider as LLMProvider;
     const provider = PROVIDERS.find((p) => p.key === providerKey);
-    if (!provider) return DEFAULT_LLM_MODELS[providerKey];
+    if (!provider) {
+      return DEFAULT_LLM_MODELS[providerKey];
+    }
+
     return (
       (preference?.[provider.modelField] as string) ||
       DEFAULT_LLM_MODELS[providerKey]
@@ -102,6 +112,7 @@ const AgentPage = (props: any) => {
     const subAgents = agentStatsFromReady?.subAgentsCount || 0;
     const tools = agentStatsFromReady?.toolsCount || 0;
     const skills = agentStatsFromReady?.skillsCount || 0;
+
     return { subAgents, tools, skills };
   }, [agentStatsFromReady]);
 
@@ -123,6 +134,10 @@ const AgentPage = (props: any) => {
             {
               key: TAB.SKILLS,
               label: translate("agent.tabAgentSkill"),
+            },
+            {
+              key: TAB.TOOLS,
+              label: translate("agent.tabTools"),
             },
           ]}
           activeKey={activeTab}
@@ -241,6 +256,24 @@ const AgentPage = (props: any) => {
               }
             >
               <SkillsManager />
+            </Suspense>
+          )}
+
+          {activeTab === TAB.TOOLS && (
+            <Suspense
+              fallback={
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    padding: "2rem",
+                  }}
+                >
+                  <Spin />
+                </div>
+              }
+            >
+              <ToolsManager />
             </Suspense>
           )}
         </>

@@ -4,6 +4,7 @@ import { browserDownloader } from "@/electron/service/browserDownloader";
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
+import { recreateAllAgents } from "./appAgent";
 
 export const perferenceController = () => {
   ipcMain.on(MESSAGE.INIT_PREFERENCE, async (_event, _payload) => {
@@ -42,7 +43,7 @@ export const perferenceController = () => {
     MESSAGE.UPDATE_PREFERENCE,
     MESSAGE.UPDATE_PREFERENCE_RES,
     async (event, payload) => {
-      const { requestId, data } = payload;
+      const { requestId, data, isUpdateAgentTool } = payload;
       const [res, err] = await preferenceDB.updatePreference(data);
 
       if (err) {
@@ -64,6 +65,10 @@ export const perferenceController = () => {
         data: { ...res, isRevisionDownloaded: Boolean(downloaded) },
         requestId,
       });
+
+      if (isUpdateAgentTool) {
+        recreateAllAgents();
+      }
     },
   );
 };

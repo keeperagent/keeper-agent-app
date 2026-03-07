@@ -134,6 +134,13 @@ class PreferenceDB {
         };
       }
 
+      if (preference?.disabledTools) {
+        updateData = {
+          ...updateData,
+          disabledTools: JSON.stringify(preference?.disabledTools),
+        };
+      }
+
       await PreferenceModel.update(_.omit(updateData, ["id"]), {
         where: { id: preference?.id },
       });

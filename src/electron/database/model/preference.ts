@@ -110,6 +110,10 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: "",
       },
+      disabledTools: {
+        type: DataTypes.STRING,
+        defaultValue: "[]",
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
@@ -121,5 +125,5 @@ export default (db: Sequelize) =>
           fields: ["key"],
         },
       ],
-    }
+    },
   );

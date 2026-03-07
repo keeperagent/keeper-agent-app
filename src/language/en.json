@@ -1061,6 +1061,7 @@
   "agent.tabAgent": "Agent",
   "agent.tabMcpServer": "MCP server",
   "agent.tabAgentSkill": "Agent skill",
+  "agent.tabTools": "Tools",
   "agent.providerClaude": "Claude",
   "agent.providerOpenAI": "OpenAI",
   "agent.providerGemini": "Gemini",
