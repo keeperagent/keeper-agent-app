@@ -24,7 +24,10 @@ const ToolsManager = (props: { preference: IPreference | null }) => {
   const disabledSet = new Set(disabledTools);
 
   const onToggle = (toolKey: string, checked: boolean) => {
-    if (!preference) return;
+    if (!preference) {
+      return;
+    }
+
     const next = checked
       ? disabledTools.filter((key) => key !== toolKey)
       : [...disabledTools, toolKey];

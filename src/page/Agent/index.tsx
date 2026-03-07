@@ -89,14 +89,19 @@ const AgentPage = (props: any) => {
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
-    if (provider === currentProvider) return;
+    if (provider === currentProvider) {
+      return;
+    }
     actSetLLMProvider(provider);
   };
 
   const currentModelName = useMemo(() => {
     const providerKey = currentProvider as LLMProvider;
     const provider = PROVIDERS.find((p) => p.key === providerKey);
-    if (!provider) return DEFAULT_LLM_MODELS[providerKey];
+    if (!provider) {
+      return DEFAULT_LLM_MODELS[providerKey];
+    }
+
     return (
       (preference?.[provider.modelField] as string) ||
       DEFAULT_LLM_MODELS[providerKey]
@@ -107,6 +112,7 @@ const AgentPage = (props: any) => {
     const subAgents = agentStatsFromReady?.subAgentsCount || 0;
     const tools = agentStatsFromReady?.toolsCount || 0;
     const skills = agentStatsFromReady?.skillsCount || 0;
+
     return { subAgents, tools, skills };
   }, [agentStatsFromReady]);
 

@@ -8,6 +8,11 @@ import {
   LLMProvider,
 } from "@/redux/agent";
 
+enum AgentRole {
+  HUMAN = "human",
+  AI = "ai",
+}
+
 type AgentToolStep = {
   toolName: string;
   args: unknown;
@@ -16,7 +21,7 @@ type AgentToolStep = {
 };
 
 type AgentMessage = {
-  role: string;
+  role: AgentRole;
   content: string;
   timestamp?: number;
 };
@@ -67,9 +72,9 @@ const useDashboardAgent = () => {
   const pendingReadyRef = useRef<{
     sessionId: string;
     ready: boolean;
-    subAgentsCount?: number;
-    toolsCount?: number;
-    skillsCount?: number;
+    subAgentsCount: number;
+    toolsCount: number;
+    skillsCount: number;
   } | null>(null);
 
   sessionIdRef.current = sessionId;
@@ -78,26 +83,17 @@ const useDashboardAgent = () => {
   dispatchRef.current = dispatch;
   conversationRef.current = conversation;
 
-  const hasElectron = typeof window !== "undefined" && window?.electron != null;
-
-  /** Fire-and-forget: save a single message to the SQLite chat history. */
-  const saveMessageToDB = useCallback(
-    (msg: AgentMessage) => {
-      if (!hasElectron) return;
-      window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
-        role: msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp || Date.now(),
-      });
-    },
-    [hasElectron],
-  );
+  const saveMessageToDB = useCallback((msg: AgentMessage) => {
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
+      role: msg.role,
+      content: msg.content,
+      timestamp: msg.timestamp || Date.now(),
+    });
+  }, []);
 
   // Load conversation history from SQLite on first mount only.
   // This replaces the old redux-persist rehydration.
   useEffect(() => {
-    if (!hasElectron) return;
-
     const handleLoad = (_event: any, payload: any) => {
       const { data } = payload || {};
       if (Array.isArray(data) && data.length > 0) {
@@ -112,11 +108,9 @@ const useDashboardAgent = () => {
     return () => {
       window?.electron?.removeAllListeners(MESSAGE.CHAT_HISTORY_LOAD_RES);
     };
-  }, []); // Intentional: run once on mount
+  }, []);
 
   useEffect(() => {
-    if (!hasElectron) return;
-
     const handleCreateSession = (_event: any, payload: any) => {
       setCreatingSession(false);
       const { data, error: errMessage } = payload || {};
@@ -141,27 +135,16 @@ const useDashboardAgent = () => {
       if (pending) {
         pendingReadyRef.current = null;
         setAgentReady(true);
-        if (
-          typeof pending.subAgentsCount === "number" &&
-          typeof pending.toolsCount === "number" &&
-          typeof pending.skillsCount === "number"
-        ) {
-          dispatchRef.current(
-            actSaveAgentStats({
-              subAgentsCount: pending.subAgentsCount,
-              toolsCount: pending.toolsCount,
-              skillsCount: pending.skillsCount,
-            }),
-          );
-        }
+        dispatchRef.current(
+          actSaveAgentStats({
+            subAgentsCount: pending.subAgentsCount,
+            toolsCount: pending.toolsCount,
+            skillsCount: pending.skillsCount,
+          }),
+        );
       } else {
-        setAgentReady(!!data?.agentReady);
-        if (
-          data?.agentReady &&
-          typeof data?.subAgentsCount === "number" &&
-          typeof data?.toolsCount === "number" &&
-          typeof data?.skillsCount === "number"
-        ) {
+        setAgentReady(Boolean(data?.agentReady));
+        if (data?.agentReady) {
           dispatchRef.current(
             actSaveAgentStats({
               subAgentsCount: data.subAgentsCount,
@@ -196,7 +179,7 @@ const useDashboardAgent = () => {
       const remainingContent = streamingContentRef.current || "";
       if (remainingContent.trim()) {
         const assistantMessage: AgentMessage = {
-          role: "ai",
+          role: AgentRole.AI,
           content: remainingContent,
           timestamp: Date.now(),
         };
@@ -205,7 +188,7 @@ const useDashboardAgent = () => {
       } else if (result?.isError) {
         // Top-level run error — show the error message directly
         const errorMessage: AgentMessage = {
-          role: "ai",
+          role: AgentRole.AI,
           content: `Error: ${result.errorMsg || "An error occurred."}`,
           timestamp: Date.now(),
         };
@@ -216,7 +199,7 @@ const useDashboardAgent = () => {
         const failedStep = (result?.steps || []).find((s: any) => !s.success);
         if (failedStep) {
           const errorMessage: AgentMessage = {
-            role: "ai",
+            role: AgentRole.AI,
             content: `Error: ${failedStep.result || "An error occurred while executing the task."}`,
             timestamp: Date.now(),
           };
@@ -283,7 +266,7 @@ const useDashboardAgent = () => {
         // so the tool execution indicator appears as a separate step
         if (streamingContentRef.current.trim()) {
           const partialMessage: AgentMessage = {
-            role: "ai",
+            role: AgentRole.AI,
             content: streamingContentRef.current,
             timestamp: Date.now(),
           };
@@ -337,12 +320,7 @@ const useDashboardAgent = () => {
 
       if (payloadSessionId === sessionIdRef.current) {
         setAgentReady(payloadReady);
-        if (
-          payloadReady &&
-          typeof subAgentsCount === "number" &&
-          typeof toolsCount === "number" &&
-          typeof skillsCount === "number"
-        ) {
+        if (payloadReady) {
           dispatchRef.current(
             actSaveAgentStats({ subAgentsCount, toolsCount, skillsCount }),
           );
@@ -353,9 +331,9 @@ const useDashboardAgent = () => {
         pendingReadyRef.current = {
           sessionId: payloadSessionId,
           ready: true,
-          subAgentsCount,
-          toolsCount,
-          skillsCount,
+          subAgentsCount: subAgentsCount || 0,
+          toolsCount: toolsCount || 0,
+          skillsCount: skillsCount || 0,
         };
       }
     };
@@ -434,32 +412,32 @@ const useDashboardAgent = () => {
       );
       window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_STOP_RES);
     };
-  }, [hasElectron, saveMessageToDB]);
+  }, [saveMessageToDB]);
 
   // On mount: if we already have a sessionId but agentReady is false, query the main
   // process for the current agent status. This handles the case where DASHBOARD_AGENT_READY
   // fired while this component was unmounted (e.g., during a reset or provider change).
   useEffect(() => {
-    if (!hasElectron || !sessionId || agentReady) return;
+    if (!sessionId || agentReady) {
+      return;
+    }
 
     const handleStatus = (_event: any, payload: any) => {
       const { data } = payload || {};
-      if (data?.sessionId !== sessionIdRef.current) return;
-      if (!data?.ready) return;
-      setAgentReady(true);
-      if (
-        typeof data?.subAgentsCount === "number" &&
-        typeof data?.toolsCount === "number" &&
-        typeof data?.skillsCount === "number"
-      ) {
-        dispatchRef.current(
-          actSaveAgentStats({
-            subAgentsCount: data.subAgentsCount,
-            toolsCount: data.toolsCount,
-            skillsCount: data.skillsCount,
-          }),
-        );
+      if (data?.sessionId !== sessionIdRef.current) {
+        return;
       }
+      if (!data?.ready) {
+        return;
+      }
+      setAgentReady(true);
+      dispatchRef.current(
+        actSaveAgentStats({
+          subAgentsCount: data.subAgentsCount,
+          toolsCount: data.toolsCount,
+          skillsCount: data.skillsCount,
+        }),
+      );
     };
 
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES, handleStatus);
@@ -470,15 +448,19 @@ const useDashboardAgent = () => {
         MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES,
       );
     };
-  }, [hasElectron, sessionId, agentReady]);
+  }, [sessionId, agentReady]);
 
   // Watch for provider changes from Redux and send IPC to reinit agent.
   // Keep conversation history visible (do not clear); only reset ready state and in-flight UI.
   const prevProviderRef = useRef(llmProvider);
   useEffect(() => {
-    if (prevProviderRef.current === llmProvider) return;
+    if (prevProviderRef.current === llmProvider) {
+      return;
+    }
     prevProviderRef.current = llmProvider;
-    if (!sessionIdRef.current || !hasElectron) return;
+    if (!sessionIdRef.current) {
+      return;
+    }
     setAgentReady(false);
     setSteps([]);
     setOutput("");
@@ -487,63 +469,52 @@ const useDashboardAgent = () => {
       sessionId: sessionIdRef.current,
       provider: llmProvider,
     });
-  }, [llmProvider, hasElectron]);
+  }, [llmProvider]);
 
   const createSession = useCallback(() => {
-    if (!hasElectron) {
-      setError("Agent requires the desktop app.");
-      return;
-    }
     setCreatingSession(true);
     setError(null);
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CREATE_SESSION, {
       provider: llmProvider,
     });
-  }, [hasElectron, llmProvider]);
+  }, [llmProvider]);
 
-  const sendMessage = useCallback(
-    (input: string) => {
-      if (!sessionIdRef.current) {
-        setError("Agent session is not ready. Please try again in a moment.");
-        return;
-      }
-      if (!input || input.trim().length === 0) {
-        setError("Message must not be empty");
-        return;
-      }
+  const sendMessage = useCallback((input: string) => {
+    if (!sessionIdRef.current) {
+      setError("Agent session is not ready. Please try again in a moment.");
+      return;
+    }
+    if (!input || input.trim().length === 0) {
+      setError("Message must not be empty");
+      return;
+    }
 
-      const userMessage: AgentMessage = {
-        role: "human",
-        content: input.trim(),
-        timestamp: Date.now(),
-      };
-      setConversation((prev) => [...prev, userMessage]);
+    const userMessage: AgentMessage = {
+      role: AgentRole.HUMAN,
+      content: input.trim(),
+      timestamp: Date.now(),
+    };
+    setConversation((prev) => [...prev, userMessage]);
 
-      // Persist the user message to SQLite immediately — before loading = true —
-      // so it's never lost even if the app is closed while the agent is thinking.
-      if (hasElectron) {
-        window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
-          role: userMessage.role,
-          content: userMessage.content,
-          timestamp: userMessage.timestamp,
-        });
-      }
+    // Persist the user message to SQLite immediately — before loading = true —
+    // so it's never lost even if the app is closed while the agent is thinking.
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
+      role: userMessage.role,
+      content: userMessage.content,
+      timestamp: userMessage.timestamp,
+    });
 
-      setLoading(true);
-      setError(null);
-      setStreamingContent("");
-      streamingContentRef.current = "";
-      setExecutingTool(null);
-      toolDepthRef.current = 0;
-      if (hasElectron) {
-        window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
-          sessionId: sessionIdRef.current,
-          input,
-        });
-      }
-    },
-    [hasElectron],
-  );
+    setLoading(true);
+    setError(null);
+    setStreamingContent("");
+    streamingContentRef.current = "";
+    setExecutingTool(null);
+    toolDepthRef.current = 0;
+    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
+      sessionId: sessionIdRef.current,
+      input,
+    });
+  }, []);
 
   const resetSession = useCallback(() => {
     if (!sessionIdRef.current) {
@@ -558,48 +529,42 @@ const useDashboardAgent = () => {
     setExecutingTool(null);
     toolDepthRef.current = 0;
     // Clear SQLite history so the next session starts fresh
-    if (hasElectron) {
-      window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {});
-    }
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {});
     // Reset the agent's LangGraph thread on the backend
-    if (hasElectron) {
-      window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RESET_SESSION, {
-        sessionId: sessionIdRef.current,
-      });
-    }
-  }, [hasElectron]);
+    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RESET_SESSION, {
+      sessionId: sessionIdRef.current,
+    });
+  }, []);
 
   const changeProvider = useCallback(
     (provider: LLMProvider) => {
       dispatch(actSetLLMProvider(provider));
-      if (!sessionIdRef.current || !hasElectron) return;
+      if (!sessionIdRef.current) return;
       setAgentReady(false);
       window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER, {
         sessionId: sessionIdRef.current,
         provider,
       });
     },
-    [hasElectron, dispatch],
+    [dispatch],
   );
 
   const stopAgent = useCallback(() => {
-    if (!sessionIdRef.current || !hasElectron) return;
+    if (!sessionIdRef.current) return;
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_STOP, {
       sessionId: sessionIdRef.current,
     });
-  }, [hasElectron]);
+  }, []);
 
   const destroySession = useCallback(() => {
     if (!sessionIdRef.current) {
       return;
     }
     setError(null);
-    if (hasElectron) {
-      window?.electron?.send(MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION, {
-        sessionId: sessionIdRef.current,
-      });
-    }
-  }, [hasElectron]);
+    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION, {
+      sessionId: sessionIdRef.current,
+    });
+  }, []);
 
   return {
     sessionId,
