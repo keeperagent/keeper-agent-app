@@ -15,33 +15,37 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
   // App Management Tools
   {
     key: "create_wallet_group",
-    name: "Create Wallet group",
-    description: "Create a new wallet group to organize wallets.",
+    name: "Create wallet group",
+    description:
+      "Set up a new wallet group to organize and manage your wallets in one place",
     group: BaseToolGroup.APP_MANAGEMENT,
   },
   {
     key: "generate_wallets_for_group",
-    name: "Generate wallets for Wallet group",
-    description: "Generate and add wallets to an existing wallet group.",
+    name: "Generate wallets for group",
+    description:
+      "Automatically generate and assign multiple wallets to an existing wallet group",
     group: BaseToolGroup.APP_MANAGEMENT,
   },
   {
     key: "create_profile_group_with_profiles",
-    name: "Create Profile group with Profiles",
-    description: "Create a profile group and populate it with profiles.",
+    name: "Create profile group with profiles",
+    description:
+      "Create a profile group and bulk-provision browser profiles inside it",
     group: BaseToolGroup.APP_MANAGEMENT,
   },
   {
     key: "create_campaign_for_profile_group",
-    name: "Create Campaign for Profile group",
-    description: "Create a campaign and link it to a profile group.",
+    name: "Create campaign for profile group",
+    description:
+      "Create a new campaign and attach it to a profile group for execution",
     group: BaseToolGroup.APP_MANAGEMENT,
   },
   {
     key: "create_node_provider_group",
-    name: "Create Node provider group",
+    name: "Create node provider group",
     description:
-      "Create a node provider group and populate it with RPC endpoints.",
+      "Create a node provider group and register RPC endpoints for on-chain access",
     group: BaseToolGroup.APP_MANAGEMENT,
   },
   // Transaction Tools
@@ -49,53 +53,56 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     key: "get_solana_token_balance",
     name: "Get Solana token balance",
     description:
-      "Get SOL or SPL token balances across campaign wallets on Solana.",
+      "Fetch SOL and SPL token balances across all wallets in a Solana campaign",
     group: BaseToolGroup.TRANSACTION,
   },
   {
     key: "get_evm_token_balance",
     name: "Get EVM token balance",
     description:
-      "Get native token or ERC20 balances across campaign wallets on EVM chains.",
+      "Fetch native and ERC-20 token balances across all wallets in an EVM campaign",
     group: BaseToolGroup.TRANSACTION,
   },
   {
     key: "get_token_price",
     name: "Get token price",
-    description: "Get token price in USD from on-chain data.",
+    description:
+      "Look up the current USD price of any token using live on-chain data",
     group: BaseToolGroup.TRANSACTION,
   },
   {
     key: "swap_on_jupiter",
     name: "Swap on Jupiter",
     description:
-      "Swap tokens on Solana via Jupiter (buy SOL → token, sell token → SOL).",
+      "Execute token swaps on Solana through Jupiter — buy or sell any SPL token",
     group: BaseToolGroup.TRANSACTION,
   },
   {
     key: "swap_on_kyberswap",
     name: "Swap on Kyberswap",
     description:
-      "Swap tokens on EVM chains via Kyberswap (buy native → ERC20, sell ERC20 → native).",
+      "Execute token swaps on EVM chains through Kyberswap — buy or sell any ERC-20 token",
+    group: BaseToolGroup.TRANSACTION,
+  },
+  {
+    key: "launch_pumpfun_token",
+    name: "Launch Pump.fun token",
+    description:
+      "Deploy and launch a new token on Pump.fun directly from the agent",
+    group: BaseToolGroup.TRANSACTION,
+  },
+  {
+    key: "launch_bonkfun_token",
+    name: "Launch Bonk.fun token",
+    description:
+      "Deploy and launch a new token on Bonk.fun directly from the agent",
     group: BaseToolGroup.TRANSACTION,
   },
   {
     key: "transfer_solana_token",
     name: "Transfer Solana token",
     description:
-      "Transfer native SOL or SPL tokens from a source wallet to target wallets in a campaign.",
-    group: BaseToolGroup.TRANSACTION,
-  },
-  {
-    key: "launch_pumpfun_token",
-    name: "Launch Pump.fun Token",
-    description: "Launch a new token on Pump.fun on Solana.",
-    group: BaseToolGroup.TRANSACTION,
-  },
-  {
-    key: "launch_bonkfun_token",
-    name: "Launch Bonk.fun Token",
-    description: "Launch a new token on Bonk.fun on Solana.",
+      "Send SOL or SPL tokens from one wallet to multiple target wallets",
     group: BaseToolGroup.TRANSACTION,
   },
   // Code Execution Tools
@@ -103,14 +110,14 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     key: "execute_javascript",
     name: "Execute JavaScript",
     description:
-      "Execute JavaScript/Node.js code to fetch data, process results, or run custom logic.",
+      "Run JavaScript / Node.js code to call APIs or automate custom logic",
     group: BaseToolGroup.CODE_EXECUTION,
   },
   {
     key: "execute_python",
     name: "Execute Python",
     description:
-      "Execute Python code to fetch data, process results, or run custom logic.",
+      "Run Python scripts to call APIs, process data, or automate any custom logic",
     group: BaseToolGroup.CODE_EXECUTION,
   },
 ];
