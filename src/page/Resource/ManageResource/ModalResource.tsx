@@ -53,7 +53,7 @@ const ModalResource = (props: IModalResourceProps) => {
   useEffect(() => {
     getListResourceGroup({
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
     });
 
     return () => {
@@ -160,7 +160,7 @@ const ModalResource = (props: IModalResourceProps) => {
       clearTimeout(searchGroupTimeOut);
     }
     searchGroupTimeOut = setTimeout(() => {
-      getListResourceGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListResourceGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

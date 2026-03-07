@@ -57,7 +57,7 @@ const AutoGenerate = (props: IAutoGenerateProps) => {
   useEffect(() => {
     getListWalletGroup({
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
     });
 
     return () => {
@@ -107,7 +107,7 @@ const AutoGenerate = (props: IAutoGenerateProps) => {
 
       const { groupId } = form.getFieldsValue(["groupId"]);
       props?.actSaveSelectedWalletGroup(
-        _.find(listWalletGroup, { id: groupId }) || null
+        _.find(listWalletGroup, { id: groupId }) || null,
       );
 
       setShouldRefetch(true);
@@ -143,7 +143,7 @@ const AutoGenerate = (props: IAutoGenerateProps) => {
       clearTimeout(searchWalletGroupTimeOut);
     }
     searchWalletGroupTimeOut = setTimeout(() => {
-      getListWalletGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListWalletGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -289,5 +289,5 @@ export default connect(
     listWalletGroup: state?.WalletGroup?.listWalletGroup,
     selectedWalletGroup: state?.WalletGroup?.selectedWalletGroup,
   }),
-  { actSaveSelectedWalletGroup }
+  { actSaveSelectedWalletGroup },
 )(AutoGenerate);

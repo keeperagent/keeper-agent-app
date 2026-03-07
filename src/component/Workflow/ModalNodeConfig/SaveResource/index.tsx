@@ -73,7 +73,7 @@ const SaveResource = (props: Props) => {
   useEffect(() => {
     getListResourceGroup({
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
     });
 
     return () => {
@@ -213,7 +213,7 @@ const SaveResource = (props: Props) => {
       clearTimeout(searchGroupTimeOut);
     }
     searchGroupTimeOut = setTimeout(() => {
-      getListResourceGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListResourceGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

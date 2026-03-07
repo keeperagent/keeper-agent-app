@@ -19,7 +19,7 @@ const ListJob = (props: IProps) => {
   const { getListCampaign } = useGetListCampaign();
 
   useEffect(() => {
-    getListCampaign({ page: 1, pageSize: 10000 });
+    getListCampaign({ page: 1, pageSize: 1000 });
   }, []);
 
   return (

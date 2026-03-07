@@ -343,7 +343,7 @@ const ManageLog = (props: any) => {
       clearTimeout(searchScheduleTimeOut);
     }
     searchScheduleTimeOut = setTimeout(() => {
-      getListSchedule({ page: 1, pageSize: 10000, searchText: text });
+      getListSchedule({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

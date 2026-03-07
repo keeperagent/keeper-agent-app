@@ -80,7 +80,7 @@ const WalletView = (props: any) => {
     useGetListCampaignProfile();
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
     if (!chainKey) {
       props?.actSaveChainKey("solana");
     }
@@ -123,7 +123,7 @@ const WalletView = (props: any) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -146,7 +146,7 @@ const WalletView = (props: any) => {
       clearTimeout(searchCampaignTimeOut);
     }
     searchCampaignTimeOut = setTimeout(() => {
-      getListCampaign({ page: 1, pageSize: 10000, searchText: text });
+      getListCampaign({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

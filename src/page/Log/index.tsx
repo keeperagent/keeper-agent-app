@@ -97,7 +97,7 @@ const ManageLog = (props: any) => {
       clearTimeout(searchCampaignTimeOut);
     }
     searchCampaignTimeOut = setTimeout(() => {
-      getListCampaign({ page: 1, pageSize: 10000, searchText: text });
+      getListCampaign({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -106,7 +106,7 @@ const ManageLog = (props: any) => {
       clearTimeout(searchWorkflowTimeOut);
     }
     searchWorkflowTimeOut = setTimeout(() => {
-      getListWorkflow({ page: 1, pageSize: 10000, searchText: text });
+      getListWorkflow({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

@@ -37,7 +37,7 @@ const ChainOption = (props: IProps) => {
   const { translate } = useTranslation();
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   const onSearchNodeEndpointGroup = (text: string) => {
@@ -45,35 +45,35 @@ const ChainOption = (props: IProps) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
   const onChangeChainName = (event: ChangeEvent<HTMLInputElement>) => {
     onChangeChainOption(
       { ...chainOption, chainName: event?.target?.value },
-      index
+      index,
     );
   };
 
   const onChangeTokenName = (event: ChangeEvent<HTMLInputElement>) => {
     onChangeChainOption(
       { ...chainOption, tokenName: event?.target?.value },
-      index
+      index,
     );
   };
 
   const onChangeTokenAddress = (event: ChangeEvent<HTMLInputElement>) => {
     onChangeChainOption(
       { ...chainOption, tokenAddress: event?.target?.value },
-      index
+      index,
     );
   };
 
   const onChangeMinimumAmount = (event: ChangeEvent<HTMLInputElement>) => {
     onChangeChainOption(
       { ...chainOption, minimumAmount: event?.target?.value },
-      index
+      index,
     );
   };
 
@@ -84,7 +84,7 @@ const ChainOption = (props: IProps) => {
         chainType: value as CHAIN_TYPE,
         nodeEndpointGroupId: null,
       },
-      index
+      index,
     );
   };
 
@@ -94,7 +94,7 @@ const ChainOption = (props: IProps) => {
 
   const listValidNodeEndpointGroup = useMemo(() => {
     return listNodeEndpointGroup.filter(
-      (item) => item?.chainType === chainOption?.chainType
+      (item) => item?.chainType === chainOption?.chainType,
     );
   }, [listNodeEndpointGroup, chainOption?.chainType]);
 
@@ -304,5 +304,5 @@ export default connect(
   (state: RootState) => ({
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
   }),
-  {}
+  {},
 )(ChainOption);

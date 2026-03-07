@@ -69,7 +69,7 @@ const ReadContractEVM = (props: Props) => {
     useGetListNodeEndpointGroup();
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   const TAB_NAME = useMemo(() => {
@@ -109,7 +109,7 @@ const ReadContractEVM = (props: Props) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

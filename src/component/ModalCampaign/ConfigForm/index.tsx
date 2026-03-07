@@ -30,7 +30,7 @@ const ConfigForm = (props: any) => {
     useGetListProxyIpGroup();
 
   useEffect(() => {
-    getListProxyIpGroup({ page: 1, pageSize: 10000 });
+    getListProxyIpGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const ConfigForm = (props: any) => {
       clearTimeout(searchProxyIpGroupTimeOut);
     }
     searchProxyIpGroupTimeOut = setTimeout(() => {
-      getListProxyIpGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListProxyIpGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -160,25 +160,23 @@ const ConfigForm = (props: any) => {
               size="large"
               className="custom-select"
             >
-              {LIST_PROXY_SERVICE?.map(
-                (proxyService: IProxyService) => (
-                  <Option key={proxyService?.type}>
-                    <span style={{ display: "flex", alignItems: "center" }}>
-                      <div
-                        className="color"
-                        style={{
-                          width: "2rem",
-                          height: "2rem",
-                          borderRadius: "0.5rem",
-                          backgroundColor: proxyService.background,
-                          marginRight: "1rem",
-                        }}
-                      />
-                      {proxyService?.name}
-                    </span>
-                  </Option>
-                )
-              )}
+              {LIST_PROXY_SERVICE?.map((proxyService: IProxyService) => (
+                <Option key={proxyService?.type}>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    <div
+                      className="color"
+                      style={{
+                        width: "2rem",
+                        height: "2rem",
+                        borderRadius: "0.5rem",
+                        backgroundColor: proxyService.background,
+                        marginRight: "1rem",
+                      }}
+                    />
+                    {proxyService?.name}
+                  </span>
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
@@ -287,5 +285,5 @@ export default connect(
   (state: RootState) => ({
     listProxyIpGroup: state?.ProxyIpGroup?.listProxyIpGroup,
   }),
-  {}
+  {},
 )(ConfigForm);

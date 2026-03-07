@@ -52,7 +52,7 @@ const ModalImportResource = (props: any) => {
   useEffect(() => {
     getListResourceGroup({
       page: 1,
-      pageSize: 10000,
+      pageSize: 1000,
     });
   }, []);
 
@@ -100,7 +100,7 @@ const ModalImportResource = (props: any) => {
       clearTimeout(searchResourceGroupTimeOut);
     }
     searchResourceGroupTimeOut = setTimeout(() => {
-      getListResourceGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListResourceGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 

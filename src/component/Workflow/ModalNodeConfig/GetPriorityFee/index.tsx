@@ -50,7 +50,7 @@ const GetPriorityFee = (props: Props) => {
     useGetListNodeEndpointGroup();
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 10000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   const TAB_NAME = useMemo(() => {
@@ -82,7 +82,7 @@ const GetPriorityFee = (props: Props) => {
       clearTimeout(searchNodeEndpointGroupTimeOut);
     }
     searchNodeEndpointGroupTimeOut = setTimeout(() => {
-      getListNodeEndpointGroup({ page: 1, pageSize: 10000, searchText: text });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -145,7 +145,7 @@ const GetPriorityFee = (props: Props) => {
 
   const listValidNodeEndpointGroup = useMemo(() => {
     return listNodeEndpointGroup.filter(
-      (item) => item?.chainType === CHAIN_TYPE.SOLANA
+      (item) => item?.chainType === CHAIN_TYPE.SOLANA,
     );
   }, [listNodeEndpointGroup]);
 
@@ -192,7 +192,7 @@ const GetPriorityFee = (props: Props) => {
             >
               <Input
                 placeholder={translate(
-                  "workflow.variableToSaveResultPlaceholder"
+                  "workflow.variableToSaveResultPlaceholder",
                 )}
                 className="custom-input"
                 size="large"
@@ -260,7 +260,7 @@ const GetPriorityFee = (props: Props) => {
                         </OptionWrapper>
                       </Option>
                     );
-                  }
+                  },
                 )}
               </Select>
             </Form.Item>
@@ -305,5 +305,5 @@ export default connect(
   (state: RootState) => ({
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
   }),
-  {}
+  {},
 )(GetPriorityFee);

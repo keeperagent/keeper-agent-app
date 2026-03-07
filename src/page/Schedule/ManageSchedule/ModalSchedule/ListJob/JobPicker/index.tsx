@@ -46,7 +46,7 @@ const JobPicker = (props: IProps) => {
       clearTimeout(searchCampaignTimeOut);
     }
     searchCampaignTimeOut = setTimeout(() => {
-      getListCampaign({ page: 1, pageSize: 10000, searchText: text });
+      getListCampaign({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
