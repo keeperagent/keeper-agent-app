@@ -34,6 +34,7 @@ import {
   executeJavaScriptTool,
   executePythonTool,
 } from "./baseTool";
+import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
 import {
   getOpenAIKey,
@@ -167,30 +168,37 @@ const buildBaseSubAgents = (
   const isEnabled = (key: string) => !disabledTools.has(key);
 
   const appManagementTools = [
-    isEnabled("create_wallet_group") && createWalletGroupTool(),
-    isEnabled("generate_wallets_for_group") && generateWalletsForGroupTool(),
-    isEnabled("create_profile_group_with_profiles") &&
+    isEnabled(BASE_TOOL_KEYS.CREATE_WALLET_GROUP) && createWalletGroupTool(),
+    isEnabled(BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP) &&
+      generateWalletsForGroupTool(),
+    isEnabled(BASE_TOOL_KEYS.CREATE_PROFILE_GROUP_WITH_PROFILES) &&
       createProfileGroupWithProfilesTool(),
-    isEnabled("create_campaign_for_profile_group") &&
+    isEnabled(BASE_TOOL_KEYS.CREATE_CAMPAIGN_FOR_PROFILE_GROUP) &&
       createCampaignForProfileGroupTool(),
-    isEnabled("create_node_provider_group") && createNodeProviderGroupTool(),
+    isEnabled(BASE_TOOL_KEYS.CREATE_NODE_PROVIDER_GROUP) &&
+      createNodeProviderGroupTool(),
   ].filter((tool): any => Boolean(tool));
 
   const transactionTools = [
-    isEnabled("get_evm_token_balance") && getEvmTokenBalanceTool(toolContext),
-    isEnabled("get_solana_token_balance") &&
+    isEnabled(BASE_TOOL_KEYS.GET_EVM_TOKEN_BALANCE) &&
+      getEvmTokenBalanceTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE) &&
       getSolanaTokenBalanceTool(toolContext),
-    isEnabled("get_token_price") && getTokenPriceTool(),
-    isEnabled("launch_bonkfun_token") && launchBonkfunTokenTool(toolContext),
-    isEnabled("launch_pumpfun_token") && launchPumpfunTokenTool(toolContext),
-    isEnabled("swap_on_jupiter") && swapOnJupiterTool(toolContext),
-    isEnabled("swap_on_kyberswap") && swapOnKyberswapTool(toolContext),
-    isEnabled("transfer_solana_token") && transferSolanaTokenTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.GET_TOKEN_PRICE) && getTokenPriceTool(),
+    isEnabled(BASE_TOOL_KEYS.LAUNCH_BONKFUN_TOKEN) &&
+      launchBonkfunTokenTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.LAUNCH_PUMPFUN_TOKEN) &&
+      launchPumpfunTokenTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.SWAP_ON_JUPITER) && swapOnJupiterTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.SWAP_ON_KYBERSWAP) &&
+      swapOnKyberswapTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.TRANSFER_SOLANA_TOKEN) &&
+      transferSolanaTokenTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
   const codeExecutionTools = [
-    isEnabled("execute_javascript") && executeJavaScriptTool(),
-    isEnabled("execute_python") && executePythonTool(),
+    isEnabled(BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT) && executeJavaScriptTool(),
+    isEnabled(BASE_TOOL_KEYS.EXECUTE_PYTHON) && executePythonTool(),
   ].filter((tool): any => Boolean(tool));
 
   return [
