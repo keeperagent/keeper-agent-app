@@ -1,0 +1,23 @@
+{
+  "entry": [
+    "src/electron/main.ts",
+    "src/electron/preload.ts",
+    "src/electron/mainProcess.ts",
+    "src/index.tsx",
+    "src/App.tsx",
+    "src/redux/store.ts",
+    "electron.vite.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "src/electron/database/migration/**",
+    "src/electron/database/model/**",
+    "src/types/**"
+  ],
+  "ignoreDependencies": ["electron", "vite"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/redux/*.ts": ["exports", "types"],
+    "src/component/index.ts": ["exports"]
+  }
+}

@@ -1,0 +1,51 @@
+/* Open Sans */
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 300;
+  src: url("../../src/asset/fonts/OpenSans-Light.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 400;
+  src: url("../../src/asset/fonts/OpenSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 500;
+  src: url("../../src/asset/fonts/OpenSans-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 600;
+  src: url("../../src/asset/fonts/OpenSans-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 700;
+  src: url("../../src/asset/fonts/OpenSans-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 600;
+  src: url("../../src/asset/fonts/OpenSans-SemiBold.woff2") format("woff2");
+}
+
+/* JetBrains Mono */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 300;
+  src: url("../../src/asset/fonts/JetBrainsMono-Italic-VariableFont_wght.ttf")
+    format("ttf");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 400;
+  src: url("../../src/asset/fonts/JetBrainsMono-VariableFont_wght.ttf")
+    format("ttf");
+}

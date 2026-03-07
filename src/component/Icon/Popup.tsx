@@ -1,0 +1,27 @@
+import { IIconProps } from "./index";
+
+// https://www.flaticon.com/search?word=window&corner=rounded&type=uicon
+
+const PopupIcon = (props: IIconProps) => {
+  const {
+    color = "#6e6b7b",
+    width = 512,
+    height = 512,
+    className = "",
+  } = props;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={width}
+      height={height}
+      className={className}
+      fill={color}
+    >
+      <path d="M13,6H5C2.24,6,0,8.24,0,11v8c0,2.76,2.24,5,5,5H13c2.76,0,5-2.24,5-5V11c0-2.76-2.24-5-5-5Zm-8,2H13c1.65,0,3,1.35,3,3H2c0-1.65,1.35-3,3-3Zm8,14H5c-1.65,0-3-1.35-3-3v-6h14v6c0,1.65-1.35,3-3,3ZM24,5V13.54c0,1.78-.96,3.44-2.5,4.33-.16,.09-.33,.13-.5,.13-.35,0-.68-.18-.87-.5-.28-.48-.11-1.09,.36-1.37,.93-.54,1.5-1.53,1.5-2.6V5c0-1.65-1.35-3-3-3H10.46c-1.07,0-2.06,.58-2.6,1.5-.28,.48-.89,.64-1.37,.36-.48-.28-.64-.89-.36-1.37,.89-1.54,2.55-2.5,4.33-2.5h8.54c2.76,0,5,2.24,5,5Z" />
+    </svg>
+  );
+};
+
+export default PopupIcon;

@@ -1,0 +1,27 @@
+import { IIconProps } from "./index";
+
+// https://www.flaticon.com/search?word=copy&type=uicon
+
+const CopyBoldIcon = (props: IIconProps) => {
+  const {
+    color = "#6e6b7b",
+    width = 512,
+    height = 512,
+    className = "",
+  } = props;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={width}
+      height={height}
+      className={className}
+      fill={color}
+    >
+      <path d="m15 20h-10a5.006 5.006 0 0 1 -5-5v-10a5.006 5.006 0 0 1 5-5h10a5.006 5.006 0 0 1 5 5v10a5.006 5.006 0 0 1 -5 5zm9-1v-13a1 1 0 0 0 -2 0v13a3 3 0 0 1 -3 3h-13a1 1 0 0 0 0 2h13a5.006 5.006 0 0 0 5-5z" />
+    </svg>
+  );
+};
+
+export default CopyBoldIcon;

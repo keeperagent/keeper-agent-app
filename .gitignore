@@ -1,0 +1,9 @@
+dist
+node_modules
+build
+release
+.vscode
+.claude
+.DS_Store
+release.sh
+.env

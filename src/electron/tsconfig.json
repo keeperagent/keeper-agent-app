@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "lib": ["dom", "esnext"],
+    "sourceMap": true,
+    "strict": true,
+    "outDir": "../../dist",
+    "rootDir": "..",
+    "noEmitOnError": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "skipLibCheck": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "types": []
+  },
+  "include": ["./"]
+}
