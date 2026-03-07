@@ -12,9 +12,14 @@ import { logEveryWhere } from "./util";
  *
  * Commands:
  *   /connect  — Link the bot to a chat by saving the chat ID.
- *   /campaign — List all campaigns.
+ *   /campaign — List all campaigns (paginated, 15 per page, with search).
  *   /run      — Start the guided workflow-run flow (see steps below).
  *   /stop     — Stop the currently running workflow.
+ *
+ * Campaign list & search:
+ *   - Both /campaign and /run show paginated results (15 per page).
+ *   - "Search campaign" button prompts the user to type a campaign name.
+ *   - Prev/Next buttons navigate between pages.
  *
  * Run-workflow flow (4 steps):
  *
@@ -64,6 +69,7 @@ type ITelegramRunSession = {
 const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const AWAITING_ENCRYPT_KEY = "__encrypt_key__";
 const AWAITING_BATCH_VARIABLES = "__batch_variables__";
+const CAMPAIGN_PAGE_SIZE = 15;
 
 // Store last run config per workflow+campaign for re-run
 type ILastRunConfig = {
@@ -71,10 +77,16 @@ type ILastRunConfig = {
   encryptKey?: string;
 };
 
+type ICampaignSearchContext = {
+  searchText?: string;
+  forAction: "run" | "list";
+};
+
 class TelegramBotService {
   private mapTelegramBot: Map<string, Telegraf>;
   private runSessionMap = new Map<number, ITelegramRunSession>();
   private lastRunConfigMap = new Map<string, ILastRunConfig>();
+  private campaignSearchMap = new Map<number, ICampaignSearchContext>();
   private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -507,28 +519,123 @@ class TelegramBotService {
     ]);
   };
 
-  private runCampaign = async (ctx: any) => {
-    await ctx.deleteMessage();
+  private showCampaignList = async (
+    ctx: any,
+    page: number,
+    forAction: "run" | "list",
+    searchText?: string,
+  ) => {
     try {
-      const [res] = await campaignDB.getListCampaign(1, 15);
-      if (res) {
+      const [res] = await campaignDB.getListCampaign(
+        page,
+        CAMPAIGN_PAGE_SIZE,
+        searchText,
+      );
+
+      if (!res || res.data.length === 0) {
+        const noResultMsg = searchText
+          ? `No campaigns found for "${searchText}"`
+          : "No campaign found";
+        this.replyMessage(ctx, noResultMsg, [
+          [
+            {
+              text: "🔍 Search again",
+              callback_data: `${TELEGRAM_BOT.ACTION_SEARCH_CAMPAIGN}${forAction}`,
+            },
+            {
+              text: "📋 Show all",
+              callback_data: `campaign_page_${forAction}_1_`,
+            },
+          ],
+        ]);
+        return;
+      }
+
+      if (forAction === "run") {
         const buttons = res.data.map((item) => ({
           text: item?.name || "",
           callback_data:
             TELEGRAM_BOT.ACTION_RUN_A_CAMPAIGN + (item?.id?.toString() || ""),
         }));
-        this.replyMessage(
-          ctx,
-          "Select a campaign to run",
-          this.toSingleLineButtons(buttons),
+        const markup = this.toSingleLineButtons(buttons);
+
+        const navRow: IMarkUpInline[] = [];
+        if (page > 1) {
+          navRow.push({
+            text: "⬅️ Prev",
+            callback_data: `campaign_page_run_${page - 1}_${searchText || ""}`,
+          });
+        }
+        if (page < res.totalPage) {
+          navRow.push({
+            text: "Next ➡️",
+            callback_data: `campaign_page_run_${page + 1}_${searchText || ""}`,
+          });
+        }
+
+        const searchRow: IMarkUpInline[] = [
+          {
+            text: "🔍 Search campaign",
+            callback_data: `${TELEGRAM_BOT.ACTION_SEARCH_CAMPAIGN}run`,
+          },
+        ];
+
+        if (navRow.length > 0) markup.push(navRow);
+        markup.push(searchRow);
+
+        const title = searchText
+          ? `Search results for "${searchText}" (${res.totalData} found, page ${page}/${res.totalPage})`
+          : `Select a campaign to run (page ${page}/${res.totalPage})`;
+        this.replyMessage(ctx, title, markup);
+      } else {
+        const names = res.data.map(
+          (item, i) =>
+            `${(page - 1) * CAMPAIGN_PAGE_SIZE + i + 1}. <b>${item.name}</b>`,
         );
+
+        const navRow: IMarkUpInline[] = [];
+        if (page > 1) {
+          navRow.push({
+            text: "⬅️ Prev",
+            callback_data: `campaign_page_list_${page - 1}_${searchText || ""}`,
+          });
+        }
+        if (page < res.totalPage) {
+          navRow.push({
+            text: "Next ➡️",
+            callback_data: `campaign_page_list_${page + 1}_${searchText || ""}`,
+          });
+        }
+
+        const markup: IMarkUpInline[][] = [];
+        if (navRow.length > 0) markup.push(navRow);
+        markup.push([
+          {
+            text: "🔍 Search campaign",
+            callback_data: `${TELEGRAM_BOT.ACTION_SEARCH_CAMPAIGN}list`,
+          },
+          {
+            text: "Run a campaign 🚀",
+            callback_data: TELEGRAM_BOT.ACTION_RUN_CAMPAIGN,
+          },
+        ]);
+
+        const title = searchText
+          ? `Search results for "${searchText}" (${res.totalData} found, page ${page}/${res.totalPage})`
+          : `<i>List of campaign (page ${page}/${res.totalPage}):</i>`;
+        this.replyHTML(ctx, `${title}\n${names.join("\n")}`, markup);
       }
     } catch (error: any) {
       this.replyMessage(
         ctx,
-        `An error occurred while running the campaign: ${error?.message}`,
+        `An error occurred while getting campaigns: ${error?.message}`,
       );
     }
+  };
+
+  private runCampaign = async (ctx: any) => {
+    await ctx.deleteMessage();
+    await this.showCampaignList(ctx, 1, "run");
   };
 
   private runACampaign = async (ctx: any) => {
@@ -619,34 +726,7 @@ class TelegramBotService {
       telegramBot.command(
         TELEGRAM_BOT.COMMAND_GET_ALL_CAMPAIGN,
         async (ctx) => {
-          try {
-            const [res] = await campaignDB.getListCampaign(1, 15);
-            const campaigns = res?.data || [];
-            if (campaigns.length === 0) {
-              this.replyMessage(ctx, "No campaign found");
-              return;
-            }
-            const names = campaigns.map(
-              (item, i) => `${i + 1}. <b>${item.name}</b>`,
-            );
-            this.replyHTML(
-              ctx,
-              `<i>List of campaign: </i>\n${names.join("\n")}`,
-              [
-                [
-                  {
-                    text: "Run a campaign 🚀",
-                    callback_data: TELEGRAM_BOT.ACTION_RUN_CAMPAIGN,
-                  },
-                ],
-              ],
-            );
-          } catch (error) {
-            this.replyMessage(
-              ctx,
-              `An error occurred while getting campaigns: ${error}`,
-            );
-          }
+          await this.showCampaignList(ctx, 1, "list");
         },
       );
 
@@ -659,6 +739,29 @@ class TelegramBotService {
       telegramBot.action(
         this.getRegexAction(TELEGRAM_BOT.ACTION_RUN_A_CAMPAIGN),
         (ctx) => this.runACampaign(ctx),
+      );
+
+      // Search campaign: prompt user for search text
+      telegramBot.action(/^search_campaign_(run|list)$/, async (ctx) => {
+        await ctx.deleteMessage();
+        const forAction = ctx.match[1] as "run" | "list";
+        const chatId = ctx.chat?.id;
+        if (!chatId) return;
+
+        this.campaignSearchMap.set(chatId, { forAction });
+        ctx.reply("Enter campaign name to search:");
+      });
+
+      // Campaign pagination
+      telegramBot.action(
+        /^campaign_page_(run|list)_(\d+)_(.*)$/,
+        async (ctx) => {
+          await ctx.deleteMessage();
+          const forAction = ctx.match[1] as "run" | "list";
+          const page = Number(ctx.match[2]);
+          const searchText = ctx.match[3] || undefined;
+          await this.showCampaignList(ctx, page, forAction, searchText);
+        },
       );
 
       // Step 1: After selecting a workflow, check for variables
@@ -986,10 +1089,28 @@ class TelegramBotService {
         await this.showEncryptKeyOptions(ctx, workflowId, campaignId);
       });
 
-      // Text input handler for variable values and encrypt key
+      // Text input handler for variable values, encrypt key, and campaign search
       telegramBot.on("text", async (ctx) => {
         const chatId = ctx.chat?.id;
         if (!chatId) {
+          return;
+        }
+
+        const inputText = ctx.message.text;
+
+        // Handle campaign search input
+        const searchContext = this.campaignSearchMap.get(chatId);
+        if (searchContext) {
+          this.campaignSearchMap.delete(chatId);
+          try {
+            await ctx.deleteMessage();
+          } catch {}
+          await this.showCampaignList(
+            ctx,
+            1,
+            searchContext.forAction,
+            inputText,
+          );
           return;
         }
 
@@ -997,8 +1118,6 @@ class TelegramBotService {
         if (!session?.awaitingInput) {
           return;
         }
-
-        const inputText = ctx.message.text;
         try {
           await ctx.deleteMessage();
         } catch {}
