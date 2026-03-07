@@ -15,11 +15,13 @@ import ChatAgent from "./ChatAgent";
 
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
+const ToolsManager = lazy(() => import("./ToolsManager"));
 
 const TAB = {
   AGENT: "AGENT",
   MCP_SERVER: "MCP_SERVER",
   SKILLS: "SKILLS",
+  TOOLS: "TOOLS",
 };
 
 const PROVIDERS: {
@@ -123,6 +125,10 @@ const AgentPage = (props: any) => {
             {
               key: TAB.SKILLS,
               label: translate("agent.tabAgentSkill"),
+            },
+            {
+              key: TAB.TOOLS,
+              label: translate("agent.tabTools"),
             },
           ]}
           activeKey={activeTab}
@@ -241,6 +247,24 @@ const AgentPage = (props: any) => {
               }
             >
               <SkillsManager />
+            </Suspense>
+          )}
+
+          {activeTab === TAB.TOOLS && (
+            <Suspense
+              fallback={
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    padding: "2rem",
+                  }}
+                >
+                  <Spin />
+                </div>
+              }
+            >
+              <ToolsManager />
             </Suspense>
           )}
         </>

@@ -2103,6 +2103,7 @@ export type IPreference = {
   googleGeminiModel?: string;
   jupiterApiKeys?: string[];
   masterPasswordVerifier?: string;
+  disabledTools?: string[];
 };
 
 // Statistic

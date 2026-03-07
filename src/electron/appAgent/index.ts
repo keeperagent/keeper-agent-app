@@ -43,6 +43,7 @@ import {
   getAnthropicModel,
   getGoogleGeminiModel,
 } from "./utils";
+import { preferenceDB } from "@/electron/database/preference";
 import { LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { ToolContext } from "./toolContext";
@@ -159,73 +160,92 @@ const createTaskSkillRedirectMiddleware = (allowedSubagentNames: string[]) => {
   });
 };
 
-const buildBaseSubAgents = (toolContext: ToolContext): SubAgent[] => [
-  {
-    name: "app_management_agent",
-    description:
-      "Manages Campaign, Profile, Wallet, and Node Provider of this application",
-    systemPrompt:
-      "You are a subagent responsible for managing application resources including Campaigns, Profiles, Wallets, and Node Providers. Use the available tools to complete the user's task. Return results directly.",
-    tools: [
-      createWalletGroupTool(),
-      generateWalletsForGroupTool(),
+const buildBaseSubAgents = (
+  toolContext: ToolContext,
+  disabledTools: Set<string>,
+): SubAgent[] => {
+  const isEnabled = (key: string) => !disabledTools.has(key);
+
+  const appManagementTools = [
+    isEnabled("create_wallet_group") && createWalletGroupTool(),
+    isEnabled("generate_wallets_for_group") && generateWalletsForGroupTool(),
+    isEnabled("create_profile_group_with_profiles") &&
       createProfileGroupWithProfilesTool(),
+    isEnabled("create_campaign_for_profile_group") &&
       createCampaignForProfileGroupTool(),
-      createNodeProviderGroupTool(),
-    ] as any,
-  },
-  {
-    name: "transaction_agent",
-    description:
-      "Handles on-chain operations: checking balances, token prices, swaps, transfers, and token launches on Solana and EVM chains",
-    systemPrompt:
-      "You are a subagent for on-chain operations (balances, prices, swaps, transfers, token launch on Pump.fun and Bonk.fun). Follow these rules exactly.\n\n" +
-      "## Swap/Transfer procedure\n" +
-      "1. Show confirmation table and STOP. Wait for user approval.\n" +
-      "2. After user confirms, IMMEDIATELY call the swap/transfer tool. Do NOT output text — just call the tool.\n\n" +
-      "## Confirmation table:\n" +
-      "| Field | Value |\n|-------|-------|\n| Action | BUY or SELL |\n| Token | [mint address] |\n| Amount | [amount in native token, e.g. 0.00235 SOL] |\n| Wallets | [count] |\n| Strategy | [strategy name] |\n" +
-      "No extra fields. No wallet balance. No token price. No estimated tokens. No bold text. No bullet points.\n\n" +
-      "## FORBIDDEN\n" +
-      "- Do NOT call get_token_price on the output/target token when buying.\n" +
-      "- Do NOT estimate tokens the user will receive.\n" +
-      "- Do NOT comment on token liquidity, price, or whether it is newly launched.\n" +
-      "- Do NOT check wallet balance before swaps.\n\n" +
-      "## Displaying results\n" +
-      "When the tool returns a 'results' array (wallets <= 5), display a markdown table:\n" +
-      "| Wallet | Amount | Tx Hash |\n|--------|--------|---------|\n| [address] | [amount] | [hash or error] |\n\n" +
-      "## General\n" +
-      "- Keep responses short. Use markdown tables for structured information.\n" +
-      "## On tool failure\n" +
-      "Try ONE alternative, then report the error.",
-    tools: [
-      getEvmTokenBalanceTool(toolContext),
+    isEnabled("create_node_provider_group") && createNodeProviderGroupTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  const transactionTools = [
+    isEnabled("get_evm_token_balance") && getEvmTokenBalanceTool(toolContext),
+    isEnabled("get_solana_token_balance") &&
       getSolanaTokenBalanceTool(toolContext),
-      getTokenPriceTool(),
-      launchBonkfunTokenTool(toolContext),
-      launchPumpfunTokenTool(toolContext),
-      swapOnJupiterTool(toolContext),
-      swapOnKyberswapTool(toolContext),
-      transferSolanaTokenTool(toolContext),
-    ] as any,
-  },
-  {
-    name: "code_execution_agent",
-    description:
-      "Executes JavaScript or Python code to fetch data from external APIs, process data, or run any custom logic. Use this for tasks that require code execution, API calls, or data processing.",
-    systemPrompt:
-      "You are a subagent that executes code. Use execute_javascript for JS code or execute_python for Python code. " +
-      "Pass the ENTIRE code as a single STRING to the tool input. Do NOT use write_file — you don't have it. " +
-      "For JS: use console.log() to output results. For Python: use print() to output results. Only stdout is returned. " +
-      "When generating files, ALWAYS use relative paths (e.g. 'output.pdf', NOT '/output.pdf'). The working directory is already writable. Print the filename when done. " +
-      "You MUST await all async calls. npm/pip packages are auto-installed on first use. " +
-      "When making HTTP requests, always set a User-Agent header (e.g. 'Mozilla/5.0') to avoid being blocked by APIs. " +
-      "If a request fails, try fixing the code (add headers, change endpoint, etc.) before giving up. " +
-      "Do NOT retry with the exact same code. Do NOT say you cannot do something — you have full Node.js/Python capabilities. " +
-      "Report the result back.",
-    tools: [executeJavaScriptTool(), executePythonTool()] as any,
-  },
-];
+    isEnabled("get_token_price") && getTokenPriceTool(),
+    isEnabled("launch_bonkfun_token") && launchBonkfunTokenTool(toolContext),
+    isEnabled("launch_pumpfun_token") && launchPumpfunTokenTool(toolContext),
+    isEnabled("swap_on_jupiter") && swapOnJupiterTool(toolContext),
+    isEnabled("swap_on_kyberswap") && swapOnKyberswapTool(toolContext),
+    isEnabled("transfer_solana_token") && transferSolanaTokenTool(toolContext),
+  ].filter((tool): any => Boolean(tool));
+
+  const codeExecutionTools = [
+    isEnabled("execute_javascript") && executeJavaScriptTool(),
+    isEnabled("execute_python") && executePythonTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  return [
+    {
+      name: "app_management_agent",
+      description:
+        "Manages Campaign, Profile, Wallet, and Node Provider of this application",
+      systemPrompt:
+        "You are a subagent responsible for managing application resources including Campaigns, Profiles, Wallets, and Node Providers. Use the available tools to complete the user's task. Return results directly.",
+      tools: appManagementTools as any,
+    },
+    {
+      name: "transaction_agent",
+      description:
+        "Handles on-chain operations: checking balances, token prices, swaps, transfers, and token launches on Solana and EVM chains",
+      systemPrompt:
+        "You are a subagent for on-chain operations (balances, prices, swaps, transfers, token launch on Pump.fun and Bonk.fun). Follow these rules exactly.\n\n" +
+        "## Swap/Transfer procedure\n" +
+        "1. Show confirmation table and STOP. Wait for user approval.\n" +
+        "2. After user confirms, IMMEDIATELY call the swap/transfer tool. Do NOT output text — just call the tool.\n\n" +
+        "## Confirmation table:\n" +
+        "| Field | Value |\n|-------|-------|\n| Action | BUY or SELL |\n| Token | [mint address] |\n| Amount | [amount in native token, e.g. 0.00235 SOL] |\n| Wallets | [count] |\n| Strategy | [strategy name] |\n" +
+        "No extra fields. No wallet balance. No token price. No estimated tokens. No bold text. No bullet points.\n\n" +
+        "## FORBIDDEN\n" +
+        "- Do NOT call get_token_price on the output/target token when buying.\n" +
+        "- Do NOT estimate tokens the user will receive.\n" +
+        "- Do NOT comment on token liquidity, price, or whether it is newly launched.\n" +
+        "- Do NOT check wallet balance before swaps.\n\n" +
+        "## Displaying results\n" +
+        "When the tool returns a 'results' array (wallets <= 5), display a markdown table:\n" +
+        "| Wallet | Amount | Tx Hash |\n|--------|--------|---------|\n| [address] | [amount] | [hash or error] |\n\n" +
+        "## General\n" +
+        "- Keep responses short. Use markdown tables for structured information.\n" +
+        "## On tool failure\n" +
+        "Try ONE alternative, then report the error.",
+      tools: transactionTools as any,
+    },
+    {
+      name: "code_execution_agent",
+      description:
+        "Executes JavaScript or Python code to fetch data from external APIs, process data, or run any custom logic. Use this for tasks that require code execution, API calls, or data processing.",
+      systemPrompt:
+        "You are a subagent that executes code. Use execute_javascript for JS code or execute_python for Python code. " +
+        "Pass the ENTIRE code as a single STRING to the tool input. Do NOT use write_file — you don't have it. " +
+        "For JS: use console.log() to output results. For Python: use print() to output results. Only stdout is returned. " +
+        "When generating files, ALWAYS use relative paths (e.g. 'output.pdf', NOT '/output.pdf'). The working directory is already writable. Print the filename when done. " +
+        "You MUST await all async calls. npm/pip packages are auto-installed on first use. " +
+        "When making HTTP requests, always set a User-Agent header (e.g. 'Mozilla/5.0') to avoid being blocked by APIs. " +
+        "If a request fails, try fixing the code (add headers, change endpoint, etc.) before giving up. " +
+        "Do NOT retry with the exact same code. Do NOT say you cannot do something — you have full Node.js/Python capabilities. " +
+        "Report the result back.",
+      tools: codeExecutionTools as any,
+    },
+  ];
+};
 
 type CreateAgentOptions = {
   temperature?: number;
@@ -310,7 +330,10 @@ const createKeeperAgent = async (
   // The caller (controller) is responsible for updating it before each run.
   const toolContext = options?.toolContext || new ToolContext();
 
-  const baseSubAgents = buildBaseSubAgents(toolContext);
+  const [preference] = await preferenceDB.getOnePreference();
+  const disabledTools = new Set<string>(preference?.disabledTools || []);
+
+  const baseSubAgents = buildBaseSubAgents(toolContext, disabledTools);
   const { subAgents: mcpSubAgentInfos, closeClients } =
     await mcpToolLoader.loadMcpSubAgents();
 

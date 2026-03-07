@@ -28,7 +28,10 @@ const useUpdatePreference = () => {
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const updatePreference = async (data: IPreference) => {
+  const updatePreference = async (
+    data: IPreference,
+    isUpdateAgentTool?: boolean,
+  ) => {
     setLoading(true);
     setIsSuccess(false);
 
@@ -36,6 +39,7 @@ const useUpdatePreference = () => {
     window?.electron?.send(MESSAGE.UPDATE_PREFERENCE, {
       data,
       requestId: uniqueID,
+      isUpdateAgentTool,
     });
 
     await new Promise(async (resolve) => {

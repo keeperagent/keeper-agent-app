@@ -216,6 +216,10 @@ const formatPreference = (data: any): IPreference => {
     googleGeminiApiKey: data?.googleGeminiApiKey
       ? encryptionService.decryptData(data?.googleGeminiApiKey)
       : "",
+    disabledTools:
+      typeof data?.disabledTools === "string"
+        ? JSON.parse(data?.disabledTools || "[]")
+        : data?.disabledTools,
   };
 };
 
