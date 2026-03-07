@@ -243,8 +243,8 @@ export class Workflow {
         isRunWithCampaign: Boolean(campaignId),
       });
 
-      // Report completion via Telegram (only if monitoring is active)
-      if (campaignId && telegramBotService.isMonitoring()) {
+      // Report completion via Telegram (only if this campaign is being monitored)
+      if (campaignId && telegramBotService.isMonitoring(campaignId)) {
         telegramBotService.reportWorkflowCompleted(
           campaignId,
           this.workflow?.name || "Unknown",

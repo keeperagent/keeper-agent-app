@@ -77,6 +77,14 @@ const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const AWAITING_ENCRYPT_KEY = "__encrypt_key__";
 const AWAITING_BATCH_VARIABLES = "__batch_variables__";
 const CAMPAIGN_PAGE_SIZE = 15;
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 const STATUS_REPORT_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 // Store last run config per workflow+campaign for re-run
@@ -273,8 +281,8 @@ class TelegramBotService {
 
         const message =
           `📊 <b>Status Update</b>\n\n` +
-          `<b>Campaign:</b> ${this.monitoringCampaignName}\n` +
-          `<b>Workflow:</b> ${this.monitoringWorkflowName}\n` +
+          `<b>Campaign:</b> ${escapeHtml(this.monitoringCampaignName || "")}\n` +
+          `<b>Workflow:</b> ${escapeHtml(this.monitoringWorkflowName || "")}\n` +
           `<b>Progress:</b> ${completed}/${totalProfile} profiles (${progress}%)`;
 
         const [preference] = await preferenceDB.getOnePreference();
@@ -291,7 +299,10 @@ class TelegramBotService {
     }, STATUS_REPORT_INTERVAL_MS);
   };
 
-  isMonitoring = () => {
+  isMonitoring = (campaignId?: number) => {
+    if (campaignId !== undefined) {
+      return this.statusMonitorId !== null && this.monitoringCampaignId === campaignId;
+    }
     return this.statusMonitorId !== null;
   };
 
@@ -318,8 +329,8 @@ class TelegramBotService {
 
       const message =
         `✅ <b>Workflow Completed</b>\n\n` +
-        `<b>Campaign:</b> ${campaignName}\n` +
-        `<b>Workflow:</b> ${workflowName}\n` +
+        `<b>Campaign:</b> ${escapeHtml(campaignName)}\n` +
+        `<b>Workflow:</b> ${escapeHtml(workflowName)}\n` +
         `<b>Total profiles:</b> ${err ? "N/A" : totalProfile}`;
 
       const [preference] = await preferenceDB.getOnePreference();
@@ -583,8 +594,8 @@ class TelegramBotService {
     const { workflow } = await this.getWorkflowVariables(workflowId);
     const [campaignFound] = await campaignDB.getOneCampaign(Number(campaignId));
 
-    const campaignName = campaignFound?.name || "Unknown";
-    const workflowName = workflow?.name || "Unknown";
+    const campaignName = escapeHtml(campaignFound?.name || "Unknown");
+    const workflowName = escapeHtml(workflow?.name || "Unknown");
 
     let msg = `<b>📋 Confirm Run</b>\n\n`;
     msg += `<b>Campaign:</b> ${campaignName}\n`;
@@ -595,7 +606,7 @@ class TelegramBotService {
     if (varEntries.length > 0) {
       msg += `\n<b>Variables:</b>\n`;
       varEntries.forEach(([name, val]) => {
-        msg += `  • <b>${name}</b> = ${val}\n`;
+        msg += `  • <b>${escapeHtml(name)}</b> = ${escapeHtml(val)}\n`;
       });
     }
 
@@ -692,7 +703,7 @@ class TelegramBotService {
       } else {
         const names = res.data.map(
           (item, i) =>
-            `${(page - 1) * CAMPAIGN_PAGE_SIZE + i + 1}. <b>${item.name}</b>`,
+            `${(page - 1) * CAMPAIGN_PAGE_SIZE + i + 1}. <b>${escapeHtml(item.name || "")}</b>`,
         );
 
         const navRow: IMarkUpInline[] = [];
@@ -723,7 +734,7 @@ class TelegramBotService {
         ]);
 
         const title = searchText
-          ? `Search results for "${searchText}" (${res.totalData} found, page ${page}/${res.totalPage})`
+          ? `Search results for "${escapeHtml(searchText)}" (${res.totalData} found, page ${page}/${res.totalPage})`
           : `<i>List of campaign (page ${page}/${res.totalPage}):</i>`;
         this.replyHTML(ctx, `${title}\n${names.join("\n")}`, markup);
       }
@@ -1120,7 +1131,7 @@ class TelegramBotService {
 
         this.replyHTML(
           ctx,
-          `Workflow "<b>${workflow?.name}</b>" from campaign "<b>${campaignFound?.name}</b>" started successfully ⚡️`,
+          `Workflow "<b>${escapeHtml(workflow?.name || "")}</b>" from campaign "<b>${escapeHtml(campaignFound?.name || "")}</b>" started successfully ⚡️`,
         );
 
         mainWindow?.webContents.send(
