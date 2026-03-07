@@ -201,16 +201,21 @@ const buildBaseSubAgents = (
     isEnabled(BASE_TOOL_KEYS.EXECUTE_PYTHON) && executePythonTool(),
   ].filter((tool): any => Boolean(tool));
 
-  return [
-    {
+  const agents = [];
+
+  if (appManagementTools.length > 0) {
+    agents.push({
       name: "app_management_agent",
       description:
         "Manages Campaign, Profile, Wallet, and Node Provider of this application",
       systemPrompt:
         "You are a subagent responsible for managing application resources including Campaigns, Profiles, Wallets, and Node Providers. Use the available tools to complete the user's task. Return results directly.",
       tools: appManagementTools as any,
-    },
-    {
+    });
+  }
+
+  if (transactionTools.length > 0) {
+    agents.push({
       name: "transaction_agent",
       description:
         "Handles on-chain operations: checking balances, token prices, swaps, transfers, and token launches on Solana and EVM chains",
@@ -235,8 +240,11 @@ const buildBaseSubAgents = (
         "## On tool failure\n" +
         "Try ONE alternative, then report the error.",
       tools: transactionTools as any,
-    },
-    {
+    });
+  }
+
+  if (codeExecutionTools.length > 0) {
+    agents.push({
       name: "code_execution_agent",
       description:
         "Executes JavaScript or Python code to fetch data from external APIs, process data, or run any custom logic. Use this for tasks that require code execution, API calls, or data processing.",
@@ -251,8 +259,10 @@ const buildBaseSubAgents = (
         "Do NOT retry with the exact same code. Do NOT say you cannot do something — you have full Node.js/Python capabilities. " +
         "Report the result back.",
       tools: codeExecutionTools as any,
-    },
-  ];
+    });
+  }
+
+  return agents;
 };
 
 type CreateAgentOptions = {
