@@ -1,6 +1,7 @@
 import { Telegraf } from "telegraf";
 import { preferenceDB } from "@/electron/database/preference";
 import { campaignDB } from "@/electron/database/campaign";
+import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { workflowDB } from "@/electron/database/workflow";
 import { mainWindow } from "@/electron/main";
 import { TELEGRAM_BOT } from "@/electron/constant";
@@ -43,6 +44,12 @@ import { logEveryWhere } from "./util";
  *     "Run now" sends the config to the renderer via IPC and saves
  *     it for future re-runs. "Cancel" aborts the flow.
  *
+ * Status reporting:
+ *   - After a workflow starts via Telegram, a periodic status report is sent
+ *     every 15 seconds showing progress (completed/total profiles).
+ *   - When the workflow completes, a final completion message is sent.
+ *   - Status monitoring stops on workflow completion or /stop command.
+ *
  * Session management:
  *   - Each chat gets one ITelegramRunSession stored in runSessionMap.
  *   - Sessions expire after 10 minutes (SESSION_TTL_MS).
@@ -70,6 +77,7 @@ const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const AWAITING_ENCRYPT_KEY = "__encrypt_key__";
 const AWAITING_BATCH_VARIABLES = "__batch_variables__";
 const CAMPAIGN_PAGE_SIZE = 15;
+const STATUS_REPORT_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 // Store last run config per workflow+campaign for re-run
 type ILastRunConfig = {
@@ -88,6 +96,10 @@ class TelegramBotService {
   private lastRunConfigMap = new Map<string, ILastRunConfig>();
   private campaignSearchMap = new Map<number, ICampaignSearchContext>();
   private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+  private statusMonitorId: ReturnType<typeof setInterval> | null = null;
+  private monitoringCampaignId: number | null = null;
+  private monitoringWorkflowName: string | null = null;
+  private monitoringCampaignName: string | null = null;
 
   constructor() {
     this.mapTelegramBot = new Map();
@@ -230,6 +242,96 @@ class TelegramBotService {
       if (now - session.createdAt > SESSION_TTL_MS) {
         this.runSessionMap.delete(chatId);
       }
+    }
+  };
+
+  startStatusMonitor = (
+    campaignId: number,
+    workflowName: string,
+    campaignName: string,
+  ) => {
+    this.stopStatusMonitor();
+    this.monitoringCampaignId = campaignId;
+    this.monitoringWorkflowName = workflowName;
+    this.monitoringCampaignName = campaignName;
+
+    this.statusMonitorId = setInterval(async () => {
+      if (!this.monitoringCampaignId) {
+        return;
+      }
+
+      try {
+        const [totalProfile, totalUnFinished, err] =
+          await campaignProfileDB.getCampaignProfileStatus(
+            this.monitoringCampaignId,
+          );
+        if (err) return;
+
+        const completed = totalProfile - totalUnFinished;
+        const progress =
+          totalProfile > 0 ? Math.round((completed / totalProfile) * 100) : 0;
+
+        const message =
+          `📊 <b>Status Update</b>\n\n` +
+          `<b>Campaign:</b> ${this.monitoringCampaignName}\n` +
+          `<b>Workflow:</b> ${this.monitoringWorkflowName}\n` +
+          `<b>Progress:</b> ${completed}/${totalProfile} profiles (${progress}%)`;
+
+        const [preference] = await preferenceDB.getOnePreference();
+        await this.sendMessage(
+          preference?.botTokenTelegram || "",
+          message,
+          preference?.chatIdTelegram?.toString() || "",
+        );
+      } catch (error) {
+        logEveryWhere({
+          message: `Status monitor error: ${error}`,
+        });
+      }
+    }, STATUS_REPORT_INTERVAL_MS);
+  };
+
+  isMonitoring = () => {
+    return this.statusMonitorId !== null;
+  };
+
+  stopStatusMonitor = () => {
+    if (this.statusMonitorId) {
+      clearInterval(this.statusMonitorId);
+      this.statusMonitorId = null;
+    }
+    this.monitoringCampaignId = null;
+    this.monitoringWorkflowName = null;
+    this.monitoringCampaignName = null;
+  };
+
+  reportWorkflowCompleted = async (
+    campaignId: number,
+    workflowName: string,
+    campaignName: string,
+  ) => {
+    this.stopStatusMonitor();
+
+    try {
+      const [totalProfile, , err] =
+        await campaignProfileDB.getCampaignProfileStatus(campaignId);
+
+      const message =
+        `✅ <b>Workflow Completed</b>\n\n` +
+        `<b>Campaign:</b> ${campaignName}\n` +
+        `<b>Workflow:</b> ${workflowName}\n` +
+        `<b>Total profiles:</b> ${err ? "N/A" : totalProfile}`;
+
+      const [preference] = await preferenceDB.getOnePreference();
+      await this.sendMessage(
+        preference?.botTokenTelegram || "",
+        message,
+        preference?.chatIdTelegram?.toString() || "",
+      );
+    } catch (error) {
+      logEveryWhere({
+        message: `Report workflow completed error: ${error}`,
+      });
     }
   };
 
@@ -1031,6 +1133,13 @@ class TelegramBotService {
           },
         );
 
+        // Start periodic status reporting
+        this.startStatusMonitor(
+          Number(campaignId),
+          workflow?.name || "Unknown",
+          campaignFound?.name || "Unknown",
+        );
+
         // Save last run config for re-run
         this.lastRunConfigMap.set(this.getLastRunKey(workflowId, campaignId), {
           variables: { ...variables },
@@ -1176,6 +1285,7 @@ class TelegramBotService {
 
       // Stop command
       telegramBot.command(TELEGRAM_BOT.COMMAND_STOP_CAMPAIGN, async (ctx) => {
+        this.stopStatusMonitor();
         mainWindow?.webContents.send(
           TELEGRAM_BOT.ACTION_STOP_CAMPAIGN_USING_TELEGRAM,
         );
