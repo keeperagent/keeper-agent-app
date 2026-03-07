@@ -13,7 +13,7 @@ import { Wrapper } from "./style";
 import { TAB_NAME_EN, TAB } from "../util";
 import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 import { FormLabelWrapper } from "../style";
 
 type Props = {

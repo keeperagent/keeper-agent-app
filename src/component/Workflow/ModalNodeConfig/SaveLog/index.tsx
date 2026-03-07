@@ -12,7 +12,7 @@ import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
 import { Wrapper } from "./style";
 import { TAB_NAME_EN, TAB } from "../util";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 
 const { TextArea } = Input;
 

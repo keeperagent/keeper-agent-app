@@ -3,7 +3,7 @@ import { IKeyValue } from "@/electron/type";
 import { MinusCircleIcon } from "@/component/Icon";
 import { useTranslation } from "@/hook";
 import { ItemWrapper } from "./style";
-import WorkflowVariable from "../../WorkflowVariable";
+import WorkflowVariable from "../../../WorkflowVariable";
 
 type IProps = {
   keyValue: IKeyValue;

@@ -93,7 +93,7 @@ const WorkflowVariable = (props: IProps) => {
   const SCRIPT_NAME = SCRIPT_NAME_EN;
 
   const renderListVariable = useCallback(() => {
-    const mapVariable: { [key: string]: IWorkflowVariable; } = {};
+    const mapVariable: { [key: string]: IWorkflowVariable } = {};
 
     if (selectedCampaign) {
       const listVariableOfCampaign = getVariableFromCampaign(
@@ -142,8 +142,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ISetAttributeNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.SET_ATTRIBUTE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.SET_ATTRIBUTE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -156,8 +157,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ICrawlTextNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.CRAWL_TEXT]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.CRAWL_TEXT]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -170,8 +172,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IGetRandomValueNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.GET_RANDOM_VALUE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.GET_RANDOM_VALUE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -184,8 +187,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ICheckElementExistNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.CHECK_ELEMENT_EXIST]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.CHECK_ELEMENT_EXIST]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -198,8 +202,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IGetGasPriceNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.GET_GAS_PRICE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.GET_GAS_PRICE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -212,8 +217,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IGetWalletBalanceNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.GET_WALLET_BALANCE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.GET_WALLET_BALANCE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -226,8 +232,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ICalculateNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.CALCULATE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.CALCULATE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -240,8 +247,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ITransferTokenNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.TRANSFER_TOKEN]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.TRANSFER_TOKEN]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -254,8 +262,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IApproveRevokeEVMNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EVM_APPROVE_REVOKE_TOKEN]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.EVM_APPROVE_REVOKE_TOKEN]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -268,8 +277,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ISwapUniswapNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.SWAP_UNISWAP]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.SWAP_UNISWAP]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -282,8 +292,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ISwapUniswapNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.SWAP_UNISWAP]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.SWAP_UNISWAP]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -296,8 +307,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ISwapCetusNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.SWAP_UNISWAP]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.SWAP_UNISWAP]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -319,8 +331,9 @@ const WorkflowVariable = (props: IProps) => {
           listVariable?.forEach((variableName) => {
             const variable: IWorkflowVariable = {
               variable: variableName,
-              label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EVM_SNIPE_CONTRACT]
-                } Processor`,
+              label: `${translate("from")} ${
+                SCRIPT_NAME[WORKFLOW_TYPE.EVM_SNIPE_CONTRACT]
+              } Processor`,
             };
 
             if (variable?.variable) {
@@ -335,8 +348,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IEVMWriteContractNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EVM_WRITE_TO_CONTRACT]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.EVM_WRITE_TO_CONTRACT]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -351,8 +365,9 @@ const WorkflowVariable = (props: IProps) => {
           listVariable?.forEach((variableName) => {
             const variable: IWorkflowVariable = {
               variable: variableName,
-              label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EVM_READ_FROM_CONTRACT]
-                } Processor`,
+              label: `${translate("from")} ${
+                SCRIPT_NAME[WORKFLOW_TYPE.EVM_READ_FROM_CONTRACT]
+              } Processor`,
             };
 
             if (variable?.variable) {
@@ -367,8 +382,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IExecuteTransactionNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EXECUTE_TRANSACTION]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.EXECUTE_TRANSACTION]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -382,8 +398,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IConvertTokenAmountNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.CONVERT_TOKEN_AMOUNT]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.CONVERT_TOKEN_AMOUNT]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -396,8 +413,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IGetTokenPriceNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.GET_TOKEN_PRICE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.GET_TOKEN_PRICE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -410,8 +428,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IExecuteCodeNodeConfig;
           const variable: IWorkflowVariable = {
             variable: config?.variable || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EXECUTE_CODE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.EXECUTE_CODE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -430,8 +449,9 @@ const WorkflowVariable = (props: IProps) => {
           listVariable?.forEach((variableName) => {
             const variable: IWorkflowVariable = {
               variable: variableName,
-              label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.EVM_SNIPE_CONTRACT]
-                } Processor`,
+              label: `${translate("from")} ${
+                SCRIPT_NAME[WORKFLOW_TYPE.EVM_SNIPE_CONTRACT]
+              } Processor`,
             };
 
             if (variable?.variable) {
@@ -445,8 +465,9 @@ const WorkflowVariable = (props: IProps) => {
         case WORKFLOW_TYPE.CHECK_RESOURCE: {
           const variable: IWorkflowVariable = {
             variable: IS_RESOURCE_EXIST,
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.CHECK_RESOURCE]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.CHECK_RESOURCE]
+            } Processor`,
           };
 
           if (variable?.variable) {
@@ -459,8 +480,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as IGenerateVanityAddressNodeConfig;
           const addressVariable: IWorkflowVariable = {
             variable: config?.variableToSaveAddress || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.GENERATE_VANITY_ADDRESS]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.GENERATE_VANITY_ADDRESS]
+            } Processor`,
           };
 
           if (addressVariable?.variable) {
@@ -469,8 +491,9 @@ const WorkflowVariable = (props: IProps) => {
 
           const privateKeyVariable: IWorkflowVariable = {
             variable: config?.variableToSavePrivateKey || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.GENERATE_VANITY_ADDRESS]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.GENERATE_VANITY_ADDRESS]
+            } Processor`,
           };
 
           if (privateKeyVariable?.variable) {
@@ -483,8 +506,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ILaunchTokenBonkfunNodeConfig;
           const addressVariable: IWorkflowVariable = {
             variable: config?.variableTokenAddress || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]
+            } Processor`,
           };
 
           if (addressVariable?.variable) {
@@ -493,8 +517,9 @@ const WorkflowVariable = (props: IProps) => {
 
           const txHashVariable: IWorkflowVariable = {
             variable: config?.variableTxHash || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]
+            } Processor`,
           };
 
           if (txHashVariable?.variable) {
@@ -507,8 +532,9 @@ const WorkflowVariable = (props: IProps) => {
           const config = node?.data?.config as ILaunchTokenBonkfunNodeConfig;
           const addressVariable: IWorkflowVariable = {
             variable: config?.variableTokenAddress || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]
+            } Processor`,
           };
 
           if (addressVariable?.variable) {
@@ -517,8 +543,9 @@ const WorkflowVariable = (props: IProps) => {
 
           const txHashVariable: IWorkflowVariable = {
             variable: config?.variableTxHash || "",
-            label: `${translate("from")} ${SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]
-              } Processor`,
+            label: `${translate("from")} ${
+              SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]
+            } Processor`,
           };
 
           if (txHashVariable?.variable) {
@@ -528,8 +555,6 @@ const WorkflowVariable = (props: IProps) => {
         }
       }
     });
-
-
 
     let listVariable = Object.values(mapVariable);
     listVariable = _.sortBy(

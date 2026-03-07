@@ -5,7 +5,7 @@ import { useTranslation } from "@/hook";
 import { COMPARISION_EXPRESSION } from "@/electron/constant";
 import { Wrapper } from "./style";
 import { FormLabelWrapper } from "../style";
-import WorkflowVariable from "../WorkflowVariable";
+import WorkflowVariable from "../../WorkflowVariable";
 
 const listCondition = (translate: (key: string) => string) => [
   { value: COMPARISION_EXPRESSION.LARGER, label: translate("isGreaterThan") },
