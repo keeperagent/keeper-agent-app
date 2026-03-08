@@ -30,6 +30,7 @@ const McpServerItem = (props: IMcpServerItemProps) => {
     item.status === MCPServerStatus.ERROR ? item.lastError || "" : "";
   const showErrorTooltip =
     item.status === MCPServerStatus.ERROR && fullError.length > 0;
+  const showToolCount = isConnected && Boolean(item.toolsCount);
 
   return (
     <Wrapper>
@@ -89,14 +90,14 @@ const McpServerItem = (props: IMcpServerItemProps) => {
               className="item-value item-tools-row"
               onClick={(e) => {
                 e.stopPropagation();
-                onViewTools(item);
+                showToolCount && onViewTools(item);
               }}
             >
-              {item.toolsCount != null && isConnected
+              {showToolCount
                 ? `${item.toolsCount} ${translate("tools")}`
                 : EMPTY_STRING}
 
-              {isConnected && Boolean(item.toolsCount) && (
+              {showToolCount && (
                 <div className="view-icon">
                   <EyeOpenIcon />
                 </div>
