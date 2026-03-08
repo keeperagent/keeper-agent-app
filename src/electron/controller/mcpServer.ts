@@ -1,6 +1,6 @@
 import { MESSAGE } from "@/electron/constant";
 import { mcpServerDB } from "@/electron/database/mcpServer";
-import { IMcpServer, MCPServerStatus } from "@/electron/type";
+import { IMcpServer } from "@/electron/type";
 import { mcpToolLoader } from "@/electron/appAgent/mcpTool";
 import type {
   IpcGetListMcpServerPayload,
@@ -66,7 +66,6 @@ export const mcpServerController = () => {
     async (event, payload) => {
       const data = {
         ...payload?.data,
-        status: MCPServerStatus.DISCONNECTED,
         lastError: "",
         toolsCount: 0,
       };
