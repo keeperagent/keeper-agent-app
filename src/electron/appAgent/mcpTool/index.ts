@@ -478,7 +478,7 @@ export class McpToolLoader {
       return;
     }
 
-    const tools = await this.listMcpServerTools(
+    const allTools = await this.listMcpServerTools(
       serverId,
       server.name,
       server?.config || "",
@@ -488,12 +488,17 @@ export class McpToolLoader {
       await client.close();
     } catch {}
 
+    const disabledTools = server.disabledTools || [];
+    const enabledToolsCount = allTools.filter(
+      (tool) => !disabledTools.includes(tool.name),
+    ).length;
+
     await this.updateServerStatus(
       server,
       serverId,
       MCPServerStatus.CONNECTED,
       "",
-      tools?.length || 0,
+      enabledToolsCount,
     );
 
     logEveryWhere({
