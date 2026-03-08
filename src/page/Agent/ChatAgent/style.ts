@@ -3,12 +3,12 @@ import { ITheme } from "@/style/theme";
 
 const PageWrapper = styled.div`
   width: 100%;
-  height: 87vh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 1.6rem;
-  overflow-x: hidden;
   overflow-y: auto;
 
   .main {
@@ -35,7 +35,9 @@ const PageWrapper = styled.div`
     }
 
     .right-wrapper {
+      flex: 1;
       min-width: 20rem;
+      min-height: 0;
       border-radius: var(--border-radius);
       margin-left: 0.3rem;
       display: flex;
@@ -43,6 +45,7 @@ const PageWrapper = styled.div`
 
       .agent-view-wrapper {
         flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -55,6 +58,7 @@ const PageWrapper = styled.div`
       background: ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
       color: ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
       position: relative;
+      transition: all 0.2s ease-in-out;
 
       &::before {
         content: "‹";
