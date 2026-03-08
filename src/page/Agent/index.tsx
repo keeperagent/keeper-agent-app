@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useMemo } from "react";
+import { lazy, Suspense, useState, useEffect, useMemo, Fragment } from "react";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
@@ -220,7 +220,7 @@ const AgentPage = (props: any) => {
           <Spin size="small" />
         </div>
       ) : (
-        <>
+        <Fragment>
           {activeTab === TAB.AGENT && (
             <ChatAgent setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
           )}
@@ -241,6 +241,7 @@ const AgentPage = (props: any) => {
               <McpServerManager />
             </Suspense>
           )}
+
           {activeTab === TAB.SKILLS && (
             <Suspense
               fallback={
@@ -276,7 +277,7 @@ const AgentPage = (props: any) => {
               <ToolsManager />
             </Suspense>
           )}
-        </>
+        </Fragment>
       )}
     </Wrapper>
   );

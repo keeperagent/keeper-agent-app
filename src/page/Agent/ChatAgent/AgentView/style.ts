@@ -422,7 +422,7 @@ const AgentViewWrapper = styled.div`
       }
 
       .upload-inside .icon.add-files:hover svg {
-        fill: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
+        fill: var(--color-text-hover);
       }
     }
 

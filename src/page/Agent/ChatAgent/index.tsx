@@ -12,7 +12,14 @@ import WalletView from "./WalletView";
 const DEFAULT_SPLIT_PERCENT = 50;
 
 const AgentPage = (props: any) => {
-  const { actSetPageName, layoutMode, splitPercent, actSetSplitPercent, setEncryptKey, encryptKey } = props;
+  const {
+    actSetPageName,
+    layoutMode,
+    splitPercent,
+    actSetSplitPercent,
+    setEncryptKey,
+    encryptKey,
+  } = props;
 
   const { translate } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
@@ -140,7 +147,10 @@ const AgentPage = (props: any) => {
               ref={chartRef}
               style={{ flexBasis: `${splitPercent}%` }}
             >
-              <div className="chart-wrapper">
+              <div
+                className="chart-wrapper"
+                style={{ marginBottom: isChatOptimize ? "1rem" : "0" }}
+              >
                 <TokenChart />
               </div>
 

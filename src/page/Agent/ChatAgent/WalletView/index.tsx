@@ -430,6 +430,7 @@ const WalletView = (props: any) => {
             mode="multiple"
             onChange={onChangeListProfileId}
             disabled={isAllWallet}
+            style={{ marginBottom: "-1.5rem" }}
           >
             {listCampaignProfile?.map((campaignProfile: ICampaignProfile) => {
               let note = campaignProfile?.note || EMPTY_STRING;

@@ -4,12 +4,12 @@ import { ITheme } from "@/style/theme";
 const PageWrapper = styled.div`
   width: 100%;
   height: 87vh;
-  max-height: 87vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 1.6rem;
   overflow-x: hidden;
+  overflow-y: auto;
 
   .main {
     width: 100%;

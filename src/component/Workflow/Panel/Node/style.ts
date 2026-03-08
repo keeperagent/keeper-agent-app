@@ -18,6 +18,10 @@ const NodeWrapper = styled.div`
       theme?.colorBgPrimary};
     border: 1px dashed ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
 
+    .name {
+      color: var(--color-text-hover);
+    }
+
     .drag {
       svg {
         fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
