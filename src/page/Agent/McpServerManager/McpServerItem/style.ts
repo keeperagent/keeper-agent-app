@@ -13,6 +13,10 @@ export const Wrapper = styled.div`
 
   &:hover {
     border: 1px dashed var(--color-primary);
+
+    .item-top-bar .item-name {
+      color: var(--color-text-hover);
+    }
   }
 
   .item-dots-row {
@@ -68,10 +72,6 @@ export const Wrapper = styled.div`
     }
   }
 
-  .item-top-bar:hover .item-name {
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
-  }
-
   .item-center {
     flex: 1;
     padding: 1rem 1.2rem;
@@ -111,7 +111,7 @@ export const Wrapper = styled.div`
       height: 1.4rem;
       min-width: 1.4rem;
       min-height: 1.4rem;
-      fill: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
+      fill: var(--color-text-hover);
     }
   }
 

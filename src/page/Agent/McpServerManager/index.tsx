@@ -38,6 +38,8 @@ const McpServerManager = (props: any) => {
     serverId: number;
     serverName: string;
     config: string;
+    disabledTools: string[];
+    item: IMcpServer;
   } | null>(null);
 
   const listSortField = useMemo(
@@ -120,12 +122,26 @@ const McpServerManager = (props: any) => {
   };
 
   const handleViewTools = (item: IMcpServer) => {
-    if (item.id == null) return;
+    if (item.id == null) {
+      return;
+    }
+
     setToolsModal({
       serverId: item.id,
       serverName: item.name || "",
       config: item.config || "",
+      disabledTools: item.disabledTools || [],
+      item,
     });
+  };
+
+  const handleToggleTool = (toolName: string, disabled: boolean) => {
+    if (!toolsModal) return;
+    const updatedDisabled = disabled
+      ? [...toolsModal.disabledTools, toolName]
+      : toolsModal.disabledTools.filter((t) => t !== toolName);
+    setToolsModal({ ...toolsModal, disabledTools: updatedDisabled });
+    updateMcpServer({ ...toolsModal.item, disabledTools: updatedDisabled });
   };
 
   return (
@@ -218,6 +234,8 @@ const McpServerManager = (props: any) => {
         serverId={toolsModal?.serverId || 0}
         serverName={toolsModal?.serverName || ""}
         config={toolsModal?.config || ""}
+        disabledTools={toolsModal?.disabledTools || []}
+        onToggleTool={handleToggleTool}
         onClose={() => setToolsModal(null)}
       />
     </Wrapper>

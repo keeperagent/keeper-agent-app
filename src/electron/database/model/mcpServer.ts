@@ -44,6 +44,11 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: 0,
       },
+      disabledTools: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "[]",
+      },
       createAt: {
         type: DataTypes.INTEGER,
         allowNull: false,

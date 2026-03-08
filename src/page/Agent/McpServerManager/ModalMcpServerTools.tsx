@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Modal, Table, Tooltip } from "antd";
+import { Modal, Switch, Table, Tooltip } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import { useTranslation } from "@/hook/useTranslation";
 import { EMPTY_STRING } from "@/config/constant";
@@ -16,11 +16,13 @@ type ModalMcpServerToolsProps = {
   serverId: number;
   serverName: string;
   config: string;
+  disabledTools: string[];
+  onToggleTool: (toolName: string, disabled: boolean) => void;
   onClose: () => void;
 };
 
 const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
-  const { open, serverId, serverName, config, onClose } = props;
+  const { open, serverId, serverName, config, disabledTools, onToggleTool, onClose } = props;
   const { translate } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [tools, setTools] = useState<McpToolInfo[]>([]);
@@ -73,7 +75,7 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
       title: translate("description"),
       dataIndex: "description",
       key: "description",
-      width: "45%",
+      width: "40%",
       render: (v: string) => v || EMPTY_STRING,
     },
     {
@@ -115,6 +117,21 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
         return display;
       },
     },
+    {
+      title: translate("agent.toolEnabled"),
+      key: "enabled",
+      width: "9rem",
+      render: (_: unknown, row: McpToolInfo) => {
+        const isEnabled = !disabledTools.includes(row.name);
+        return (
+          <Switch
+            size="small"
+            checked={isEnabled}
+            onChange={(checked) => onToggleTool(row.name, !checked)}
+          />
+        );
+      },
+    },
   ];
 
   const dataSource = tools.map((tool, index) => ({
@@ -124,7 +141,7 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
 
   return (
     <Modal
-      title={`${translate("agent.availableTools")} — ${serverName}`}
+      title={`${translate("agent.availableTools")} - ${serverName}`}
       open={open}
       onCancel={onClose}
       footer={null}
@@ -137,6 +154,7 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
           {error}
         </div>
       )}
+
       <Table
         size="small"
         loading={loading}

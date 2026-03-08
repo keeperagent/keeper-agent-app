@@ -235,6 +235,7 @@ export class McpToolLoader {
   private getMcpToolsFromClient = async (
     serverName: string,
     client: Client,
+    disabledTools: string[] = [],
   ): Promise<DynamicStructuredTool[]> => {
     const tools: DynamicStructuredTool[] = [];
 
@@ -242,6 +243,7 @@ export class McpToolLoader {
       const { tools: mcpTools } = await client.listTools();
 
       for (const mcpTool of mcpTools) {
+        if (disabledTools.includes(mcpTool.name)) continue;
         tools.push(
           new DynamicStructuredTool({
             name: mcpTool.name || "",
@@ -390,7 +392,11 @@ export class McpToolLoader {
       if (!client) continue;
 
       clients.push(client);
-      const tools = await this.getMcpToolsFromClient(server.name, client);
+      const tools = await this.getMcpToolsFromClient(
+        server.name,
+        client,
+        server.disabledTools || [],
+      );
 
       await this.updateServerStatus(
         server,

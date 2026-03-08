@@ -50,7 +50,8 @@ class PreferenceDB {
         {
           ...preference,
           key: preferenceUniqueKey,
-          nodeBlackList: JSON.stringify(preference?.nodeBlackList),
+          nodeBlackList: JSON.stringify(preference?.nodeBlackList || []),
+          disabledTools: JSON.stringify(preference?.disabledTools || []),
           jupiterApiKeys: encryptionService.encryptData(
             JSON.stringify(preference?.jupiterApiKeys || []),
           ),

@@ -12,7 +12,7 @@ type IMcpServerItemProps = {
   onEdit: (item: IMcpServer) => void;
   onDelete: (id: number) => void;
   onToggle: (item: IMcpServer) => void;
-  onViewTools?: (item: IMcpServer) => void;
+  onViewTools: (item: IMcpServer) => void;
 };
 
 const McpServerItem = (props: IMcpServerItemProps) => {
@@ -82,29 +82,27 @@ const McpServerItem = (props: IMcpServerItemProps) => {
 
         <div className="item-center-row">
           <span className="item-label">{translate("toolsCount")}:</span>
-          <span className="item-value item-tools-row">
-            {item.toolsCount != null && isConnected
-              ? `${item.toolsCount} ${translate("tools")}`
-              : EMPTY_STRING}
-            {isConnected &&
-              item.toolsCount != null &&
-              item.toolsCount > 0 &&
-              onViewTools && (
-                <Tooltip
-                  title={translate("viewTools") || translate("agent.viewTools")}
-                >
-                  <div
-                    className="view-icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewTools(item);
-                    }}
-                  >
-                    <EyeOpenIcon />
-                  </div>
-                </Tooltip>
+          <Tooltip
+            title={translate("viewTools") || translate("agent.viewTools")}
+          >
+            <span
+              className="item-value item-tools-row"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewTools(item);
+              }}
+            >
+              {item.toolsCount != null && isConnected
+                ? `${item.toolsCount} ${translate("tools")}`
+                : EMPTY_STRING}
+
+              {isConnected && Boolean(item.toolsCount) && (
+                <div className="view-icon">
+                  <EyeOpenIcon />
+                </div>
               )}
-          </span>
+            </span>
+          </Tooltip>
         </div>
 
         <div className="item-center-row">
