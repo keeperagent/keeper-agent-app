@@ -11,6 +11,14 @@ export const Wrapper = styled.div`
   border-radius: var(--border-radius);
   background: ${({ theme }: { theme: ITheme }) => theme?.colorBgPrimary};
 
+  &:hover {
+    border: 1px dashed var(--color-primary);
+
+    .tool-name {
+      color: var(--color-text-hover);
+    }
+  }
+
   &.disabled {
     opacity: 0.5;
   }
