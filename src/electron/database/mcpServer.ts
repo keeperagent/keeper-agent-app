@@ -48,6 +48,7 @@ class McpServerDB {
       const totalDataAwait = McpServerModel.count({
         where: !searchText ? condition : {},
       });
+
       // When searchText is set, omit limit/offset so LIKE search works. See: https://github.com/sequelize/sequelize/issues/12971
       const listDataAwait = McpServerModel.findAll({
         order,
@@ -58,15 +59,16 @@ class McpServerDB {
         raw: true,
       });
 
-      const [totalData, listData]: any = await Promise.all([
+      let [totalData, listData]: any = await Promise.all([
         totalDataAwait,
         listDataAwait,
       ]);
       const totalPage = Math.ceil(totalData / Number(pageSize));
+      listData = listData?.map((item: any) => formatMcpServer(item));
 
       return [
         {
-          data: (listData as any[]).map(formatMcpServer),
+          data: listData,
           totalData,
           page,
           pageSize,

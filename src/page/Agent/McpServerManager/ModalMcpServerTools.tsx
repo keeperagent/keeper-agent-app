@@ -22,7 +22,15 @@ type ModalMcpServerToolsProps = {
 };
 
 const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
-  const { open, serverId, serverName, config, disabledTools, onToggleTool, onClose } = props;
+  const {
+    open,
+    serverId,
+    serverName,
+    config,
+    disabledTools,
+    onToggleTool,
+    onClose,
+  } = props;
   const { translate } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [tools, setTools] = useState<McpToolInfo[]>([]);
