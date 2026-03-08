@@ -126,7 +126,9 @@ export class McpToolLoader {
 
   private isMcpHttpConfig = (
     config: McpConfigOrHttp,
-  ): config is McpHttpConfig => typeof (config as any)?.url === "string";
+  ): config is McpHttpConfig => {
+    return typeof (config as any)?.url === "string";
+  };
 
   getServerConfig = (configStr: string): Record<string, any> | null => {
     try {
@@ -134,14 +136,17 @@ export class McpToolLoader {
       if (!raw) {
         return null;
       }
+
       const mcpServers = raw?.mcpServers;
       if (!mcpServers) {
         return null;
       }
+
       const first = Object.values(mcpServers)[0];
       if (first != null && typeof first === "object") {
         return first;
       }
+
       return null;
     } catch {
       return null;
@@ -153,12 +158,15 @@ export class McpToolLoader {
     if (!config) {
       return "";
     }
+
     if (this.isMcpHttpConfig(config as McpConfigOrHttp)) {
       return config?.url || "";
     }
+
     if (config?.transportType === "http" || config?.transportType === "sse") {
       return config?.endpoint || "";
     }
+
     const cmd = config?.command;
     const args = Array.isArray(config?.args) ? config?.args : [];
     return [cmd, ...args].join(" ");
@@ -185,6 +193,7 @@ export class McpToolLoader {
         if (!config?.command) {
           return { client: null, error: "Missing or invalid command" };
         }
+
         const baseEnv: Record<string, string> = {};
         Object.keys(process.env).forEach((key) => {
           if (process.env[key]) {
@@ -209,7 +218,9 @@ export class McpToolLoader {
         await client.connect(transport);
       }
 
-      logEveryWhere({ message: `[KeeperAgent] MCP server "${name}" connected` });
+      logEveryWhere({
+        message: `[KeeperAgent] MCP server "${name}" connected`,
+      });
       return { client };
     } catch (err: any) {
       logEveryWhere({
@@ -243,7 +254,10 @@ export class McpToolLoader {
       const { tools: mcpTools } = await client.listTools();
 
       for (const mcpTool of mcpTools) {
-        if (disabledTools.includes(mcpTool.name)) continue;
+        if (disabledTools.includes(mcpTool.name)) {
+          continue;
+        }
+
         tools.push(
           new DynamicStructuredTool({
             name: mcpTool.name || "",
@@ -389,7 +403,9 @@ export class McpToolLoader {
     for (const server of validServers) {
       const serverId = server?.id!;
       const { client } = await this.connectServerOrFail(server, serverId);
-      if (!client) continue;
+      if (!client) {
+        continue;
+      }
 
       clients.push(client);
       const tools = await this.getMcpToolsFromClient(
