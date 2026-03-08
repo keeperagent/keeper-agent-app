@@ -13,6 +13,10 @@ export const Wrapper = styled.div`
 
   &:hover {
     border: 1px dashed var(--color-primary);
+
+    .item-top-bar .item-name {
+      color: var(--color-text-hover);
+    }
   }
 
   .item-dots-row {
@@ -66,10 +70,6 @@ export const Wrapper = styled.div`
       text-overflow: ellipsis;
       flex: 1;
     }
-  }
-
-  .item-top-bar:hover .item-name {
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
   }
 
   .item-center {
