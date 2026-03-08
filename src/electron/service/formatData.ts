@@ -4,6 +4,7 @@ import {
   ICampaign,
   ICampaignProfile,
   ILog,
+  IMcpServer,
   IPreference,
   IProfile,
   IProfileGroup,
@@ -223,6 +224,14 @@ const formatPreference = (data: any): IPreference => {
   };
 };
 
+const formatMcpServer = (data: any): IMcpServer => ({
+  ...data,
+  disabledTools:
+    typeof data?.disabledTools === "string"
+      ? JSON.parse(data?.disabledTools || "[]")
+      : data?.disabledTools || [],
+});
+
 const formatLog = (data: Model<any, any>): ILog => {
   const formatedData: ILog = formatDBResponse(data);
   return formatedData;
@@ -282,6 +291,7 @@ export {
   formatCampaignProfile,
   formatProfile,
   formatPreference,
+  formatMcpServer,
   formatWorkflow,
   formatLog,
   formatSchedule,

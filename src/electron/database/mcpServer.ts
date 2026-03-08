@@ -3,6 +3,7 @@ import _ from "lodash";
 import { IMcpServer, IGetListResponse, ISorter } from "@/electron/type";
 import { McpServerModel } from "./index";
 import { logEveryWhere } from "@/electron/service/util";
+import { formatMcpServer } from "@/electron/service/formatData";
 import { SORT_ORDER } from "@/electron/constant";
 
 class McpServerDB {
@@ -47,6 +48,7 @@ class McpServerDB {
       const totalDataAwait = McpServerModel.count({
         where: !searchText ? condition : {},
       });
+
       // When searchText is set, omit limit/offset so LIKE search works. See: https://github.com/sequelize/sequelize/issues/12971
       const listDataAwait = McpServerModel.findAll({
         order,
@@ -57,11 +59,12 @@ class McpServerDB {
         raw: true,
       });
 
-      const [totalData, listData]: any = await Promise.all([
+      let [totalData, listData]: any = await Promise.all([
         totalDataAwait,
         listDataAwait,
       ]);
       const totalPage = Math.ceil(totalData / Number(pageSize));
+      listData = listData?.map((item: any) => formatMcpServer(item));
 
       return [
         {
@@ -91,7 +94,7 @@ class McpServerDB {
       if (!data) {
         return [null, null];
       }
-      return [data?.toJSON(), null];
+      return [formatMcpServer(data?.toJSON()), null];
     } catch (err: any) {
       logEveryWhere({ message: `getOneMcpServer() error: ${err?.message}` });
       return [null, err];
@@ -105,6 +108,7 @@ class McpServerDB {
       const mcpServer = await McpServerModel.create(
         {
           ...data,
+          disabledTools: JSON.stringify(data?.disabledTools || []),
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
         } as any,
@@ -113,7 +117,7 @@ class McpServerDB {
         },
       );
 
-      return [mcpServer?.toJSON(), null];
+      return [formatMcpServer(mcpServer?.toJSON()), null];
     } catch (err: any) {
       logEveryWhere({ message: `createMcpServer() error: ${err?.message}` });
       return [null, err];
@@ -125,7 +129,14 @@ class McpServerDB {
   ): Promise<[IMcpServer | null, Error | null]> {
     try {
       await McpServerModel.update(
-        _.omit({ ...data, updateAt: new Date().getTime() }, ["id"]) as any,
+        _.omit(
+          {
+            ...data,
+            disabledTools: JSON.stringify(data?.disabledTools || []),
+            updateAt: new Date().getTime(),
+          },
+          ["id"],
+        ) as any,
         {
           where: { id: data?.id },
         },

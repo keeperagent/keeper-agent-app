@@ -2262,6 +2262,7 @@ export type IMcpServer = {
   status?: MCPServerStatus;
   lastError?: string;
   toolsCount?: number;
+  disabledTools?: string[];
   createAt?: number;
   updateAt?: number;
 };

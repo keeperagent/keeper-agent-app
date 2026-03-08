@@ -47,7 +47,7 @@ const GlobalStyle = createGlobalStyle`
     --text-font-secondary: 'Open Sans', sans-serif;
     --color-text: #212A3E;
     --color-text-secondary: #6E6B7B;
-    --color-text-hover: rgb(197, 104, 36);
+    --color-text-hover: #F59E0B;;
     --color-primary: rgba(79, 70, 229, 1);
     --color-secondary: #F7EBFF;
     --color-primary-light: #867ae9;
