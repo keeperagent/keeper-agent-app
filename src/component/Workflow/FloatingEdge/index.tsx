@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, Fragment } from "react";
 import {
   useStore,
   getStraightPath,
@@ -14,10 +14,10 @@ const FloatingEdge = (props: any) => {
   const { id, source, target, markerEnd, style, data, selected } = props;
 
   const sourceNode = useStore(
-    useCallback((store) => store.nodeLookup.get(source), [source])
+    useCallback((store) => store.nodeLookup.get(source), [source]),
   );
   const targetNode = useStore(
-    useCallback((store) => store.nodeLookup.get(target), [target])
+    useCallback((store) => store.nodeLookup.get(target), [target]),
   );
 
   if (!sourceNode || !targetNode) {
@@ -33,7 +33,7 @@ const FloatingEdge = (props: any) => {
   });
 
   return (
-    <>
+    <Fragment>
       <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
 
       {data?.withQueue && (
@@ -51,7 +51,7 @@ const FloatingEdge = (props: any) => {
           />
         </EdgeLabelRenderer>
       )}
-    </>
+    </Fragment>
   );
 };
 

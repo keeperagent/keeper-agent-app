@@ -5,7 +5,6 @@ import { RootState } from "./store";
 export enum AGENT_LAYOUT_MODE {
   TRADE_OPTIMIZE = "TRADE_OPTIMIZE",
   CHAT_OPTIMIZE = "CHAT_OPTIMIZE",
-  ONLY_CHAT = "ONLY_CHAT",
 }
 
 interface IAgentState {

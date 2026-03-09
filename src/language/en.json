@@ -1101,5 +1101,10 @@
   "masterPassword.changeInfo": "Previous encrypted data (API keys, Telegram token, etc.) cannot be recovered, re-enter them in Settings if needed. Wallets are not affected",
   "masterPassword.changeSuccess": "Master password changed successfully. Use the new password next time you unlock the app.",
   "masterPassword.resetPasswordLink": "Reset password",
-  "masterPassword.backToUnlock": "Back to unlock"
+  "masterPassword.backToUnlock": "Back to unlock",
+  "agent.contextSettings": "Context Settings",
+  "agent.saveCurrentSettings": "Save current settings",
+  "agent.presetName": "Preset name",
+  "button.load": "Load",
+  "button.save": "Save"
 }

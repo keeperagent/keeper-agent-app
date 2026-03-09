@@ -179,9 +179,8 @@ const Scroll = (props: Props) => {
               />
             </Form.Item>
 
-            {/* ------ SELECTOR CSS/XPATH ------ */}
             {scrollSelector === SCROLL_TYPE.SCROLL_SELECTOR && (
-              <>
+              <Fragment>
                 <div className="selectorMode">
                   <TagOption
                     content={SELECTOR_NAME[SELECTOR_TYPE.CSS_SELECTOR]}
@@ -264,12 +263,12 @@ const Scroll = (props: Props) => {
                     </Form.Item>
                   </Fragment>
                 )}
-              </>
+              </Fragment>
             )}
 
             {/* ------ SELECT BY COORDINATES ------ */}
             {scrollSelector === SCROLL_TYPE.SCROLL_COORDINATES && (
-              <>
+              <Fragment>
                 <div className="selectorMode">
                   <TagOption
                     content={
@@ -303,7 +302,7 @@ const Scroll = (props: Props) => {
                     defaultValue={0}
                   />
                 </Form.Item>
-              </>
+              </Fragment>
             )}
           </Fragment>
         )}

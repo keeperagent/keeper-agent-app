@@ -616,7 +616,7 @@ export type ISaveResourceNodeConfig = {
   col9?: string; // value of the ninth column
   col10?: string; // value of the tenth column
   resourceGroup?: number; // resource group id
-  encryptKey?: string; // encrypt key, will be empty as default, user need to input the value manually
+  encryptKey?: string; // secret key, will be empty as default, user need to input the value manually
   mode?: ENCRYPT_MODE; // encrypt mode
   batchValue?: string; // batch value
   isInsertMultipleResource?: boolean; // is insert multiple resource
@@ -637,7 +637,7 @@ export type ISaveWalletNodeConfig = {
   address?: string; // address of the wallet
   privateKey?: string; // private key of the wallet
   walletGroup?: number; // wallet group id
-  encryptKey?: string; // encrypt key, will be empty as default, user need to input the value manually
+  encryptKey?: string; // secret key, will be empty as default, user need to input the value manually
   mode?: ENCRYPT_MODE; // encrypt mode
 };
 
@@ -1897,7 +1897,7 @@ export type ISelectWalletNodeConfig = {
   compareValue?: string; // compared value of the wallet
   fieldName?: string; // field name of the wallet
   walletGroupId?: number; // wallet group id in database
-  encryptKey?: string; // encrypt key, will be empty as default, user need to input the value manually
+  encryptKey?: string; // secret key, will be empty as default, user need to input the value manually
   mode?: ENCRYPT_MODE; // encrypt mode
 };
 
@@ -1916,7 +1916,7 @@ export type ICheckResourceNodeConfig = {
   compareValue?: string; // compared value of the resource
   fieldName?: string; // field name of the resource
   resourceGroupId?: number; // resource group id in database
-  encryptKey?: string; // encrypt key, will be empty as default, user need to input the value manually
+  encryptKey?: string; // secret key, will be empty as default, user need to input the value manually
   mode?: ENCRYPT_MODE; // encrypt mode
 };
 
@@ -2277,3 +2277,16 @@ export type IAgentSkill = {
   updateAt?: number;
   filePath?: string;
 };
+
+export type IAgentSetting = {
+  id?: number;
+  name: string;
+  type: string;
+  data: string;
+  createAt?: number;
+  updateAt?: number;
+};
+
+export enum AGENT_SETTING_TYPE {
+  AGENT_PRESET = "AGENT_PRESET",
+}
