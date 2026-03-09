@@ -139,8 +139,8 @@ const DrawerSavePreset = styled.div`
 
     > span {
       display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
       font-size: 1.1rem;
       background: ${({ theme }: { theme: ITheme }) =>
         theme?.colorBgTag || "rgba(0,0,0,0.06)"};
@@ -176,40 +176,6 @@ const DrawerPresetSection = styled.div`
 
     svg {
       width: 9rem;
-    }
-  }
-
-  .preset-item {
-    display: flex;
-    align-items: center;
-    padding: 0.6rem 0.5rem;
-    border-radius: 0.4rem;
-    font-size: 1.2rem;
-    border-bottom: 1px solid
-      ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
-
-    .preset-item-name {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      cursor: pointer;
-    }
-
-    .preset-item-actions {
-      display: flex;
-      gap: 1.3rem;
-      margin-left: 0.8rem;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-
-      & > * {
-        cursor: pointer;
-      }
-
-      .preset-action-delete {
-        color: var(--color-error);
-      }
     }
   }
 `;

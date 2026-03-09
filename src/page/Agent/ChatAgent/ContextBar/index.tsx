@@ -40,6 +40,7 @@ import {
 } from "@/redux/agent";
 import { listChainConfig } from "../WalletView/config";
 import WalletView from "../WalletView";
+import PresetItem from "./PresetItem";
 import SettingIcon from "@/component/Icon/Setting";
 import { CustomizationIcon } from "@/component/Icon";
 import {
@@ -428,28 +429,14 @@ const ContextBar = (props: any) => {
           )}
 
           {listAgentSetting?.map((setting: IAgentSetting) => (
-            <div key={setting.id} className="preset-item">
-              <span
-                className="preset-item-name"
-                onClick={() => onLoadPreset(setting)}
-                title={translate("button.load")}
-              >
-                {setting.name}
-              </span>
-
-              <div className="preset-item-actions">
-                <span onClick={() => onLoadPreset(setting)}>
-                  {translate("button.load")}
-                </span>
-
-                <span
-                  className="preset-action-delete"
-                  onClick={() => onDeletePreset(setting.id!)}
-                >
-                  {translate("button.delete")}
-                </span>
-              </div>
-            </div>
+            <PresetItem
+              key={setting.id}
+              setting={setting}
+              listNodeEndpointGroup={listNodeEndpointGroup}
+              listCampaign={listCampaign}
+              onLoad={onLoadPreset}
+              onDelete={onDeletePreset}
+            />
           ))}
         </DrawerPresetSection>
       </Drawer>
