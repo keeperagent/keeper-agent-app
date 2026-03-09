@@ -34,6 +34,7 @@ import { searchController } from "./controller/search";
 import { agentController } from "./controller/appAgent";
 import { mcpServerController } from "./controller/mcpServer";
 import { agentSkillController } from "./controller/agentSkill";
+import { agentSettingController } from "./controller/agentSetting";
 import { chatHistoryController } from "./controller/chatHistory";
 import { nodeSecretController } from "./controller/nodeSecret";
 import { authStorageController } from "./controller/authStorage";
@@ -73,6 +74,7 @@ const runMainProcess = () => {
   agentController();
   mcpServerController();
   agentSkillController();
+  agentSettingController();
   chatHistoryController();
   nodeSecretController();
   authStorageController();

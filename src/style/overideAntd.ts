@@ -110,6 +110,11 @@ const OverideAntdStyle = createGlobalStyle`
   .ant-checkbox-wrapper {
     font-size: 1.3rem !important;
   }
+
+  .ant-dropdown-menu-item-selected {
+    color: ${({ theme }: { theme: ITheme }) =>
+      theme?.colorTextPrimary} !important;
+  }
 `;
 
 export { OverideAntdStyle };

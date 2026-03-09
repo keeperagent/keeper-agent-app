@@ -359,7 +359,7 @@ const WalletView = (props: any) => {
                 loading={isSelectCampaignLoading}
                 onChange={onChangeCampaign}
                 optionLabelProp="label"
-                style={{ transform: "scaleY(1.03)" }}
+                style={{ transform: "scaleY(0.975)" }}
               >
                 {listCampaign?.map((campaign: ICampaign) => (
                   <Option
@@ -430,6 +430,7 @@ const WalletView = (props: any) => {
             mode="multiple"
             onChange={onChangeListProfileId}
             disabled={isAllWallet}
+            style={{ marginBottom: "-1.5rem" }}
           >
             {listCampaignProfile?.map((campaignProfile: ICampaignProfile) => {
               let note = campaignProfile?.note || EMPTY_STRING;

@@ -176,3 +176,9 @@ export {
   saveAuthToken,
   clearAuthToken,
 } from "./authStorage";
+export {
+  useGetListAgentSetting,
+  useCreateAgentSetting,
+  useUpdateAgentSetting,
+  useDeleteAgentSetting,
+} from "./agentSetting";

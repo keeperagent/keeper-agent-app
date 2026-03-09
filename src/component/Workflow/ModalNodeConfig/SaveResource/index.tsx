@@ -60,7 +60,7 @@ const SaveResource = (props: Props) => {
   const defaultBatchValue = "[]";
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
-  const [encryptKey, setEncryptKey] = useState(""); // actual encrypt key — only for display, never stored in Redux
+  const [encryptKey, setEncryptKey] = useState(""); // actual secret key — only for display, never stored in Redux
   const [form] = Form.useForm();
   const [mode, setMode] = useState<ENCRYPT_MODE>(ENCRYPT_MODE.NO_ENSCRYPT);
   const [batchValue, setBatchValue] = useState(defaultBatchValue);

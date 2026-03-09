@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useTranslation } from "@/hook";
@@ -7,12 +7,19 @@ import { AGENT_LAYOUT_MODE, actSetSplitPercent } from "@/redux/agent";
 import { PageWrapper } from "./style";
 import TokenChart from "./TokenChart";
 import AgentView from "./AgentView";
-import WalletView from "./WalletView";
+import ContextBar from "./ContextBar";
 
 const DEFAULT_SPLIT_PERCENT = 50;
 
 const AgentPage = (props: any) => {
-  const { actSetPageName, layoutMode, splitPercent, actSetSplitPercent, setEncryptKey, encryptKey } = props;
+  const {
+    actSetPageName,
+    layoutMode,
+    splitPercent,
+    actSetSplitPercent,
+    setEncryptKey,
+    encryptKey,
+  } = props;
 
   const { translate } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
@@ -122,19 +129,18 @@ const AgentPage = (props: any) => {
 
   const resetSplit = () => actSetSplitPercent?.(DEFAULT_SPLIT_PERCENT);
 
-  const isOnlyChat = layoutMode === AGENT_LAYOUT_MODE.ONLY_CHAT;
-  const isChatOptimize = layoutMode === AGENT_LAYOUT_MODE.CHAT_OPTIMIZE;
+  const isChatOnly = layoutMode === AGENT_LAYOUT_MODE.CHAT_OPTIMIZE;
 
   return (
     <PageWrapper>
       <title>{translate("sidebar.askAgent")}</title>
 
       <div
-        className={`main ${isDragging ? "dragging" : ""} ${isOnlyChat ? "only-chat" : ""}`}
+        className={`main ${isDragging ? "dragging" : ""} ${isChatOnly ? "only-chat" : ""}`}
         ref={mainRef}
       >
-        {!isOnlyChat && (
-          <>
+        {!isChatOnly && (
+          <Fragment>
             <div
               className="left-wrapper"
               ref={chartRef}
@@ -143,13 +149,6 @@ const AgentPage = (props: any) => {
               <div className="chart-wrapper">
                 <TokenChart />
               </div>
-
-              {isChatOptimize && (
-                <WalletView
-                  setEncryptKey={setEncryptKey}
-                  encryptKey={encryptKey}
-                />
-              )}
             </div>
 
             <div
@@ -157,26 +156,21 @@ const AgentPage = (props: any) => {
               onPointerDown={startDrag}
               onDoubleClick={resetSplit}
             />
-          </>
+          </Fragment>
         )}
 
         <div
           className="right-wrapper"
           ref={agentRef}
           style={
-            isOnlyChat
+            isChatOnly
               ? { flexBasis: "100%" }
               : { flexBasis: `${100 - splitPercent}%` }
           }
         >
-          {!isOnlyChat && !isChatOptimize && (
-            <WalletView setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
-          )}
+          <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
 
-          <div
-            className="agent-view-wrapper"
-            style={{ marginTop: isChatOptimize || isOnlyChat ? "0" : "2rem" }}
-          >
+          <div className="agent-view-wrapper" style={{ marginTop: "0.8rem" }}>
             <AgentView encryptKey={encryptKey} />
           </div>
         </div>

@@ -28,6 +28,7 @@ const Wrapper = styled.div`
     cursor: pointer;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
     font-weight: 500;
+    transition: all 0.1s ease-in-out;
 
     &:hover {
       color: var(--color-text-hover);

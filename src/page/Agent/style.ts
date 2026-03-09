@@ -3,7 +3,7 @@ import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 6.9rem);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -69,9 +69,8 @@ const Wrapper = styled.div`
       max-width: 250px;
       padding: 3px 1rem;
       border-radius: 0.5rem;
-      background: ${({ theme }: { theme: ITheme }) => theme.colorBgTag};
-      color: ${({ theme }: { theme: ITheme }) => theme.colorPrimary};
-      border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorPrimary};
+      color: var(--color-text-hover);
+      border: 1px dashed var(--color-text-hover);
     }
 
     .provider-item {

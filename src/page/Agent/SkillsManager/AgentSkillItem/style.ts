@@ -69,6 +69,7 @@ export const Wrapper = styled.div`
       overflow: hidden;
       text-overflow: ellipsis;
       flex: 1;
+      transition: all 0.2s ease-in-out;
     }
   }
 

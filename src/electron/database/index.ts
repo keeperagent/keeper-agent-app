@@ -26,6 +26,7 @@ import scheduleLogFactory from "./model/scheduleLog";
 import jobFactory from "./model/job";
 import mcpServerFactory from "./model/mcpServer";
 import agentSkillFactory from "./model/agentSkill";
+import agentSettingFactory from "./model/agentSetting";
 import chatHistoryFactory from "./model/chatHistory";
 import nodeSecretFactory from "./model/nodeSecret";
 
@@ -61,6 +62,7 @@ export const ScheduleLogModel = scheduleLogFactory(db);
 export const JobModel = jobFactory(db);
 export const McpServerModel = mcpServerFactory(db);
 export const AgentSkillModel = agentSkillFactory(db);
+export const AgentSettingModel = agentSettingFactory(db);
 export const ChatHistoryModel = chatHistoryFactory(db);
 export const NodeSecretModel = nodeSecretFactory(db);
 
@@ -355,7 +357,9 @@ export const dbReady: Promise<void> = (async () => {
     await db.authenticate();
     logEveryWhere({ message: "Connection has been established successfully." });
   } catch (error: any) {
-    logEveryWhere({ message: `Unable to connect to the database: ${error?.message}` });
+    logEveryWhere({
+      message: `Unable to connect to the database: ${error?.message}`,
+    });
   }
 
   try {

@@ -18,11 +18,10 @@ import {
   CopyIcon,
   CheckIcon,
   ChartIcon,
-  LayoutLeftIcon,
   PaperPlaneIcon,
   StopCircle,
-  CommentIcon,
   PaperClipIcon,
+  CommentIcon,
 } from "@/component/Icon";
 import AttachedFiles, { type AttachedFile } from "./AttachedFiles";
 import { actSetLayoutMode, AGENT_LAYOUT_MODE } from "@/redux/agent";
@@ -195,7 +194,7 @@ const MessageBody = ({
   isUser: boolean;
 }) => {
   if (isUser) {
-    return <>{content}</>;
+    return <Fragment>{content}</Fragment>;
   }
   return (
     <div className="markdown-content">
@@ -783,17 +782,6 @@ const AgentView = (props: any) => {
                 className={`icon ${layoutMode === AGENT_LAYOUT_MODE.CHAT_OPTIMIZE ? "active" : ""}`}
                 onClick={() =>
                   props?.actSetLayoutMode(AGENT_LAYOUT_MODE.CHAT_OPTIMIZE)
-                }
-              >
-                <LayoutLeftIcon />
-              </div>
-            </Tooltip>
-
-            <Tooltip title={translate("agent.onlyChatView")}>
-              <div
-                className={`icon ${layoutMode === AGENT_LAYOUT_MODE.ONLY_CHAT ? "active" : ""}`}
-                onClick={() =>
-                  props?.actSetLayoutMode(AGENT_LAYOUT_MODE.ONLY_CHAT)
                 }
               >
                 <CommentIcon />

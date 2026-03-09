@@ -107,6 +107,7 @@ export { default as PaperPlaneIcon } from "./PaperPlane";
 export { default as OpenFolderIcon } from "./OpenFolder";
 export { default as ChartIcon } from "./Chart";
 export { default as PaperClipIcon } from "./PaperClip";
+export { default as CustomizationIcon } from "./Customization";
 
 export interface IIconProps {
   color?: string;

@@ -163,6 +163,7 @@ const SidebarWrapper = styled.div`
     padding: 0;
     margin: 0;
     overflow: visible;
+    overflow-y: auto;
     padding: 0 1.7rem;
     list-style: none;
   }

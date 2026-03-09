@@ -3,6 +3,7 @@
  */
 
 import type {
+  IAgentSetting,
   IAgentSkill,
   ICampaign,
   ICampaignProfile,
@@ -477,6 +478,17 @@ export type IpcCreateAgentSkillPayload = {
 };
 export type IpcUpdateAgentSkillPayload = {
   data: IAgentSkill;
+};
+
+// AgentSetting
+export type IpcGetListAgentSettingPayload = IpcSortedPagePayload & {
+  type?: string;
+};
+export type IpcCreateAgentSettingPayload = {
+  data: IAgentSetting;
+};
+export type IpcUpdateAgentSettingPayload = {
+  data: IAgentSetting;
 };
 
 // AppAgent

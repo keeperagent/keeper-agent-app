@@ -55,7 +55,7 @@ const SelectWallet = (props: Props) => {
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
   const [mode, setMode] = useState(ENCRYPT_MODE.NO_ENSCRYPT);
-  const [encryptKey, setEncryptKey] = useState(""); // actual encrypt key — only for display, never stored in Redux
+  const [encryptKey, setEncryptKey] = useState(""); // actual secret key — only for display, never stored in Redux
   const [form] = Form.useForm();
   const { getListWalletGroup, loading } = useGetListWalletGroup();
   const { saveNodeSecret } = useSaveNodeSecret();
