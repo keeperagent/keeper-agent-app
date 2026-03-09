@@ -331,7 +331,7 @@ const ContextBar = (props: any) => {
                       {campaignItem?.name || EMPTY_STRING}
                     </div>
                     <div className="description">
-                      {campaign?.note || EMPTY_STRING}
+                      {campaignItem?.note || EMPTY_STRING}
                     </div>
                   </div>
                 </OptionWrapper>
