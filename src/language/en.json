@@ -1105,6 +1105,11 @@
   "agent.contextSettings": "Context Settings",
   "agent.saveCurrentSettings": "Save current settings",
   "agent.presetName": "Preset name",
+  "agent.noPresets": "No presets yet",
   "button.load": "Load",
-  "button.save": "Save"
+  "button.save": "Save",
+  "button.setting": "Settings",
+  "success": "Success",
+  "agent.noWallet": "No wallet",
+  "agent.noNodeProvider": "No node provider found for this chain. Please create one first."
 }

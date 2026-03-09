@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState, Fragment } from "react";
 import _ from "lodash";
 import { connect } from "react-redux";
-import { Drawer, Dropdown, Input, message, Popover } from "antd";
+import {
+  Drawer,
+  Dropdown,
+  Input,
+  message,
+  Popover,
+  Empty,
+  Button,
+  Tooltip,
+} from "antd";
 import { RootState } from "@/redux/store";
 import {
   useGetListCampaign,
@@ -35,7 +44,7 @@ import SettingIcon from "@/component/Icon/Setting";
 import { CustomizationIcon } from "@/component/Icon";
 import {
   ContextBarWrapper,
-  DropdownOption,
+  OptionWrapper,
   PresetPopoverWrapper,
   DrawerSavePreset,
   DrawerPresetSection,
@@ -81,6 +90,13 @@ const ContextBar = (props: any) => {
   const chainConfig = useMemo(() => {
     return _.find(listChainConfig, { dexscreenerKey: chainKey }) || null;
   }, [chainKey]);
+
+  const filteredNodeEndpointGroups = useMemo(() => {
+    const chainType = chainConfig?.isEvm ? CHAIN_TYPE.EVM : CHAIN_TYPE.SOLANA;
+    return listNodeEndpointGroup?.filter(
+      (item: INodeEndpointGroup) => item?.chainType === chainType,
+    );
+  }, [listNodeEndpointGroup, chainConfig]);
 
   const nodeEndpointGroup = useMemo(() => {
     return _.find(listNodeEndpointGroup, { id: nodeEndpointGroupId }) || null;
@@ -163,13 +179,14 @@ const ContextBar = (props: any) => {
       }),
     });
     setDrawerPresetName("");
-    message.success(translate("success"));
   };
 
   const presetContent = (
     <PresetPopoverWrapper>
       {listAgentSetting?.length === 0 && (
-        <div className="preset-empty">{translate("noData")}</div>
+        <div className="preset-empty">
+          <Empty description={translate("agent.noPresets")} />
+        </div>
       )}
 
       {listAgentSetting?.map((setting: IAgentSetting) => (
@@ -196,14 +213,21 @@ const ContextBar = (props: any) => {
             items: listChainConfig?.map((config) => ({
               key: config.dexscreenerKey,
               label: (
-                <DropdownOption>
-                  <img src={config.logo} alt="" />
-                  <span>{config.chainName}</span>
-                </DropdownOption>
+                <OptionWrapper>
+                  <div className="icon">
+                    <img src={config.logo} alt="" />
+                  </div>
+                  <span className="name">{config.chainName}</span>
+                </OptionWrapper>
               ),
             })),
             selectedKeys: chainKey ? [chainKey] : [],
-            style: { maxHeight: "35rem", overflowY: "auto" },
+            style: {
+              maxHeight: "35rem",
+              overflowY: "auto",
+              minWidth: "17rem",
+              overflowX: "hidden",
+            },
             onClick: ({ key }) => {
               props?.actSaveChainKey(key);
               props?.actSaveNodeEndpointGroupId(null);
@@ -221,23 +245,27 @@ const ContextBar = (props: any) => {
           trigger={["click"]}
           placement="bottomLeft"
           menu={{
-            items: listNodeEndpointGroup?.map((group: INodeEndpointGroup) => {
-              const groupChainConfig = _.find(getChainConfig(locale), {
-                key: group?.chainType || CHAIN_TYPE.EVM,
-              }) as IChainConfig;
+            items: filteredNodeEndpointGroups?.map(
+              (group: INodeEndpointGroup) => {
+                const groupChainConfig = _.find(getChainConfig(locale), {
+                  key: group?.chainType || CHAIN_TYPE.EVM,
+                }) as IChainConfig;
 
-              return {
-                key: String(group.id),
-                label: (
-                  <DropdownOption>
-                    {groupChainConfig?.image && (
-                      <img src={groupChainConfig.image} alt="" />
-                    )}
-                    <span>{group.name}</span>
-                  </DropdownOption>
-                ),
-              };
-            }),
+                return {
+                  key: String(group.id),
+                  label: (
+                    <OptionWrapper>
+                      {groupChainConfig?.image && (
+                        <div className="icon">
+                          <img src={groupChainConfig.image} alt="" />
+                        </div>
+                      )}
+                      <span className="name">{group.name}</span>
+                    </OptionWrapper>
+                  ),
+                };
+              },
+            ),
             selectedKeys: nodeEndpointGroupId
               ? [String(nodeEndpointGroupId)]
               : [],
@@ -246,11 +274,21 @@ const ContextBar = (props: any) => {
               props?.actSaveNodeEndpointGroupId(Number(key)),
           }}
         >
-          <span
-            className={`context-chip ${!nodeEndpointGroup ? "placeholder" : ""}`}
+          <Tooltip
+            title={
+              filteredNodeEndpointGroups?.length === 0
+                ? translate("agent.noNodeProvider")
+                : ""
+            }
           >
-            <span className="chip-label">{nodeEndpointGroup?.name}</span>
-          </span>
+            <span
+              className={`context-chip ${!nodeEndpointGroup ? "placeholder" : ""}`}
+            >
+              <span className="chip-label">
+                {nodeEndpointGroup?.name || EMPTY_STRING}
+              </span>
+            </span>
+          </Tooltip>
         </Dropdown>
 
         <Popover
@@ -284,7 +322,18 @@ const ContextBar = (props: any) => {
           menu={{
             items: listCampaign?.map((campaignItem: ICampaign) => ({
               key: String(campaignItem.id),
-              label: campaignItem.name,
+              label: (
+                <OptionWrapper>
+                  <div className="content">
+                    <div className="name">
+                      {campaignItem?.name || EMPTY_STRING}
+                    </div>
+                    <div className="description">
+                      {campaign?.note || EMPTY_STRING}
+                    </div>
+                  </div>
+                </OptionWrapper>
+              ),
             })),
             selectedKeys: campaignId ? [String(campaignId)] : [],
             style: { maxHeight: "35rem", overflowY: "auto" },
@@ -354,17 +403,17 @@ const ContextBar = (props: any) => {
 
             <div className="preset-save-row">
               <Input
-                size="small"
+                size="medium"
                 placeholder={translate("agent.presetName")}
                 value={drawerPresetName}
                 onChange={(event) => setDrawerPresetName(event.target.value)}
                 onPressEnter={onDrawerSavePreset}
-                style={{ flex: 1 }}
+                className="custom-input"
               />
 
-              <span className="preset-save-link" onClick={onDrawerSavePreset}>
+              <Button onClick={onDrawerSavePreset} type="primary" size="small">
                 {translate("button.save")}
-              </span>
+              </Button>
             </div>
           </DrawerSavePreset>
         )}
@@ -373,7 +422,9 @@ const ContextBar = (props: any) => {
           <div className="preset-title">Presets</div>
 
           {listAgentSetting?.length === 0 && (
-            <div className="preset-empty">{translate("noData")}</div>
+            <div className="preset-empty">
+              <Empty description={translate("agent.noPresets")} />
+            </div>
           )}
 
           {listAgentSetting?.map((setting: IAgentSetting) => (

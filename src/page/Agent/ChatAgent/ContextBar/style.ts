@@ -10,7 +10,6 @@ const ContextBarWrapper = styled.div`
   border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
   background: ${({ theme }: { theme: ITheme }) => theme?.colorBgPrimary};
   flex-wrap: wrap;
-  min-height: 3.6rem;
 
   .context-chip {
     display: inline-flex;
@@ -38,10 +37,11 @@ const ContextBarWrapper = styled.div`
     }
 
     .chip-icon {
-      width: 1.4rem;
-      height: 1.4rem;
+      width: 1.3rem;
+      height: 1.3rem;
       border-radius: 50%;
       object-fit: contain;
+      margin-right: 0.3rem;
     }
 
     .chip-label {
@@ -80,29 +80,23 @@ const ContextBarWrapper = styled.div`
   }
 `;
 
-const DropdownOption = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  img {
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 50%;
-    object-fit: contain;
-  }
-`;
-
 const PresetPopoverWrapper = styled.div`
   min-width: 16rem;
   max-height: 35rem;
   overflow: auto;
 
-  .preset-empty {
-    padding: 1rem;
-    text-align: center;
-    opacity: 0.5;
+  .ant-empty-image {
+    height: 5rem;
+  }
+
+  .ant-empty-description {
     font-size: 1.1rem;
+  }
+
+  .preset-empty {
+    svg {
+      width: 5rem;
+    }
   }
 
   .preset-item {
@@ -150,28 +144,21 @@ const DrawerSavePreset = styled.div`
       font-size: 1.1rem;
       background: ${({ theme }: { theme: ITheme }) =>
         theme?.colorBgTag || "rgba(0,0,0,0.06)"};
-      border: 1px solid
-        ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+      border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
       color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
     }
   }
 
   .preset-save-row {
     display: flex;
-    gap: 0.5rem;
+    gap: 1.5rem;
     align-items: center;
-
-    .preset-save-link {
-      white-space: nowrap;
-      font-size: 1.2rem;
-    }
   }
 `;
 
 const DrawerPresetSection = styled.div`
   margin-top: 1.5rem;
-  border-top: 1px solid
-    ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+  border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
   padding-top: 1.5rem;
 
   .preset-title {
@@ -180,11 +167,16 @@ const DrawerPresetSection = styled.div`
     margin-bottom: 1rem;
   }
 
+  .ant-empty-description {
+    font-size: 1.3rem;
+  }
+
   .preset-empty {
-    padding: 1.5rem;
-    text-align: center;
-    opacity: 0.5;
-    font-size: 1.2rem;
+    margin-top: 3rem;
+
+    svg {
+      width: 9rem;
+    }
   }
 
   .preset-item {
@@ -206,10 +198,14 @@ const DrawerPresetSection = styled.div`
 
     .preset-item-actions {
       display: flex;
-      gap: 0.8rem;
+      gap: 1.3rem;
       margin-left: 0.8rem;
       font-size: 1.1rem;
       flex-shrink: 0;
+
+      & > * {
+        cursor: pointer;
+      }
 
       .preset-action-delete {
         color: var(--color-error);
@@ -218,10 +214,54 @@ const DrawerPresetSection = styled.div`
   }
 `;
 
+const OptionWrapper = styled.div`
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    .name {
+      color: var(--color-text-hover);
+    }
+  }
+
+  .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 0.7rem;
+    margin-right: 1rem;
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+
+    .name {
+      font-size: 1.3rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+
+    .description {
+      font-size: 1rem;
+      font-weight: 400;
+      display: flex;
+    }
+  }
+`;
+
 export {
   ContextBarWrapper,
-  DropdownOption,
   PresetPopoverWrapper,
   DrawerSavePreset,
   DrawerPresetSection,
+  OptionWrapper,
 };
