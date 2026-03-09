@@ -297,14 +297,15 @@ const ContextBar = (props: any) => {
           placement="bottomLeft"
           content={
             <Input
-              size="small"
+              size="medium"
               value={tokenAddress}
               onChange={(event) =>
                 props?.actSaveTokenAddress(event.target.value)
               }
               placeholder={translate("agent.enterTokenAddress")}
-              style={{ width: "22rem" }}
+              style={{ width: "40rem", fontSize: "1.1rem" }}
               allowClear
+              className="custom-input"
             />
           }
         >
@@ -428,16 +429,18 @@ const ContextBar = (props: any) => {
             </div>
           )}
 
-          {listAgentSetting?.map((setting: IAgentSetting) => (
-            <PresetItem
-              key={setting.id}
-              setting={setting}
-              listNodeEndpointGroup={listNodeEndpointGroup}
-              listCampaign={listCampaign}
-              onLoad={onLoadPreset}
-              onDelete={onDeletePreset}
-            />
-          ))}
+          <div className="list-preset">
+            {listAgentSetting?.map((setting: IAgentSetting) => (
+              <PresetItem
+                key={setting.id}
+                setting={setting}
+                listNodeEndpointGroup={listNodeEndpointGroup}
+                listCampaign={listCampaign}
+                onLoad={onLoadPreset}
+                onDelete={onDeletePreset}
+              />
+            ))}
+          </div>
         </DrawerPresetSection>
       </Drawer>
     </Fragment>

@@ -63,6 +63,7 @@ const OptionWrapper = styled.div`
       font-weight: 500;
       display: flex;
       align-items: center;
+      transition: all 0.1s ease-in-out;
     }
 
     .description {

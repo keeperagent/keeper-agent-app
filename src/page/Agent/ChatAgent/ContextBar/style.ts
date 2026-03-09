@@ -20,8 +20,7 @@ const ContextBarWrapper = styled.div`
     font-size: 1.1rem;
     cursor: pointer;
     white-space: nowrap;
-    background: ${({ theme }: { theme: ITheme }) =>
-      theme?.colorBgTag || "rgba(0,0,0,0.06)"};
+    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
     border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
     transition: all 0.15s ease;
@@ -67,8 +66,7 @@ const ContextBarWrapper = styled.div`
       transition: all 0.15s ease;
 
       &:hover {
-        background: ${({ theme }: { theme: ITheme }) =>
-          theme?.colorBgTag || "rgba(0,0,0,0.06)"};
+        background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
       }
 
       svg {
@@ -109,8 +107,7 @@ const PresetPopoverWrapper = styled.div`
     transition: background 0.15s ease;
 
     &:hover {
-      background: ${({ theme }: { theme: ITheme }) =>
-        theme?.colorBgTag || "rgba(0,0,0,0.06)"};
+      background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
     }
 
     .preset-item-name {
@@ -126,15 +123,16 @@ const DrawerSavePreset = styled.div`
   margin-top: 1.5rem;
 
   .preset-save-label {
-    font-size: 1.2rem;
-    opacity: 0.65;
-    margin-bottom: 0.4rem;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 0.7rem;
   }
 
   .preset-summary {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: 0.5rem;
     margin-bottom: 0.6rem;
 
     & > span {
@@ -143,9 +141,10 @@ const DrawerSavePreset = styled.div`
       border-radius: var(--border-radius);
       font-size: 1.1rem;
       background: ${({ theme }: { theme: ITheme }) =>
-        theme?.colorBgTag || "rgba(0,0,0,0.06)"};
-      border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+        theme?.colorBgTransparentLight};
+      border: 1px solid
+        ${({ theme }: { theme: ITheme }) => theme?.colorBgTransparent};
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
     }
   }
 
@@ -161,6 +160,7 @@ const DrawerPresetSection = styled.div`
   margin-top: 1.5rem;
   border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
   padding-top: 1.5rem;
+  overflow-y: auto;
 
   .preset-title {
     font-size: 1.4rem;
@@ -178,6 +178,11 @@ const DrawerPresetSection = styled.div`
     svg {
       width: 9rem;
     }
+  }
+
+  .list-preset {
+    max-height: 43rem;
+    overflow-y: auto;
   }
 `;
 

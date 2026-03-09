@@ -25,6 +25,7 @@ const OptionWrapper = styled.div`
   .name {
     font-size: 1.3rem;
     font-weight: 500;
+    transition: all 0.1s ease-in-out;
   }
 
   .description {

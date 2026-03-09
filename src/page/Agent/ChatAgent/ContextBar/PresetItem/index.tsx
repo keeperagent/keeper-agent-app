@@ -59,6 +59,7 @@ const PresetItem = (props: PresetItemProps) => {
         title={translate("button.load")}
       >
         <div className="preset-item-name">{setting.name}</div>
+
         <div className="preset-item-detail">
           <span>{presetChain?.chainName || EMPTY_STRING}</span>
           <span>{presetNodeGroup?.name || EMPTY_STRING}</span>

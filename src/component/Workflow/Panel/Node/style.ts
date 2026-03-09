@@ -57,6 +57,7 @@ const NodeWrapper = styled.div`
     font-size: 1.1rem;
     font-weight: 600;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    transition: all 0.2s ease-in-out;
   }
 
   .drag {
