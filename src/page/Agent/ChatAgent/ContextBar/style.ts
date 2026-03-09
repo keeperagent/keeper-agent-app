@@ -137,7 +137,7 @@ const DrawerSavePreset = styled.div`
     gap: 0.4rem;
     margin-bottom: 0.6rem;
 
-    > span {
+    & > span {
       display: inline-block;
       padding: 0.5rem 1rem;
       border-radius: var(--border-radius);
@@ -153,6 +153,7 @@ const DrawerSavePreset = styled.div`
     display: flex;
     gap: 1.5rem;
     align-items: center;
+    margin-top: 1rem;
   }
 `;
 

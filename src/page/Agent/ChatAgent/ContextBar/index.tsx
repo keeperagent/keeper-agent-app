@@ -404,7 +404,7 @@ const ContextBar = (props: any) => {
 
             <div className="preset-save-row">
               <Input
-                size="medium"
+                size="large"
                 placeholder={translate("agent.presetName")}
                 value={drawerPresetName}
                 onChange={(event) => setDrawerPresetName(event.target.value)}
@@ -412,7 +412,7 @@ const ContextBar = (props: any) => {
                 className="custom-input"
               />
 
-              <Button onClick={onDrawerSavePreset} type="primary" size="small">
+              <Button onClick={onDrawerSavePreset} type="primary" size="middle">
                 {translate("button.save")}
               </Button>
             </div>
