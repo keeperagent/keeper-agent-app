@@ -309,7 +309,9 @@ class AgentChatBridge {
   private maybeFlushMemoryOnExit = async (
     session: AgentSession,
   ): Promise<void> => {
-    if (session.contextTokens === 0) return;
+    if (session.contextTokens === 0) {
+      return;
+    }
     try {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
@@ -321,7 +323,9 @@ class AgentChatBridge {
         session.platformChatId,
       );
       const allNew = [...messages, ...recentMessages];
-      if (allNew.length < MIN_MESSAGES_FOR_EXIT_FLUSH) return;
+      if (allNew.length < MIN_MESSAGES_FOR_EXIT_FLUSH) {
+        return;
+      }
       const conversationText = allNew
         .map(
           (msg) =>

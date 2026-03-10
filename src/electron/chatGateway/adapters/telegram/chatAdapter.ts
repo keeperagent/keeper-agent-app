@@ -1,6 +1,9 @@
 import type { Telegraf } from "telegraf";
 import { ChatPlatform } from "@/electron/chatGateway/types";
-import type { IChatAdapter, IPlatformMessage } from "@/electron/chatGateway/types";
+import type {
+  IChatAdapter,
+  IPlatformMessage,
+} from "@/electron/chatGateway/types";
 
 export type TelegramChatAdapter = IChatAdapter & {
   receive: (message: IPlatformMessage) => Promise<void>;
@@ -9,8 +12,9 @@ export type TelegramChatAdapter = IChatAdapter & {
 export const createTelegramChatAdapter = (
   telegramBot: Telegraf,
 ): TelegramChatAdapter => {
-  let messageHandler: ((message: IPlatformMessage) => void | Promise<void>) | null =
-    null;
+  let messageHandler:
+    | ((message: IPlatformMessage) => void | Promise<void>)
+    | null = null;
 
   return {
     platformId: ChatPlatform.TELEGRAM,

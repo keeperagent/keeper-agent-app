@@ -61,44 +61,24 @@ import { logEveryWhere } from "@/electron/service/util";
 import { agentChatBridge } from "@/electron/chatGateway/bridge";
 import { ChatPlatform, IPlatformMessage } from "@/electron/chatGateway/types";
 import { createTelegramChatAdapter } from "./chatAdapter";
-
-type IMarkUpInline = {
-  text: string;
-  callback_data: string;
-};
-
-type ITelegramRunSession = {
-  workflowId: string;
-  campaignId: string;
-  variables: Record<string, string>;
-  encryptKey?: string;
-  awaitingInput?: string;
-  createdAt: number;
-};
-
-const SESSION_TTL_MS = 10 * 60 * 1000;
-const AWAITING_ENCRYPT_KEY = "__encrypt_key__";
-const AWAITING_BATCH_VARIABLES = "__batch_variables__";
-const CAMPAIGN_PAGE_SIZE = 15;
-
-const escapeHtml = (text: string) =>
-  text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-const STATUS_REPORT_INTERVAL_MS = 15 * 1000;
-
-type ILastRunConfig = {
-  variables: Record<string, string>;
-  encryptKey?: string;
-};
-
-type ICampaignSearchContext = {
-  searchText?: string;
-  forAction: "run" | "list";
-};
+import {
+  IMarkUpInline,
+  ITelegramRunSession,
+  ILastRunConfig,
+  ICampaignSearchContext,
+  SESSION_TTL_MS,
+  AWAITING_ENCRYPT_KEY,
+  AWAITING_BATCH_VARIABLES,
+  CAMPAIGN_PAGE_SIZE,
+  STATUS_REPORT_INTERVAL_MS,
+  escapeHtml,
+  toSingleLineButtons,
+  parseIds,
+  buildAction,
+  cancelButton,
+  backButton,
+  getRegexAction,
+} from "./util";
 
 class TelegramBotService {
   private mapTelegramBot: Map<string, Telegraf>;
@@ -198,48 +178,6 @@ class TelegramBotService {
       parse_mode: "HTML",
       ...(markup && { reply_markup: { inline_keyboard: markup } }),
     });
-  };
-
-  private toSingleLineButtons = (inputMarkup: IMarkUpInline[]) => {
-    return inputMarkup.map((item) => [item]);
-  };
-
-  private parseIds = (callbackData: string) => {
-    const parts = callbackData.split("_");
-    return {
-      workflowId: parts[parts.length - 2],
-      campaignId: parts[parts.length - 1],
-    };
-  };
-
-  private buildAction = (
-    action: string,
-    workflowId: string,
-    campaignId: string,
-  ) => {
-    return `${action}${workflowId}_${campaignId}`;
-  };
-
-  private cancelButton = (workflowId: string, campaignId: string) => ({
-    text: "❌ Cancel",
-    callback_data: this.buildAction(
-      TELEGRAM_BOT.ACTION_CANCEL_RUN,
-      workflowId,
-      campaignId,
-    ),
-  });
-
-  private backButton = (
-    action: string,
-    workflowId: string,
-    campaignId: string,
-  ) => ({
-    text: "⬅️ Back",
-    callback_data: this.buildAction(action, workflowId, campaignId),
-  });
-
-  private getRegexAction = (action: string) => {
-    return new RegExp(`^${action}\\d+$`);
   };
 
   private getSession = (chatId?: number) => {
@@ -396,7 +334,7 @@ class TelegramBotService {
 
     const quickRunBtn = {
       text: "🚀 Quick run",
-      callback_data: this.buildAction(
+      callback_data: buildAction(
         TELEGRAM_BOT.ACTION_QUICK_RUN,
         workflowId,
         campaignId,
@@ -409,7 +347,7 @@ class TelegramBotService {
     const rerunBtn = lastRunConfig
       ? {
           text: "🔄 Re-run last settings",
-          callback_data: this.buildAction(
+          callback_data: buildAction(
             TELEGRAM_BOT.ACTION_RERUN,
             workflowId,
             campaignId,
@@ -444,7 +382,7 @@ class TelegramBotService {
               [
                 {
                   text: "✏️ Set variables",
-                  callback_data: this.buildAction(
+                  callback_data: buildAction(
                     TELEGRAM_BOT.ACTION_SET_VARIABLES,
                     workflowId,
                     campaignId,
@@ -452,7 +390,7 @@ class TelegramBotService {
                 },
                 {
                   text: "⏭️ Skip variables",
-                  callback_data: this.buildAction(
+                  callback_data: buildAction(
                     TELEGRAM_BOT.ACTION_SKIP_VARIABLES,
                     workflowId,
                     campaignId,
@@ -460,7 +398,7 @@ class TelegramBotService {
                 },
               ],
               shortcutRow,
-              [this.cancelButton(workflowId, campaignId)],
+              [cancelButton(workflowId, campaignId)],
             ],
           },
         },
@@ -478,7 +416,7 @@ class TelegramBotService {
             [
               {
                 text: "Enter secret key",
-                callback_data: this.buildAction(
+                callback_data: buildAction(
                   TELEGRAM_BOT.ACTION_ENTER_ENCRYPT_KEY + "_",
                   workflowId,
                   campaignId,
@@ -486,7 +424,7 @@ class TelegramBotService {
               },
               {
                 text: "Skip secret key",
-                callback_data: this.buildAction(
+                callback_data: buildAction(
                   TELEGRAM_BOT.ACTION_SKIP_ENCRYPT_KEY + "_",
                   workflowId,
                   campaignId,
@@ -494,7 +432,7 @@ class TelegramBotService {
               },
             ],
             shortcutRow,
-            [this.cancelButton(workflowId, campaignId)],
+            [cancelButton(workflowId, campaignId)],
           ],
         },
       });
@@ -523,11 +461,11 @@ class TelegramBotService {
       };
     });
 
-    const markup = this.toSingleLineButtons(buttons);
+    const markup = toSingleLineButtons(buttons);
     markup.push([
       {
         text: "📝 Set all at once",
-        callback_data: this.buildAction(
+        callback_data: buildAction(
           TELEGRAM_BOT.ACTION_SET_ALL_VARIABLES,
           workflowId,
           campaignId,
@@ -536,20 +474,16 @@ class TelegramBotService {
     ]);
 
     markup.push([
-      this.backButton(
-        TELEGRAM_BOT.ACTION_BACK_TO_STEP1,
-        workflowId,
-        campaignId,
-      ),
+      backButton(TELEGRAM_BOT.ACTION_BACK_TO_STEP1, workflowId, campaignId),
       {
         text: "▶️ Next step",
-        callback_data: this.buildAction(
+        callback_data: buildAction(
           TELEGRAM_BOT.ACTION_NEXT_STEP_VARIABLE,
           workflowId,
           campaignId,
         ),
       },
-      this.cancelButton(workflowId, campaignId),
+      cancelButton(workflowId, campaignId),
     ]);
 
     ctx.reply("Select a variable to set, or set all at once:", {
@@ -574,7 +508,7 @@ class TelegramBotService {
           [
             {
               text: "Enter secret key",
-              callback_data: this.buildAction(
+              callback_data: buildAction(
                 TELEGRAM_BOT.ACTION_ENTER_ENCRYPT_KEY + "_",
                 workflowId,
                 campaignId,
@@ -582,7 +516,7 @@ class TelegramBotService {
             },
             {
               text: "Skip secret key",
-              callback_data: this.buildAction(
+              callback_data: buildAction(
                 TELEGRAM_BOT.ACTION_SKIP_ENCRYPT_KEY + "_",
                 workflowId,
                 campaignId,
@@ -590,8 +524,8 @@ class TelegramBotService {
             },
           ],
           [
-            this.backButton(backTarget, workflowId, campaignId),
-            this.cancelButton(workflowId, campaignId),
+            backButton(backTarget, workflowId, campaignId),
+            cancelButton(workflowId, campaignId),
           ],
         ],
       },
@@ -628,7 +562,7 @@ class TelegramBotService {
       [
         {
           text: "🚀 Run now",
-          callback_data: this.buildAction(
+          callback_data: buildAction(
             TELEGRAM_BOT.ACTION_CONFIRM_RUN,
             workflowId,
             campaignId,
@@ -636,12 +570,8 @@ class TelegramBotService {
         },
       ],
       [
-        this.backButton(
-          TELEGRAM_BOT.ACTION_BACK_TO_ENCRYPT,
-          workflowId,
-          campaignId,
-        ),
-        this.cancelButton(workflowId, campaignId),
+        backButton(TELEGRAM_BOT.ACTION_BACK_TO_ENCRYPT, workflowId, campaignId),
+        cancelButton(workflowId, campaignId),
       ],
     ]);
   };
@@ -684,7 +614,7 @@ class TelegramBotService {
           callback_data:
             TELEGRAM_BOT.ACTION_RUN_A_CAMPAIGN + (item?.id?.toString() || ""),
         }));
-        const markup = this.toSingleLineButtons(buttons);
+        const markup = toSingleLineButtons(buttons);
 
         const navRow: IMarkUpInline[] = [];
         if (page > 1) {
@@ -707,7 +637,9 @@ class TelegramBotService {
           },
         ];
 
-        if (navRow.length > 0) markup.push(navRow);
+        if (navRow.length > 0) {
+          markup.push(navRow);
+        }
         markup.push(searchRow);
 
         const title = searchText
@@ -735,7 +667,9 @@ class TelegramBotService {
         }
 
         const markup: IMarkUpInline[][] = [];
-        if (navRow.length > 0) markup.push(navRow);
+        if (navRow.length > 0) {
+          markup.push(navRow);
+        }
         markup.push([
           {
             text: "🔍 Search campaign",
@@ -795,7 +729,7 @@ class TelegramBotService {
       this.replyMessage(
         ctx,
         "Select a workflow to run 🚀",
-        this.toSingleLineButtons(buttons),
+        toSingleLineButtons(buttons),
       );
     } catch {
       this.replyMessage(ctx, "An error occurred while running the campaign");
@@ -864,7 +798,7 @@ class TelegramBotService {
         this.runCampaign(ctx),
       );
       telegramBot.action(
-        this.getRegexAction(TELEGRAM_BOT.ACTION_RUN_A_CAMPAIGN),
+        getRegexAction(TELEGRAM_BOT.ACTION_RUN_A_CAMPAIGN),
         (ctx) => this.runACampaign(ctx),
       );
 
@@ -873,7 +807,9 @@ class TelegramBotService {
         await ctx.deleteMessage();
         const forAction = ctx.match[1] as "run" | "list";
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
 
         this.campaignSearchMap.set(chatId, { forAction });
         ctx.reply("Enter campaign name to search:");
@@ -894,9 +830,11 @@ class TelegramBotService {
       // Step 1: After selecting a workflow
       telegramBot.action(/^run_workflow_[0-9_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId, campaignId } = this.parseIds(ctx.match[0]);
+        const { workflowId, campaignId } = parseIds(ctx.match[0]);
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
 
         this.runSessionMap.set(chatId, {
           workflowId,
@@ -912,7 +850,9 @@ class TelegramBotService {
       telegramBot.action(/^quick_run_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
         const session = this.getSession(chatId);
         if (!session) return;
         await this.showConfirmation(ctx, chatId);
@@ -921,9 +861,11 @@ class TelegramBotService {
       // Re-run
       telegramBot.action(/^rerun_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId, campaignId } = this.parseIds(ctx.match[0]);
+        const { workflowId, campaignId } = parseIds(ctx.match[0]);
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
 
         const lastConfig = this.lastRunConfigMap.get(
           this.getLastRunKey(workflowId, campaignId),
@@ -950,9 +892,11 @@ class TelegramBotService {
       // Step 2a: Set variables
       telegramBot.action(/^set_variables_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId } = this.parseIds(ctx.match[0]);
+        const { workflowId } = parseIds(ctx.match[0]);
         const session = this.getSession(ctx.chat?.id);
-        if (!session) return;
+        if (!session) {
+          return;
+        }
 
         const { listVariable } = await this.getWorkflowVariables(workflowId);
         this.showVariableList(ctx, listVariable, session);
@@ -961,16 +905,18 @@ class TelegramBotService {
       // Step 2b: Skip variables
       telegramBot.action(/^skip_variables_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId, campaignId } = this.parseIds(ctx.match[0]);
+        const { workflowId, campaignId } = parseIds(ctx.match[0]);
         this.showEncryptKeyOptions(ctx, workflowId, campaignId);
       });
 
       // Step 2c: Set all variables at once
       telegramBot.action(/^set_all_var_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId } = this.parseIds(ctx.match[0]);
+        const { workflowId } = parseIds(ctx.match[0]);
         const session = this.getSession(ctx.chat?.id);
-        if (!session) return;
+        if (!session) {
+          return;
+        }
 
         const { listVariable } = await this.getWorkflowVariables(workflowId);
         const example = listVariable
@@ -986,12 +932,12 @@ class TelegramBotService {
           `Enter all variables, one per line:\n<code>${example}</code>`,
           [
             [
-              this.backButton(
+              backButton(
                 TELEGRAM_BOT.ACTION_BACK_TO_VARLIST,
                 session.workflowId,
                 session.campaignId,
               ),
-              this.cancelButton(session.workflowId, session.campaignId),
+              cancelButton(session.workflowId, session.campaignId),
             ],
           ],
         );
@@ -1007,7 +953,9 @@ class TelegramBotService {
         const variableName = withoutPrefix.split("_").slice(0, -2).join("_");
 
         const session = this.getSession(ctx.chat?.id);
-        if (!session) return;
+        if (!session) {
+          return;
+        }
 
         session.awaitingInput = variableName;
         this.replyHTML(
@@ -1015,12 +963,12 @@ class TelegramBotService {
           `Enter value for variable "<b>${variableName}</b>":`,
           [
             [
-              this.backButton(
+              backButton(
                 TELEGRAM_BOT.ACTION_BACK_TO_VARLIST,
                 session.workflowId,
                 session.campaignId,
               ),
-              this.cancelButton(session.workflowId, session.campaignId),
+              cancelButton(session.workflowId, session.campaignId),
             ],
           ],
         );
@@ -1029,9 +977,11 @@ class TelegramBotService {
       // Next step -> secret key
       telegramBot.action(/^next_step_var_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId, campaignId } = this.parseIds(ctx.match[0]);
+        const { workflowId, campaignId } = parseIds(ctx.match[0]);
         const session = this.getSession(ctx.chat?.id);
-        if (session) session.awaitingInput = undefined;
+        if (session) {
+          session.awaitingInput = undefined;
+        }
         this.showEncryptKeyOptions(ctx, workflowId, campaignId);
       });
 
@@ -1045,9 +995,11 @@ class TelegramBotService {
           await ctx.deleteMessage();
           const callbackData = ctx.match[0];
           const chatId = ctx.chat?.id;
-          if (!chatId) return;
+          if (!chatId) {
+            return;
+          }
 
-          const { workflowId, campaignId } = this.parseIds(callbackData);
+          const { workflowId, campaignId } = parseIds(callbackData);
 
           if (!this.getSession(chatId)) {
             this.runSessionMap.set(chatId, {
@@ -1065,12 +1017,12 @@ class TelegramBotService {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    this.backButton(
+                    backButton(
                       TELEGRAM_BOT.ACTION_BACK_TO_ENCRYPT,
                       workflowId,
                       campaignId,
                     ),
-                    this.cancelButton(workflowId, campaignId),
+                    cancelButton(workflowId, campaignId),
                   ],
                 ],
               },
@@ -1085,7 +1037,9 @@ class TelegramBotService {
       telegramBot.action(/^confirm_run_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
 
         const session = this.getSession(chatId);
         if (!session) {
@@ -1152,26 +1106,34 @@ class TelegramBotService {
       // Step 4b: Cancel
       telegramBot.action(/^cancel_run_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        if (ctx.chat?.id) this.runSessionMap.delete(ctx.chat.id);
+        if (ctx.chat?.id) {
+          this.runSessionMap.delete(ctx.chat.id);
+        }
         this.replyMessage(ctx, "Run cancelled.");
       });
 
       // Back navigation
       telegramBot.action(/^back_step1_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId, campaignId } = this.parseIds(ctx.match[0]);
+        const { workflowId, campaignId } = parseIds(ctx.match[0]);
         const session = this.getSession(ctx.chat?.id);
-        if (session) session.awaitingInput = undefined;
+        if (session) {
+          session.awaitingInput = undefined;
+        }
         await this.showStep1(ctx, workflowId, campaignId);
       });
 
       telegramBot.action(/^back_varlist_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId } = this.parseIds(ctx.match[0]);
+        const { workflowId } = parseIds(ctx.match[0]);
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
         const session = this.getSession(chatId);
-        if (!session) return;
+        if (!session) {
+          return;
+        }
         session.awaitingInput = undefined;
         const { listVariable } = await this.getWorkflowVariables(workflowId);
         this.showVariableList(ctx, listVariable, session);
@@ -1179,16 +1141,20 @@ class TelegramBotService {
 
       telegramBot.action(/^back_encrypt_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
-        const { workflowId, campaignId } = this.parseIds(ctx.match[0]);
+        const { workflowId, campaignId } = parseIds(ctx.match[0]);
         const session = this.getSession(ctx.chat?.id);
-        if (session) session.awaitingInput = undefined;
+        if (session) {
+          session.awaitingInput = undefined;
+        }
         await this.showEncryptKeyOptions(ctx, workflowId, campaignId);
       });
 
       // Text input handler
       telegramBot.on("text", async (ctx) => {
         const chatId = ctx.chat?.id;
-        if (!chatId) return;
+        if (!chatId) {
+          return;
+        }
 
         const inputText = ctx.message.text;
 
