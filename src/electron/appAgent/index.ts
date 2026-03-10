@@ -110,11 +110,16 @@ When the user wants to SELL tokens for a USD amount (e.g. "sell $10 worth"):
 
 ## Rules
 - On tool failure: try ONE alternative, then report to user.
-- Swap/transfer confirmations MUST use markdown table (Field|Value), not bullet points.
+- Swap/transfer confirmations MUST use structured format (table or labeled fields), not bullet points.
 - CRITICAL: After the user confirms a swap/transfer, you MUST delegate execution to the transaction subagent via the \`task\` tool. NEVER pretend the transaction is executing or generate fake results — always call the actual tool.
 - When the user asks how to use any capability: delegate to the relevant subagent to explain the tool's parameters and usage. Do NOT answer from general knowledge — describe YOUR tools, not external websites or UIs.
 - When displaying results from subagents, always apply the Solana link format rules above. Reformat any raw addresses or tx hashes into shortened Solscan links.
-- Keep responses concise. Prefer markdown tables over long lists or bullet points when presenting structured information.`;
+- Keep responses concise.
+
+## Output format
+Adapt output based on the "platformId" field in the CURRENT CONTEXT of each message:
+- TELEGRAM: Use Telegram HTML tags only — never use Markdown syntax.
+- KEEPER: Use Markdown. Prefer markdown tables over long lists or bullet points when presenting structured information.`;
 };
 
 /**

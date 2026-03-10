@@ -1,5 +1,5 @@
 import { ipcMain } from "electron";
-import { telegramBotService } from "@/electron/service/telegramBot";
+import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { MESSAGE } from "@/electron/constant";
 
 export const telegramController = () => {

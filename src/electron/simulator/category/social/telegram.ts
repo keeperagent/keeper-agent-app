@@ -6,7 +6,7 @@ import {
   IFlowProfile,
 } from "@/electron/type";
 import { getActualValue, processSkipSetting } from "@/electron/simulator/util";
-import { telegramBotService } from "@/electron/service/telegramBot";
+import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 
 export class Telegram {
   private listRunningClient: TelegramClient[];

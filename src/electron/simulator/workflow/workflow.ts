@@ -38,7 +38,7 @@ import {
   NODE_ACTION,
 } from "@/electron/simulator/constant";
 import { preferenceDB } from "@/electron/database/preference";
-import { telegramBotService } from "@/electron/service/telegramBot";
+import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { LOG_TYPE } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { mainWindow } from "@/electron/main";

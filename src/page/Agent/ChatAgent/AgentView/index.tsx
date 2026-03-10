@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, getToolDisplayName } from "@/electron/constant";
+import { ChatPlatform } from "@/electron/chatGateway/types";
 import { connect } from "react-redux";
 import { Alert, Button, Input, message, Tooltip } from "antd";
 import copy from "copy-to-clipboard";
@@ -25,36 +26,6 @@ import {
 } from "@/component/Icon";
 import AttachedFiles, { type AttachedFile } from "./AttachedFiles";
 import { actSetLayoutMode, AGENT_LAYOUT_MODE } from "@/redux/agent";
-
-const TOOL_DISPLAY_NAMES: Record<string, string> = {
-  // Subagent names
-  app_management_agent: "App Management subagent",
-  transaction_agent: "Transaction subagent",
-  code_execution_agent: "Code Execution subagent",
-
-  // Tool names
-  swap_on_jupiter: "Swap on Jupiter",
-  swap_on_kyberswap: "Swap on KyberSwap",
-  transfer_solana_token: "Transfer Solana token",
-  get_solana_token_balance: "Get Solana token balance",
-  get_evm_token_balance: "Get EVM token balance",
-  get_token_price: "Get token price",
-  launch_pumpfun_token: "Launch Pump.fun token",
-  launch_bonkfun_token: "Launch Bonk.fun token",
-  create_wallet_group: "Create wallet group",
-  generate_wallets_for_group: "Generate wallets",
-  create_profile_group_with_profiles: "Create profile group",
-  create_campaign_for_profile_group: "Create campaign",
-  create_node_provider_group: "Create node provider group",
-  execute_javascript: "Execute JavaScript",
-  execute_python: "Execute Python",
-  read_file: "Read file",
-  write_file: "Write file",
-};
-
-const getToolDisplayName = (toolName: string): string =>
-  TOOL_DISPLAY_NAMES[toolName] ||
-  toolName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 /** Absolute path for backend. Uses Electron getPathForFile when available (pick/drop). */
 const getFilePath = (file: File): string => {
@@ -551,6 +522,7 @@ const AgentView = (props: any) => {
     }
 
     const context = {
+      platformId: ChatPlatform.KEEPER,
       chainKey,
       tokenAddress,
       nodeEndpointGroupId,

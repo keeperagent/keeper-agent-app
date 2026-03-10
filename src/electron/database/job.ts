@@ -12,7 +12,7 @@ import { IJob } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { encryptionService } from "@/electron/service/encrypt";
 import { formatJob } from "@/electron/service/formatData";
-import { telegramBotService } from "@/electron/service/telegramBot";
+import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { preferenceDB } from "./preference";
 import { campaignProfileDB } from "./campaignProfile";
 

@@ -28,7 +28,7 @@ import { runJobController } from "./controller/job";
 import { runScheduleLogController } from "./controller/scheduleLog";
 import { masterPasswordController } from "./controller/masterPassword";
 import { runSecretKeyController } from "./controller/secretKeyCache";
-import { telegramBotService } from "./service/telegramBot";
+import { telegramBotService } from "./chatGateway/adapters/telegram";
 import { scheduleManager } from "./schedule";
 import { searchController } from "./controller/search";
 import { agentController } from "./controller/appAgent";
