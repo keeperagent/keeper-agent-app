@@ -742,9 +742,6 @@ class AgentChatBridge {
     adapter: IChatAdapter,
     message: IPlatformMessage,
   ) => {
-    logEveryWhere({
-      message: `[AgentChatBridge] Incoming message from ${adapter.platformId}:${message.chatId}: "${message.text.slice(0, 50)}"`,
-    });
     const sessionKey = this.sessionKey(adapter.platformId, message.chatId);
 
     // Create session on first message if it doesn't exist
