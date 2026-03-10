@@ -1,13 +1,53 @@
 /*
- TelegramBotService — Remote campaign runner + agent chat via Telegram bot.
- 
+  TelegramBotService — Remote campaign runner via Telegram bot.
+
   Commands:
     /connect  — Link the bot to a chat by saving the chat ID.
     /campaign — List all campaigns (paginated, 15 per page, with search).
-    /run      — Start the guided workflow-run flow.
+    /run      — Start the guided workflow-run flow (see steps below).
     /stop     — Stop the currently running workflow.
+
+  Campaign list & search:
+    - Both /campaign and /run show paginated results (15 per page).
+    - "Search campaign" button prompts the user to type a campaign name.
+    - Prev/Next buttons navigate between pages.
+
+  Run-workflow flow (4 steps):
+
+    Step 1 – Select workflow & choose path
+      User picks a campaign → picks a workflow → sees options:
+        • "Set variables" → go to Step 2a
+        • "Skip variables" → go to Step 3
+        • "Quick run"      → skip everything, go to Step 4 (confirm)
+        • "Re-run"         → restore last run config, go to Step 4
+
+    Step 2 – Set workflow variables
+      a) One at a time  — pick a variable, type a value.
+      b) Set all at once — send `varName=value` lines in one message.
+      c) Skip / Next step → go to Step 3.
+
+    Step 3 – Secret key (optional)
+      User can enter a secret key or skip it → go to Step 4.
+
+    Step 4 – Confirm & run
+      Shows a summary (campaign, workflow, variables, secret key).
+      "Run now" sends the config to the renderer via IPC and saves
+      it for future re-runs. "Cancel" aborts the flow.
+
+  Status reporting:
+    - After a workflow starts via Telegram, a periodic status report is sent
+      every 15 seconds showing progress (completed/total profiles).
+    - When the workflow completes, a final completion message is sent.
+    - Status monitoring stops on workflow completion or /stop command.
+
+  Session management:
+    - Each chat gets one ITelegramRunSession stored in runSessionMap.
+    - Sessions expire after 10 minutes (SESSION_TTL_MS).
+    - Expired sessions are cleaned up every 5 minutes.
+    - Last-run configs are kept in lastRunConfigMap for the "Re-run" shortcut.
+
   Regular chat messages (not a command or workflow input) are forwarded to the KeeperAgent via AgentChatBridge.
- */
+*/
 
 import { Telegraf } from "telegraf";
 import { preferenceDB } from "@/electron/database/preference";
