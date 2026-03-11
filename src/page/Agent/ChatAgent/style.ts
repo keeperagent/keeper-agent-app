@@ -53,7 +53,7 @@ const PageWrapper = styled.div`
     }
 
     .resizer {
-      flex: 0 0 0.1rem;
+      flex: 0 0 1px;
       cursor: col-resize;
       background: ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
       color: ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
@@ -86,6 +86,10 @@ const PageWrapper = styled.div`
       background: ${({ theme }: { theme: ITheme }) =>
         theme?.colorTextSecondary};
       color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+      box-shadow:
+        0.5px 0 0 ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary},
+        -0.5px 0 0
+          ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
     }
 
     &.only-chat {

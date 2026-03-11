@@ -1,7 +1,7 @@
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { preferenceDB } from "@/electron/database/preference";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
-import { triggerWhenUnlock } from "@/electron/service/masterPassword";
+import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import {
   IpcSetupMasterPasswordPayload,
   IpcVerifyMasterPasswordPayload,
@@ -56,7 +56,7 @@ export const masterPasswordController = () => {
       });
 
       masterPasswordManager.setMasterPassword(passwordBuffer);
-      triggerWhenUnlock();
+      telegramBotService.start();
 
       event.reply(MESSAGE.SETUP_MASTER_PASSWORD_RES, {
         code: RESPONSE_CODE.SUCCESS,
@@ -107,7 +107,7 @@ export const masterPasswordController = () => {
 
       const passwordBuffer = masterPasswordManager.derivePassword(password);
       masterPasswordManager.setMasterPassword(passwordBuffer);
-      triggerWhenUnlock();
+      telegramBotService.start();
 
       event.reply(MESSAGE.VERIFY_MASTER_PASSWORD_RES, {
         code: RESPONSE_CODE.SUCCESS,
@@ -164,7 +164,7 @@ export const masterPasswordController = () => {
       }
 
       masterPasswordManager.setMasterPassword(passwordBuffer);
-      triggerWhenUnlock();
+      telegramBotService.start();
 
       event.reply(MESSAGE.RESET_MASTER_PASSWORD_RES, {
         code: RESPONSE_CODE.SUCCESS,

@@ -305,6 +305,7 @@ const ContextBar = (props: any) => {
               placeholder={translate("agent.enterTokenAddress")}
               style={{ width: "40rem", fontSize: "1.1rem" }}
               allowClear
+              autoFocus
               className="custom-input"
             />
           }

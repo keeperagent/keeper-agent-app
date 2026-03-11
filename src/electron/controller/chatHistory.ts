@@ -1,5 +1,6 @@
 import { MESSAGE } from "@/electron/constant";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
+import { ChatPlatform } from "@/electron/chatGateway/types";
 import type {
   IpcChatHistorySaveMessagePayload,
   IpcChatHistoryLoadPayload,
@@ -16,6 +17,8 @@ export const chatHistoryController = () => {
         role: role || "",
         content: content || "",
         timestamp: timestamp || Date.now(),
+        platformId: ChatPlatform.KEEPER,
+        platformChatId: "default",
       });
       event.reply(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE_RES, {
         data,
@@ -29,7 +32,11 @@ export const chatHistoryController = () => {
     MESSAGE.CHAT_HISTORY_LOAD_RES,
     async (event, payload) => {
       const { limit } = payload || {};
-      const [data, err] = await chatHistoryDB.getRecentMessages(limit);
+      const [data, err] = await chatHistoryDB.getRecentMessages(
+        limit,
+        ChatPlatform.KEEPER,
+        "default",
+      );
       event.reply(MESSAGE.CHAT_HISTORY_LOAD_RES, {
         data,
         error: err?.message,
@@ -41,7 +48,10 @@ export const chatHistoryController = () => {
     MESSAGE.CHAT_HISTORY_CLEAR,
     MESSAGE.CHAT_HISTORY_CLEAR_RES,
     async (event) => {
-      const [data, err] = await chatHistoryDB.clearHistory();
+      const [data, err] = await chatHistoryDB.clearHistory(
+        ChatPlatform.KEEPER,
+        "default",
+      );
       event.reply(MESSAGE.CHAT_HISTORY_CLEAR_RES, {
         data,
         error: err?.message,

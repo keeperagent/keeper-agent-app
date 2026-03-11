@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { telegramBotService } from "./telegramBot";
 
 const PBKDF2_ITERATIONS = 600_000;
 const KEY_LENGTH = 32; // 256 bits
@@ -102,10 +101,5 @@ export class MasterPasswordManager {
     );
   };
 }
-
-// other services that need decrypted data to be ready to use
-export const triggerWhenUnlock = (): void => {
-  telegramBotService.start();
-};
 
 export const masterPasswordManager = new MasterPasswordManager();

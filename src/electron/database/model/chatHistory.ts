@@ -1,4 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
+import { ChatPlatform } from "@/electron/chatGateway/types";
 
 export default (db: Sequelize) =>
   db.define(
@@ -25,8 +26,7 @@ export default (db: Sequelize) =>
         allowNull: false,
         defaultValue: false,
       },
-      // The id of the last non-summary message included in this summary.
-      // Used to know which messages are "already summarised" vs still verbatim.
+      // The id of the last non-summary message included in this summary
       summaryUpTo: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -35,6 +35,16 @@ export default (db: Sequelize) =>
       timestamp: {
         type: DataTypes.INTEGER,
         allowNull: false,
+      },
+      platformId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: ChatPlatform.KEEPER,
+      },
+      platformChatId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "",
       },
     },
     {

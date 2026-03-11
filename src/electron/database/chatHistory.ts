@@ -1,19 +1,11 @@
 import { Op } from "sequelize";
-import { ChatHistoryModel } from "./index";
 import { logEveryWhere } from "@/electron/service/util";
-
-export type ChatMessage = {
-  id?: number;
-  role: string;
-  content: string;
-  isSummary?: boolean;
-  summaryUpTo?: number | null;
-  timestamp: number;
-};
+import { ChatPlatform, IChatMessage } from "@/electron/chatGateway/types";
+import { ChatHistoryModel } from "./index";
 
 type AgentContext = {
-  summary: ChatMessage | null;
-  messages: ChatMessage[];
+  summary: IChatMessage | null;
+  messages: IChatMessage[];
 };
 
 // How many messages to return for UI display
@@ -23,13 +15,15 @@ export const AGENT_CONTEXT_LIMIT = 20;
 
 class ChatHistoryDB {
   async saveMessage(
-    msg: Omit<ChatMessage, "id">,
-  ): Promise<[ChatMessage | null, Error | null]> {
+    msg: IChatMessage,
+  ): Promise<[IChatMessage | null, Error | null]> {
     try {
       const data = await ChatHistoryModel.create({ ...msg });
-      return [data.toJSON() as ChatMessage, null];
+      return [data.toJSON() as IChatMessage, null];
     } catch (err: any) {
-      logEveryWhere({ message: `ChatHistoryDB.saveMessage error: ${err?.message}` });
+      logEveryWhere({
+        message: `ChatHistoryDB.saveMessage error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -37,18 +31,26 @@ class ChatHistoryDB {
   /** Returns the last `limit` human/ai messages sorted oldest→newest for UI display. */
   async getRecentMessages(
     limit = RECENT_MESSAGES_LIMIT,
-  ): Promise<[ChatMessage[], Error | null]> {
+    platformId: ChatPlatform,
+    platformChatId: string,
+  ): Promise<[IChatMessage[], Error | null]> {
     try {
       const rows = await ChatHistoryModel.findAll({
-        where: { isSummary: false },
+        where: {
+          isSummary: false,
+          platformId,
+          platformChatId,
+        },
         order: [["timestamp", "DESC"]],
         limit,
         raw: true,
       });
       // Reverse so the UI gets oldest-first order
-      return [(rows as any[]).reverse() as ChatMessage[], null];
+      return [(rows as any[]).reverse() as IChatMessage[], null];
     } catch (err: any) {
-      logEveryWhere({ message: `ChatHistoryDB.getRecentMessages error: ${err?.message}` });
+      logEveryWhere({
+        message: `ChatHistoryDB.getRecentMessages error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -58,10 +60,13 @@ class ChatHistoryDB {
    * - the latest summary (if any) covering older messages
    * - the most recent AGENT_CONTEXT_LIMIT verbatim messages after the summary cutoff
    */
-  async getAgentContext(): Promise<[AgentContext, Error | null]> {
+  async getAgentContext(
+    platformId: ChatPlatform,
+    platformChatId: string,
+  ): Promise<[AgentContext, Error | null]> {
     try {
       const summaryRow = (await ChatHistoryModel.findOne({
-        where: { isSummary: true },
+        where: { isSummary: true, platformId, platformChatId },
         order: [["timestamp", "DESC"]],
         raw: true,
       })) as any;
@@ -71,6 +76,8 @@ class ChatHistoryDB {
       const recentRows = await ChatHistoryModel.findAll({
         where: {
           isSummary: false,
+          platformId,
+          platformChatId,
           ...(summaryUpTo > 0 ? { id: { [Op.gt]: summaryUpTo } } : {}),
         },
         order: [["timestamp", "DESC"]],
@@ -79,17 +86,19 @@ class ChatHistoryDB {
       });
 
       // Reverse so the agent receives messages in chronological (oldest-first) order
-      const messages = (recentRows as any[] as ChatMessage[]).reverse();
+      const messages = (recentRows as any[] as IChatMessage[]).reverse();
 
       return [
         {
-          summary: summaryRow ? (summaryRow as ChatMessage) : null,
+          summary: summaryRow ? (summaryRow as IChatMessage) : null,
           messages,
         },
         null,
       ];
     } catch (err: any) {
-      logEveryWhere({ message: `ChatHistoryDB.getAgentContext error: ${err?.message}` });
+      logEveryWhere({
+        message: `ChatHistoryDB.getAgentContext error: ${err?.message}`,
+      });
       return [{ summary: null, messages: [] }, err];
     }
   }
@@ -99,10 +108,13 @@ class ChatHistoryDB {
    * Returns all unsummarised messages up to (but not including) the most recent
    * AGENT_CONTEXT_LIMIT messages, so fresh context remains verbatim.
    */
-  async getMessagesForSummarization(): Promise<[ChatMessage[], Error | null]> {
+  async getMessagesForSummarization(
+    platformId: ChatPlatform,
+    platformChatId: string,
+  ): Promise<[IChatMessage[], Error | null]> {
     try {
       const summaryRow = (await ChatHistoryModel.findOne({
-        where: { isSummary: true },
+        where: { isSummary: true, platformId, platformChatId },
         order: [["timestamp", "DESC"]],
         raw: true,
       })) as any;
@@ -113,11 +125,13 @@ class ChatHistoryDB {
       const allRows = (await ChatHistoryModel.findAll({
         where: {
           isSummary: false,
+          platformId,
+          platformChatId,
           ...(summaryUpTo > 0 ? { id: { [Op.gt]: summaryUpTo } } : {}),
         },
         order: [["timestamp", "ASC"]],
         raw: true,
-      })) as any[] as ChatMessage[];
+      })) as any[] as IChatMessage[];
 
       // Keep the most recent AGENT_CONTEXT_LIMIT messages verbatim — summarise everything older
       const toSummarize = allRows.slice(0, -AGENT_CONTEXT_LIMIT);
@@ -134,38 +148,60 @@ class ChatHistoryDB {
   async saveSummary(
     content: string,
     summaryUpTo: number,
-  ): Promise<[ChatMessage | null, Error | null]> {
+    platformId: ChatPlatform,
+    platformChatId: string,
+  ): Promise<[IChatMessage | null, Error | null]> {
     try {
-      await ChatHistoryModel.destroy({ where: { isSummary: true } });
+      await ChatHistoryModel.destroy({
+        where: { isSummary: true, platformId, platformChatId },
+      });
       const data = await ChatHistoryModel.create({
         role: "summary",
         content,
         isSummary: true,
         summaryUpTo,
         timestamp: Date.now(),
+        platformId,
+        platformChatId,
       });
-      return [data.toJSON() as ChatMessage, null];
+      return [data.toJSON() as IChatMessage, null];
     } catch (err: any) {
-      logEveryWhere({ message: `ChatHistoryDB.saveSummary error: ${err?.message}` });
+      logEveryWhere({
+        message: `ChatHistoryDB.saveSummary error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 
-  async clearHistory(): Promise<[number | null, Error | null]> {
+  async clearHistory(
+    platformId: ChatPlatform,
+    platformChatId: string,
+  ): Promise<[number | null, Error | null]> {
     try {
-      const count = await ChatHistoryModel.destroy({ where: {} });
+      const count = await ChatHistoryModel.destroy({
+        where: { platformId, platformChatId },
+      });
       return [count, null];
     } catch (err: any) {
-      logEveryWhere({ message: `ChatHistoryDB.clearHistory error: ${err?.message}` });
+      logEveryWhere({
+        message: `ChatHistoryDB.clearHistory error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 
   /** Returns the id of the last non-summary message. Used as the summaryUpTo cutoff. */
-  async getLastMessageId(): Promise<number | null> {
+  async getLastMessageId(
+    platformId: ChatPlatform,
+    platformChatId: string,
+  ): Promise<number | null> {
     try {
       const row = (await ChatHistoryModel.findOne({
-        where: { isSummary: false },
+        where: {
+          isSummary: false,
+          platformId,
+          platformChatId,
+        },
         order: [["id", "DESC"]],
         attributes: ["id"],
         raw: true,

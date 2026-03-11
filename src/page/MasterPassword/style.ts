@@ -11,7 +11,7 @@ const MasterPasswordPageWrapper = styled.div`
   align-items: center;
   background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
   position: relative;
-  overflow-y: auto;
+  overflow: hidden;
 
   .main {
     display: flex;
@@ -47,8 +47,8 @@ const MasterPasswordPageWrapper = styled.div`
     position: absolute;
     width: 100%;
     height: 100%;
-    top: 0;
-    left: 0;
+    top: 2rem;
+    left: 2rem;
     background-image: url("../../asset/dot-bg-1.png");
     background-size: contain;
   }
