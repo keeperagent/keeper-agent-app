@@ -135,6 +135,7 @@ const normalizeLlmErrorMessage = (raw: string): string => {
 class AgentChatBridge {
   private sessions = new Map<string, AgentSession>();
   private abortControllers = new Map<string, AbortController>();
+  private activeRuns = new Set<string>();
   private adapters = new Map<string, IChatAdapter>();
 
   //  Pre-warmed session created at startup, claimed by the first IPC call.
@@ -481,6 +482,11 @@ class AgentChatBridge {
       success: boolean;
     }> = [];
 
+    if (this.activeRuns.has(sessionId)) {
+      throw new Error("Run already in progress for this session");
+    }
+    this.activeRuns.add(sessionId);
+
     const abortController = new AbortController();
     this.abortControllers.set(sessionId, abortController);
 
@@ -592,8 +598,6 @@ class AgentChatBridge {
         }
       }
 
-      this.abortControllers.delete(sessionId);
-
       if (abortController.signal.aborted) {
         return { output: finalOutput, steps, stopped: true };
       }
@@ -602,8 +606,6 @@ class AgentChatBridge {
       this.postRunCompaction(sessionId, session);
       return { output: finalOutput, steps };
     } catch (err: any) {
-      this.abortControllers.delete(sessionId);
-
       if (abortController.signal.aborted) {
         return { output: finalOutput, steps, stopped: true };
       }
@@ -619,6 +621,9 @@ class AgentChatBridge {
         : `Error: ${errorMsg}`;
 
       return { output: errorOutput, steps, isError: true, errorMsg };
+    } finally {
+      this.activeRuns.delete(sessionId);
+      this.abortControllers.delete(sessionId);
     }
   };
 
