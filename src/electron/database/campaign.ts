@@ -118,7 +118,9 @@ class CampaignDB {
       listData = listData?.map((item: Model<any, any>) => formatCampaign(item));
       return [listData, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListCampaignByWorkflowId() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListCampaignByWorkflowId() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -199,7 +201,9 @@ class CampaignDB {
 
       return [formatCampaign(campaign), null];
     } catch (err: any) {
-      logEveryWhere({ message: `createCampaign() error: ${err?.message ?? err}` });
+      logEveryWhere({
+        message: `createCampaign() error: ${err?.message ?? err}`,
+      });
       return [null, err];
     }
   }
@@ -231,7 +235,9 @@ class CampaignDB {
 
       return this.getOneCampaign(data?.id!);
     } catch (err: any) {
-      logEveryWhere({ message: `updateCampaign() error: ${err?.message ?? err}` });
+      logEveryWhere({
+        message: `updateCampaign() error: ${err?.message ?? err}`,
+      });
       return [null, err];
     }
   }
@@ -243,10 +249,31 @@ class CampaignDB {
       const data = await CampaignModel.destroy({ where: { id: listID } });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteCampaign() error: ${err?.message ?? err}` });
+      logEveryWhere({
+        message: `deleteCampaign() error: ${err?.message ?? err}`,
+      });
       return [null, err];
     }
   }
+
+  getListCampaignByProfileGroupId = async (
+    listProfileGroupId: number[],
+  ): Promise<[ICampaign[], Error | null]> => {
+    try {
+      let listData: any = await CampaignModel.findAll({
+        where: { profileGroupId: { [Op.in]: listProfileGroupId } },
+        raw: false,
+      });
+      listData = listData?.map((item: Model<any, any>) => formatCampaign(item));
+
+      return [listData, null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getListCampaignByProfileGroupId() error: ${err?.message}`,
+      });
+      return [[], err];
+    }
+  };
 }
 
 const campaignDB = new CampaignDB();

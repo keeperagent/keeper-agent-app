@@ -1,6 +1,7 @@
 import { walletGroupDB } from "@/electron/database/walletGroup";
+import _ from "lodash";
 import { walletDB } from "@/electron/database/wallet";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, PROFILE_TYPE } from "@/electron/constant";
 import { onIpc } from "./helpers";
 import type {
   IpcGetListWalletGroupPayload,
@@ -10,6 +11,9 @@ import type {
   IpcDeletePayload,
   IpcGetWalletGroupDependencyPayload,
 } from "@/electron/ipcTypes";
+import { profileGroupDB } from "../database/profileGroup";
+import { campaignDB } from "../database/campaign";
+import { IProfileGroup, IWalletGroup } from "../type";
 
 export const runWalletGroupController = () => {
   onIpc<IpcGetListWalletGroupPayload>(
@@ -17,12 +21,45 @@ export const runWalletGroupController = () => {
     MESSAGE.GET_LIST_WALLET_GROUP_RES,
     async (event, payload) => {
       const { page, pageSize, searchText, sortField } = payload;
-      const [res] = await walletGroupDB.getListWalletGroup(
+      let [res] = await walletGroupDB.getListWalletGroup(
         page,
         pageSize,
         searchText,
         sortField,
       );
+
+      const listWalletGroup = res?.data || [];
+      const listWalletGroupId =
+        listWalletGroup?.map((walletGroup: IWalletGroup) => walletGroup?.id!) ||
+        [];
+      const [mapProfileGroupDependency] =
+        await walletGroupDB.getWalletGroupDependency(listWalletGroupId);
+      listWalletGroup?.forEach((walletGroup: IWalletGroup) => {
+        let listProfileGroupUseWalletGroup: IProfileGroup[] = [];
+
+        const listProfileGroup =
+          mapProfileGroupDependency[walletGroup?.id!]?.listProfileGroup || [];
+        listProfileGroup?.forEach((profileGroup: IProfileGroup) => {
+          if (profileGroup?.walletGroupId === walletGroup?.id) {
+            listProfileGroupUseWalletGroup.push(profileGroup);
+          }
+        });
+        listProfileGroupUseWalletGroup = _.sortBy(
+          listProfileGroupUseWalletGroup,
+          "createAt",
+        );
+
+        walletGroup.listProfileGroup = listProfileGroupUseWalletGroup;
+      });
+
+      res = {
+        data: listWalletGroup,
+        totalData: res?.totalData || 0,
+        totalPage: res?.totalPage || 0,
+        page: res?.page || 0,
+        pageSize: res?.pageSize || 0,
+      };
+
       event.reply(MESSAGE.GET_LIST_WALLET_GROUP_RES, {
         data: res,
       });
@@ -47,6 +84,22 @@ export const runWalletGroupController = () => {
     MESSAGE.CREATE_WALLET_GROUP_RES,
     async (event, payload) => {
       const [res] = await walletGroupDB.createWalletGroup(payload?.data);
+      if (payload?.isQuickMapCampaign) {
+        const [profileGroup] = await profileGroupDB.createProfileGroup({
+          walletGroupId: res?.id,
+          name: res?.name || "",
+        });
+        await campaignDB.createCampaign({
+          profileGroupId: profileGroup?.id,
+          name: res?.name || "",
+          isFullScreen: true,
+          proxyType: PROFILE_TYPE.ALL_PROFILE,
+          numberOfThread: 1,
+          numberOfRound: 1,
+          reloadDuration: 3,
+          defaultOpenUrl: "https://iphey.com",
+        });
+      }
 
       event.reply(MESSAGE.CREATE_WALLET_GROUP_RES, {
         data: res,

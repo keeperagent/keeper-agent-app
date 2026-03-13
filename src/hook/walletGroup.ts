@@ -16,11 +16,15 @@ import { useTranslation } from "./useTranslation";
 import { useIpcAction } from "./useIpcAction";
 
 const useGetListWalletGroup = () => {
-  const { execute: getListWalletGroup, loading } = useIpcAction<IpcGetListWalletGroupPayload>(
-    MESSAGE.GET_LIST_WALLET_GROUP,
-    MESSAGE.GET_LIST_WALLET_GROUP_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveGetListWalletGroup(payload?.data)) },
-  );
+  const { execute: getListWalletGroup, loading } =
+    useIpcAction<IpcGetListWalletGroupPayload>(
+      MESSAGE.GET_LIST_WALLET_GROUP,
+      MESSAGE.GET_LIST_WALLET_GROUP_RES,
+      {
+        onSuccess: (payload, dispatch) =>
+          dispatch(actSaveGetListWalletGroup(payload?.data)),
+      },
+    );
   return { loading, getListWalletGroup };
 };
 
@@ -28,7 +32,10 @@ const useGetOneWalletGroup = () => {
   const { execute, loading } = useIpcAction(
     MESSAGE.GET_ONE_WALLET_GROUP,
     MESSAGE.GET_ONE_WALLET_GROUP_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveSelectedWalletGroup(payload?.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveSelectedWalletGroup(payload?.data)),
+    },
   );
   const getOneWalletGroup = (id: number) => execute({ id });
   return { loading, getOneWalletGroup };
@@ -54,15 +61,25 @@ const useDeleteWalletGroup = () => {
       },
     },
   );
-  const deleteWalletGroup = (listGroupId: number[]) => execute({ data: listGroupId });
-  return { deleteWalletGroup, loading, isSuccess, hasDependencyError, setHasDependencyError };
+  const deleteWalletGroup = (listGroupId: number[]) =>
+    execute({ data: listGroupId });
+  return {
+    deleteWalletGroup,
+    loading,
+    isSuccess,
+    hasDependencyError,
+    setHasDependencyError,
+  };
 };
 
 const useUpdateWalletGroup = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.UPDATE_WALLET_GROUP,
     MESSAGE.UPDATE_WALLET_GROUP_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveUpdateWalletGroup(payload?.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveUpdateWalletGroup(payload?.data)),
+    },
   );
   const updateWalletGroup = (data: IWalletGroup) => execute({ data });
   return { updateWalletGroup, loading, isSuccess };
@@ -72,9 +89,14 @@ const useCreateWalletGroup = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.CREATE_WALLET_GROUP,
     MESSAGE.CREATE_WALLET_GROUP_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveCreateWalletGroup(payload?.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveCreateWalletGroup(payload?.data)),
+    },
   );
-  const createWalletGroup = (data: IWalletGroup) => execute({ data });
+  const createWalletGroup = (data: IWalletGroup, isQuickMapCampaign: boolean) =>
+    execute({ data, isQuickMapCampaign });
+
   return { createWalletGroup, loading, isSuccess };
 };
 
@@ -83,11 +105,22 @@ const useGetWalletGroupDependency = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.GET_WALLET_GROUP_DEPENDENCY,
     MESSAGE.GET_WALLET_GROUP_DEPENDENCY_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveWalletGroupDependency(payload.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveWalletGroupDependency(payload.data)),
+    },
   );
-  const getWalletGroupDependency = (listWalletGroupId: number[]) => execute({ listWalletGroupId });
-  const clearWalletGroupDependency = () => dispatch(actSaveWalletGroupDependency({}));
-  return { getWalletGroupDependency, loading, isSuccess, clearWalletGroupDependency };
+  const getWalletGroupDependency = (listWalletGroupId: number[]) =>
+    execute({ listWalletGroupId });
+  const clearWalletGroupDependency = () =>
+    dispatch(actSaveWalletGroupDependency({}));
+
+  return {
+    getWalletGroupDependency,
+    loading,
+    isSuccess,
+    clearWalletGroupDependency,
+  };
 };
 
 export {

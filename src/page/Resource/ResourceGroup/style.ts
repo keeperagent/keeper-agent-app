@@ -116,4 +116,36 @@ const LinkHoverWrapper = styled.span`
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
   }
 `;
-export { PageWrapper, ExpandIconWrapper, ExpandRowWrapper, LinkHoverWrapper };
+
+const OptionWrapper = styled.div`
+  padding-bottom: 0.1rem;
+  cursor: pointer;
+  min-width: 15rem;
+
+  &:hover {
+    .name {
+      color: var(--color-text-hover);
+    }
+  }
+
+  .name {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+  }
+
+  .description {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-left: 1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+  }
+`;
+
+export {
+  PageWrapper,
+  ExpandIconWrapper,
+  ExpandRowWrapper,
+  LinkHoverWrapper,
+  OptionWrapper,
+};

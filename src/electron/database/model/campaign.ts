@@ -78,11 +78,6 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: "",
       },
-      isUseBrowser: {
-        type: DataTypes.BOOLEAN,
-        allowNull: true,
-        defaultValue: 0,
-      },
 
       col1Variable: {
         type: DataTypes.STRING,
@@ -193,5 +188,5 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
-    }
+    },
   );

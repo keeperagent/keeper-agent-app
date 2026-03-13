@@ -61,6 +61,18 @@ const formatProfileGroup = (data: Model<any, any>): IProfileGroup => {
   return profileGroup;
 };
 
+const formatResourceGroup = (data: Model<any, any>): IResourceGroup => {
+  let formatData = formatDBResponse(data);
+  formatData = {
+    ...formatData,
+    listProfileGroup:
+      formatData?.ProfileGroups?.map((profileGroup: any) =>
+        formatDBResponse(profileGroup),
+      ) || [],
+  };
+  return formatData;
+};
+
 const formatCampaign = (data: Model<any, any>): ICampaign => {
   let formatedData = formatDBResponse(data);
 
@@ -286,6 +298,7 @@ const formatScheduleLog = (data: any): IScheduleLog => {
 };
 
 export {
+  formatResourceGroup,
   formatProfileGroup,
   formatCampaign,
   formatCampaignProfile,

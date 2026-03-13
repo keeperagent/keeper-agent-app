@@ -6,10 +6,11 @@ import {
   Tooltip,
   Popconfirm,
   Select,
+  Dropdown,
 } from "antd";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import { connect } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import { formatTime, getPortfolioAppImg, trimText } from "@/service/util";
 import { DeleteButton } from "@/component/Button";
@@ -35,9 +36,10 @@ import {
 } from "@/redux/walletGroup";
 import ModalDeleteDependency from "@/component/ModalDeleteDependency";
 import { actSaveGetListWallet } from "@/redux/wallet";
-import { ISorter, IWalletGroup } from "@/electron/type";
+import { IProfileGroup, ISorter, IWalletGroup } from "@/electron/type";
 import { PORTFOLIO_APP_NAME, SORT_ORDER } from "@/electron/constant";
 import { EMPTY_STRING } from "@/config/constant";
+import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
 import ModalWalletGroup from "./ModalWalletGroup";
 import {
   WalletGroupWrapper,
@@ -45,6 +47,7 @@ import {
   ExpandIconWrapper,
   ExpandRowWrapper,
   LinkHoverWrapper,
+  OptionWrapper,
 } from "./style";
 import { VIEW_MODE } from "../index";
 
@@ -57,6 +60,7 @@ const renderColumns = (
   onViewGroup: (groupID: number) => void,
   searchText: string,
   translate: any,
+  locale: string,
 ) => [
   {
     title: translate("indexTable"),
@@ -66,7 +70,7 @@ const renderColumns = (
   {
     title: translate("walletGroup.name"),
     dataIndex: "name",
-    width: "50%",
+    width: "40%",
     render: (value: string, record: IWalletGroup) => (
       <LinkHoverWrapper onClick={() => onViewGroup(record?.id!)}>
         <div className="name">
@@ -90,7 +94,7 @@ const renderColumns = (
   {
     title: translate("wallet.allNumberWallets"),
     dataIndex: "totalWallet",
-    width: "15%",
+    width: "13%",
     render: (value: number) => value || 0,
   },
   {
@@ -107,6 +111,55 @@ const renderColumns = (
         </PortfolioAppWrapper>
       ) : (
         EMPTY_STRING
+      );
+    },
+  },
+  {
+    title: translate("usedBy"),
+    dataIndex: "totalUsed",
+    width: "13%",
+    render: (value: any, record: IWalletGroup) => {
+      const listProfileGroup = record?.listProfileGroup || [];
+      const element = (
+        <span>
+          <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>
+            {listProfileGroup?.length}
+          </span>{" "}
+          <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>
+            {translate("profile.profileGroup")}
+          </span>
+        </span>
+      );
+      if (listProfileGroup?.length === 0) {
+        return element;
+      }
+
+      const items = listProfileGroup?.map(
+        (profileGroup: IProfileGroup, index: number) => ({
+          key: index,
+          label: (
+            <OptionWrapper>
+              <Link
+                to={`/dashboard/profile?group=${profileGroup?.id}&mode=${PROFILE_VIEW_MODE.PROFILE}`}
+              >
+                <div className="name">
+                  {index + 1}. {profileGroup?.name}
+                </div>
+                <div className="description">
+                  {formatTime(Number(profileGroup?.createAt), locale)}
+                </div>
+              </Link>
+            </OptionWrapper>
+          ),
+        }),
+      );
+
+      return (
+        <span>
+          <Dropdown menu={{ items }} placement="bottomLeft">
+            {element}
+          </Dropdown>
+        </span>
       );
     },
   },
@@ -403,6 +456,7 @@ const WalletGroup = (props: any) => {
           onViewGroup,
           searchText,
           translate,
+          locale,
         )}
         pagination={{
           total: totalData,

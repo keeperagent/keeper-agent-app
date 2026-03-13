@@ -1,10 +1,11 @@
 import { Op } from "sequelize";
 import _ from "lodash";
 import { resourceDB } from "./resource";
-import { ResourceGroupModel } from "./index";
+import { ProfileGroupModel, ResourceGroupModel } from "./index";
 import { IResourceGroup, IGetListResponse, ISorter } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { SORT_ORDER } from "@/electron/constant";
+import { formatResourceGroup } from "../service/formatData";
 
 class ResourceGroupDB {
   async totalData(): Promise<[number | null, Error | null]> {
@@ -44,7 +45,8 @@ class ResourceGroupDB {
         limit: pageSize,
         offset: (page - 1) * pageSize,
         where: condition,
-        raw: true,
+        include: [{ model: ProfileGroupModel, required: false }],
+        raw: false,
       });
 
       // run in parallel
@@ -57,6 +59,7 @@ class ResourceGroupDB {
         listData?.map((group: IResourceGroup) => group?.id) || [];
       const [listCount] = await resourceDB.countTotalResource(listGroupId);
       listData = listData?.map((data: any) => {
+        data = formatResourceGroup(data);
         const countItem = _.find(listCount, {
           groupId: data?.id,
         });
@@ -66,7 +69,9 @@ class ResourceGroupDB {
       const totalPage = Math.ceil(totalData / Number(pageSize));
       return [{ data: listData, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListResourceGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListResourceGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -91,7 +96,9 @@ class ResourceGroupDB {
 
       return [listData, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListResourceGroupById() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListResourceGroupById() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -109,7 +116,9 @@ class ResourceGroupDB {
       }
       return [data.toJSON(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `getOneResourceGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getOneResourceGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -128,7 +137,9 @@ class ResourceGroupDB {
       );
       return [data?.toJSON(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `createResourceGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `createResourceGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -146,7 +157,9 @@ class ResourceGroupDB {
 
       return this.getOneResourceGroup(group?.id!);
     } catch (err: any) {
-      logEveryWhere({ message: `updateResourceGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `updateResourceGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -160,7 +173,9 @@ class ResourceGroupDB {
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteResourceGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteResourceGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }

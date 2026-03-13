@@ -7,10 +7,11 @@ import {
   Tooltip,
   Popconfirm,
   Select,
+  Dropdown,
 } from "antd";
 import { connect } from "react-redux";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import qs from "qs";
 import { formatTime, trimText } from "@/service/util";
 import { DeleteButton } from "@/component/Button";
@@ -37,8 +38,10 @@ import {
   actSetPageSize,
 } from "@/redux/profileGroup";
 import { actSaveGetListProfile } from "@/redux/profile";
-import { IProfileGroup, ISorter } from "@/electron/type";
+import { CAMPAIGN_VIEW_MODE } from "@/config/constant";
+import { ICampaign, IProfileGroup, ISorter } from "@/electron/type";
 import { EMPTY_STRING } from "@/config/constant";
+import { SORT_ORDER } from "@/electron/constant";
 import ModalProfileGroup from "./ModalProfileGroup";
 import {
   ProfileGroupWrapper,
@@ -46,9 +49,9 @@ import {
   LinkHoverWrapper,
   ExpandRowWrapper,
   ExpandIconWrapper,
+  OptionWrapper,
 } from "./style";
 import { VIEW_MODE } from "../index";
-import { SORT_ORDER } from "@/electron/constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -63,6 +66,7 @@ const renderColumns = (
   onViewGroup: (groupID: number) => void,
   searchText: string,
   translate: any,
+  locale: string,
 ) => [
   {
     title: translate("indexTable"),
@@ -72,7 +76,7 @@ const renderColumns = (
   {
     title: translate("profileGroup.name"),
     dataIndex: "name",
-    width: "60%",
+    width: "45%",
     render: (value: string, record: IProfileGroup) => (
       <LinkHoverWrapper onClick={() => onViewGroup(record?.id!)}>
         <div className="name">
@@ -98,6 +102,53 @@ const renderColumns = (
     dataIndex: "totalProfile",
     width: "15%",
     render: (value: number) => value || 0,
+  },
+  {
+    title: translate("usedBy"),
+    dataIndex: "totalUsed",
+    width: "13%",
+    render: (value: any, record: IProfileGroup) => {
+      const listCampaign = record?.listCampaign || [];
+      const element = (
+        <span>
+          <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>
+            {listCampaign?.length}
+          </span>{" "}
+          <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>
+            {translate("campaign")}
+          </span>
+        </span>
+      );
+      if (listCampaign?.length === 0) {
+        return element;
+      }
+
+      const items = listCampaign?.map((campaign: ICampaign, index: number) => ({
+        key: index,
+        label: (
+          <OptionWrapper>
+            <Link
+              to={`/dashboard/campaign?campaignId=${campaign?.id}&mode=${CAMPAIGN_VIEW_MODE.VIEW_PROFILE}`}
+            >
+              <div className="name">
+                {index + 1}. {campaign?.name}
+              </div>
+              <div className="description">
+                {formatTime(Number(campaign?.createAt), locale)}
+              </div>
+            </Link>
+          </OptionWrapper>
+        ),
+      }));
+
+      return (
+        <span>
+          <Dropdown menu={{ items }} placement="bottomLeft">
+            {element}
+          </Dropdown>
+        </span>
+      );
+    },
   },
   {
     title: "",
@@ -424,6 +475,7 @@ const ProfileGroup = (props: any) => {
             onViewGroup,
             searchText,
             translate,
+            locale,
           )}
           pagination={{
             total: totalData,
