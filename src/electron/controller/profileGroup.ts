@@ -38,7 +38,7 @@ export const profileGroupController = () => {
 
         listCampaign?.forEach((campaign: ICampaign) => {
           if (campaign?.profileGroupId === profileGroup?.id) {
-            listCampaignUseProfileGroup.push(profileGroup);
+            listCampaignUseProfileGroup.push(campaign);
           }
         });
         listCampaignUseProfileGroup = _.sortBy(
