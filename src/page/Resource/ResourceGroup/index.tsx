@@ -6,10 +6,11 @@ import {
   Tooltip,
   Popconfirm,
   Select,
+  Dropdown,
 } from "antd";
 import { connect } from "react-redux";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { formatTime, trimText } from "@/service/util";
 import { DeleteButton } from "@/component/Button";
 import { SearchInput } from "@/component/Input";
@@ -33,17 +34,19 @@ import {
   actSetPageSize,
 } from "@/redux/resourceGroup";
 import { actSaveGetListResource } from "@/redux/resource";
-import { IResourceGroup, ISorter } from "@/electron/type";
+import { IProfileGroup, IResourceGroup, ISorter } from "@/electron/type";
+import { EMPTY_STRING } from "@/config/constant";
+import { SORT_ORDER } from "@/electron/constant";
+import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
 import ModalResourceGroup from "./ModalResourceGroup";
 import {
   PageWrapper,
   ExpandIconWrapper,
   ExpandRowWrapper,
   LinkHoverWrapper,
+  OptionWrapper,
 } from "./style";
 import { VIEW_MODE } from "../index";
-import { EMPTY_STRING } from "@/config/constant";
-import { SORT_ORDER } from "@/electron/constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -54,6 +57,7 @@ const renderColumns = (
   onViewGroup: (groupID: number) => void,
   searchText: string,
   translate: any,
+  locale: string,
 ) => [
   {
     title: translate("indexTable"),
@@ -63,7 +67,7 @@ const renderColumns = (
   {
     title: translate("resourceGroup.name"),
     dataIndex: "name",
-    width: "60%",
+    width: "50%",
     render: (value: string, record: IResourceGroup) => (
       <LinkHoverWrapper onClick={() => onViewGroup(record?.id!)}>
         <div className="name">
@@ -87,8 +91,57 @@ const renderColumns = (
   {
     title: translate("resource.totalResource"),
     dataIndex: "totalResource",
-    width: "17%",
+    width: "15%",
     render: (value: number) => value || 0,
+  },
+  {
+    title: translate("usedBy"),
+    dataIndex: "totalUsed",
+    width: "15%",
+    render: (value: any, record: IResourceGroup) => {
+      const listProfileGroup = record?.listProfileGroup || [];
+      const element = (
+        <span>
+          <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>
+            {listProfileGroup?.length}
+          </span>{" "}
+          <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>
+            {translate("profile.profileGroup")}
+          </span>
+        </span>
+      );
+      if (listProfileGroup?.length === 0) {
+        return element;
+      }
+
+      const items = listProfileGroup?.map(
+        (profileGroup: IProfileGroup, index: number) => ({
+          key: index,
+          label: (
+            <OptionWrapper>
+              <Link
+                to={`/dashboard/profile?group=${profileGroup?.id}&mode=${PROFILE_VIEW_MODE.PROFILE}`}
+              >
+                <div className="name">
+                  {index + 1}. {profileGroup?.name}
+                </div>
+                <div className="description">
+                  {formatTime(Number(profileGroup?.createAt), locale)}
+                </div>
+              </Link>
+            </OptionWrapper>
+          ),
+        }),
+      );
+
+      return (
+        <span>
+          <Dropdown menu={{ items }} placement="bottomLeft">
+            {element}
+          </Dropdown>
+        </span>
+      );
+    },
   },
   {
     title: "",
@@ -361,6 +414,7 @@ const ResourceGroup = (props: any) => {
           onViewGroup,
           searchText,
           translate,
+          locale,
         )}
         pagination={{
           total: totalData,

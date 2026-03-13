@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Modal, Form, Input, Select } from "antd";
+import { Modal, Form, Input, Select, Checkbox } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
@@ -73,6 +73,7 @@ const ModalWalletGroup = (props: any) => {
       name: selectedWalletGroup?.name || "",
       note: selectedWalletGroup?.note || "",
       portfolioApp: selectedWalletGroup?.portfolioApp || PORTFOLIO_APP.DEBANK,
+      isQuickMapCampaign: selectedWalletGroup?.isQuickMapCampaign,
     });
   }, [isModalOpen, form, selectedWalletGroup]);
 
@@ -101,11 +102,13 @@ const ModalWalletGroup = (props: any) => {
 
   const onSubmitForm = async () => {
     try {
-      const { name, note, portfolioApp } = await form.validateFields([
-        "name",
-        "note",
-        "portfolioApp",
-      ]);
+      const { name, note, portfolioApp, isQuickMapCampaign } =
+        await form.validateFields([
+          "name",
+          "note",
+          "portfolioApp",
+          "isQuickMapCampaign",
+        ]);
       setBtnLoading(true);
 
       if (selectedWalletGroup) {
@@ -116,7 +119,7 @@ const ModalWalletGroup = (props: any) => {
           id: selectedWalletGroup?.id,
         });
       } else {
-        createWalletGroup({ name, note, portfolioApp });
+        createWalletGroup({ name, note, portfolioApp }, isQuickMapCampaign);
       }
     } catch {}
   };
@@ -137,7 +140,7 @@ const ModalWalletGroup = (props: any) => {
           : translate("button.update")
       }
       cancelText={translate("cancel")}
-      width="45rem"
+      width="50rem"
       onOk={onSubmitForm}
       confirmLoading={isBtnLoading}
     >
@@ -193,6 +196,10 @@ const ModalWalletGroup = (props: any) => {
             })}
           </Select>
         </Form.Item>
+
+        <Form.Item name="isQuickMapCampaign" valuePropName="checked">
+          <Checkbox>{translate("wallet.quickMapCampaign")}</Checkbox>
+        </Form.Item>
       </Form>
     </Modal>
   );
@@ -207,5 +214,5 @@ export default connect(
     actSaveSelectedWalletGroup,
     actSaveCreateWalletGroup,
     actSaveUpdateWalletGroup,
-  }
+  },
 )(ModalWalletGroup);

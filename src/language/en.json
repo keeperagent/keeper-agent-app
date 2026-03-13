@@ -237,6 +237,7 @@
   "wallet.usedByProfileGroup": "Used by Profile groups",
   "wallet.canNotDeleteWallet": "Cannot delete Wallet because it is in use",
   "wallet.beforeDeleteWallet": "You need to delete the Profile Group and Campaign before deleting the Wallet",
+  "wallet.quickMapCampaign": "Automatically create Profile group and Campaign",
   "walletGroup.name": "Name",
   "resource.resource": "Resource",
   "resource.numberResourceGroup": "Number of resource groupr",

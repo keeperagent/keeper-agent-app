@@ -135,7 +135,9 @@ class ProfileGroupDB {
 
       return [{ data: listData, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListProfileGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListProfileGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -158,7 +160,9 @@ class ProfileGroupDB {
 
       return [listData, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListProfileGroupById() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListProfileGroupById() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }

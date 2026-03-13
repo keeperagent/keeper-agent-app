@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { profileGroupDB } from "@/electron/database/profileGroup";
 import { profileDB } from "@/electron/database/profile";
 import { MESSAGE } from "@/electron/constant";
@@ -9,6 +10,8 @@ import type {
   IpcIdPayload,
   IpcUpdateProfileGroupPayload,
 } from "@/electron/ipcTypes";
+import { ICampaign, IProfileGroup } from "../type";
+import { campaignDB } from "../database/campaign";
 
 export const profileGroupController = () => {
   onIpc<IpcGetListProfileGroupPayload>(
@@ -16,12 +19,44 @@ export const profileGroupController = () => {
     MESSAGE.GET_LIST_PROFILE_GROUP_RES,
     async (event, payload) => {
       const { page, pageSize, searchText, sortField } = payload;
-      const [res] = await profileGroupDB.getListProfileGroup(
+      let [res] = await profileGroupDB.getListProfileGroup(
         page,
         pageSize,
         searchText,
         sortField,
       );
+
+      const listProfileGroup = res?.data || [];
+      const listProfileGroupId =
+        listProfileGroup?.map(
+          (profileGroup: IProfileGroup) => profileGroup?.id!,
+        ) || [];
+      const [listCampaign] =
+        await campaignDB.getListCampaignByProfileGroupId(listProfileGroupId);
+      listProfileGroup?.forEach((profileGroup: IProfileGroup) => {
+        let listCampaignUseProfileGroup: ICampaign[] = [];
+
+        listCampaign?.forEach((campaign: ICampaign) => {
+          if (campaign?.profileGroupId === profileGroup?.id) {
+            listCampaignUseProfileGroup.push(campaign);
+          }
+        });
+        listCampaignUseProfileGroup = _.sortBy(
+          listCampaignUseProfileGroup,
+          "createAt",
+        );
+
+        profileGroup.listCampaign = listCampaignUseProfileGroup;
+      });
+
+      res = {
+        data: listProfileGroup,
+        totalData: res?.totalData || 0,
+        totalPage: res?.totalPage || 0,
+        page: res?.page || 0,
+        pageSize: res?.pageSize || 0,
+      };
+
       event.reply(MESSAGE.GET_LIST_PROFILE_GROUP_RES, {
         data: res,
       });

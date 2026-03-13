@@ -74,6 +74,7 @@ export type IWalletGroup = {
   totalWallet?: number;
   typeName?: string;
   portfolioApp?: string;
+  listProfileGroup?: IProfileGroup[];
 };
 
 export type IProfile = {
@@ -181,6 +182,7 @@ export type IResourceGroup = {
   col9IsEncrypt?: false;
   col10IsEncrypt?: false;
   typeName?: string;
+  listProfileGroup?: IProfileGroup[];
 };
 
 export type IResource = {
@@ -226,6 +228,7 @@ export type IProfileGroup = {
   walletGroup?: IWalletGroup;
   listExtension?: IExtension[];
   listResourceGroup?: IResourceGroup[];
+  listCampaign?: ICampaign[];
   typeName?: string;
   totalProfile?: number;
 };

@@ -102,6 +102,7 @@ export type IpcGenerateWalletFromPhrasePayload = {
 export type IpcGetListWalletGroupPayload = IpcSortedPagePayload;
 export type IpcCreateWalletGroupPayload = {
   data: IWalletGroup;
+  isQuickMapCampaign: boolean;
 };
 export type IpcUpdateWalletGroupPayload = {
   data: IWalletGroup;
