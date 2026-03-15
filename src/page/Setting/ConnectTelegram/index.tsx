@@ -157,5 +157,5 @@ export default connect(
   (state: RootState) => ({
     preference: state?.Preference?.preference,
   }),
-  {}
+  {},
 )(ConnectTelegram);

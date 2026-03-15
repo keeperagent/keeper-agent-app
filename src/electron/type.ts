@@ -2087,6 +2087,8 @@ export type IPreference = {
   chatIdTelegram?: number;
   isTelegramOn?: boolean;
   botTokenTelegram?: string;
+  isWhatsAppOn?: boolean;
+  whatsappAuthState?: string;
   hideMinimap?: boolean;
   key?: string;
   deviceId?: string;

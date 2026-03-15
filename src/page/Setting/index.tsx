@@ -5,6 +5,7 @@ import { useTranslation, useGetPreference } from "@/hook";
 import { actSetPageName } from "@/redux/layout";
 import { Wrapper } from "./style";
 import ConnectTelegram from "./ConnectTelegram";
+import ConnectWhatsApp from "./ConnectWhatsApp";
 import ImportDatabase from "./ImportDatabase";
 import ExportDatabase from "./ExportDatabase";
 import Other from "./Other";
@@ -62,6 +63,15 @@ const SettingPage = (props: any) => {
                 <span>{translate("setting.connectTelegram")}</span>
               </div>
               <ConnectTelegram />
+            </div>
+
+            <Divider />
+
+            <div className="form">
+              <div className="heading">
+                <span>{translate("setting.connectWhatsApp")}</span>
+              </div>
+              <ConnectWhatsApp />
             </div>
 
             <Divider />

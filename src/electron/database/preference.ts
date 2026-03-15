@@ -1,4 +1,6 @@
 import _ from "lodash";
+import { proto, initAuthCreds, BufferJSON } from "@whiskeysockets/baileys";
+import type { AuthenticationState } from "@whiskeysockets/baileys";
 import { formatPreference } from "@/electron/service/formatData";
 import { preferenceUniqueKey } from "@/electron/constant";
 import { IPreference } from "@/electron/type";
@@ -165,7 +167,86 @@ class PreferenceDB {
     }
   }
 
-  /** Update only the master password verifier (used when changing master password). */
+  /* Load WhatsApp auth state from the whatsappAuthState column. */
+  async getWhatsAppAuthState(): Promise<{
+    state: AuthenticationState;
+    saveCreds: () => Promise<void>;
+  }> {
+    let store: Record<string, any> = {};
+    try {
+      const row = await PreferenceModel.findOne({
+        where: { key: preferenceUniqueKey },
+        attributes: ["whatsappAuthState"],
+        raw: true,
+      });
+      const raw = (row as any)?.whatsappAuthState || "{}";
+      store = JSON.parse(raw, BufferJSON.reviver);
+    } catch {}
+
+    const creds = store.creds || initAuthCreds();
+
+    const saveStore = async () => {
+      const value = JSON.stringify(store, BufferJSON.replacer);
+      await PreferenceModel.update(
+        { whatsappAuthState: value },
+        { where: { key: preferenceUniqueKey } },
+      );
+    };
+
+    return {
+      state: {
+        creds,
+        keys: {
+          get: async (type, ids) => {
+            const data: Record<string, any> = {};
+            for (const id of ids) {
+              const entryKey = `${type}-${id}`;
+              let value = store[entryKey] || null;
+              if (type === "app-state-sync-key" && value) {
+                value = proto.Message.AppStateSyncKeyData.fromObject(value);
+              }
+              data[id] = value;
+            }
+            return data;
+          },
+          set: async (data) => {
+            const entries = data as Record<string, Record<string, any>>;
+            for (const category in entries) {
+              for (const id in entries[category]) {
+                const entryKey = `${category}-${id}`;
+                const value = entries[category][id];
+                if (value) {
+                  store[entryKey] = value;
+                } else {
+                  delete store[entryKey];
+                }
+              }
+            }
+            await saveStore();
+          },
+        },
+      },
+      saveCreds: async () => {
+        store.creds = creds;
+        await saveStore();
+      },
+    };
+  }
+
+  async clearWhatsAppAuthState(): Promise<void> {
+    try {
+      await PreferenceModel.update(
+        { whatsappAuthState: "{}" },
+        { where: { key: preferenceUniqueKey } },
+      );
+    } catch (err: any) {
+      logEveryWhere({
+        message: `clearWhatsAppAuthState() error: ${err?.message}`,
+      });
+    }
+  }
+
+  /* Update only the master password verifier (used when changing master password). */
   async updateMasterPasswordVerifier(
     preferenceId: number,
     verifier: string,
