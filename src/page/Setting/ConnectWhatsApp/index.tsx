@@ -124,7 +124,11 @@ const ConnectWhatsApp = (props: IProps) => {
           </Button>
         )}
 
-        <Button type="primary" onClick={onConnect}>
+        <Button
+          type="primary"
+          onClick={onConnect}
+          disabled={status === WhatsAppStatus.CONNECTING}
+        >
           {status === WhatsAppStatus.CONNECTED
             ? translate("reconnect")
             : translate("connect")}

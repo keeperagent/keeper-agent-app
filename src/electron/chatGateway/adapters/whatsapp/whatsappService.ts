@@ -43,8 +43,9 @@ class WhatsAppService {
   private socket: WASocket | null = null;
   private chatAdapter: WhatsAppChatAdapter | null = null;
   private isStarting = false;
-  // Track message IDs sent by the agent to avoid processing them as user input
-  private sentMessageIds = new Set<string>();
+  // Track recent message IDs sent by the agent to avoid processing them as user input
+  private sentMessageIds: string[] = [];
+  private readonly maxSentIds = 50;
 
   /** Push current status to the renderer. */
   emitStatus = () => {
@@ -85,11 +86,10 @@ class WhatsAppService {
       await preferenceDB.clearWhatsAppAuthState();
       await this.initSocket();
     } catch (err: any) {
+      this.isStarting = false;
       logEveryWhere({
         message: `[WhatsApp] connect() error: ${err?.message}`,
       });
-    } finally {
-      this.isStarting = false;
     }
   };
 
@@ -141,6 +141,7 @@ class WhatsAppService {
       }
 
       if (connection === "open") {
+        this.isStarting = false;
         logEveryWhere({ message: "[WhatsApp] Connected" });
         this.notifyStatus(WhatsAppStatus.CONNECTED);
         this.registerAdapter();
@@ -164,6 +165,7 @@ class WhatsAppService {
           message: `[WhatsApp] Connection closed — status ${statusCode}, error: ${lastError?.message}`,
         });
 
+        this.isStarting = false;
         this.socket = null;
         this.chatAdapter = null;
         this.notifyStatus(WhatsAppStatus.DISCONNECTED);
@@ -183,8 +185,10 @@ class WhatsAppService {
           continue;
         }
         // Skip messages sent by the agent to avoid loop
-        if (message.key.id && this.sentMessageIds.has(message.key.id)) {
-          this.sentMessageIds.delete(message.key.id);
+        const messageId = message.key.id || "";
+        const sentIndex = this.sentMessageIds.indexOf(messageId);
+        if (messageId && sentIndex !== -1) {
+          this.sentMessageIds.splice(sentIndex, 1);
           continue;
         }
 
@@ -230,7 +234,10 @@ class WhatsAppService {
       if (this.socket) {
         const sent = await this.socket.sendMessage(chatId, { text });
         if (sent?.key?.id) {
-          this.sentMessageIds.add(sent.key.id);
+          this.sentMessageIds.push(sent.key.id);
+          if (this.sentMessageIds.length > this.maxSentIds) {
+            this.sentMessageIds.shift();
+          }
         }
       }
     });

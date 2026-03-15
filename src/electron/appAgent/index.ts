@@ -92,6 +92,7 @@ Workspace: \`${workspacePath}\`. Use relative paths for read_file/write_file (e.
 ## Solana wallet address and transaction hash format
 Render addresses/txhashes as Solscan links using the format for the platformId in CURRENT CONTEXT:
 - TELEGRAM: HTML — \`<a href="https://solscan.io/account/<full_address>">first6...last4</a>\` for wallets; \`<a href="https://solscan.io/tx/<full_hash>">first6...last4</a>\` for tx hashes.
+- WHATSAPP: Plain text — \`first6...last4 (https://solscan.io/account/<full_address>)\` for wallets; \`first6...last4 (https://solscan.io/tx/<full_hash>)\` for tx hashes.
 - KEEPER/others: Markdown — \`[first6...last4](https://solscan.io/account/<full_address>)\` for wallets; \`[first6...last4](https://solscan.io/tx/<full_hash>)\` for tx hashes.
 Always shorten the display text.
 
@@ -113,7 +114,7 @@ When the user wants to SELL tokens for a USD amount (e.g. "sell $10 worth"):
 
 ## Rules
 - On tool failure: try ONE alternative, then report to user.
-- Swap/transfer confirmations MUST use structured format, not bullet points: TELEGRAM uses bold-labeled fields (<b>Field:</b> Value, one per line); KEEPER/others use a Markdown table.
+- Swap/transfer confirmations MUST use structured format, not bullet points: TELEGRAM uses bold-labeled fields (<b>Field:</b> Value, one per line); WHATSAPP uses *bold* labels (*Field:* Value, one per line); KEEPER/others use a Markdown table.
 - CRITICAL: After the user confirms a swap/transfer, you MUST delegate execution to the transaction subagent via the \`task\` tool. NEVER pretend the transaction is executing or generate fake results — always call the actual tool. Include the current platformId in the task description when delegating to transaction_agent (e.g. "platformId=TELEGRAM").
 - When the user asks how to use any capability: delegate to the relevant subagent to explain the tool's parameters and usage. Do NOT answer from general knowledge — describe YOUR tools, not external websites or UIs.
 - When displaying results from subagents, always apply the Solana link format rules above. Reformat any raw addresses or tx hashes into shortened Solscan links using the format for the current platformId.
@@ -122,6 +123,7 @@ When the user wants to SELL tokens for a USD amount (e.g. "sell $10 worth"):
 ## Output format
 Adapt output based on the "platformId" field in the CURRENT CONTEXT of each message:
 - TELEGRAM: Use Telegram HTML tags only — never use Markdown syntax.
+- WHATSAPP: Use WhatsApp formatting only — *bold*, _italic_, ~strikethrough~, \`monospace\`, \`\`\`code block\`\`\`. No HTML tags, no Markdown links.
 - KEEPER: Use Markdown. Prefer markdown tables over long lists or bullet points when presenting structured information.`;
 };
 
@@ -230,12 +232,14 @@ const buildBaseSubAgents = (
       systemPrompt:
         "You are a subagent for on-chain operations (balances, prices, swaps, transfers, token launch on Pump.fun and Bonk.fun). Follow these rules exactly.\n\n" +
         "## Platform detection\n" +
-        "Check the task description for 'platformId=TELEGRAM'. If found, use HTML formatting; otherwise use Markdown.\n\n" +
+        "Check the task description for platformId. TELEGRAM=HTML formatting, WHATSAPP=WhatsApp formatting (*bold*, plain text links), KEEPER=Markdown.\n\n" +
         "## Swap/Transfer procedure\n" +
         "1. Show confirmation and STOP. Wait for user approval.\n" +
         "2. After user confirms, IMMEDIATELY call the swap/transfer tool. Do NOT output text — just call the tool.\n\n" +
         "## Confirmation — TELEGRAM (bold-labeled fields):\n" +
         "<b>Action:</b> BUY or SELL\n<b>Token:</b> [mint address]\n<b>Amount:</b> [amount in native token, e.g. 0.00235 SOL]\n<b>Wallets:</b> [count]\n<b>Strategy:</b> [strategy name]\n\n" +
+        "## Confirmation — WHATSAPP (*bold* labels):\n" +
+        "*Action:* BUY or SELL\n*Token:* [mint address]\n*Amount:* [amount in native token, e.g. 0.00235 SOL]\n*Wallets:* [count]\n*Strategy:* [strategy name]\n\n" +
         "## Confirmation — KEEPER/others (Markdown table):\n" +
         "| Field | Value |\n|-------|-------|\n| Action | BUY or SELL |\n| Token | [mint address] |\n| Amount | [amount in native token, e.g. 0.00235 SOL] |\n| Wallets | [count] |\n| Strategy | [strategy name] |\n\n" +
         "No extra fields. No wallet balance. No token price. No estimated tokens. No bullet points.\n\n" +
@@ -247,6 +251,7 @@ const buildBaseSubAgents = (
         "## Displaying results\n" +
         "When the tool returns a 'results' array (wallets <= 5):\n" +
         "- TELEGRAM: one entry per wallet using bold-labeled fields — <b>Wallet:</b> <a href='https://solscan.io/account/[address]'>[first6...last4]</a> <b>Amount:</b> [amount] <b>Tx:</b> <a href='https://solscan.io/tx/[hash]'>[first6...last4]</a> (or error text).\n" +
+        "- WHATSAPP: one entry per wallet — *Wallet:* first6...last4 (https://solscan.io/account/[address]) *Amount:* [amount] *Tx:* first6...last4 (https://solscan.io/tx/[hash]) (or error text).\n" +
         "- KEEPER/others: Markdown table — | Wallet | Amount | Tx Hash | with Markdown links [first6...last4](https://solscan.io/account/[address]) and [first6...last4](https://solscan.io/tx/[hash]) (or error text).\n\n" +
         "## General\n" +
         "- Keep responses short.\n" +

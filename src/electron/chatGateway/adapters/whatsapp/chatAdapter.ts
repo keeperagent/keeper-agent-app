@@ -38,10 +38,9 @@ export const createWhatsAppChatAdapter = (): WhatsAppChatAdapter => {
       }
     },
 
-    sendMarkdown: async (chatId, markdown) => {
-      // WhatsApp doesn't support HTML — send plain text
+    sendMarkdown: async (chatId, text) => {
       if (sendTextFn) {
-        await sendTextFn(chatId, markdown);
+        await sendTextFn(chatId, text);
       }
     },
 
