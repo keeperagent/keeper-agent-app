@@ -5,6 +5,7 @@ import { RootState } from "@/redux/store";
 import { useUpdatePreference, useTranslation } from "@/hook";
 import { IPreference } from "@/electron/type";
 import { WhatsAppStatus } from "@/electron/chatGateway/types";
+import Status from "@/component/Status";
 import { MESSAGE } from "@/electron/constant";
 import { Wrapper } from "./style";
 
@@ -79,9 +80,12 @@ const ConnectWhatsApp = (props: IProps) => {
 
   return (
     <Wrapper>
-      <div className="status-badge">
-        <span className={`status-dot ${status}`} />
-        <span>{statusLabel}</span>
+      <div className="status-wrapper">
+        <Status
+          content={statusLabel}
+          isSuccess={status === WhatsAppStatus.CONNECTED}
+          isLarge={true}
+        />
       </div>
 
       <Form layout="vertical" form={form}>

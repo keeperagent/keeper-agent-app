@@ -69,6 +69,15 @@ const SettingPage = (props: any) => {
 
             <div className="form">
               <div className="heading">
+                <span>{translate("setting.connectWhatsApp")}</span>
+              </div>
+              <ConnectWhatsApp />
+            </div>
+
+            <Divider />
+
+            <div className="form">
+              <div className="heading">
                 <span>{translate("setting.otherSetting")}</span>
               </div>
               <Other />
@@ -84,14 +93,7 @@ const SettingPage = (props: any) => {
             </div>
           </Col>
 
-          <Col span={7}>
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.connectWhatsApp")}</span>
-              </div>
-              <ConnectWhatsApp />
-            </div>
-          </Col>
+          <Col span={7}></Col>
         </Row>
       )}
 
