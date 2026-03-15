@@ -28,6 +28,17 @@ import { preferenceDB } from "@/electron/database/preference";
 import { createWhatsAppChatAdapter } from "./chatAdapter";
 import type { WhatsAppChatAdapter } from "./chatAdapter";
 
+const silentLogger = {
+  level: "silent",
+  child: () => silentLogger,
+  trace: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  fatal: () => {},
+} as any;
+
 class WhatsAppService {
   private socket: WASocket | null = null;
   private chatAdapter: WhatsAppChatAdapter | null = null;
@@ -111,6 +122,7 @@ class WhatsAppService {
       auth: state,
       version,
       browser: Browsers.appropriate("Keeper Agent"),
+      logger: silentLogger,
     });
 
     this.socket = socket;

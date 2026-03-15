@@ -1,20 +1,34 @@
 import { useEffect, useState } from "react";
-import { Button, QRCode } from "antd";
+import { Button, Form, Switch, QRCode } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { useTranslation } from "@/hook";
+import { useUpdatePreference, useTranslation } from "@/hook";
+import { IPreference } from "@/electron/type";
 import { WhatsAppStatus, WhatsAppAction } from "@/electron/chatGateway/types";
 import Status from "@/component/Status";
 import { MESSAGE } from "@/electron/constant";
 import { Wrapper } from "./style";
 
-const ConnectWhatsApp = () => {
+type IProps = {
+  preference: IPreference | null;
+};
+
+const ConnectWhatsApp = (props: IProps) => {
+  const { preference } = props;
+  const { updatePreference } = useUpdatePreference();
   const { translate } = useTranslation();
+  const [form] = Form.useForm();
 
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [status, setStatus] = useState<WhatsAppStatus>(
     WhatsAppStatus.DISCONNECTED,
   );
+
+  useEffect(() => {
+    form.setFieldsValue({
+      isWhatsAppOn: preference?.isWhatsAppOn,
+    });
+  }, [preference, form]);
 
   useEffect(() => {
     const handleQr = (_event: any, data: { qr: string }) => {
@@ -31,7 +45,6 @@ const ConnectWhatsApp = () => {
     window.electron.on(MESSAGE.WHATSAPP_QR, handleQr);
     window.electron.on(MESSAGE.WHATSAPP_STATUS, handleStatus);
 
-    // Request current status on mount
     window.electron.send(MESSAGE.RESTART_WHATSAPP, {
       action: WhatsAppAction.STATUS,
     });
@@ -41,6 +54,14 @@ const ConnectWhatsApp = () => {
       window.electron.removeAllListeners(MESSAGE.WHATSAPP_STATUS);
     };
   }, []);
+
+  const onToggle = async (checked: boolean) => {
+    await updatePreference({
+      id: preference?.id,
+      isWhatsAppOn: checked,
+    });
+    window.electron.send(MESSAGE.RESTART_WHATSAPP);
+  };
 
   const onConnect = () => {
     window.electron.send(MESSAGE.RESTART_WHATSAPP, {
@@ -71,6 +92,20 @@ const ConnectWhatsApp = () => {
         />
       </div>
 
+      <Form layout="vertical" form={form}>
+        <Form.Item
+          label={`${translate("setting.enableWhatsAppAgent")}:`}
+          valuePropName="checked"
+          name="isWhatsAppOn"
+        >
+          <Switch
+            checkedChildren={translate("yes")}
+            unCheckedChildren={translate("no")}
+            onChange={onToggle}
+          />
+        </Form.Item>
+      </Form>
+
       {qrCode && status !== WhatsAppStatus.CONNECTED && (
         <div className="qr-container">
           <QRCode value={qrCode} size={240} />
@@ -98,4 +133,9 @@ const ConnectWhatsApp = () => {
   );
 };
 
-export default connect((state: RootState) => ({}), {})(ConnectWhatsApp);
+export default connect(
+  (state: RootState) => ({
+    preference: state?.Preference?.preference,
+  }),
+  {},
+)(ConnectWhatsApp);
