@@ -130,7 +130,9 @@ const LanguageModel = (props: IProps) => {
         >
           <PasswordInput
             name="googleGeminiApiKey"
-            placeholder={translate("workflow.enterGoogleGeminiApiKeyPlaceholder")}
+            placeholder={translate(
+              "workflow.enterGoogleGeminiApiKeyPlaceholder",
+            )}
             extendClass="googleGeminiApiKey"
           />
         </Form.Item>

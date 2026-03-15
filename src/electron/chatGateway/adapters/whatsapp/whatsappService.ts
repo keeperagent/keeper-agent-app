@@ -9,8 +9,9 @@
   - Only agent chat is supported — no workflow integration.
 */
 
-import makeWASocket, {
-  DisconnectReason,
+import {
+  makeWASocket,
+  fetchLatestBaileysVersion,
   Browsers,
   type WASocket,
 } from "@whiskeysockets/baileys";
@@ -32,56 +33,96 @@ class WhatsAppService {
   private chatAdapter: WhatsAppChatAdapter | null = null;
   private isStarting = false;
 
+  /** Push current status to the renderer. */
+  emitStatus = () => {
+    if (this.socket && !this.isStarting) {
+      this.notifyStatus(WhatsAppStatus.CONNECTED);
+    } else if (this.isStarting) {
+      this.notifyStatus(WhatsAppStatus.CONNECTING);
+    } else {
+      this.notifyStatus(WhatsAppStatus.DISCONNECTED);
+    }
+  };
+
+  /* Called on app startup — only connects if isWhatsAppOn is true. */
   start = async () => {
     try {
-      // Stop existing connection first
-      if (this.socket) {
-        try {
-          this.socket.end(undefined);
-        } catch {}
-        this.socket = null;
-      }
-      this.chatAdapter = null;
-
       const [preference] = await preferenceDB.getOnePreference();
       if (!preference?.isWhatsAppOn) {
         logEveryWhere({ message: "[WhatsApp] WhatsApp is not enabled" });
         return;
       }
-
-      if (this.isStarting) {
-        return;
-      }
-      this.isStarting = true;
-
-      await this.connect();
+      await this.initSocket();
     } catch (err: any) {
       logEveryWhere({
         message: `[WhatsApp] start() error: ${err?.message}`,
+      });
+    }
+  };
+
+  connect = async () => {
+    if (this.isStarting) {
+      return;
+    }
+    this.isStarting = true;
+
+    try {
+      await this.stopSocket();
+      // Clear stale auth so we always get a fresh QR on user-initiated connect
+      await preferenceDB.clearWhatsAppAuthState();
+      await this.initSocket();
+    } catch (err: any) {
+      logEveryWhere({
+        message: `[WhatsApp] connect() error: ${err?.message}`,
       });
     } finally {
       this.isStarting = false;
     }
   };
 
-  private connect = async () => {
+  disconnect = async () => {
+    await this.stopSocket();
+    const [preference] = await preferenceDB.getOnePreference();
+    if (preference && preference.isWhatsAppOn) {
+      await preferenceDB.updatePreference({
+        id: preference.id,
+        isWhatsAppOn: false,
+      });
+    }
+  };
+
+  private stopSocket = async () => {
+    if (this.socket) {
+      try {
+        this.socket.end(undefined);
+      } catch {}
+      this.socket = null;
+    }
+    this.chatAdapter = null;
+    this.notifyStatus(WhatsAppStatus.DISCONNECTED);
+  };
+
+  private initSocket = async () => {
     const { state, saveCreds } = await preferenceDB.getWhatsAppAuthState();
+    const { version } = await fetchLatestBaileysVersion();
+    console.log(`[WhatsApp] Creating socket with version ${version.join(".")}`);
 
     const socket = makeWASocket({
       auth: state,
+      version,
       browser: Browsers.appropriate("Keeper Agent"),
-      printQRInTerminal: false,
     });
 
     this.socket = socket;
 
     socket.ev.on("creds.update", saveCreds);
 
-    socket.ev.on("connection.update", (update) => {
+    socket.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
         logEveryWhere({ message: "[WhatsApp] QR code received" });
+        this.notifyStatus(WhatsAppStatus.CONNECTING);
         mainWindow?.webContents?.send(MESSAGE.WHATSAPP_QR, { qr });
       }
 
@@ -89,34 +130,29 @@ class WhatsAppService {
         logEveryWhere({ message: "[WhatsApp] Connected" });
         this.notifyStatus(WhatsAppStatus.CONNECTED);
         this.registerAdapter();
+
+        // Auto-save preference so it reconnects on next app start
+        const [preference] = await preferenceDB.getOnePreference();
+        if (preference && !preference.isWhatsAppOn) {
+          await preferenceDB.updatePreference({
+            id: preference.id,
+            isWhatsAppOn: true,
+          });
+        }
       }
 
       if (connection === "close") {
+        const lastError = lastDisconnect?.error as any;
         const statusCode =
-          (lastDisconnect?.error as any)?.output?.statusCode ||
-          (lastDisconnect?.error as any)?.statusCode;
+          lastError?.output?.statusCode || lastError?.statusCode;
 
         logEveryWhere({
-          message: `[WhatsApp] Connection closed — status ${statusCode}`,
+          message: `[WhatsApp] Connection closed — status ${statusCode}, error: ${lastError?.message}`,
         });
-
-        if (statusCode === DisconnectReason.loggedOut) {
-          this.socket = null;
-          this.chatAdapter = null;
-          preferenceDB.clearWhatsAppAuthState().catch(() => {});
-          this.notifyStatus(WhatsAppStatus.DISCONNECTED);
-          return;
-        }
 
         this.socket = null;
         this.chatAdapter = null;
-        setTimeout(() => {
-          this.connect().catch((reconnectErr: any) => {
-            logEveryWhere({
-              message: `[WhatsApp] Reconnect error: ${reconnectErr?.message}`,
-            });
-          });
-        }, 3000);
+        this.notifyStatus(WhatsAppStatus.DISCONNECTED);
       }
     });
 

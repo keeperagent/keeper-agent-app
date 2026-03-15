@@ -15,6 +15,13 @@ export enum WhatsAppStatus {
   CONNECTING = "connecting",
 }
 
+export enum WhatsAppAction {
+  START = "start",
+  CONNECT = "connect",
+  DISCONNECT = "disconnect",
+  STATUS = "status",
+}
+
 /** A stored chat history record (role/content pair saved to the database). */
 export type IChatMessage = {
   id?: number;
