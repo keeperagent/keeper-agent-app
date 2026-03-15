@@ -15,7 +15,7 @@ type IProps = {
 
 const ConnectWhatsApp = (props: IProps) => {
   const { preference } = props;
-  const { updatePreference } = useUpdatePreference();
+  const { updatePreference, loading } = useUpdatePreference();
   const { translate } = useTranslation();
   const [form] = Form.useForm();
 
@@ -37,7 +37,7 @@ const ConnectWhatsApp = (props: IProps) => {
 
     const handleStatus = (_event: any, data: { status: WhatsAppStatus }) => {
       setStatus(data.status);
-      if (data.status === WhatsAppStatus.CONNECTED) {
+      if (data.status !== WhatsAppStatus.CONNECTING) {
         setQrCode(null);
       }
     };
@@ -102,6 +102,7 @@ const ConnectWhatsApp = (props: IProps) => {
             checkedChildren={translate("yes")}
             unCheckedChildren={translate("no")}
             onChange={onToggle}
+            disabled={loading}
           />
         </Form.Item>
       </Form>
