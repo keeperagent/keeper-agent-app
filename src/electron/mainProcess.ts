@@ -29,6 +29,7 @@ import { runScheduleLogController } from "./controller/scheduleLog";
 import { masterPasswordController } from "./controller/masterPassword";
 import { runSecretKeyController } from "./controller/secretKeyCache";
 import { telegramBotService } from "./chatGateway/adapters/telegram";
+import { whatsappService } from "./chatGateway/adapters/whatsapp";
 import { scheduleManager } from "./schedule";
 import { searchController } from "./controller/search";
 import { agentController } from "./controller/appAgent";
@@ -38,6 +39,7 @@ import { agentSettingController } from "./controller/agentSetting";
 import { chatHistoryController } from "./controller/chatHistory";
 import { nodeSecretController } from "./controller/nodeSecret";
 import { authStorageController } from "./controller/authStorage";
+import { whatsappController } from "./controller/whatsapp";
 
 const runMainProcess = () => {
   telegramController();
@@ -78,9 +80,11 @@ const runMainProcess = () => {
   chatHistoryController();
   nodeSecretController();
   authStorageController();
+  whatsappController();
 
   scheduleManager.start();
   telegramBotService.start();
+  whatsappService.start();
 };
 
 export { runMainProcess };

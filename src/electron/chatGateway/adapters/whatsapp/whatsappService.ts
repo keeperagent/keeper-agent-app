@@ -1,0 +1,195 @@
+/*
+  WhatsAppService — Manages a single WhatsApp connection via Baileys.
+
+  - Auth state (credentials + signal keys) is stored in the Preference table.
+    After the first QR scan, subsequent connections reuse the saved session automatically.
+  - Emits QR codes to the renderer so the user can scan from the WhatsApp app.
+  - On successful connection, registers a WhatsAppChatAdapter with the AgentChatBridge
+    so that regular text messages are forwarded to the KeeperAgent.
+  - Only agent chat is supported — no workflow integration.
+*/
+
+import makeWASocket, {
+  DisconnectReason,
+  Browsers,
+  type WASocket,
+} from "@whiskeysockets/baileys";
+import { logEveryWhere } from "@/electron/service/util";
+import { mainWindow } from "@/electron/main";
+import { MESSAGE } from "@/electron/constant";
+import { agentChatBridge } from "@/electron/chatGateway/bridge";
+import {
+  ChatPlatform,
+  WhatsAppStatus,
+  IPlatformMessage,
+} from "@/electron/chatGateway/types";
+import { preferenceDB } from "@/electron/database/preference";
+import { createWhatsAppChatAdapter } from "./chatAdapter";
+import type { WhatsAppChatAdapter } from "./chatAdapter";
+
+class WhatsAppService {
+  private socket: WASocket | null = null;
+  private chatAdapter: WhatsAppChatAdapter | null = null;
+  private isStarting = false;
+
+  start = async () => {
+    try {
+      // Stop existing connection first
+      if (this.socket) {
+        try {
+          this.socket.end(undefined);
+        } catch {}
+        this.socket = null;
+      }
+      this.chatAdapter = null;
+
+      const [preference] = await preferenceDB.getOnePreference();
+      if (!preference?.isWhatsAppOn) {
+        logEveryWhere({ message: "[WhatsApp] WhatsApp is not enabled" });
+        return;
+      }
+
+      if (this.isStarting) {
+        return;
+      }
+      this.isStarting = true;
+
+      await this.connect();
+    } catch (err: any) {
+      logEveryWhere({
+        message: `[WhatsApp] start() error: ${err?.message}`,
+      });
+    } finally {
+      this.isStarting = false;
+    }
+  };
+
+  private connect = async () => {
+    const { state, saveCreds } = await preferenceDB.getWhatsAppAuthState();
+
+    const socket = makeWASocket({
+      auth: state,
+      browser: Browsers.appropriate("Keeper Agent"),
+      printQRInTerminal: false,
+    });
+
+    this.socket = socket;
+
+    socket.ev.on("creds.update", saveCreds);
+
+    socket.ev.on("connection.update", (update) => {
+      const { connection, lastDisconnect, qr } = update;
+
+      if (qr) {
+        logEveryWhere({ message: "[WhatsApp] QR code received" });
+        mainWindow?.webContents?.send(MESSAGE.WHATSAPP_QR, { qr });
+      }
+
+      if (connection === "open") {
+        logEveryWhere({ message: "[WhatsApp] Connected" });
+        this.notifyStatus(WhatsAppStatus.CONNECTED);
+        this.registerAdapter();
+      }
+
+      if (connection === "close") {
+        const statusCode =
+          (lastDisconnect?.error as any)?.output?.statusCode ||
+          (lastDisconnect?.error as any)?.statusCode;
+
+        logEveryWhere({
+          message: `[WhatsApp] Connection closed — status ${statusCode}`,
+        });
+
+        if (statusCode === DisconnectReason.loggedOut) {
+          this.socket = null;
+          this.chatAdapter = null;
+          preferenceDB.clearWhatsAppAuthState().catch(() => {});
+          this.notifyStatus(WhatsAppStatus.DISCONNECTED);
+          return;
+        }
+
+        this.socket = null;
+        this.chatAdapter = null;
+        setTimeout(() => {
+          this.connect().catch((reconnectErr: any) => {
+            logEveryWhere({
+              message: `[WhatsApp] Reconnect error: ${reconnectErr?.message}`,
+            });
+          });
+        }, 3000);
+      }
+    });
+
+    socket.ev.on("messages.upsert", (upsert) => {
+      if (upsert.type !== "notify") {
+        return;
+      }
+
+      for (const message of upsert.messages) {
+        if (message.key.fromMe) {
+          continue;
+        }
+        if (message.key.remoteJid === "status@broadcast") {
+          continue;
+        }
+
+        const text =
+          message.message?.conversation ||
+          message.message?.extendedTextMessage?.text ||
+          "";
+
+        if (!text.trim()) {
+          continue;
+        }
+
+        const chatId = message.key.remoteJid || "";
+        const userId = message.key.participant || chatId;
+
+        const platformMessage: IPlatformMessage = {
+          platformId: ChatPlatform.WHATSAPP,
+          chatId,
+          userId,
+          text,
+          messageId: message?.key?.id || undefined,
+        };
+
+        if (this.chatAdapter) {
+          this.chatAdapter.receive(platformMessage).catch((receiveErr: any) => {
+            logEveryWhere({
+              message: `[WhatsApp] Message receive error: ${receiveErr?.message}`,
+            });
+          });
+        }
+      }
+    });
+  };
+
+  private registerAdapter = () => {
+    if (this.chatAdapter) {
+      return;
+    }
+
+    const adapter = createWhatsAppChatAdapter();
+
+    adapter.setSendText(async (chatId, text) => {
+      if (this.socket) {
+        await this.socket.sendMessage(chatId, { text });
+      }
+    });
+
+    adapter.setSendPresence(async (chatId) => {
+      if (this.socket) {
+        await this.socket.sendPresenceUpdate("composing", chatId);
+      }
+    });
+
+    agentChatBridge.registerAdapter(adapter);
+    this.chatAdapter = adapter;
+  };
+
+  private notifyStatus = (status: WhatsAppStatus) => {
+    mainWindow?.webContents?.send(MESSAGE.WHATSAPP_STATUS, { status });
+  };
+}
+
+export const whatsappService = new WhatsAppService();

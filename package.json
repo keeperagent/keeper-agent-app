@@ -34,6 +34,7 @@
     "@uniswap/v2-sdk": "^4.15.2",
     "@uniswap/v3-sdk": "^3.25.2",
     "@uniswap/v4-sdk": "^1.21.4",
+    "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "@xyflow/react": "^12.10.1",

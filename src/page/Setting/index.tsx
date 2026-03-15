@@ -5,6 +5,7 @@ import { useTranslation, useGetPreference } from "@/hook";
 import { actSetPageName } from "@/redux/layout";
 import { Wrapper } from "./style";
 import ConnectTelegram from "./ConnectTelegram";
+import ConnectWhatsApp from "./ConnectWhatsApp";
 import ImportDatabase from "./ImportDatabase";
 import ExportDatabase from "./ExportDatabase";
 import Other from "./Other";
@@ -83,7 +84,14 @@ const SettingPage = (props: any) => {
             </div>
           </Col>
 
-          <Col span={7}></Col>
+          <Col span={7}>
+            <div className="form">
+              <div className="heading">
+                <span>{translate("setting.connectWhatsApp")}</span>
+              </div>
+              <ConnectWhatsApp />
+            </div>
+          </Col>
         </Row>
       )}
 

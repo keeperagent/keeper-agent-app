@@ -27,6 +27,16 @@ export default (db: Sequelize) =>
         type: DataTypes.STRING,
         defaultValue: "",
       },
+      isWhatsAppOn: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      whatsappAuthState: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "{}",
+      },
       deviceId: {
         type: DataTypes.STRING,
         defaultValue: null,

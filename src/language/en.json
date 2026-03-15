@@ -783,6 +783,8 @@
   "proxy.staticProxy": "Static proxy",
   "proxy.rotateProxy": "Rotating proxy",
   "setting.connectTelegram": "Connect Telegram",
+  "setting.connectWhatsApp": "Connect WhatsApp",
+  "setting.enableWhatsAppAgent": "Enable WhatsApp",
   "setting.otherSetting": "Other settings",
   "setting.languageModel": "LLM settings",
   "setting.syncData": "Data synchronization",
