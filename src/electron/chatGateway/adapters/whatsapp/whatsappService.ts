@@ -43,6 +43,8 @@ class WhatsAppService {
   private socket: WASocket | null = null;
   private chatAdapter: WhatsAppChatAdapter | null = null;
   private isStarting = false;
+  // Track message IDs sent by the agent to avoid processing them as user input
+  private sentMessageIds = new Set<string>();
 
   /** Push current status to the renderer. */
   emitStatus = () => {
@@ -174,10 +176,15 @@ class WhatsAppService {
       }
 
       for (const message of upsert.messages) {
-        if (message.key.fromMe) {
+        if (!message.key.fromMe) {
           continue;
         }
         if (message.key.remoteJid === "status@broadcast") {
+          continue;
+        }
+        // Skip messages sent by the agent to avoid loop
+        if (message.key.id && this.sentMessageIds.has(message.key.id)) {
+          this.sentMessageIds.delete(message.key.id);
           continue;
         }
 
@@ -221,7 +228,10 @@ class WhatsAppService {
 
     adapter.setSendText(async (chatId, text) => {
       if (this.socket) {
-        await this.socket.sendMessage(chatId, { text });
+        const sent = await this.socket.sendMessage(chatId, { text });
+        if (sent?.key?.id) {
+          this.sentMessageIds.add(sent.key.id);
+        }
       }
     });
 
