@@ -348,7 +348,7 @@ const ContextBar = (props: any) => {
         >
           <span className={`context-chip ${!campaign ? "placeholder" : ""}`}>
             <span className="chip-label">
-              {campaign?.name || translate("agent.campaign")}
+              {campaign?.name || translate("sidebar.campaign")}
             </span>
           </span>
         </Dropdown>
