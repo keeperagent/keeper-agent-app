@@ -37,6 +37,7 @@ import {
   searchWorkflowsTool,
   runWorkflowTool,
   stopWorkflowTool,
+  checkWorkflowStatusTool,
 } from "./baseTool";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
@@ -297,6 +298,8 @@ const buildBaseSubAgents = (
     isEnabled(BASE_TOOL_KEYS.SEARCH_WORKFLOWS) && searchWorkflowsTool(),
     isEnabled(BASE_TOOL_KEYS.RUN_WORKFLOW) && runWorkflowTool(),
     isEnabled(BASE_TOOL_KEYS.STOP_WORKFLOW) && stopWorkflowTool(),
+    isEnabled(BASE_TOOL_KEYS.CHECK_WORKFLOW_STATUS) &&
+      checkWorkflowStatusTool(),
   ].filter((tool): any => Boolean(tool));
 
   if (workflowTools.length > 0) {

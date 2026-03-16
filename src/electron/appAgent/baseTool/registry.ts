@@ -32,6 +32,7 @@ export const BASE_TOOL_KEYS = {
   SEARCH_WORKFLOWS: "search_workflows",
   RUN_WORKFLOW: "run_workflow",
   STOP_WORKFLOW: "stop_workflow",
+  CHECK_WORKFLOW_STATUS: "check_workflow_status",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -151,6 +152,13 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     key: BASE_TOOL_KEYS.STOP_WORKFLOW,
     name: "Stop workflow",
     description: "Stop a currently running workflow on a campaign",
+    group: BaseToolGroup.WORKFLOW,
+  },
+  {
+    key: BASE_TOOL_KEYS.CHECK_WORKFLOW_STATUS,
+    name: "Check workflow status",
+    description:
+      "Check the progress and status of a workflow running on a campaign",
     group: BaseToolGroup.WORKFLOW,
   },
   // Code Execution Tools
