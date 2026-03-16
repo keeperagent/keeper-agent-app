@@ -33,6 +33,11 @@ import {
   launchBonkfunTokenTool,
   executeJavaScriptTool,
   executePythonTool,
+  searchCampaignsTool,
+  searchWorkflowsTool,
+  runWorkflowTool,
+  stopWorkflowTool,
+  checkWorkflowStatusTool,
 } from "./baseTool";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
@@ -112,10 +117,14 @@ When the user wants to SELL tokens for a USD amount (e.g. "sell $10 worth"):
 2. Calculate: tokenAmount = usdAmount / tokenPrice.
 3. Then delegate the sell with the token amount.
 
+## Workflow execution
+- Before running a workflow: show campaign name, workflow name, variables (if any), and ask the user for their encryptKey (secret key). Users rarely provide it upfront — always ask.
+- NEVER echo encryptKey back in your response. Once received, delegate to workflow_agent immediately with all details including encryptKey in the task description.
+
 ## Rules
 - On tool failure: try ONE alternative, then report to user.
 - Swap/transfer confirmations MUST use structured format, not bullet points: TELEGRAM uses bold-labeled fields (<b>Field:</b> Value, one per line); WHATSAPP uses *bold* labels (*Field:* Value, one per line); KEEPER/others use a Markdown table.
-- CRITICAL: After the user confirms a swap/transfer, you MUST delegate execution to the transaction subagent via the \`task\` tool. NEVER pretend the transaction is executing or generate fake results — always call the actual tool. Include the current platformId in the task description when delegating to transaction_agent (e.g. "platformId=TELEGRAM").
+- CRITICAL: After the user confirms a swap/transfer, you MUST delegate execution to the transaction subagent via the \`task\` tool. NEVER pretend the transaction is executing or generate fake results — always call the actual tool.
 - When the user asks how to use any capability: delegate to the relevant subagent to explain the tool's parameters and usage. Do NOT answer from general knowledge — describe YOUR tools, not external websites or UIs.
 - When displaying results from subagents, always apply the Solana link format rules above. Reformat any raw addresses or tx hashes into shortened Solscan links using the format for the current platformId.
 - Keep responses concise.
@@ -124,7 +133,11 @@ When the user wants to SELL tokens for a USD amount (e.g. "sell $10 worth"):
 Adapt output based on the "platformId" field in the CURRENT CONTEXT of each message:
 - TELEGRAM: Use Telegram HTML tags only — never use Markdown syntax.
 - WHATSAPP: Use WhatsApp formatting only — *bold*, _italic_, ~strikethrough~, \`monospace\`, \`\`\`code block\`\`\`. No HTML tags, no Markdown links.
-- KEEPER: Use Markdown. Prefer markdown tables over long lists or bullet points when presenting structured information.`;
+- KEEPER: Use Markdown. Prefer markdown tables over long lists or bullet points when presenting structured information.
+
+CRITICAL: When delegating to ANY subagent via \`task\`, you MUST append the following to the task description:
+"Output format: [TELEGRAM=HTML | WHATSAPP=WhatsApp formatting | KEEPER=Markdown tables]. Use tables instead of bullet lists for structured data."
+This ensures all subagents format their responses correctly for the current platform.`;
 };
 
 /**
@@ -217,7 +230,7 @@ const buildBaseSubAgents = (
     agents.push({
       name: "app_management_agent",
       description:
-        "Manages Campaign, Profile, Wallet, and Node Provider of this application",
+        "Creates new Campaigns, Profiles, Wallets, and Node Providers. Use this only for creating new resources, NOT for listing or searching.",
       systemPrompt:
         "You are a subagent responsible for managing application resources including Campaigns, Profiles, Wallets, and Node Providers. Use the available tools to complete the user's task. Return results directly.",
       tools: appManagementTools as any,
@@ -277,6 +290,29 @@ const buildBaseSubAgents = (
         "Do NOT retry with the exact same code. Do NOT say you cannot do something — you have full Node.js/Python capabilities. " +
         "Report the result back.",
       tools: codeExecutionTools as any,
+    });
+  }
+
+  const workflowTools = [
+    isEnabled(BASE_TOOL_KEYS.SEARCH_CAMPAIGNS) && searchCampaignsTool(),
+    isEnabled(BASE_TOOL_KEYS.SEARCH_WORKFLOWS) && searchWorkflowsTool(),
+    isEnabled(BASE_TOOL_KEYS.RUN_WORKFLOW) && runWorkflowTool(),
+    isEnabled(BASE_TOOL_KEYS.STOP_WORKFLOW) && stopWorkflowTool(),
+    isEnabled(BASE_TOOL_KEYS.CHECK_WORKFLOW_STATUS) &&
+      checkWorkflowStatusTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  if (workflowTools.length > 0) {
+    agents.push({
+      name: "workflow_agent",
+      description:
+        "Lists and searches campaigns and workflows, runs workflows on campaigns, and stops running workflows. Use this for any campaign/workflow lookup or execution.",
+      systemPrompt:
+        "1. Search by name to get IDs.\n" +
+        "2. If exactly 1 campaign and 1 workflow match, execute immediately.\n" +
+        "3. If multiple campaigns or multiple workflows in a campaign, return the full list — never pick one yourself.\n" +
+        "4. Never include encryptKey in response text.",
+      tools: workflowTools as any,
     });
   }
 
@@ -434,6 +470,7 @@ const createKeeperAgent = async (
     model: llm,
     systemPrompt: buildSystemPrompt(subagents),
     backend,
+    tools: [] as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

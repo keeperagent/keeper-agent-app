@@ -6,7 +6,7 @@ export const Wrapper = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  padding-bottom: 5rem;
 
   .group {
     margin-bottom: 3.5rem;

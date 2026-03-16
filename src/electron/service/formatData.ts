@@ -78,7 +78,10 @@ const formatCampaign = (data: Model<any, any>): ICampaign => {
 
   formatedData = {
     ...formatedData,
-    listWorkflow: formatedData?.Workflows || [],
+    listWorkflow:
+      formatedData?.Workflows?.map((workflow: any) =>
+        formatWorkflow(workflow),
+      ) || [],
     listExtension:
       formatedData?.Extensions?.map((extension: any) =>
         formatDBResponse(extension),

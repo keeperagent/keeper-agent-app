@@ -117,7 +117,11 @@ const AgentPage = (props: any) => {
   }, [agentStatsFromReady]);
 
   return (
-    <Wrapper>
+    <Wrapper
+      style={{
+        height: activeTab !== TAB.AGENT ? "100%" : "calc(100vh - 6.9rem)",
+      }}
+    >
       <div className="tab">
         <Tabs
           onChange={onChangeTab}
@@ -224,6 +228,7 @@ const AgentPage = (props: any) => {
           {activeTab === TAB.AGENT && (
             <ChatAgent setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
           )}
+
           {activeTab === TAB.MCP_SERVER && (
             <Suspense
               fallback={
