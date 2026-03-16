@@ -31,9 +31,14 @@ export const checkWorkflowStatusTool = () =>
         );
       }
 
-      const targetWorkflow = (campaign?.listWorkflow || []).find(
+      const targetWorkflow = campaign?.listWorkflow?.find(
         (workflow) => workflow.id === workflowId,
       );
+      if (!targetWorkflow) {
+        throw new Error(
+          `Workflow with ID ${workflowId} not found in campaign "${campaign.name}"`,
+        );
+      }
       const workflowName = targetWorkflow?.name || `ID ${workflowId}`;
 
       const workflow = await workflowManager.getWorkflow(

@@ -1,5 +1,6 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
+import { campaignDB } from "@/electron/database/campaign";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { safeStringify } from "@/electron/appAgent/utils";
 
@@ -21,6 +22,28 @@ export const stopWorkflowTool = () =>
       campaignId: number;
       workflowId: number;
     }) => {
+      const [campaign, campaignErr] =
+        await campaignDB.getOneCampaign(campaignId);
+      if (campaignErr || !campaign) {
+        throw (
+          campaignErr || new Error(`Campaign with ID ${campaignId} not found`)
+        );
+      }
+
+      const targetWorkflow = campaign?.listWorkflow?.find(
+        (workflow) => workflow.id === workflowId,
+      );
+      if (!targetWorkflow) {
+        return safeStringify({
+          error: `Workflow with ID ${workflowId} not found in campaign "${campaign.name}"`,
+          availableWorkflows:
+            campaign?.listWorkflow?.map((workflow) => ({
+              id: workflow.id,
+              name: workflow.name,
+            })) || [],
+        });
+      }
+
       const workflow = await workflowManager.getWorkflow(
         workflowId,
         campaignId,
@@ -29,13 +52,13 @@ export const stopWorkflowTool = () =>
 
       if (!workflow.monitor.isRunning) {
         return safeStringify({
-          error: `Workflow (ID: ${workflowId}) is not running on campaign (ID: ${campaignId})`,
+          error: `Workflow "${targetWorkflow.name}" is not running on campaign "${campaign.name}"`,
         });
       }
 
       await workflow.stopWorkflow();
       return safeStringify({
-        message: `Workflow (ID: ${workflowId}) stopped on campaign (ID: ${campaignId})`,
+        message: `Workflow "${targetWorkflow.name}" stopped on campaign "${campaign.name}"`,
       });
     },
   });

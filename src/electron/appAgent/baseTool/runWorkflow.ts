@@ -8,12 +8,8 @@ import { ICampaignProfile, IWorkflowVariable } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 
 const schema = z.object({
-  campaignId: z
-    .number()
-    .describe("Campaign ID"),
-  workflowId: z
-    .number()
-    .describe("Workflow ID"),
+  campaignId: z.number().describe("Campaign ID"),
+  workflowId: z.number().describe("Workflow ID"),
   encryptKey: z
     .string()
     .optional()
@@ -21,10 +17,10 @@ const schema = z.object({
       "Secret key to decrypt profile data. Required if the workflow uses encrypted data.",
     ),
   variables: z
-    .any()
+    .record(z.string())
     .optional()
     .describe(
-      'Workflow variable overrides as key-value pairs (Record<string, string>). e.g. { "walletAddress": "0x123..." }',
+      'Workflow variable overrides as key-value pairs. e.g. { "walletAddress": "0x123..." }',
     ),
 });
 
@@ -43,7 +39,7 @@ export const runWorkflowTool = () =>
       campaignId: number;
       workflowId: number;
       encryptKey?: string;
-      variables?: any;
+      variables?: Record<string, string>;
     }) => {
       const resolvedEncryptKey = encryptKey || "";
       const resolvedVariables = variables || undefined;

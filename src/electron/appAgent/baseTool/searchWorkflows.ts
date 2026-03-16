@@ -24,7 +24,7 @@ export const searchWorkflowsTool = () =>
     func: async ({ searchText }: { searchText?: string }) => {
       const [workflowResult, err] = await workflowDB.getListWorkflow(
         1,
-        20,
+        15,
         searchText || undefined,
       );
       if (err) {
@@ -36,8 +36,11 @@ export const searchWorkflowsTool = () =>
         .map((workflow) => workflow.id!)
         .filter(Boolean);
 
-      const [listCampaign] =
+      const [listCampaign, listCampaignErr] =
         await campaignDB.getListCampaignByWorkflowId(workflowIds);
+      if (listCampaignErr) {
+        throw listCampaignErr;
+      }
 
       const campaignsByWorkflowId = new Map<number, ICampaign[]>();
       for (const campaign of listCampaign || []) {
