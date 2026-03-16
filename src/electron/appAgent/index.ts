@@ -33,6 +33,8 @@ import {
   launchBonkfunTokenTool,
   executeJavaScriptTool,
   executePythonTool,
+  webSearchTavilyTool,
+  webSearchExaTool,
   searchCampaignsTool,
   searchWorkflowsTool,
   runWorkflowTool,
@@ -290,6 +292,27 @@ const buildBaseSubAgents = (
         "Do NOT retry with the exact same code. Do NOT say you cannot do something — you have full Node.js/Python capabilities. " +
         "Report the result back.",
       tools: codeExecutionTools as any,
+    });
+  }
+
+  const researchTools = [
+    isEnabled(BASE_TOOL_KEYS.WEB_SEARCH_TAVILY) && webSearchTavilyTool(),
+    isEnabled(BASE_TOOL_KEYS.WEB_SEARCH_EXA) && webSearchExaTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  if (researchTools.length > 0) {
+    agents.push({
+      name: "research_agent",
+      description:
+        "Searches the web for current information, news, facts, and research. Use Tavily for general/factual queries and Exa for semantic/conceptual search.",
+      systemPrompt:
+        "You are a research subagent with web search capabilities. " +
+        "You have two search tools:\n" +
+        "- **web_search_tavily**: Best for factual lookups, current events, news, prices, and general queries.\n" +
+        "- **web_search_exa**: Best for semantic search — finding conceptually similar content, research papers, related projects, and deep topic exploration.\n\n" +
+        "Choose the right tool based on the query type. You can use both if needed for comprehensive research.\n" +
+        "Return results clearly with source URLs. Keep responses concise and relevant.",
+      tools: researchTools as any,
     });
   }
 

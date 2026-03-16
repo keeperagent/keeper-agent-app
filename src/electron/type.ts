@@ -2107,6 +2107,8 @@ export type IPreference = {
   anthropicModel?: string;
   googleGeminiModel?: string;
   jupiterApiKeys?: string[];
+  tavilyApiKey?: string;
+  exaApiKey?: string;
   masterPasswordVerifier?: string;
   disabledTools?: string[];
 };

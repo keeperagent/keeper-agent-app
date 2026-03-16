@@ -69,6 +69,12 @@ class PreferenceDB {
           googleGeminiApiKey: preference?.googleGeminiApiKey
             ? encryptionService.encryptData(preference?.googleGeminiApiKey)
             : "",
+          tavilyApiKey: preference?.tavilyApiKey
+            ? encryptionService.encryptData(preference?.tavilyApiKey)
+            : "",
+          exaApiKey: preference?.exaApiKey
+            ? encryptionService.encryptData(preference?.exaApiKey)
+            : "",
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
         },
@@ -118,6 +124,18 @@ class PreferenceDB {
           googleGeminiApiKey: encryptionService.encryptData(
             preference?.googleGeminiApiKey,
           ),
+        };
+      }
+      if (preference?.tavilyApiKey) {
+        updateData = {
+          ...updateData,
+          tavilyApiKey: encryptionService.encryptData(preference?.tavilyApiKey),
+        };
+      }
+      if (preference?.exaApiKey) {
+        updateData = {
+          ...updateData,
+          exaApiKey: encryptionService.encryptData(preference?.exaApiKey),
         };
       }
 

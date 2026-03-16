@@ -18,3 +18,5 @@ export { searchWorkflowsTool } from "./searchWorkflows";
 export { runWorkflowTool } from "./runWorkflow";
 export { stopWorkflowTool } from "./stopWorkflow";
 export { checkWorkflowStatusTool } from "./checkWorkflowStatus";
+export { webSearchTavilyTool } from "./webSearchTavily";
+export { webSearchExaTool } from "./webSearchExa";

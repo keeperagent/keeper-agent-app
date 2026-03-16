@@ -25,6 +25,8 @@ const LanguageModel = (props: IProps) => {
       openAIModel: preference?.openAIModel,
       anthropicModel: preference?.anthropicModel,
       googleGeminiModel: preference?.googleGeminiModel,
+      tavilyApiKey: preference?.tavilyApiKey,
+      exaApiKey: preference?.exaApiKey,
     });
   }, [preference]);
 
@@ -45,6 +47,8 @@ const LanguageModel = (props: IProps) => {
         openAIModel,
         anthropicModel,
         googleGeminiModel,
+        tavilyApiKey,
+        exaApiKey,
       } = await form.validateFields([
         "openAIApiKey",
         "anthropicApiKey",
@@ -52,6 +56,8 @@ const LanguageModel = (props: IProps) => {
         "openAIModel",
         "anthropicModel",
         "googleGeminiModel",
+        "tavilyApiKey",
+        "exaApiKey",
       ]);
 
       await updatePreference({
@@ -62,6 +68,8 @@ const LanguageModel = (props: IProps) => {
         openAIModel: openAIModel || "",
         anthropicModel: anthropicModel || "",
         googleGeminiModel: googleGeminiModel || "",
+        tavilyApiKey,
+        exaApiKey,
       });
     } catch {}
   };
@@ -147,6 +155,32 @@ const LanguageModel = (props: IProps) => {
             className="custom-input"
             placeholder={DEFAULT_LLM_MODELS[LLMProvider.GEMINI]}
             size="large"
+          />
+        </Form.Item>
+        <Divider />
+
+        <Form.Item
+          label={`${translate("workflow.tavilyApiKeyLabel")}:`}
+          name="tavilyApiKey"
+          tooltip={translate("workflow.tavilyApiKeyTooltip")}
+        >
+          <PasswordInput
+            name="tavilyApiKey"
+            placeholder={translate("workflow.enterTavilyApiKeyPlaceholder")}
+            extendClass="tavilyApiKey"
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={`${translate("workflow.exaApiKeyLabel")}:`}
+          name="exaApiKey"
+          tooltip={translate("workflow.exaApiKeyTooltip")}
+          style={{ marginTop: "-1rem" }}
+        >
+          <PasswordInput
+            name="exaApiKey"
+            placeholder={translate("workflow.enterExaApiKeyPlaceholder")}
+            extendClass="exaApiKey"
           />
         </Form.Item>
       </Form>

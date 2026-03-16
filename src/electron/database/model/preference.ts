@@ -120,6 +120,16 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: "",
       },
+      tavilyApiKey: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      exaApiKey: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
       disabledTools: {
         type: DataTypes.STRING,
         defaultValue: "[]",
