@@ -20,8 +20,8 @@ export const searchWorkflowsTool = () =>
     description:
       "Search and list workflows. Returns workflow IDs, names, variables, and which campaigns they belong to.\n" +
       "Use this to find the workflowId and campaignId needed by run_workflow / stop_workflow.",
-    schema,
-    func: async ({ searchText }) => {
+    schema: schema as any,
+    func: async ({ searchText }: { searchText?: string }) => {
       const [workflowResult, err] = await workflowDB.getListWorkflow(
         1,
         20,
@@ -41,7 +41,7 @@ export const searchWorkflowsTool = () =>
 
       const campaignsByWorkflowId = new Map<number, ICampaign[]>();
       for (const campaign of listCampaign || []) {
-        for (const workflow of campaign.listWorkflow || []) {
+        for (const workflow of campaign?.listWorkflow || []) {
           if (workflowIds.includes(workflow.id!)) {
             const existing = campaignsByWorkflowId.get(workflow.id!) || [];
             existing.push(campaign);
@@ -54,18 +54,18 @@ export const searchWorkflowsTool = () =>
         workflows: matchedWorkflows.map((workflow) => ({
           id: workflow.id,
           name: workflow.name,
-          listVariable: (workflow.listVariable || []).map((variable) => ({
-            variable: variable.variable,
-            label: variable.label,
-            value: variable.value,
-          })),
-          campaigns: (campaignsByWorkflowId.get(workflow.id!) || []).map(
-            (campaign) => ({
+          listVariable:
+            workflow?.listVariable?.map((variable) => ({
+              variable: variable.variable,
+              label: variable.label,
+              value: variable.value,
+            })) || [],
+          campaigns:
+            campaignsByWorkflowId.get(workflow.id!)?.map((campaign) => ({
               id: campaign.id,
               name: campaign.name,
               totalProfiles: campaign.totalProfile || 0,
-            }),
-          ),
+            })) || [],
         })),
       });
     },

@@ -10,10 +10,10 @@ import { safeStringify } from "@/electron/appAgent/utils";
 const schema = z.object({
   campaignId: z
     .number()
-    .describe("Campaign ID (get from search_campaigns or search_workflows)"),
+    .describe("Campaign ID"),
   workflowId: z
     .number()
-    .describe("Workflow ID (get from search_campaigns or search_workflows)"),
+    .describe("Workflow ID"),
   encryptKey: z
     .string()
     .optional()
@@ -34,7 +34,17 @@ export const runWorkflowTool = () =>
     description:
       "Run a workflow on a campaign using their IDs. Use search_campaigns or search_workflows first to get the IDs.",
     schema: schema as any,
-    func: async ({ campaignId, workflowId, encryptKey, variables }) => {
+    func: async ({
+      campaignId,
+      workflowId,
+      encryptKey,
+      variables,
+    }: {
+      campaignId: number;
+      workflowId: number;
+      encryptKey?: string;
+      variables?: any;
+    }) => {
       const resolvedEncryptKey = encryptKey || "";
       const resolvedVariables = variables || undefined;
 
@@ -52,10 +62,11 @@ export const runWorkflowTool = () =>
       if (!targetWorkflow) {
         return safeStringify({
           error: `Workflow with ID ${workflowId} not found in campaign "${campaign.name}"`,
-          availableWorkflows: (campaign.listWorkflow || []).map((workflow) => ({
-            id: workflow.id,
-            name: workflow.name,
-          })),
+          availableWorkflows:
+            campaign?.listWorkflow?.map((workflow) => ({
+              id: workflow.id,
+              name: workflow.name,
+            })) || [],
         });
       }
 

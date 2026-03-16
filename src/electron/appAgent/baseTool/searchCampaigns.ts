@@ -18,11 +18,11 @@ export const searchCampaignsTool = () =>
     description:
       "Search and list campaigns. Returns campaign IDs, names, profile counts, and their attached workflows with IDs and variables.\n" +
       "Use this to find the campaignId and workflowId needed by run_workflow / stop_workflow.",
-    schema,
-    func: async ({ searchText }) => {
+    schema: schema as any,
+    func: async ({ searchText }: { searchText?: string }) => {
       const [result, err] = await campaignDB.getListCampaign(
         1,
-        20,
+        15,
         searchText || undefined,
       );
       if (err) {
@@ -35,15 +35,17 @@ export const searchCampaignsTool = () =>
           id: campaign.id,
           name: campaign.name,
           totalProfiles: campaign.totalProfile || 0,
-          workflows: (campaign.listWorkflow || []).map((workflow) => ({
-            id: workflow.id,
-            name: workflow.name,
-            listVariable: (workflow.listVariable || []).map((variable) => ({
-              variable: variable.variable,
-              label: variable.label,
-              value: variable.value,
-            })),
-          })),
+          workflows:
+            campaign?.listWorkflow?.map((workflow) => ({
+              id: workflow.id,
+              name: workflow.name,
+              listVariable:
+                workflow?.listVariable?.map((variable) => ({
+                  variable: variable.variable,
+                  label: variable.label,
+                  value: variable.value,
+                })) || [],
+            })) || [],
         })),
       });
     },

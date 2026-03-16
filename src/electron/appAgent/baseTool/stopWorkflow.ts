@@ -4,12 +4,8 @@ import { workflowManager } from "@/electron/simulator/workflow";
 import { safeStringify } from "@/electron/appAgent/utils";
 
 const schema = z.object({
-  campaignId: z
-    .number()
-    .describe("Campaign ID (get from search_campaigns or search_workflows)"),
-  workflowId: z
-    .number()
-    .describe("Workflow ID (get from search_campaigns or search_workflows)"),
+  campaignId: z.number().describe("Campaign ID"),
+  workflowId: z.number().describe("Workflow ID"),
 });
 
 export const stopWorkflowTool = () =>
@@ -17,8 +13,14 @@ export const stopWorkflowTool = () =>
     name: "stop_workflow",
     description:
       "Stop a currently running workflow on a campaign using their IDs.",
-    schema,
-    func: async ({ campaignId, workflowId }) => {
+    schema: schema as any,
+    func: async ({
+      campaignId,
+      workflowId,
+    }: {
+      campaignId: number;
+      workflowId: number;
+    }) => {
       const workflow = await workflowManager.getWorkflow(
         workflowId,
         campaignId,
