@@ -308,9 +308,10 @@ const buildBaseSubAgents = (
       description:
         "Lists and searches campaigns and workflows, runs workflows on campaigns, and stops running workflows. Use this for any campaign/workflow lookup or execution.",
       systemPrompt:
-        "1. Search by name to get IDs. If multiple matches, return the full list.\n" +
-        "2. Execute run_workflow or stop_workflow immediately. No confirmation needed.\n" +
-        "3. Never include encryptKey in response text.",
+        "1. Search by name to get IDs.\n" +
+        "2. If exactly 1 campaign and 1 workflow match, execute immediately.\n" +
+        "3. If multiple campaigns or multiple workflows in a campaign, return the full list — never pick one yourself.\n" +
+        "4. Never include encryptKey in response text.",
       tools: workflowTools as any,
     });
   }
