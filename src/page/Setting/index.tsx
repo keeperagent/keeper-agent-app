@@ -10,9 +10,11 @@ import ImportDatabase from "./ImportDatabase";
 import ExportDatabase from "./ExportDatabase";
 import Other from "./Other";
 import LanguageModel from "./LanguageModel";
+import WebSearch from "./WebSearch";
 
 const TAB = {
   GENERAL_SETTING: "GENERAL_SETTING",
+  AGENT_SETTING: "AGENT_SETTING",
   DATABASE_SETTING: "DATABASE_SETTING",
 };
 
@@ -47,6 +49,10 @@ const SettingPage = (props: any) => {
               label: translate("setting.general"),
             },
             {
+              key: TAB.AGENT_SETTING,
+              label: translate("setting.agent"),
+            },
+            {
               key: TAB.DATABASE_SETTING,
               label: translate("setting.database"),
             },
@@ -75,7 +81,9 @@ const SettingPage = (props: any) => {
             </div>
 
             <Divider />
+          </Col>
 
+          <Col span={7}>
             <div className="form">
               <div className="heading">
                 <span>{translate("setting.otherSetting")}</span>
@@ -84,12 +92,28 @@ const SettingPage = (props: any) => {
             </div>
           </Col>
 
+          <Col span={7}></Col>
+        </Row>
+      )}
+
+      {activeTab === TAB.AGENT_SETTING && (
+        <Row style={{ width: "100%" }} justify="space-between">
           <Col span={7}>
             <div className="form">
               <div className="heading">
                 <span>{translate("setting.languageModel")}</span>
               </div>
+
               <LanguageModel />
+            </div>
+          </Col>
+
+          <Col span={7}>
+            <div className="form">
+              <div className="heading">
+                <span>{translate("setting.webSearch")}</span>
+              </div>
+              <WebSearch />
             </div>
           </Col>
 
