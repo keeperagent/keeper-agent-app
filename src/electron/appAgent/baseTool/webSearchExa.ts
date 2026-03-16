@@ -1,21 +1,25 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ExaSearchResults } from "@langchain/exa";
-import Exa from "exa-js";
+import { Exa } from "exa-js";
 import { getExaKey } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 
 const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
 
+type WebSearchExaInput = {
+  query: string;
+  maxResults?: number;
+};
+
 export const webSearchExaTool = () =>
-  new DynamicStructuredTool({
+  new DynamicStructuredTool<z.ZodObject<any>>({
     name: "web_search_exa",
     description:
       "Search the web using Exa for semantic/neural search. " +
       "Best for finding conceptually similar content, deep research, and discovering related projects or articles. " +
-      "Unlike keyword search, Exa understands the meaning behind queries. " +
-      "Input: a search query string.",
+      "Unlike keyword search, Exa understands the meaning behind queries.",
     schema: z.object({
       query: z
         .string()
@@ -29,22 +33,23 @@ export const webSearchExaTool = () =>
         .optional()
         .describe("Maximum number of results to return (default 5)"),
     }),
-    func: async ({ query, maxResults = MAX_RESULTS }) => {
+    func: async (input: WebSearchExaInput) => {
+      const { query, maxResults = MAX_RESULTS } = input;
       try {
         const [apiKey, keyErr] = await getExaKey();
         if (keyErr || !apiKey) {
-          return "Error: Exa API key is not configured. Please set it in Settings > Language Model.";
+          return "Error: Exa API key is not configured. Please set it in Settings > Agent.";
         }
 
         const exaClient = new Exa(apiKey);
-        const tool = new ExaSearchResults({
-          client: exaClient,
+        const exaTool = new ExaSearchResults({
+          client: exaClient as any,
           searchArgs: {
             numResults: maxResults,
           },
         });
 
-        const result = await tool.invoke(query);
+        const result = await exaTool.invoke(query);
 
         const output =
           typeof result === "string" ? result : JSON.stringify(result);

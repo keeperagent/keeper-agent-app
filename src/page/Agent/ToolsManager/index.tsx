@@ -11,10 +11,11 @@ import ToolItem from "./ToolItem";
 import { Wrapper } from "./style";
 
 const GROUPS: BaseToolGroup[] = [
-  BaseToolGroup.APP_MANAGEMENT,
   BaseToolGroup.TRANSACTION,
   BaseToolGroup.CODE_EXECUTION,
   BaseToolGroup.WORKFLOW,
+  BaseToolGroup.RESEARCH,
+  BaseToolGroup.APP_MANAGEMENT,
 ];
 
 const ToolsManager = (props: { preference: IPreference | null }) => {
