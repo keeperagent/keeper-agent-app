@@ -362,7 +362,9 @@ const AgentView = (props: any) => {
     e.preventDefault();
     setIsDragOverAgent(false);
     const files = e.dataTransfer.files;
-    if (!files?.length) return;
+    if (!files?.length) {
+      return;
+    }
     const next = Array.from(files).map(fileToAttached);
     setAttachedFiles((prev) => [...prev, ...next]);
   };

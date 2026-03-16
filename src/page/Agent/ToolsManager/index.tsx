@@ -14,6 +14,7 @@ const GROUPS: BaseToolGroup[] = [
   BaseToolGroup.APP_MANAGEMENT,
   BaseToolGroup.TRANSACTION,
   BaseToolGroup.CODE_EXECUTION,
+  BaseToolGroup.WORKFLOW,
 ];
 
 const ToolsManager = (props: { preference: IPreference | null }) => {

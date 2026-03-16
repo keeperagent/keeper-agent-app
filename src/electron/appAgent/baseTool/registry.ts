@@ -2,6 +2,7 @@ export enum BaseToolGroup {
   APP_MANAGEMENT = "app_management",
   TRANSACTION = "transaction",
   CODE_EXECUTION = "code_execution",
+  WORKFLOW = "workflow",
 }
 
 export type BaseToolRegistryItem = {
@@ -27,6 +28,10 @@ export const BASE_TOOL_KEYS = {
   LAUNCH_BONKFUN_TOKEN: "launch_bonkfun_token",
   EXECUTE_JAVASCRIPT: "execute_javascript",
   EXECUTE_PYTHON: "execute_python",
+  SEARCH_CAMPAIGNS: "search_campaigns",
+  SEARCH_WORKFLOWS: "search_workflows",
+  RUN_WORKFLOW: "run_workflow",
+  STOP_WORKFLOW: "stop_workflow",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -123,6 +128,31 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
       "Send SOL or SPL tokens from one wallet to multiple target wallets",
     group: BaseToolGroup.TRANSACTION,
   },
+  // Workflow Tools
+  {
+    key: BASE_TOOL_KEYS.SEARCH_CAMPAIGNS,
+    name: "Search campaigns",
+    description: "Search and list campaigns with their attached workflows",
+    group: BaseToolGroup.WORKFLOW,
+  },
+  {
+    key: BASE_TOOL_KEYS.SEARCH_WORKFLOWS,
+    name: "Search workflows",
+    description: "Search and list workflows with their associated campaigns",
+    group: BaseToolGroup.WORKFLOW,
+  },
+  {
+    key: BASE_TOOL_KEYS.RUN_WORKFLOW,
+    name: "Run workflow",
+    description: "Run a workflow on a campaign using campaign and workflow IDs",
+    group: BaseToolGroup.WORKFLOW,
+  },
+  {
+    key: BASE_TOOL_KEYS.STOP_WORKFLOW,
+    name: "Stop workflow",
+    description: "Stop a currently running workflow on a campaign",
+    group: BaseToolGroup.WORKFLOW,
+  },
   // Code Execution Tools
   {
     key: BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT,
@@ -144,4 +174,5 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.APP_MANAGEMENT]: "App Management",
   [BaseToolGroup.TRANSACTION]: "Transaction",
   [BaseToolGroup.CODE_EXECUTION]: "Code Execution",
+  [BaseToolGroup.WORKFLOW]: "Workflow",
 };

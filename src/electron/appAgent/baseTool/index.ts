@@ -13,3 +13,7 @@ export { launchPumpfunTokenTool } from "./launchPumpfunToken";
 export { launchBonkfunTokenTool } from "./launchBonkfunToken";
 export { executeJavaScriptTool } from "./executeJavaScript";
 export { executePythonTool } from "./executePython";
+export { searchCampaignsTool } from "./searchCampaigns";
+export { searchWorkflowsTool } from "./searchWorkflows";
+export { runWorkflowTool } from "./runWorkflow";
+export { stopWorkflowTool } from "./stopWorkflow";
