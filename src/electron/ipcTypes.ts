@@ -544,6 +544,7 @@ export type IpcReadFileAsDataUrlPayload = {
 export type IpcSaveClipboardImagePayload = {
   base64: string;
   mimeType: string;
+  requestId?: string;
 };
 
 export type IpcDeleteTempFilePayload = {

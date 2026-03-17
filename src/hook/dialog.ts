@@ -56,7 +56,12 @@ const useSaveClipboardImage = () => {
     mimeType: string,
     previewUrl: string,
   ): Promise<AttachedFile | null> => {
-    window.electron.send(MESSAGE.SAVE_CLIPBOARD_IMAGE, { base64, mimeType });
+    const requestId = crypto.randomUUID();
+    window.electron.send(MESSAGE.SAVE_CLIPBOARD_IMAGE, {
+      base64,
+      mimeType,
+      requestId,
+    });
 
     let isDone = false;
     let result: AttachedFile | null = null;
@@ -65,9 +70,9 @@ const useSaveClipboardImage = () => {
       window?.electron?.on(
         MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
         (_event: any, payload: any) => {
-          window?.electron?.removeAllListeners(
-            MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
-          );
+          if (payload?.requestId !== requestId) {
+            return;
+          }
           const data = payload?.data;
           if (data) {
             result = {
@@ -116,9 +121,6 @@ const useReadFileAsDataUrl = () => {
           if (payload?.requestId !== requestId) {
             return;
           }
-          window?.electron?.removeAllListeners(
-            MESSAGE.READ_FILE_AS_DATA_URL_RES,
-          );
           dataUrl = payload?.dataUrl || null;
           isDone = true;
         },

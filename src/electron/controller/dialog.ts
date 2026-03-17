@@ -136,9 +136,12 @@ export const dialogController = () => {
     MESSAGE.SAVE_CLIPBOARD_IMAGE,
     MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
     async (event, payload) => {
-      const { base64, mimeType } = payload || {};
+      const { base64, mimeType, requestId } = payload || {};
       if (!base64) {
-        event.reply(MESSAGE.SAVE_CLIPBOARD_IMAGE_RES, { data: null });
+        event.reply(MESSAGE.SAVE_CLIPBOARD_IMAGE_RES, {
+          data: null,
+          requestId,
+        });
         return;
       }
 
@@ -157,6 +160,7 @@ export const dialogController = () => {
       fs.writeFileSync(filePath, buffer);
       event.reply(MESSAGE.SAVE_CLIPBOARD_IMAGE_RES, {
         data: { path: filePath, name: fileName, extension },
+        requestId,
       });
     },
   );
