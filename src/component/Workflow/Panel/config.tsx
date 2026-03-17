@@ -50,6 +50,7 @@ import {
   AgentIcon,
   ImageIcon,
   SettingWindowIcon,
+  UploadIcon,
 } from "@/component/Icon";
 import metamaskImg from "@/asset/metamask.png";
 import twitterImg from "@/asset/twitter.png";
@@ -181,6 +182,7 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
   [WORKFLOW_TYPE.CLICK_EXTENSION]: (
     <SettingWindowIcon color="var(--color-primary)" />
   ),
+  [WORKFLOW_TYPE.UPLOAD_FILE]: <UploadIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.GET_RANDOM_VALUE]: <DiceIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.RANDOM_ON_OFF]: <ToggleIcon color="var(--color-primary)" />,
 
@@ -845,6 +847,17 @@ export const getListNode = (): INodeGroup[] => {
             sleep: DEFAULT_SLEEP_TIME,
             name: SCRIPT_NAME[WORKFLOW_TYPE.CHECK_ELEMENT_EXIST],
             workflowType: WORKFLOW_TYPE.CHECK_ELEMENT_EXIST,
+            status: NODE_STATUS.INVALID,
+          },
+          version: "v1.1",
+        },
+        {
+          type: NODE_TYPE.CUSTOM_NODE,
+          icon: mapNodeIcon[WORKFLOW_TYPE.UPLOAD_FILE],
+          config: {
+            sleep: DEFAULT_SLEEP_TIME,
+            name: SCRIPT_NAME[WORKFLOW_TYPE.UPLOAD_FILE],
+            workflowType: WORKFLOW_TYPE.UPLOAD_FILE,
             status: NODE_STATUS.INVALID,
           },
           version: "v1.1",

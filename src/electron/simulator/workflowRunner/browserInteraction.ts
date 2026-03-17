@@ -22,6 +22,7 @@ import {
   IClickNodeConfig,
   ICheckElementExistNodeConfig,
   IClickExtensionNodeConfig,
+  IUploadFileNodeConfig,
 } from "@/electron/type";
 import {
   SELECTOR_TYPE,
@@ -625,6 +626,59 @@ export class BrowserInteraction {
     });
   };
 
+  uploadFile = async (
+    flowProfile: IFlowProfile,
+  ): Promise<[IFlowProfile | null, Error | null]> => {
+    const script = async (
+      page: Page,
+      config: IUploadFileNodeConfig,
+      listVariable: IWorkflowVariable[],
+    ): Promise<IFlowProfile> => {
+      if (processSkipSetting(config, listVariable)) {
+        return flowProfile;
+      }
+
+      const timeout = (config?.timeout || 0) * 1000 || DEFAULT_TIMEOUT;
+      const filePath = getActualValue(config?.filePath || "", listVariable);
+
+      let [fileChooser] = await (async () => {
+        if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
+          const xPathSelector = getActualValue(
+            config?.xPathSelector || "",
+            listVariable,
+          );
+          const element = await page.waitForSelector(
+            `::-p-xpath(${xPathSelector})`,
+            { timeout },
+          );
+          return Promise.all([
+            page.waitForFileChooser({ timeout }),
+            element?.click(),
+          ]);
+        } else {
+          const cssSelector = getActualValue(
+            config?.cssSelector || "",
+            listVariable,
+          );
+          const element = await page.waitForSelector(cssSelector, { timeout });
+          return Promise.all([
+            page.waitForFileChooser({ timeout }),
+            element?.click(),
+          ]);
+        }
+      })();
+      await fileChooser.accept([filePath]);
+
+      return flowProfile;
+    };
+
+    return this.threadManager.runNormalTask<IUploadFileNodeConfig>({
+      flowProfile,
+      taskFn: script,
+      taskName: "uploadFile",
+    });
+  };
+
   clickExtension = async (
     flowProfile: IFlowProfile,
   ): Promise<[IFlowProfile | null, Error | null]> => {
@@ -672,4 +726,5 @@ export const registerBrowserHandlers = (
   handlers.set(WORKFLOW_TYPE.SCROLL, s.scroll);
   handlers.set(WORKFLOW_TYPE.CHECK_ELEMENT_EXIST, s.checkElementExist);
   handlers.set(WORKFLOW_TYPE.CLICK_EXTENSION, s.clickExtension);
+  handlers.set(WORKFLOW_TYPE.UPLOAD_FILE, s.uploadFile);
 };

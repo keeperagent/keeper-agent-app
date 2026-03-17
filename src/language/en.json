@@ -855,7 +855,7 @@
   "button.delete": "Delete",
   "button.clear": "Clear",
   "button.search": "Search ...",
-  "button.searchAnything": "Search anything ...",
+  "button.searchAnything": "Search anything",
   "button.import": "Import",
   "button.export": "Export",
   "file.clickToSelect": "Click to select file",
