@@ -8,6 +8,7 @@ export type AttachedFile = {
   extension: string; // e.g. "pdf", "jpg"
   type: "image" | "other";
   previewUrl?: string; // only set when we can show an image preview
+  isTemp?: boolean; // true for clipboard-pasted images saved to ka_temp
 };
 
 type AttachedFilesProps = {

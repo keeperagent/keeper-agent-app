@@ -1,7 +1,7 @@
-import { dialog, OpenDialogOptions, shell } from "electron";
+import { dialog, OpenDialogOptions, shell, app } from "electron";
 import fs from "fs";
 import path from "path";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, TEMP_FOLDER } from "@/electron/constant";
 import { mainWindow } from "@/electron/main";
 import { getSkillDirPath } from "@/electron/service/agentSkill";
 import { onIpc } from "./helpers";
@@ -9,6 +9,8 @@ import type {
   IpcChooseFilePayload,
   IpcReadFileAsDataUrlPayload,
   IpcOpenFolderPayload,
+  IpcSaveClipboardImagePayload,
+  IpcDeleteTempFilePayload,
 } from "@/electron/ipcTypes";
 import { logEveryWhere } from "@/electron/service/util";
 
@@ -125,6 +127,59 @@ export const dialogController = () => {
         path: filePath,
         dataUrl,
       });
+    },
+  );
+
+  onIpc<IpcSaveClipboardImagePayload>(
+    MESSAGE.SAVE_CLIPBOARD_IMAGE,
+    MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
+    async (event, payload) => {
+      const { base64, mimeType } = payload || {};
+      if (!base64) {
+        event.reply(MESSAGE.SAVE_CLIPBOARD_IMAGE_RES, { data: null });
+        return;
+      }
+
+      const extByMime: Record<string, string> = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/gif": "gif",
+        "image/webp": "webp",
+      };
+      const extension = extByMime[mimeType] || "png";
+      const fileName = `clipboard-${Date.now()}.${extension}`;
+      const tempDir = path.join(app.getPath("userData"), TEMP_FOLDER);
+      const filePath = path.join(tempDir, fileName);
+
+      const buffer = Buffer.from(base64, "base64");
+      fs.writeFileSync(filePath, buffer);
+      event.reply(MESSAGE.SAVE_CLIPBOARD_IMAGE_RES, {
+        data: { path: filePath, name: fileName, extension },
+      });
+    },
+  );
+
+  onIpc<IpcDeleteTempFilePayload>(
+    MESSAGE.DELETE_TEMP_FILE,
+    MESSAGE.DELETE_TEMP_FILE_RES,
+    async (event, payload) => {
+      const { path: filePath } = payload || {};
+      if (!filePath) {
+        event.reply(MESSAGE.DELETE_TEMP_FILE_RES, { success: false });
+        return;
+      }
+
+      const tempDir = path.join(app.getPath("userData"), TEMP_FOLDER);
+      const resolvedPath = path.resolve(filePath);
+      const resolvedTempDir = path.resolve(tempDir);
+      if (!resolvedPath.startsWith(resolvedTempDir)) {
+        event.reply(MESSAGE.DELETE_TEMP_FILE_RES, { success: false });
+        return;
+      }
+      if (fs.existsSync(resolvedPath)) {
+        fs.unlinkSync(resolvedPath);
+      }
+      event.reply(MESSAGE.DELETE_TEMP_FILE_RES, { success: true });
     },
   );
 

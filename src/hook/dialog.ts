@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { sleep } from "@/service/util";
+import type { AttachedFile } from "@/page/Agent/ChatAgent/AgentView/AttachedFiles";
 
 const useChooseFolder = () => {
   const [loading, setLoading] = useState(false);
@@ -49,4 +50,50 @@ const useChooseFolder = () => {
   return { loading, chooseFolder };
 };
 
-export { useChooseFolder };
+const useSaveClipboardImage = () => {
+  const saveClipboardImage = async (
+    base64: string,
+    mimeType: string,
+    previewUrl: string,
+  ): Promise<AttachedFile | null> => {
+    window.electron.send(MESSAGE.SAVE_CLIPBOARD_IMAGE, { base64, mimeType });
+
+    let isDone = false;
+    let result: AttachedFile | null = null;
+
+    await new Promise(async (resolve) => {
+      window?.electron?.on(
+        MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
+        (_event: any, payload: any) => {
+          window?.electron?.removeAllListeners(
+            MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
+          );
+          const data = payload?.data;
+          if (data) {
+            result = {
+              path: data.path,
+              name: data.name,
+              extension: data.extension,
+              type: "image",
+              previewUrl,
+              isTemp: true,
+            };
+          }
+          isDone = true;
+        },
+      );
+
+      while (!isDone) {
+        await sleep(10);
+      }
+
+      resolve(true);
+    });
+
+    return result;
+  };
+
+  return { saveClipboardImage };
+};
+
+export { useChooseFolder, useSaveClipboardImage };

@@ -540,6 +540,15 @@ export type IpcReadFileAsDataUrlPayload = {
   path: string;
 };
 
+export type IpcSaveClipboardImagePayload = {
+  base64: string;
+  mimeType: string;
+};
+
+export type IpcDeleteTempFilePayload = {
+  path: string;
+};
+
 export type IpcOpenFolderPayload = {
   folderPath?: string;
   skillFolderName?: string;

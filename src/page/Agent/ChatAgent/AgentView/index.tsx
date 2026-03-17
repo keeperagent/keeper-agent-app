@@ -7,7 +7,11 @@ import { connect } from "react-redux";
 import { Alert, Button, Input, message, Tooltip } from "antd";
 import copy from "copy-to-clipboard";
 import { RootState } from "@/redux/store";
-import { useDashboardAgent, useTranslation } from "@/hook";
+import {
+  useDashboardAgent,
+  useTranslation,
+  useSaveClipboardImage,
+} from "@/hook";
 import {
   AgentViewWrapper,
   DropOverlay,
@@ -233,6 +237,7 @@ const AgentView = (props: any) => {
     layoutMode,
   } = props;
   const { translate } = useTranslation();
+  const { saveClipboardImage } = useSaveClipboardImage();
   const {
     sessionId,
     conversation,
@@ -274,6 +279,43 @@ const AgentView = (props: any) => {
     setTimeout(() => {
       setCopiedMessageIndex(null);
     }, 1500);
+  };
+
+  const deleteTempFile = (filePath: string) => {
+    if (typeof window !== "undefined" && window?.electron) {
+      window.electron.send(MESSAGE.DELETE_TEMP_FILE, { path: filePath });
+    }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = event.clipboardData?.items;
+    if (!items) {
+      return;
+    }
+
+    for (const item of Array.from(items)) {
+      if (!item.type.startsWith("image/")) {
+        continue;
+      }
+
+      const file = item.getAsFile();
+      if (!file) {
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(",")[1];
+        const mimeType = item.type;
+        const attached = await saveClipboardImage(base64, mimeType, dataUrl);
+        if (attached) {
+          setAttachedFiles((prev) => [...prev, attached]);
+        }
+      };
+      reader.readAsDataURL(file);
+      break;
+    }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,22 +413,28 @@ const AgentView = (props: any) => {
 
   const removeAttachedFile = (index: number) => {
     setAttachedFiles((prev) => {
-      const next = prev.filter((_, i) => i !== index);
       const removed = prev[index];
-      if (removed?.previewUrl?.startsWith("blob:"))
+      if (removed?.previewUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(removed.previewUrl);
-      return next;
+      }
+      if (removed?.isTemp) {
+        deleteTempFile(removed.path);
+      }
+      return prev.filter((_, i) => i !== index);
     });
   };
 
   attachedFilesRef.current = attachedFiles;
   useEffect(() => {
     return () => {
-      attachedFilesRef.current.forEach(
-        (f) =>
-          f.previewUrl?.startsWith("blob:") &&
-          URL.revokeObjectURL(f.previewUrl),
-      );
+      attachedFilesRef.current.forEach((fileItem) => {
+        if (fileItem?.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(fileItem?.previewUrl);
+        }
+        if (fileItem?.isTemp) {
+          deleteTempFile(fileItem?.path);
+        }
+      });
     };
   }, []);
 
@@ -712,6 +760,7 @@ const AgentView = (props: any) => {
             value={draftMessage}
             onChange={(event) => setDraftMessage(event?.target?.value || "")}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={translate("agent.askMeAnything")}
             disabled={creatingSession || (!!sessionId && !agentReady)}
             className="custom-input textarea-with-inset"
