@@ -6,6 +6,8 @@ import { RootState } from "@/redux/store";
 import { SearchInput } from "@/component/Input";
 import { actSetSelectedWorkflowType } from "@/redux/workflowRunner";
 import { useTranslation } from "@/hook";
+import { SCRIPT_NAME_EN } from "@/config/constant";
+import { WORKFLOW_TYPE } from "@/electron/constant";
 import Node from "../Panel/Node";
 import { getListNode, INodeGroup } from "../Panel/config";
 import { removeSpecialCharacter } from "../Panel/util";
@@ -24,13 +26,19 @@ const NodeInstruction = (props: any) => {
       return listData;
     }
 
+    const regex = new RegExp(
+      removeSpecialCharacter(searchText.toLowerCase()),
+      "g",
+    );
+
     return listData?.map((listNode: INodeGroup) => ({
       ...listNode,
       children: listNode?.children?.filter(
-        (node: any) =>
-          (node?.config?.name as string)?.search(
-            new RegExp(removeSpecialCharacter(searchText), "g"),
-          ) !== -1,
+        (node: INode) =>
+          SCRIPT_NAME_EN[node?.config?.workflowType as WORKFLOW_TYPE]
+            ?.toLowerCase()
+            ?.search(regex) !== -1 ||
+          listNode?.label?.toLowerCase()?.search(regex) !== -1,
       ),
     }));
   }, [searchText]);

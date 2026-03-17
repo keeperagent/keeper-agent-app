@@ -79,6 +79,7 @@ export const SCRIPT_NAME_EN = {
   [WORKFLOW_TYPE.CRAWL_TEXT]: "Crawl text",
   [WORKFLOW_TYPE.CHECK_CONDITION]: "Check condition",
   [WORKFLOW_TYPE.CHECK_ELEMENT_EXIST]: "Element exist",
+  [WORKFLOW_TYPE.CLICK_EXTENSION]: "Click extension",
   [WORKFLOW_TYPE.GET_RANDOM_VALUE]: "Random value",
   [WORKFLOW_TYPE.RANDOM_ON_OFF]: "Random On/Off",
   [WORKFLOW_TYPE.CALCULATE]: "Calculate",

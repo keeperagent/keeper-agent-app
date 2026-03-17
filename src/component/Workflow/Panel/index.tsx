@@ -71,12 +71,12 @@ const Panel = (props: IProps) => {
       return listData;
     }
 
-    return listData?.map((listNode: INodeGroup) => {
-      const regex = new RegExp(
-        removeSpecialCharacter(searchText.toLowerCase()),
-        "g",
-      );
+    const regex = new RegExp(
+      removeSpecialCharacter(searchText.toLowerCase()),
+      "g",
+    );
 
+    return listData?.map((listNode: INodeGroup) => {
       return {
         ...listNode,
         children: listNode?.children?.filter(

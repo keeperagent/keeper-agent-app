@@ -31,7 +31,7 @@ const ModalInstruction = (props: any) => {
       open={isShowModalInstruction}
       title={translate("guide")}
       onCancel={onCloseModal}
-      maskClosable={true}
+      mask={{ closable: true }}
       footer={null}
       width="120rem"
       style={{ top: "6rem" }}
@@ -65,5 +65,5 @@ export default connect(
   }),
   {
     actSetShowModalInstruction,
-  }
+  },
 )(ModalInstruction);

@@ -489,7 +489,9 @@ export class ThreadManager {
 
       return [flowProfile, null];
     } catch (err: any) {
-      logEveryWhere({ message: `runNormalTask ${taskName}() error: ${err?.message}` });
+      logEveryWhere({
+        message: `runNormalTask ${taskName}() error: ${err?.message}`,
+      });
       return [flowProfile, err];
     }
   };

@@ -184,11 +184,11 @@ export const waitAndClickText = async (
   text: string,
   page?: Page,
   elementTag?: string,
-) => {
+): Promise<boolean> => {
   const startTime = Date.now();
   while (true) {
     if (Date.now() - startTime > DEFAULT_EXTENSION_TIMEOUT) {
-      break;
+      return false;
     }
 
     const isFound = await page?.evaluate(
@@ -216,7 +216,7 @@ export const waitAndClickText = async (
     }
 
     await sleep(500);
-    break;
+    return true;
   }
 };
 

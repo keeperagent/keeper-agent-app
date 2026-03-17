@@ -49,6 +49,7 @@ import {
   MiningIcon,
   AgentIcon,
   ImageIcon,
+  SettingWindowIcon,
 } from "@/component/Icon";
 import metamaskImg from "@/asset/metamask.png";
 import twitterImg from "@/asset/twitter.png";
@@ -120,12 +121,16 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
     </NodeIconWrapper>
   ),
 
-  [WORKFLOW_TYPE.GET_WALLET_BALANCE]: <PuzzleIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.GET_WALLET_BALANCE]: (
+    <PuzzleIcon color="var(--color-primary)" />
+  ),
   [WORKFLOW_TYPE.TRANSFER_TOKEN]: <TransferIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.EVM_APPROVE_REVOKE_TOKEN]: (
     <ApproveIcon color="var(--color-primary)" />
   ),
-  [WORKFLOW_TYPE.EVM_SNIPE_CONTRACT]: <CameraIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.EVM_SNIPE_CONTRACT]: (
+    <CameraIcon color="var(--color-primary)" />
+  ),
   [WORKFLOW_TYPE.EVM_READ_FROM_CONTRACT]: (
     <StoryBookIcon color="var(--color-primary)" />
   ),
@@ -139,7 +144,9 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
     <ConvertIcon color="var(--color-primary)" />
   ),
   [WORKFLOW_TYPE.GET_GAS_PRICE]: <GasIcon color="var(--color-primary)" />,
-  [WORKFLOW_TYPE.GET_PRIORITY_FEE]: <PriorityIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.GET_PRIORITY_FEE]: (
+    <PriorityIcon color="var(--color-primary)" />
+  ),
   [WORKFLOW_TYPE.GENERATE_VANITY_ADDRESS]: (
     <MiningIcon color="var(--color-primary)" />
   ),
@@ -170,6 +177,9 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
   [WORKFLOW_TYPE.CHECK_CONDITION]: <CompareIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.CHECK_ELEMENT_EXIST]: (
     <CookieIcon color="var(--color-primary)" />
+  ),
+  [WORKFLOW_TYPE.CLICK_EXTENSION]: (
+    <SettingWindowIcon color="var(--color-primary)" />
   ),
   [WORKFLOW_TYPE.GET_RANDOM_VALUE]: <DiceIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.RANDOM_ON_OFF]: <ToggleIcon color="var(--color-primary)" />,
@@ -317,8 +327,12 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
   ),
 
   [WORKFLOW_TYPE.SAVE_WALLET]: <WalletIcon color="var(--color-primary)" />,
-  [WORKFLOW_TYPE.SELECT_WALLET]: <WalletArrowIcon color="var(--color-primary)" />,
-  [WORKFLOW_TYPE.SAVE_RESOURCE]: <ObjectGroupIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.SELECT_WALLET]: (
+    <WalletArrowIcon color="var(--color-primary)" />
+  ),
+  [WORKFLOW_TYPE.SAVE_RESOURCE]: (
+    <ObjectGroupIcon color="var(--color-primary)" />
+  ),
   [WORKFLOW_TYPE.CHECK_RESOURCE]: (
     <ObjectUnGroupIcon color="var(--color-primary)" />
   ),
@@ -326,7 +340,9 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
   [WORKFLOW_TYPE.SAVE_LOG]: <LookupIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.UPDATE_PROFILE]: <RocketIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.LOOP]: <ShuffleIcon color="var(--color-primary)" />,
-  [WORKFLOW_TYPE.SOLVE_CAPTCHA]: <CheckCircleIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.SOLVE_CAPTCHA]: (
+    <CheckCircleIcon color="var(--color-primary)" />
+  ),
   [WORKFLOW_TYPE.EXECUTE_CODE]: <CodeIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.HTTP_REQUEST]: <NetworkIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.CALCULATE]: <CalculatorIcon color="var(--color-primary)" />,
@@ -723,6 +739,17 @@ export const getListNode = (): INodeGroup[] => {
             sleep: DEFAULT_SLEEP_TIME,
             name: SCRIPT_NAME[WORKFLOW_TYPE.CLICK],
             workflowType: WORKFLOW_TYPE.CLICK,
+            status: NODE_STATUS.INVALID,
+          },
+          version: "v1.1",
+        },
+        {
+          type: NODE_TYPE.CUSTOM_NODE,
+          icon: mapNodeIcon[WORKFLOW_TYPE.CLICK_EXTENSION],
+          config: {
+            sleep: DEFAULT_SLEEP_TIME,
+            name: SCRIPT_NAME[WORKFLOW_TYPE.CLICK_EXTENSION],
+            workflowType: WORKFLOW_TYPE.CLICK_EXTENSION,
             status: NODE_STATUS.INVALID,
           },
           version: "v1.1",

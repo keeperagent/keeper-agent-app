@@ -434,6 +434,7 @@ export type INodeConfig =
   | IGenerateVanityAddressNodeConfig
   | IScrollNodeConfig
   | IClickNodeConfig
+  | IClickExtensionNodeConfig
   | ITypeTextNodeConfig
   | ISelectTabNodeConfig
   | IImportMetamaskNodeConfig
@@ -1171,6 +1172,21 @@ export type IClickNodeConfig = {
   cssSelector?: string; // css selector of the text
   xPathSelector?: string; // xpath selector of the text
   listShadowRoot?: string[]; // list of shadow root
+};
+
+// CLICK_EXTENSION @workflowType
+export type IClickExtensionNodeConfig = {
+  workflowType?: WORKFLOW_TYPE; // type of the workflow
+  status?: NODE_STATUS; // status of the node
+  name: string; // name of the node
+  onError?: NODE_ACTION; // action to perform when error occurs
+  onSuccess?: NODE_ACTION; // action to perform when success
+  sleep: number; // sleep time between each node
+  timeout?: number; // timeout for the node
+  skipSetting?: ISkipSetting; // skip setting for the node
+  alertTelegramWhenError?: boolean; // alert telegram when error
+
+  text?: string; // text to click
 };
 
 // CHECK_ELEMENT_EXIST @workflowType
