@@ -638,7 +638,10 @@ export class BrowserInteraction {
       }
 
       const text = getActualValue(config?.text || "", listVariable);
-      await waitAndClickText(text, page);
+      const clicked = await waitAndClickText(text, page);
+      if (!clicked) {
+        throw new Error(`Element with text "${text}" not found in extension`);
+      }
       return flowProfile;
     };
 

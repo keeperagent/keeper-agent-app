@@ -1,7 +1,10 @@
 import { Fragment, useEffect, useState, useMemo } from "react";
 import { Tabs, Form, Input, Row, Button } from "antd";
 import { IClickExtensionNodeConfig } from "@/electron/type";
-import { DEFAULT_TIMEOUT, NODE_ACTION } from "@/electron/simulator/constant";
+import {
+  DEFAULT_EXTENSION_TIMEOUT,
+  NODE_ACTION,
+} from "@/electron/simulator/constant";
 import { NODE_STATUS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
 import { Wrapper } from "./style";
@@ -37,7 +40,7 @@ const ClickExtension = (props: Props) => {
       sleep: config?.sleep,
       onSuccess: config?.onSuccess || NODE_ACTION.CONTINUE_RUN,
       onError: config?.onError || NODE_ACTION.PAUSE_THREAD,
-      timeout: config?.timeout || DEFAULT_TIMEOUT / 1000,
+      timeout: config?.timeout || DEFAULT_EXTENSION_TIMEOUT / 1000,
       leftSide: config?.skipSetting?.leftSide,
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
