@@ -76,6 +76,7 @@ export class SolanaTransactionExecutor {
 
       try {
         const versionedTx = VersionedTransaction.deserialize(txBuffer as any);
+        versionedTx.message.recentBlockhash = blockhash;
         versionedTx.sign([keypair]);
         signature = await connection.sendRawTransaction(
           versionedTx.serialize(),
@@ -84,6 +85,7 @@ export class SolanaTransactionExecutor {
       } catch {
         // Fall back to legacy Transaction
         const legacyTx = Transaction.from(txBuffer);
+        legacyTx.recentBlockhash = blockhash;
         legacyTx.partialSign(keypair);
         signature = await connection.sendRawTransaction(legacyTx.serialize(), {
           maxRetries: 5,

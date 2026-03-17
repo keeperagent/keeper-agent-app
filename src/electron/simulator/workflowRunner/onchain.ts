@@ -840,6 +840,15 @@ export class OnChainWorkflow {
       if (isNaN(numberOfTrasaction) || numberOfTrasaction <= 0) {
         throw Error("Total transaction must > 0");
       }
+      const transactionData = getActualValue(
+        config?.transactionData || "",
+        listVariable,
+      );
+      const toAddress = getActualValue(config?.toAddress || "", listVariable);
+      const transactionValue = getActualValue(
+        config?.transactionValue || "",
+        listVariable,
+      );
       const timeout =
         ((flowProfile?.config as IExecuteTransactionNodeConfig)?.timeout || 0) *
         1000;
@@ -852,6 +861,9 @@ export class OnChainWorkflow {
         ...config,
         gasPrice,
         gasLimit,
+        transactionData,
+        toAddress,
+        transactionValue,
       };
 
       let txHash = null;
