@@ -1076,6 +1076,10 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   execute_python: "Execute Python",
   read_file: "Read file",
   write_file: "Write file",
+  web_search_tavily: "Web search (Tavily)",
+  web_search_exa: "Web search (Exa)",
+  web_extract_tavily: "Web extract (Tavily)",
+  find_similar_exa: "Find similar (Exa)",
 };
 
 export const getToolDisplayName = (toolName: string): string =>
