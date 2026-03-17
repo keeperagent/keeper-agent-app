@@ -933,6 +933,8 @@
   "guide.elementExist.example": "For example: Before swapping on a DEX (KyberSwap, Uniswap, etc.), if you have not approved yet, the DEX will ask you to approve the token before swapping. You can use this processor to check whether there is an 'Approve' button or not. If so, click 'Approve' first, then click 'Swap' after approval is complete.",
   "guide.clickExtension.title": "Clicks an element inside a browser extension popup by matching its text content.",
   "guide.clickExtension.desc": "For example: To click the 'Approve' button inside the Metamask extension popup, enter 'Approve' as the element content. The processor will wait for the element to appear and click it automatically.",
+  "guide.uploadFile.title": "Uploads a file by clicking the trigger element and accepting the file chooser dialog.",
+  "guide.uploadFile.desc": "For example: To upload a profile picture, enter the CSS selector of the upload button (e.g. #upload-btn) and the absolute path to the file (e.g. /home/user/photo.png). The processor will click the button, intercept the file chooser, and submit the file automatically.",
   "guide.randomOnOff.title": "Randomly stops or continues running the workflow.",
   "guide.randomOnOff.example": "For example, to avoid wallets acting identically and being marked as Sybil, you can choose 70 wallets out of 100 (70% On) random wallets to run the workflow.",
   "guide.importRabby.title": "Imports a wallet into Rabby. If your workflow needs to interact with the Rabby extension, the first thing you need to do is import the wallet. This processor is usually the first processor in a workflow. By simply dragging and dropping, you can complete the wallet import operation (enter seed phrase, enter password, click Import, etc.).",

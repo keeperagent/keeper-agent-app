@@ -454,6 +454,17 @@ const getNodeContent = (workflowType: string, translate?: any) => {
       };
     }
 
+    case WORKFLOW_TYPE.UPLOAD_FILE: {
+      return {
+        description: (
+          <DescriptionWrapper>
+            <div>{translate("guide.uploadFile.title")}</div>
+            <div className="example">{translate("guide.uploadFile.desc")}</div>
+          </DescriptionWrapper>
+        ),
+      };
+    }
+
     // Adnvanced
     case WORKFLOW_TYPE.SAVE_LOG: {
       return {
