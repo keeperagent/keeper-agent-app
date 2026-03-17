@@ -127,6 +127,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "typeText",
+      timeout:
+        ((flowProfile?.config as ITypeTextNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -210,6 +213,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "click",
+      timeout:
+        ((flowProfile?.config as IClickNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -508,6 +514,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "scroll",
+      timeout:
+        ((flowProfile?.config as IScrollNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -564,6 +573,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "checkElementExist",
+      timeout:
+        ((flowProfile?.config as ICheckElementExistNodeConfig)?.timeout || 0) *
+          1000 || DEFAULT_TIMEOUT,
     });
   };
 
@@ -623,6 +635,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "crawlText",
+      timeout:
+        ((flowProfile?.config as ICrawlTextNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -640,6 +655,9 @@ export class BrowserInteraction {
 
       const timeout = (config?.timeout || 0) * 1000 || DEFAULT_TIMEOUT;
       const filePath = getActualValue(config?.filePath || "", listVariable);
+      if (!filePath.trim()) {
+        throw new Error("Upload file: file path is empty");
+      }
 
       let [fileChooser] = await (async () => {
         if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
@@ -676,6 +694,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "uploadFile",
+      timeout:
+        ((flowProfile?.config as IUploadFileNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
