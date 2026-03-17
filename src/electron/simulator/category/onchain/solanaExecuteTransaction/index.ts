@@ -17,7 +17,6 @@ export class SolanaTransactionExecutor {
     config: IExecuteTransactionNodeConfig,
     privateKey: string,
     listNodeEndpoint: string[],
-    numberOfTransaction: number,
     timeout: number,
     logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> {
@@ -34,30 +33,14 @@ export class SolanaTransactionExecutor {
 
     const txBuffer = Buffer.from(config.transactionData, "base64");
 
-    let txHash: string | null = null;
-    let lastErr: Error | null = null;
-
-    for (let i = 0; i < numberOfTransaction; i++) {
-      const [signature, err] = await this.executeSingleTransaction(
-        connection,
-        txBuffer,
-        keypair,
-        config.shouldWaitTransactionComfirmed || false,
-        timeout,
-        logInfo,
-      );
-      if (err) {
-        lastErr = err;
-        continue;
-      }
-      txHash = signature;
-    }
-
-    if (txHash === null && lastErr) {
-      return [null, lastErr];
-    }
-
-    return [txHash, null];
+    return this.executeSingleTransaction(
+      connection,
+      txBuffer,
+      keypair,
+      config.shouldWaitTransactionComfirmed || false,
+      timeout,
+      logInfo,
+    );
   }
 
   private async executeSingleTransaction(

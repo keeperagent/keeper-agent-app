@@ -23,54 +23,6 @@ export class EvmTransactionExecutor {
     return currentNonce;
   }
 
-  async executeMultipleTransaction(
-    input: IExecuteTransactionNodeConfig,
-    privateKey: string,
-    listNodeEndpoint: string[],
-    numberOfTransaction: number,
-    timeout: number,
-    logInfo: IStructuredLogPayload,
-  ): Promise<Error | null> {
-    const startTime = new Date().getTime();
-    const listResult: Promise<any>[] = [];
-
-    const [provider, , errProvider] =
-      this.evmProvider.getNextProvider(listNodeEndpoint);
-    if (!provider) {
-      return Error("can not get provider " + errProvider?.message);
-    }
-    const wallet = new ethers.Wallet(privateKey, provider);
-    const currentNonce = await this.getNonce(wallet?.address, provider);
-
-    for (let i = 0; i < numberOfTransaction; i++) {
-      const nonce = currentNonce! + i;
-      const resultPromise = this.executeTransaction(
-        input,
-        provider,
-        wallet,
-        nonce,
-        timeout,
-        logInfo,
-      );
-      listResult.push(resultPromise);
-    }
-
-    if (input.shouldWaitTransactionComfirmed) {
-      await Promise.all(listResult);
-    }
-    const endTime = new Date().getTime();
-    logEveryWhere({
-      campaignId: logInfo.campaignId,
-      workflowId: logInfo.workflowId,
-      message: `Execute transaction with wallet ${
-        wallet?.address
-      }, all ${numberOfTransaction} transaction done, take: ${
-        (endTime - startTime) / 1000
-      } seconds`,
-    });
-    return null;
-  }
-
   async executeSingleTransaction(
     input: IExecuteTransactionNodeConfig,
     listNodeEndpoint: string[],

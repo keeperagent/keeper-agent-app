@@ -1460,7 +1460,7 @@ export type IExecuteTransactionNodeConfig = {
   transactionData: string; // transaction data: hex for EVM, base64 for Solana
   transactionValue?: string; // transaction value in wei (EVM only)
   nodeEndpointGroupId?: number; // node endpoint group id
-  numberOfTrasaction?: number; // number of transactions to send
+
   shouldWaitTransactionComfirmed?: boolean; // wait for confirmation
   gasPrice?: string; // gas price in gwei (EVM) or compute unit price in microLamports (Solana)
   gasLimit?: string; // gas limit (EVM) or compute unit limit (Solana)

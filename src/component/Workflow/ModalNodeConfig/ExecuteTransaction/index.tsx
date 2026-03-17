@@ -96,7 +96,6 @@ const ExecuteTransaction = (props: Props) => {
       transactionData: config?.transactionData || "",
       gasLimit: config?.gasLimit?.toString() || "",
       gasPrice: config?.gasPrice?.toString() || "",
-      numberOfTrasaction: config?.numberOfTrasaction || "1",
       shouldWaitTransactionComfirmed:
         typeof config?.shouldWaitTransactionComfirmed === "undefined"
           ? true
@@ -138,7 +137,6 @@ const ExecuteTransaction = (props: Props) => {
         transactionValue,
         gasLimit,
         gasPrice,
-        numberOfTrasaction,
         shouldWaitTransactionComfirmed,
         onError,
         onSuccess,
@@ -156,7 +154,6 @@ const ExecuteTransaction = (props: Props) => {
         "transactionData",
         "gasLimit",
         "gasPrice",
-        "numberOfTrasaction",
         "shouldWaitTransactionComfirmed",
         "onSuccess",
         "onError",
@@ -179,7 +176,6 @@ const ExecuteTransaction = (props: Props) => {
         chainType,
         gasLimit,
         gasPrice,
-        numberOfTrasaction,
         shouldWaitTransactionComfirmed,
         onError,
         onSuccess,
@@ -503,36 +499,6 @@ const ExecuteTransaction = (props: Props) => {
                           </Col>
                         </Row>
                       )}
-
-                      <Form.Item
-                        label={
-                          <FormLabelWrapper>
-                            <span className="text">
-                              {translate("workflow.totalTransaction")}:
-                            </span>
-                            <WorkflowVariable
-                              form={form}
-                              fieldName="numberOfTrasaction"
-                            />
-                          </FormLabelWrapper>
-                        }
-                        name="numberOfTrasaction"
-                        rules={[
-                          {
-                            required: true,
-                            message: translate("form.requiredField"),
-                          },
-                        ]}
-                        tooltip={translate("workflow.totalTransactionTooltip")}
-                      >
-                        <Input
-                          placeholder={translate(
-                            "workflow.totalTransactionPlaceholder",
-                          )}
-                          className="custom-input"
-                          size="large"
-                        />
-                      </Form.Item>
 
                       <Form.Item
                         name="shouldWaitTransactionComfirmed"

@@ -831,15 +831,6 @@ export class OnChainWorkflow {
       const privateKey = getActualValue(config?.privateKey || "", listVariable);
       const gasPrice = getActualValue(config?.gasPrice || "", listVariable);
       const gasLimit = getActualValue(config?.gasLimit || "", listVariable);
-      const numberOfTrasaction = Number(
-        getActualValue(
-          config?.numberOfTrasaction?.toString() || "1",
-          listVariable,
-        ),
-      );
-      if (isNaN(numberOfTrasaction) || numberOfTrasaction <= 0) {
-        throw Error("Total transaction must > 0");
-      }
       const transactionData = getActualValue(
         config?.transactionData || "",
         listVariable,
@@ -874,30 +865,18 @@ export class OnChainWorkflow {
           resolvedConfig,
           privateKey,
           listNodeProvider,
-          numberOfTrasaction,
           timeout,
           logInfo,
         );
       } else {
-        if (numberOfTrasaction === 1) {
-          [txHash, err] =
-            await this.evmTransactionExecutor.executeSingleTransaction(
-              resolvedConfig,
-              listNodeProvider,
-              privateKey,
-              timeout,
-              logInfo,
-            );
-        } else {
-          err = await this.evmTransactionExecutor.executeMultipleTransaction(
+        [txHash, err] =
+          await this.evmTransactionExecutor.executeSingleTransaction(
             resolvedConfig,
-            privateKey,
             listNodeProvider,
-            numberOfTrasaction,
+            privateKey,
             timeout,
             logInfo,
           );
-        }
       }
 
       if (err) {
