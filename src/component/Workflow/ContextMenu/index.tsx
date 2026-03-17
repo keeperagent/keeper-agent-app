@@ -10,7 +10,6 @@ import {
   PlayIcon,
   StopIcon,
   GearIcon,
-  TrashBoldIcon,
   EyeOpenIcon,
   CopyBoldIcon,
   BookBoldIcon,
@@ -208,17 +207,6 @@ const ContextMenu = (props: ContextMenuProps) => {
         )}
 
         {selectedNodeID !== null && (
-          <MenuItem>
-            <MenuItemWrapper>
-              <div className="icon">
-                <TrashBoldIcon color="var(--color-text-secondary)" />
-              </div>
-              <div className="label">{translate("button.delete")}</div>
-            </MenuItemWrapper>
-          </MenuItem>
-        )}
-
-        {selectedNodeID !== null && (
           <MenuItem onClick={onOpenModalInstruction}>
             <MenuItemWrapper>
               <div className="icon">
@@ -264,7 +252,9 @@ const ContextMenu = (props: ContextMenuProps) => {
                 <div className="icon">
                   <GrowthIcon color="var(--color-text-secondary)" />
                 </div>
-                <div className="label">{translate("workflow.viewMarketcap")}</div>
+                <div className="label">
+                  {translate("workflow.viewMarketcap")}
+                </div>
               </MenuItemWrapper>
             </MenuItem>
           )}
@@ -288,5 +278,5 @@ export default connect(
     actSetModalSampleContractSniperResultOpen,
     actSetModalPriceCheckingOpen,
     actSetModalMarketcapCheckingOpen,
-  }
+  },
 )(ContextMenu);
