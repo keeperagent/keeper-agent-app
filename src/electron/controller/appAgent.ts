@@ -166,6 +166,7 @@ export const agentController = () => {
 
         const result = await agentChatBridge.runAgent(sessionId, input, {
           ipcEvent: event,
+          attachedFiles: parsedCtx.attachedFiles,
         });
 
         createResponse(event, MESSAGE.DASHBOARD_AGENT_RUN_RES, {

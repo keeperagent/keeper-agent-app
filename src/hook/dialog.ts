@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { sleep } from "@/service/util";
+import type { AttachedFile } from "@/page/Agent/ChatAgent/AgentView/AttachedFiles";
 
 const useChooseFolder = () => {
   const [loading, setLoading] = useState(false);
@@ -49,4 +50,93 @@ const useChooseFolder = () => {
   return { loading, chooseFolder };
 };
 
-export { useChooseFolder };
+const useSaveClipboardImage = () => {
+  const saveClipboardImage = async (
+    base64: string,
+    mimeType: string,
+    previewUrl: string,
+  ): Promise<AttachedFile | null> => {
+    const requestId = crypto.randomUUID();
+    window.electron.send(MESSAGE.SAVE_CLIPBOARD_IMAGE, {
+      base64,
+      mimeType,
+      requestId,
+    });
+
+    let isDone = false;
+    let result: AttachedFile | null = null;
+
+    await new Promise(async (resolve) => {
+      window?.electron?.on(
+        MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
+        (_event: any, payload: any) => {
+          if (payload?.requestId !== requestId) {
+            return;
+          }
+          const data = payload?.data;
+          if (data) {
+            result = {
+              path: data.path,
+              name: data.name,
+              extension: data.extension,
+              type: "image",
+              previewUrl,
+              isTemp: true,
+            };
+          }
+          isDone = true;
+        },
+      );
+
+      while (!isDone) {
+        await sleep(10);
+      }
+
+      resolve(true);
+    });
+
+    return result;
+  };
+
+  return { saveClipboardImage };
+};
+
+const useReadFileAsDataUrl = () => {
+  const readFileAsDataUrl = async (
+    filePath: string,
+  ): Promise<string | null> => {
+    const requestId = crypto.randomUUID();
+    window.electron.send(MESSAGE.READ_FILE_AS_DATA_URL, {
+      path: filePath,
+      requestId,
+    });
+
+    let isDone = false;
+    let dataUrl: string | null = null;
+
+    await new Promise(async (resolve) => {
+      window?.electron?.on(
+        MESSAGE.READ_FILE_AS_DATA_URL_RES,
+        (_event: any, payload: any) => {
+          if (payload?.requestId !== requestId) {
+            return;
+          }
+          dataUrl = payload?.dataUrl || null;
+          isDone = true;
+        },
+      );
+
+      while (!isDone) {
+        await sleep(10);
+      }
+
+      resolve(true);
+    });
+
+    return dataUrl;
+  };
+
+  return { readFileAsDataUrl };
+};
+
+export { useChooseFolder, useSaveClipboardImage, useReadFileAsDataUrl };

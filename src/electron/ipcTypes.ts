@@ -538,6 +538,17 @@ export type IpcChooseFilePayload = {
 
 export type IpcReadFileAsDataUrlPayload = {
   path: string;
+  requestId?: string;
+};
+
+export type IpcSaveClipboardImagePayload = {
+  base64: string;
+  mimeType: string;
+  requestId?: string;
+};
+
+export type IpcDeleteTempFilePayload = {
+  path: string;
 };
 
 export type IpcOpenFolderPayload = {

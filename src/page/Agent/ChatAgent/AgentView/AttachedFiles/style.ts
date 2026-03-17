@@ -54,6 +54,10 @@ export const AttachedFileCard = styled.div`
     padding: 0.4rem;
   }
 
+  .card-preview--clickable {
+    cursor: pointer;
+  }
+
   .card-preview--image {
     padding: 0;
 

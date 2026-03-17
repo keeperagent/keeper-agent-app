@@ -5,7 +5,11 @@
 */
 
 import { randomUUID } from "crypto";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import {
+  HumanMessage,
+  SystemMessage,
+  type ContentBlock,
+} from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import fs from "fs-extra";
 import path from "path";
@@ -15,6 +19,7 @@ import {
   hasApiKey,
   type KeeperAgent,
   ToolContext,
+  type IAttachedFileContext,
 } from "@/electron/appAgent";
 import { logEveryWhere } from "@/electron/service/util";
 import {
@@ -130,6 +135,49 @@ const normalizeLlmErrorMessage = (raw: string): string => {
     if (message && typeof message === "string") return message;
   } catch {}
   return raw;
+};
+
+const IMAGE_MIME_BY_EXT: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+};
+
+const buildHumanMessage = async (
+  text: string,
+  attachedFiles?: IAttachedFileContext[],
+): Promise<HumanMessage> => {
+  const imageFiles = (attachedFiles || []).filter(
+    (file) =>
+      file.type === "image" &&
+      file.filePath &&
+      IMAGE_MIME_BY_EXT[file.extension || ""],
+  );
+
+  if (imageFiles.length === 0) {
+    return new HumanMessage(text);
+  }
+
+  const contentBlocks: ContentBlock[] = [
+    { type: "text", text } as ContentBlock,
+  ];
+
+  for (const file of imageFiles) {
+    try {
+      const buffer = fs.readFileSync(file.filePath);
+      const base64 = buffer.toString("base64");
+      const mimeType = IMAGE_MIME_BY_EXT[file.extension || ""];
+      contentBlocks.push({
+        type: "image",
+        mimeType,
+        data: base64,
+      } as ContentBlock);
+    } catch {}
+  }
+
+  return new HumanMessage({ content: contentBlocks });
 };
 
 class AgentChatBridge {
@@ -456,6 +504,8 @@ class AgentChatBridge {
       onToolStart?: (toolName: string, subagentType?: string) => void;
       /** Callback when a tool finishes executing. */
       onToolComplete?: (toolName: string) => void;
+      /** Image files to include as multimodal content blocks. */
+      attachedFiles?: IAttachedFileContext[];
     },
   ): Promise<{
     output: string;
@@ -493,8 +543,12 @@ class AgentChatBridge {
     try {
       const { agent } = await this.getOrCreateAgent(session);
 
+      const humanMessage = await buildHumanMessage(
+        input.trim(),
+        options?.attachedFiles,
+      );
       const eventStream = (agent as any).streamEvents(
-        { messages: [new HumanMessage(input.trim())] },
+        { messages: [humanMessage] },
         {
           configurable: { thread_id: session.threadId },
           version: "v2",
