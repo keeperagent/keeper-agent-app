@@ -3,6 +3,7 @@ import {
   updateVariable,
   processSkipSetting,
   getActualValue,
+  waitAndClickText,
 } from "@/electron/simulator/util";
 import { DEFAULT_TIMEOUT } from "@/electron/simulator/constant";
 import {
@@ -20,6 +21,7 @@ import {
   ICrawlTextNodeConfig,
   IClickNodeConfig,
   ICheckElementExistNodeConfig,
+  IClickExtensionNodeConfig,
 } from "@/electron/type";
 import {
   SELECTOR_TYPE,
@@ -622,6 +624,31 @@ export class BrowserInteraction {
       taskName: "crawlText",
     });
   };
+
+  clickExtension = async (
+    flowProfile: IFlowProfile,
+  ): Promise<[IFlowProfile | null, Error | null]> => {
+    const script = async (
+      page: Page,
+      config: IClickExtensionNodeConfig,
+      listVariable: IWorkflowVariable[],
+    ): Promise<IFlowProfile> => {
+      if (processSkipSetting(config, listVariable)) {
+        return flowProfile;
+      }
+
+      const text = getActualValue(config?.text || "", listVariable);
+      await waitAndClickText(text, page);
+      return flowProfile;
+    };
+
+    return this.threadManager.runNormalTask<IClickExtensionNodeConfig>({
+      flowProfile,
+      taskFn: script,
+      taskName: "clickExtension",
+      withExtensionPopup: true,
+    });
+  };
 }
 
 export const registerBrowserHandlers = (
@@ -641,4 +668,5 @@ export const registerBrowserHandlers = (
   handlers.set(WORKFLOW_TYPE.NEW_TAB, s.openNewTab);
   handlers.set(WORKFLOW_TYPE.SCROLL, s.scroll);
   handlers.set(WORKFLOW_TYPE.CHECK_ELEMENT_EXIST, s.checkElementExist);
+  handlers.set(WORKFLOW_TYPE.CLICK_EXTENSION, s.clickExtension);
 };

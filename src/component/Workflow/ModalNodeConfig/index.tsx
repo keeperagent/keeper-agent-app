@@ -90,6 +90,7 @@ import LaunchTokenPumpfun from "./LaunchTokenPumpfun";
 import LaunchTokenBonkfun from "./LaunchTokenBonkfun";
 import AskAgent from "./AskAgent";
 import GenerateImage from "./GenerateImage";
+import ClickExtension from "./ClickExtension";
 
 type IModalProps = {
   isModalOpen: boolean;
@@ -171,6 +172,9 @@ const ModalNodeConfig = (props: IModalProps) => {
 
       case WORKFLOW_TYPE.GENERATE_IMAGE:
         return <GenerateImage {...propsNodeConfig} />;
+
+      case WORKFLOW_TYPE.CLICK_EXTENSION:
+        return <ClickExtension {...propsNodeConfig} />;
 
       case WORKFLOW_TYPE.SWAP_UNISWAP:
         return <SwapUniswap {...propsNodeConfig} />;
@@ -422,7 +426,7 @@ const ModalNodeConfig = (props: IModalProps) => {
       onCancel={onCloseModal}
       footer={null}
       style={{ top: "5rem" }}
-      maskClosable={false}
+      mask={{ closable: true }}
     >
       <ModalWrapper>{renderNodeElement()}</ModalWrapper>
     </Modal>

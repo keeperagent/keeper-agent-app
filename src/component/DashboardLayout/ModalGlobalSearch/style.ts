@@ -47,11 +47,16 @@ const SearchResultWrapper = styled.div`
 
   &:hover {
     border: 2px dashed ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
+
+    .name {
+      color: var(--color-text-hover);
+    }
   }
 
   .name {
     font-size: 1.4rem;
     font-weight: 600;
+    transition: all 0.2s ease-in-out;
   }
 
   .description {

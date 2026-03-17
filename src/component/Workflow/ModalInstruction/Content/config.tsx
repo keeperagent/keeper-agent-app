@@ -441,6 +441,19 @@ const getNodeContent = (workflowType: string, translate?: any) => {
       };
     }
 
+    case WORKFLOW_TYPE.CLICK_EXTENSION: {
+      return {
+        description: (
+          <DescriptionWrapper>
+            <div>{translate("guide.clickExtension.title")}</div>
+            <div className="example">
+              {translate("guide.clickExtension.desc")}
+            </div>
+          </DescriptionWrapper>
+        ),
+      };
+    }
+
     // Adnvanced
     case WORKFLOW_TYPE.SAVE_LOG: {
       return {
