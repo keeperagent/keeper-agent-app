@@ -1057,6 +1057,8 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   app_management_agent: "App Management subagent",
   transaction_agent: "Transaction subagent",
   code_execution_agent: "Code Execution subagent",
+  workflow_agent: "Workflow subagent",
+  research_agent: "Research subagent",
 
   // Tool names
   swap_on_jupiter: "Swap on Jupiter",
@@ -1076,6 +1078,11 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   execute_python: "Execute Python",
   read_file: "Read file",
   write_file: "Write file",
+  search_campaigns: "Search campaigns",
+  search_workflows: "Search workflows",
+  run_workflow: "Run workflow",
+  stop_workflow: "Stop workflow",
+  check_workflow_status: "Check workflow status",
   web_search_tavily: "Web search (Tavily)",
   web_search_exa: "Web search (Exa)",
   web_extract_tavily: "Web extract (Tavily)",
