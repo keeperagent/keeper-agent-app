@@ -93,7 +93,7 @@ const TransferToken = (props: Props) => {
       sleep: config?.sleep,
       timeout: config?.timeout || DEFAULT_EXTENSION_TIMEOUT / 1000,
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       toAddress: config?.toAddress,
       amount: config?.amount,
       tokenAddress: config?.tokenAddress,

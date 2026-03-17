@@ -23,54 +23,6 @@ export class EvmTransactionExecutor {
     return currentNonce;
   }
 
-  async executeMultipleTransaction(
-    input: IExecuteTransactionNodeConfig,
-    privateKey: string,
-    listNodeEndpoint: string[],
-    numberOfTransaction: number,
-    timeout: number,
-    logInfo: IStructuredLogPayload,
-  ): Promise<Error | null> {
-    const startTime = new Date().getTime();
-    const listResult: Promise<any>[] = [];
-
-    const [provider, , errProvider] =
-      this.evmProvider.getNextProvider(listNodeEndpoint);
-    if (!provider) {
-      return Error("can not get provider " + errProvider?.message);
-    }
-    const wallet = new ethers.Wallet(privateKey, provider);
-    const currentNonce = await this.getNonce(wallet?.address, provider);
-
-    for (let i = 0; i < numberOfTransaction; i++) {
-      const nonce = currentNonce! + i;
-      const resultPromise = this.executeTransaction(
-        input,
-        provider,
-        wallet,
-        nonce,
-        timeout,
-        logInfo,
-      );
-      listResult.push(resultPromise);
-    }
-
-    if (input.shouldWaitTransactionComfirmed) {
-      await Promise.all(listResult);
-    }
-    const endTime = new Date().getTime();
-    logEveryWhere({
-      campaignId: logInfo.campaignId,
-      workflowId: logInfo.workflowId,
-      message: `Execute transaction with wallet ${
-        wallet?.address
-      }, all ${numberOfTransaction} transaction done, take: ${
-        (endTime - startTime) / 1000
-      } seconds`,
-    });
-    return null;
-  }
-
   async executeSingleTransaction(
     input: IExecuteTransactionNodeConfig,
     listNodeEndpoint: string[],
@@ -104,31 +56,38 @@ export class EvmTransactionExecutor {
     timeout: number,
     logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> => {
-    let gasLimit = input.gasLimit;
+    const gasPriceStr = input.gasPrice || "";
+    const gasLimitStr = input.gasLimit || "";
+    const isCustomGasLimit = gasLimitStr !== "" && gasLimitStr !== "0";
+    const isCustomGasPrice = gasPriceStr !== "" && gasPriceStr !== "0";
+
     const transactionValue = input.transactionValue || zero;
+
     const [estimatedGasLimit, errGasLimit] = await this.getGasLimit(
       input?.transactionData,
       wallet?.address,
-      input?.toAddress,
+      input?.toAddress || "",
       transactionValue.toString(),
       provider,
     );
     if (errGasLimit) {
       return [null, errGasLimit];
     }
-    if (!input.isUseCustomGasLimit && estimatedGasLimit !== null) {
-      gasLimit = estimatedGasLimit;
-    }
+
+    const gasLimit: ethers.BigNumber | null = isCustomGasLimit
+      ? ethers.BigNumber.from(gasLimitStr)
+      : estimatedGasLimit;
 
     const isEip1559 = input.transactionType === EVM_TRANSACTION_TYPE.EIP_1559;
-    let gasPrice = input.gasPrice;
+    let gasPrice: ethers.BigNumber = zero;
     let maxFeePerGas = input.maxFeePerGas;
     let maxPriorityFeePerGas = input.maxPriorityFeePerGas;
-    if (!input.isUseCustomGasPrice) {
-      const suggestedGasFee = await provider?.getFeeData();
 
+    if (isCustomGasPrice) {
+      gasPrice = ethers.utils.parseUnits(gasPriceStr, "gwei");
+    } else {
+      const suggestedGasFee = await provider?.getFeeData();
       if (isEip1559) {
-        gasPrice = zero;
         maxFeePerGas = suggestedGasFee.maxFeePerGas || zero;
         maxPriorityFeePerGas = suggestedGasFee.maxPriorityFeePerGas || zero;
       } else {
@@ -148,7 +107,7 @@ export class EvmTransactionExecutor {
       maxFeePerGas: isEip1559 ? maxFeePerGas : undefined,
       maxPriorityFeePerGas: isEip1559 ? maxPriorityFeePerGas : undefined,
       nonce,
-      gasLimit,
+      gasLimit: gasLimit || undefined,
     };
 
     const startTime = new Date().getTime();

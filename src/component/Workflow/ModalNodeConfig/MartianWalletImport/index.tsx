@@ -41,7 +41,7 @@ const MartianWalletImport = (props: Props) => {
       name: config?.name,
       sleep: config?.sleep,
       timeout: config?.timeout || DEFAULT_EXTENSION_TIMEOUT / 1000,
-      seedPhrase: config?.seedPhrase || `{${WALLET_VARIABLE?.WALLET_PHRASE}}`,
+      seedPhrase: config?.seedPhrase || `{{${WALLET_VARIABLE?.WALLET_PHRASE}}}`,
       password: config?.password || "",
       onSuccess: config?.onSuccess || NODE_ACTION.CONTINUE_RUN,
       onError: config?.onError || NODE_ACTION.RERUN_THREAD,

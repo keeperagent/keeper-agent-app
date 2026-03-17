@@ -105,7 +105,7 @@ const WriteToContractEVM = (props: Props) => {
 
       variable: config?.variable || "TX_HASH_WRITE_TO_CONTRACT_EVM",
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       contractAddress: config?.contractAddress,
       contractAbi: config?.contractAbi,
       nodeEndpointGroupId: config?.nodeEndpointGroupId,

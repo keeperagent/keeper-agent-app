@@ -69,7 +69,7 @@ const ApproveRevokeEVM = (props: Props) => {
       timeout: config?.timeout || DEFAULT_EXTENSION_TIMEOUT / 1000,
       variable: config?.variable || "TX_HASH_APPROVE_OR_REVOKE_TOKEN_EVM",
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       spenderAddress: config?.spenderAddress,
       tokenAddress: config?.tokenAddress,
       amount: config?.amount,

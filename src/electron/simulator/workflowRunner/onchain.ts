@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { ethers } from "ethers";
 import { Page } from "puppeteer-core";
 import {
   IApproveRevokeEVMNodeConfig,
@@ -63,6 +62,7 @@ import {
   MarketcapCheckingManager,
 } from "@/electron/simulator/category/pricing/marketcapChecking";
 import { EvmTransactionExecutor } from "@/electron/simulator/category/onchain/evmExecuteTransaction";
+import { SolanaTransactionExecutor } from "@/electron/simulator/category/onchain/solanaExecuteTransaction";
 import { SolanaVanityAddressManager } from "@/electron/simulator/category/onchain/vanityAddress/solanaVanityAddress";
 import { WorkflowRunnerArgs, NodeHandler } from "./index";
 
@@ -73,6 +73,7 @@ export class OnChainWorkflow {
   private suiProvider: SuiProvider;
   private solanaProvider: SolanaProvider;
   private evmTransactionExecutor: EvmTransactionExecutor;
+  private solanaTransactionExecutor: SolanaTransactionExecutor;
   private pricing: Pricing;
   private priceCheckingManager: PriceCheckingManager;
   private marketcapCheckingManager: MarketcapCheckingManager;
@@ -94,6 +95,9 @@ export class OnChainWorkflow {
     this.priceCheckingManager = getPriceCheckingManager();
     this.marketcapCheckingManager = getMarketcapCheckingManager();
     this.evmTransactionExecutor = new EvmTransactionExecutor();
+    this.solanaTransactionExecutor = new SolanaTransactionExecutor(
+      solanaProvider,
+    );
     this.solanaVanityAddressManager = getSolanaVanityAddressManager();
   }
 
@@ -825,62 +829,56 @@ export class OnChainWorkflow {
           ?.filter((endpoint: string) => Boolean(endpoint)) || [];
 
       const privateKey = getActualValue(config?.privateKey || "", listVariable);
-      const gasPrice = getActualValue(
-        config?.gasPrice?.toString() || "",
+      const gasPrice = getActualValue(config?.gasPrice || "", listVariable);
+      const gasLimit = getActualValue(config?.gasLimit || "", listVariable);
+      const transactionData = getActualValue(
+        config?.transactionData || "",
         listVariable,
       );
-      const gasLimit = getActualValue(
-        config?.gasLimit?.toString() || "",
+      const toAddress = getActualValue(config?.toAddress || "", listVariable);
+      const transactionValue = getActualValue(
+        config?.transactionValue || "",
         listVariable,
       );
-      const numberOfTrasaction = getActualValue(
-        config?.numberOfTrasaction?.toString() || "",
-        listVariable,
-      );
-      if (
-        isNaN(Number(numberOfTrasaction)) ||
-        Number(numberOfTrasaction) <= 0
-      ) {
-        throw Error("Total transaction must > 0");
-      }
-
-      let txHash = null;
-      let err = null;
       const timeout =
         ((flowProfile?.config as IExecuteTransactionNodeConfig)?.timeout || 0) *
         1000;
-      let enhancedConfig: IExecuteTransactionNodeConfig = config;
-      enhancedConfig = {
-        ...config,
-        gasPrice: ethers.utils.parseUnits(gasPrice || "0", "gwei"),
-        gasLimit: ethers.BigNumber.from(gasLimit || "0"),
+      const logInfo = {
+        campaignId: flowProfile.campaignConfig?.campaignId || 0,
+        workflowId: flowProfile.campaignConfig?.workflowId || 0,
       };
 
-      if (Number(numberOfTrasaction) === 1) {
+      const resolvedConfig: IExecuteTransactionNodeConfig = {
+        ...config,
+        gasPrice,
+        gasLimit,
+        transactionData,
+        toAddress,
+        transactionValue,
+      };
+
+      let txHash = null;
+      let err = null;
+
+      if (config.chainType === CHAIN_TYPE.SOLANA) {
+        [txHash, err] = await this.solanaTransactionExecutor.executeTransaction(
+          resolvedConfig,
+          privateKey,
+          listNodeProvider,
+          timeout,
+          logInfo,
+        );
+      } else {
         [txHash, err] =
           await this.evmTransactionExecutor.executeSingleTransaction(
-            enhancedConfig,
+            resolvedConfig,
             listNodeProvider,
             privateKey,
             timeout,
-            {
-              campaignId: flowProfile.campaignConfig?.campaignId || 0,
-              workflowId: flowProfile.campaignConfig?.workflowId || 0,
-            },
+            logInfo,
           );
-      } else {
-        err = await this.evmTransactionExecutor.executeMultipleTransaction(
-          enhancedConfig,
-          privateKey,
-          listNodeProvider,
-          Number(numberOfTrasaction),
-          timeout,
-          {
-            campaignId: flowProfile.campaignConfig?.campaignId || 0,
-            workflowId: flowProfile.campaignConfig?.workflowId || 0,
-          },
-        );
       }
+
       if (err) {
         throw err;
       }

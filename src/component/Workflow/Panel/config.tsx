@@ -960,8 +960,8 @@ export const getListNode = (): INodeGroup[] => {
             workflowType: WORKFLOW_TYPE.IMPORT_RABBY_WALLET,
             status: NODE_STATUS.RUN,
 
-            seedPhrase: `{${WALLET_VARIABLE?.WALLET_PHRASE}}`,
-            privateKey: `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+            seedPhrase: `{{${WALLET_VARIABLE?.WALLET_PHRASE}}}`,
+            privateKey: `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
             password: "",
             importType: IMPORT_WALLET_TYPE.IMPORT_BY_SEED_PHRASE,
             timeout: DEFAULT_EXTENSION_TIMEOUT / 1000,
@@ -1046,7 +1046,7 @@ export const getListNode = (): INodeGroup[] => {
             workflowType: WORKFLOW_TYPE.IMPORT_PHANTOM_WALLET,
             status: NODE_STATUS.INVALID,
 
-            seedPhrase: `{${WALLET_VARIABLE?.WALLET_PHRASE}}`,
+            seedPhrase: `{{${WALLET_VARIABLE?.WALLET_PHRASE}}}`,
             password: "",
             timeout: DEFAULT_EXTENSION_TIMEOUT / 1000,
           },
@@ -1110,8 +1110,8 @@ export const getListNode = (): INodeGroup[] => {
             workflowType: WORKFLOW_TYPE.IMPORT_MARTIAN_WALLET,
             status: NODE_STATUS.INVALID,
 
-            seedPhrase: `{${WALLET_VARIABLE?.WALLET_PHRASE}}`,
-            privateKey: `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+            seedPhrase: `{{${WALLET_VARIABLE?.WALLET_PHRASE}}}`,
+            privateKey: `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
             password: "",
             timeout: DEFAULT_EXTENSION_TIMEOUT / 1000,
           },
@@ -1171,7 +1171,7 @@ export const getListNode = (): INodeGroup[] => {
             workflowType: WORKFLOW_TYPE.IMPORT_METAMASK_WALLET,
 
             status: NODE_STATUS.RUN,
-            seedPhrase: `{${WALLET_VARIABLE?.WALLET_PHRASE}}`,
+            seedPhrase: `{{${WALLET_VARIABLE?.WALLET_PHRASE}}}`,
             password: "",
             timeout: DEFAULT_EXTENSION_TIMEOUT / 1000,
           },

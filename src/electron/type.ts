@@ -1454,21 +1454,21 @@ export type IExecuteTransactionNodeConfig = {
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
 
+  chainType?: CHAIN_TYPE; // chain type to execute the transaction, default is EVM
   privateKey?: string; // private key of wallet
-  toAddress: string; // to address to execute the transaction
-  transactionData: string; // transaction data to execute the transaction
-  transactionValue: string; // transaction value to execute the transaction
-  nodeEndpointGroupId?: number; // node endpoint group id in database to execute the transaction
-  numberOfTrasaction?: number; // number of transaction to execute the transaction
+  toAddress?: string; // to address (EVM only)
+  transactionData: string; // transaction data: hex for EVM, base64 for Solana
+  transactionValue?: string; // transaction value in wei (EVM only)
+  nodeEndpointGroupId?: number; // node endpoint group id
 
-  gasLimit: ethers.BigNumber; // gas limit to execute the transaction
-  isUseCustomGasLimit: boolean; // is use custom gas limit to execute the transaction
-  transactionType: EVM_TRANSACTION_TYPE; // transaction type to execute the transaction, transaction type can be LEGACY or EIP_1559, default is "LEGACY"
-  maxFeePerGas?: ethers.BigNumber; // max fee per gas to execute the transaction
-  maxPriorityFeePerGas?: ethers.BigNumber; // max priority fee per gas to execute the transaction
-  gasPrice?: ethers.BigNumber; // gas price to execute the transaction
-  isUseCustomGasPrice: boolean; // is use custom gas price to execute the transaction
-  shouldWaitTransactionComfirmed: boolean; // should wait transaction comfirmed to execute the transaction
+  shouldWaitTransactionComfirmed?: boolean; // wait for confirmation
+  gasPrice?: string; // gas price in gwei (EVM) or compute unit price in microLamports (Solana)
+  gasLimit?: string; // gas limit (EVM) or compute unit limit (Solana)
+
+  // EVM-specific fields
+  transactionType?: EVM_TRANSACTION_TYPE; // LEGACY or EIP_1559, default LEGACY
+  maxFeePerGas?: ethers.BigNumber; // EIP-1559 max fee per gas
+  maxPriorityFeePerGas?: ethers.BigNumber; // EIP-1559 max priority fee per gas
 };
 
 // GET_TOKEN_PRICE @workflowType
