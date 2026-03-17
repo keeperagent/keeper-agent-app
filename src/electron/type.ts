@@ -435,6 +435,7 @@ export type INodeConfig =
   | IScrollNodeConfig
   | IClickNodeConfig
   | IClickExtensionNodeConfig
+  | IUploadFileNodeConfig
   | ITypeTextNodeConfig
   | ISelectTabNodeConfig
   | IImportMetamaskNodeConfig
@@ -1187,6 +1188,24 @@ export type IClickExtensionNodeConfig = {
   alertTelegramWhenError?: boolean; // alert telegram when error
 
   text?: string; // text to click
+};
+
+// UPLOAD_FILE @workflowType
+export type IUploadFileNodeConfig = {
+  workflowType?: WORKFLOW_TYPE; // type of the workflow
+  status?: NODE_STATUS; // status of the node
+  name: string; // name of the node
+  onError?: NODE_ACTION; // action to perform when error occurs
+  onSuccess?: NODE_ACTION; // action to perform when success
+  sleep: number; // sleep time between each node
+  timeout?: number; // timeout for the node
+  skipSetting?: ISkipSetting; // skip setting for the node
+  alertTelegramWhenError?: boolean; // alert telegram when error
+
+  selectorType?: SELECTOR_TYPE; // selector type: CSS or XPath
+  cssSelector?: string; // CSS selector of the element to click to trigger the file chooser
+  xPathSelector?: string; // XPath selector of the element to click to trigger the file chooser
+  filePath?: string; // absolute path to the file to upload
 };
 
 // CHECK_ELEMENT_EXIST @workflowType

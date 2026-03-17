@@ -22,6 +22,7 @@ import {
   IClickNodeConfig,
   ICheckElementExistNodeConfig,
   IClickExtensionNodeConfig,
+  IUploadFileNodeConfig,
 } from "@/electron/type";
 import {
   SELECTOR_TYPE,
@@ -126,6 +127,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "typeText",
+      timeout:
+        ((flowProfile?.config as ITypeTextNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -209,6 +213,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "click",
+      timeout:
+        ((flowProfile?.config as IClickNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -507,6 +514,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "scroll",
+      timeout:
+        ((flowProfile?.config as IScrollNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -563,6 +573,9 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "checkElementExist",
+      timeout:
+        ((flowProfile?.config as ICheckElementExistNodeConfig)?.timeout || 0) *
+          1000 || DEFAULT_TIMEOUT,
     });
   };
 
@@ -622,6 +635,68 @@ export class BrowserInteraction {
       flowProfile,
       taskFn: script,
       taskName: "crawlText",
+      timeout:
+        ((flowProfile?.config as ICrawlTextNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
+    });
+  };
+
+  uploadFile = async (
+    flowProfile: IFlowProfile,
+  ): Promise<[IFlowProfile | null, Error | null]> => {
+    const script = async (
+      page: Page,
+      config: IUploadFileNodeConfig,
+      listVariable: IWorkflowVariable[],
+    ): Promise<IFlowProfile> => {
+      if (processSkipSetting(config, listVariable)) {
+        return flowProfile;
+      }
+
+      const timeout = (config?.timeout || 0) * 1000 || DEFAULT_TIMEOUT;
+      const filePath = getActualValue(config?.filePath || "", listVariable);
+      if (!filePath.trim()) {
+        throw new Error("Upload file: file path is empty");
+      }
+
+      let [fileChooser] = await (async () => {
+        if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
+          const xPathSelector = getActualValue(
+            config?.xPathSelector || "",
+            listVariable,
+          );
+          const element = await page.waitForSelector(
+            `::-p-xpath(${xPathSelector})`,
+            { timeout },
+          );
+          return Promise.all([
+            page.waitForFileChooser({ timeout }),
+            element?.click(),
+          ]);
+        } else {
+          const cssSelector = getActualValue(
+            config?.cssSelector || "",
+            listVariable,
+          );
+          const element = await page.waitForSelector(cssSelector, { timeout });
+          return Promise.all([
+            page.waitForFileChooser({ timeout }),
+            element?.click(),
+          ]);
+        }
+      })();
+      await fileChooser.accept([filePath]);
+
+      return flowProfile;
+    };
+
+    return this.threadManager.runNormalTask<IUploadFileNodeConfig>({
+      flowProfile,
+      taskFn: script,
+      taskName: "uploadFile",
+      timeout:
+        ((flowProfile?.config as IUploadFileNodeConfig)?.timeout || 0) * 1000 ||
+        DEFAULT_TIMEOUT,
     });
   };
 
@@ -672,4 +747,5 @@ export const registerBrowserHandlers = (
   handlers.set(WORKFLOW_TYPE.SCROLL, s.scroll);
   handlers.set(WORKFLOW_TYPE.CHECK_ELEMENT_EXIST, s.checkElementExist);
   handlers.set(WORKFLOW_TYPE.CLICK_EXTENSION, s.clickExtension);
+  handlers.set(WORKFLOW_TYPE.UPLOAD_FILE, s.uploadFile);
 };

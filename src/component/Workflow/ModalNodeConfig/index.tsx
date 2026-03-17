@@ -91,6 +91,7 @@ import LaunchTokenBonkfun from "./LaunchTokenBonkfun";
 import AskAgent from "./AskAgent";
 import GenerateImage from "./GenerateImage";
 import ClickExtension from "./ClickExtension";
+import UploadFile from "./UploadFile";
 
 type IModalProps = {
   isModalOpen: boolean;
@@ -175,6 +176,9 @@ const ModalNodeConfig = (props: IModalProps) => {
 
       case WORKFLOW_TYPE.CLICK_EXTENSION:
         return <ClickExtension {...propsNodeConfig} />;
+
+      case WORKFLOW_TYPE.UPLOAD_FILE:
+        return <UploadFile {...propsNodeConfig} />;
 
       case WORKFLOW_TYPE.SWAP_UNISWAP:
         return <SwapUniswap {...propsNodeConfig} />;
