@@ -35,6 +35,8 @@ import {
   executePythonTool,
   webSearchTavilyTool,
   webSearchExaTool,
+  webExtractTavilyTool,
+  findSimilarExaTool,
   searchCampaignsTool,
   searchWorkflowsTool,
   runWorkflowTool,
@@ -298,19 +300,24 @@ const buildBaseSubAgents = (
   const researchTools = [
     isEnabled(BASE_TOOL_KEYS.WEB_SEARCH_TAVILY) && webSearchTavilyTool(),
     isEnabled(BASE_TOOL_KEYS.WEB_SEARCH_EXA) && webSearchExaTool(),
+    isEnabled(BASE_TOOL_KEYS.WEB_EXTRACT_TAVILY) && webExtractTavilyTool(),
+    isEnabled(BASE_TOOL_KEYS.FIND_SIMILAR_EXA) && findSimilarExaTool(),
   ].filter((tool): any => Boolean(tool));
 
   if (researchTools.length > 0) {
     agents.push({
       name: "research_agent",
       description:
-        "Searches the web for current information, news, facts, and research. Use Tavily for general/factual queries and Exa for semantic/conceptual search.",
+        "Searches the web for current information, news, facts, and research. " +
+        "Can also extract full page content from URLs and find similar pages.",
       systemPrompt:
-        "You are a research subagent with web search capabilities. " +
-        "You have two search tools:\n" +
+        "You are a research subagent with web search and content extraction capabilities. " +
+        "You have four tools:\n" +
         "- **web_search_tavily**: Best for factual lookups, current events, news, prices, and general queries.\n" +
-        "- **web_search_exa**: Best for semantic search — finding conceptually similar content, research papers, related projects, and deep topic exploration.\n\n" +
-        "Choose the right tool based on the query type. You can use both if needed for comprehensive research.\n" +
+        "- **web_search_exa**: Best for semantic search — finding conceptually similar content, research papers, related projects, and deep topic exploration.\n" +
+        "- **web_extract_tavily**: Extract and read the full content of web pages by URL. Use after searching to read a specific result in detail.\n" +
+        "- **find_similar_exa**: Find web pages similar to a given URL. Use to discover related projects, competitors, or similar content.\n\n" +
+        "Choose the right tool based on the query type. You can chain tools — e.g. search first, then extract a result page for details.\n" +
         "Return results clearly with source URLs. Keep responses concise and relevant.",
       tools: researchTools as any,
     });

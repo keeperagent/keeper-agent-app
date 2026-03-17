@@ -36,6 +36,8 @@ export const BASE_TOOL_KEYS = {
   CHECK_WORKFLOW_STATUS: "check_workflow_status",
   WEB_SEARCH_TAVILY: "web_search_tavily",
   WEB_SEARCH_EXA: "web_search_exa",
+  WEB_EXTRACT_TAVILY: "web_extract_tavily",
+  FIND_SIMILAR_EXA: "find_similar_exa",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -177,6 +179,20 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     name: "Web search (Exa)",
     description:
       "Semantic web search for finding conceptually related content using Exa",
+    group: BaseToolGroup.RESEARCH,
+  },
+  {
+    key: BASE_TOOL_KEYS.WEB_EXTRACT_TAVILY,
+    name: "Web extract (Tavily)",
+    description:
+      "Extract and read full content from web pages by URL using Tavily",
+    group: BaseToolGroup.RESEARCH,
+  },
+  {
+    key: BASE_TOOL_KEYS.FIND_SIMILAR_EXA,
+    name: "Find similar (Exa)",
+    description:
+      "Find web pages similar to a given URL using Exa semantic search",
     group: BaseToolGroup.RESEARCH,
   },
   // Code Execution Tools

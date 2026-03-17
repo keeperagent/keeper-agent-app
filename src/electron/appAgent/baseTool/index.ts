@@ -20,3 +20,5 @@ export { stopWorkflowTool } from "./stopWorkflow";
 export { checkWorkflowStatusTool } from "./checkWorkflowStatus";
 export { webSearchTavilyTool } from "./webSearchTavily";
 export { webSearchExaTool } from "./webSearchExa";
+export { webExtractTavilyTool } from "./webExtractTavily";
+export { findSimilarExaTool } from "./findSimilarExa";
