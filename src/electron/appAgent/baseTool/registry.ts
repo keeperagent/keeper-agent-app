@@ -3,6 +3,7 @@ export enum BaseToolGroup {
   TRANSACTION = "transaction",
   CODE_EXECUTION = "code_execution",
   WORKFLOW = "workflow",
+  RESEARCH = "research",
 }
 
 export type BaseToolRegistryItem = {
@@ -33,6 +34,10 @@ export const BASE_TOOL_KEYS = {
   RUN_WORKFLOW: "run_workflow",
   STOP_WORKFLOW: "stop_workflow",
   CHECK_WORKFLOW_STATUS: "check_workflow_status",
+  WEB_SEARCH_TAVILY: "web_search_tavily",
+  WEB_SEARCH_EXA: "web_search_exa",
+  WEB_EXTRACT_TAVILY: "web_extract_tavily",
+  FIND_SIMILAR_EXA: "find_similar_exa",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -161,6 +166,35 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
       "Check the progress and status of a workflow running on a campaign",
     group: BaseToolGroup.WORKFLOW,
   },
+  // Research Tools
+  {
+    key: BASE_TOOL_KEYS.WEB_SEARCH_TAVILY,
+    name: "Web search (Tavily)",
+    description:
+      "Search the web for current information, news, and facts using Tavily",
+    group: BaseToolGroup.RESEARCH,
+  },
+  {
+    key: BASE_TOOL_KEYS.WEB_SEARCH_EXA,
+    name: "Web search (Exa)",
+    description:
+      "Semantic web search for finding conceptually related content using Exa",
+    group: BaseToolGroup.RESEARCH,
+  },
+  {
+    key: BASE_TOOL_KEYS.WEB_EXTRACT_TAVILY,
+    name: "Web extract (Tavily)",
+    description:
+      "Extract and read full content from web pages by URL using Tavily",
+    group: BaseToolGroup.RESEARCH,
+  },
+  {
+    key: BASE_TOOL_KEYS.FIND_SIMILAR_EXA,
+    name: "Find similar (Exa)",
+    description:
+      "Find web pages similar to a given URL using Exa semantic search",
+    group: BaseToolGroup.RESEARCH,
+  },
   // Code Execution Tools
   {
     key: BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT,
@@ -183,4 +217,5 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.TRANSACTION]: "Transaction",
   [BaseToolGroup.CODE_EXECUTION]: "Code Execution",
   [BaseToolGroup.WORKFLOW]: "Workflow",
+  [BaseToolGroup.RESEARCH]: "Research",
 };

@@ -232,6 +232,12 @@ const formatPreference = (data: any): IPreference => {
     googleGeminiApiKey: data?.googleGeminiApiKey
       ? encryptionService.decryptData(data?.googleGeminiApiKey)
       : "",
+    tavilyApiKey: data?.tavilyApiKey
+      ? encryptionService.decryptData(data?.tavilyApiKey)
+      : "",
+    exaApiKey: data?.exaApiKey
+      ? encryptionService.decryptData(data?.exaApiKey)
+      : "",
     disabledTools:
       typeof data?.disabledTools === "string"
         ? JSON.parse(data?.disabledTools || "[]")

@@ -97,6 +97,30 @@ export const getGoogleGeminiModel = async (): Promise<string | null> => {
   return preference?.googleGeminiModel || null;
 };
 
+export const getTavilyKey = async (): Promise<
+  [string | null, Error | null]
+> => {
+  const [preference, err] = await preferenceDB.getOnePreference();
+  if (err) {
+    return [null, err];
+  }
+  if (!preference) {
+    return [null, new Error("Preference not found")];
+  }
+  return [preference?.tavilyApiKey || null, null];
+};
+
+export const getExaKey = async (): Promise<[string | null, Error | null]> => {
+  const [preference, err] = await preferenceDB.getOnePreference();
+  if (err) {
+    return [null, err];
+  }
+  if (!preference) {
+    return [null, new Error("Preference not found")];
+  }
+  return [preference?.exaApiKey || null, null];
+};
+
 export const normalizeChainType = (
   value?: string | null,
 ): SupportedChainType | undefined => {
