@@ -5,7 +5,11 @@
 */
 
 import { randomUUID } from "crypto";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import {
+  HumanMessage,
+  SystemMessage,
+  type ContentBlock,
+} from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import fs from "fs-extra";
 import path from "path";
@@ -156,8 +160,8 @@ const buildHumanMessage = async (
     return new HumanMessage(text);
   }
 
-  const contentBlocks: Array<{ type: string; [key: string]: unknown }> = [
-    { type: "text", text },
+  const contentBlocks: ContentBlock[] = [
+    { type: "text", text } as ContentBlock,
   ];
 
   for (const file of imageFiles) {
@@ -165,11 +169,15 @@ const buildHumanMessage = async (
       const buffer = fs.readFileSync(file.filePath);
       const base64 = buffer.toString("base64");
       const mimeType = IMAGE_MIME_BY_EXT[file.extension || ""];
-      contentBlocks.push({ type: "image", mimeType, data: base64 });
+      contentBlocks.push({
+        type: "image",
+        mimeType,
+        data: base64,
+      } as ContentBlock);
     } catch {}
   }
 
-  return new HumanMessage({ content: contentBlocks as any });
+  return new HumanMessage({ content: contentBlocks });
 };
 
 class AgentChatBridge {
