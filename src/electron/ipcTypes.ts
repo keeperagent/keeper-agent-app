@@ -538,6 +538,7 @@ export type IpcChooseFilePayload = {
 
 export type IpcReadFileAsDataUrlPayload = {
   path: string;
+  requestId?: string;
 };
 
 export type IpcSaveClipboardImagePayload = {

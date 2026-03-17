@@ -124,7 +124,10 @@ const ModalCampaign = (props: IProps) => {
 
       if (isFromWorkflowView && updatedData) {
         props?.actSaveSelectedCampaign(updatedData);
-        getCampaignProfileStatus(updatedData?.id || 0, selectedWorkflow?.id || 0);
+        getCampaignProfileStatus(
+          updatedData?.id || 0,
+          selectedWorkflow?.id || 0,
+        );
       }
     }
   }, [
@@ -246,7 +249,7 @@ const ModalCampaign = (props: IProps) => {
           : translate("campaign.updateCampaign")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       width="50rem"
       style={{ top: "6rem" }}
       confirmLoading={isBtnLoading}

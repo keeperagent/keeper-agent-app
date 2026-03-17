@@ -88,7 +88,11 @@ export {
 } from "./campaignProfile";
 export { useGetPreference, useUpdatePreference } from "./preference";
 export { useExportDatabase, useImportDatabase } from "./database";
-export { useChooseFolder, useSaveClipboardImage } from "./dialog";
+export {
+  useChooseFolder,
+  useSaveClipboardImage,
+  useReadFileAsDataUrl,
+} from "./dialog";
 export { useGetStatistic } from "./statistic";
 export { useApollo } from "./apolloClient";
 export {

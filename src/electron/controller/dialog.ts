@@ -99,11 +99,12 @@ export const dialogController = () => {
     MESSAGE.READ_FILE_AS_DATA_URL,
     MESSAGE.READ_FILE_AS_DATA_URL_RES,
     async (event, payload) => {
-      const { path: filePath } = payload || {};
+      const { path: filePath, requestId } = payload || {};
       if (!filePath) {
         event.reply(MESSAGE.READ_FILE_AS_DATA_URL_RES, {
           path: filePath,
           dataUrl: null,
+          requestId,
         });
         return;
       }
@@ -126,6 +127,7 @@ export const dialogController = () => {
       event.reply(MESSAGE.READ_FILE_AS_DATA_URL_RES, {
         path: filePath,
         dataUrl,
+        requestId,
       });
     },
   );
