@@ -60,6 +60,7 @@ const ExecuteTransaction = (props: Props) => {
 
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
+  const [chainType, setChainType] = useState<CHAIN_TYPE>(CHAIN_TYPE.EVM);
   const [form] = Form.useForm();
 
   const { getListNodeEndpointGroup, loading: isSelectLoading } =
@@ -74,6 +75,8 @@ const ExecuteTransaction = (props: Props) => {
   }, [locale]);
 
   useEffect(() => {
+    const selectedChain = config?.chainType || CHAIN_TYPE.EVM;
+    setChainType(selectedChain);
     form.setFieldsValue({
       name: config?.name,
       sleep: config?.sleep,
@@ -85,21 +88,24 @@ const ExecuteTransaction = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
 
+      chainType: selectedChain,
       variable: config?.variable || "TX_HASH_EXECUTE_TRANSACTION",
       privateKey:
         config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
-      toAddress: config?.toAddress || "",
       transactionData: config?.transactionData || "",
-      transactionValue: config?.transactionValue || "0",
       gasLimit: config?.gasLimit?.toString() || "",
-      transactionType: EVM_TRANSACTION_TYPE.LEGACY,
       gasPrice: config?.gasPrice?.toString() || "",
       numberOfTrasaction: config?.numberOfTrasaction || "1",
       shouldWaitTransactionComfirmed:
         typeof config?.shouldWaitTransactionComfirmed === "undefined"
           ? true
           : Boolean(config?.shouldWaitTransactionComfirmed),
+
+      // EVM-only
+      toAddress: config?.toAddress || "",
+      transactionValue: config?.transactionValue || "0",
+      transactionType: EVM_TRANSACTION_TYPE.LEGACY,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -127,8 +133,8 @@ const ExecuteTransaction = (props: Props) => {
         privateKey,
         variable,
         nodeEndpointGroupId,
-        toAddress,
         transactionData,
+        toAddress,
         transactionValue,
         gasLimit,
         gasPrice,
@@ -147,9 +153,7 @@ const ExecuteTransaction = (props: Props) => {
         "privateKey",
         "variable",
         "nodeEndpointGroupId",
-        "toAddress",
         "transactionData",
-        "transactionValue",
         "gasLimit",
         "gasPrice",
         "numberOfTrasaction",
@@ -160,6 +164,8 @@ const ExecuteTransaction = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "toAddress",
+        "transactionValue",
       ]);
 
       onSaveNodeConfig({
@@ -169,26 +175,20 @@ const ExecuteTransaction = (props: Props) => {
         privateKey,
         variable,
         nodeEndpointGroupId,
-        toAddress,
         transactionData,
-        transactionValue,
+        chainType,
         gasLimit,
         gasPrice,
         numberOfTrasaction,
         shouldWaitTransactionComfirmed,
-        isUseCustomGasLimit: gasLimit !== "0" && gasLimit !== "",
-        transactionType: EVM_TRANSACTION_TYPE.LEGACY,
-        isUseCustomGasPrice: gasPrice !== "0" && gasPrice !== "",
         onError,
         onSuccess,
         status: NODE_STATUS.RUN,
-        skipSetting: {
-          leftSide,
-          rightSide,
-          condition,
-          isSkip,
-        },
+        skipSetting: { leftSide, rightSide, condition, isSkip },
         alertTelegramWhenError,
+        toAddress,
+        transactionValue,
+        transactionType: EVM_TRANSACTION_TYPE.LEGACY,
       });
 
       onCloseModal();
@@ -197,9 +197,14 @@ const ExecuteTransaction = (props: Props) => {
 
   const listValidNodeEndpointGroup = useMemo(() => {
     return listNodeEndpointGroup.filter(
-      (item) => item?.chainType === CHAIN_TYPE.EVM,
+      (item) => item?.chainType === chainType,
     );
-  }, [listNodeEndpointGroup]);
+  }, [listNodeEndpointGroup, chainType]);
+
+  const chainTypeConfig = useMemo(
+    () => _.find(getChainConfig(locale), { key: chainType }),
+    [chainType, locale],
+  );
 
   return (
     <Wrapper>
@@ -284,25 +289,57 @@ const ExecuteTransaction = (props: Props) => {
             </Form.Item>
 
             <Form.Item
-              label={
-                <FormLabelWrapper>
-                  <span className="text">To address:</span>
-                  <WorkflowVariable form={form} fieldName="toAddress" />
-                </FormLabelWrapper>
-              }
-              name="toAddress"
+              label={`${translate("wallet.blockchainType")}:`}
+              name="chainType"
             >
-              <Input
-                placeholder="Enter transaction value"
-                className="custom-input"
+              <Select
                 size="large"
-              />
+                className="custom-select"
+                onChange={(value: CHAIN_TYPE) => {
+                  setChainType(value);
+                  form.setFieldValue("nodeEndpointGroupId", undefined);
+                }}
+              >
+                {[CHAIN_TYPE.EVM, CHAIN_TYPE.SOLANA].map((chainOption) => {
+                  const chainOptionConfig = _.find(getChainConfig(locale), {
+                    key: chainOption,
+                  });
+                  return (
+                    <Option key={chainOption} value={chainOption}>
+                      <ChainWrapper>
+                        <div className="icon">
+                          <img src={chainOptionConfig?.image} alt="" />
+                        </div>
+                        <span className="text">{chainOptionConfig?.name}</span>
+                      </ChainWrapper>
+                    </Option>
+                  );
+                })}
+              </Select>
             </Form.Item>
+
+            {chainType === CHAIN_TYPE.EVM && (
+              <Form.Item
+                label={
+                  <FormLabelWrapper>
+                    <span className="text">{`${translate("workflow.toAddress")}:`}</span>
+                    <WorkflowVariable form={form} fieldName="toAddress" />
+                  </FormLabelWrapper>
+                }
+                name="toAddress"
+              >
+                <Input
+                  placeholder={translate("workflow.toAddressPlaceholder")}
+                  className="custom-input"
+                  size="large"
+                />
+              </Form.Item>
+            )}
 
             <Form.Item
               label={
                 <FormLabelWrapper>
-                  <span className="text">Transaction data:</span>
+                  <span className="text">{`${translate("workflow.transactionData")}:`}</span>
                   <WorkflowVariable form={form} fieldName="transactionData" />
                 </FormLabelWrapper>
               }
@@ -315,34 +352,45 @@ const ExecuteTransaction = (props: Props) => {
               ]}
             >
               <TextArea
-                placeholder={translate("workflow.enterTransactionData")}
+                placeholder={
+                  chainType === CHAIN_TYPE.SOLANA
+                    ? translate("workflow.transactionDataSolanaPlaceholder")
+                    : translate("workflow.enterTransactionData")
+                }
                 className="custom-input"
                 size="large"
                 rows={5}
               />
             </Form.Item>
 
-            <Form.Item
-              label={
-                <FormLabelWrapper>
-                  <span className="text">Transaction value:</span>
-                  <WorkflowVariable form={form} fieldName="transactionValue" />
-                </FormLabelWrapper>
-              }
-              name="transactionValue"
-              rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
-              ]}
-            >
-              <Input
-                placeholder="Enter transaction value"
-                className="custom-input"
-                size="large"
-              />
-            </Form.Item>
+            {chainType === CHAIN_TYPE.EVM && (
+              <Form.Item
+                label={
+                  <FormLabelWrapper>
+                    <span className="text">{`${translate("workflow.transactionValue")}:`}</span>
+                    <WorkflowVariable
+                      form={form}
+                      fieldName="transactionValue"
+                    />
+                  </FormLabelWrapper>
+                }
+                name="transactionValue"
+                rules={[
+                  {
+                    required: true,
+                    message: translate("form.requiredField"),
+                  },
+                ]}
+              >
+                <Input
+                  placeholder={translate(
+                    "workflow.transactionValuePlaceholder",
+                  )}
+                  className="custom-input"
+                  size="large"
+                />
+              </Form.Item>
+            )}
 
             <Form.Item
               label={`${translate("nodeEndpoint.group")}:`}
@@ -365,40 +413,34 @@ const ExecuteTransaction = (props: Props) => {
                 optionLabelProp="label"
               >
                 {listValidNodeEndpointGroup?.map(
-                  (group: INodeEndpointGroup) => {
-                    const chainConfig = _.find(getChainConfig(locale), {
-                      key: CHAIN_TYPE.EVM,
-                    });
-
-                    return (
-                      <Option
-                        key={group?.id}
-                        value={group?.id}
-                        label={
-                          <ChainWrapper>
-                            <div className="icon">
-                              <img src={chainConfig?.image} alt="" />
-                            </div>
-                            <span className="text">{group?.name}</span>
-                          </ChainWrapper>
-                        }
-                      >
-                        <OptionWrapper>
+                  (group: INodeEndpointGroup) => (
+                    <Option
+                      key={group?.id}
+                      value={group?.id}
+                      label={
+                        <ChainWrapper>
                           <div className="icon">
-                            <img src={chainConfig?.image} alt="" />
+                            <img src={chainTypeConfig?.image} alt="" />
                           </div>
+                          <span className="text">{group?.name}</span>
+                        </ChainWrapper>
+                      }
+                    >
+                      <OptionWrapper>
+                        <div className="icon">
+                          <img src={chainTypeConfig?.image} alt="" />
+                        </div>
 
-                          <div className="content">
-                            <div className="name">{group?.name}</div>
-                            <div className="description">
-                              {translate("nodeProvider.totalNode")}:{" "}
-                              {group?.totalNodeEndpoint || 0}
-                            </div>
+                        <div className="content">
+                          <div className="name">{group?.name}</div>
+                          <div className="description">
+                            {translate("nodeProvider.totalNode")}:{" "}
+                            {group?.totalNodeEndpoint || 0}
                           </div>
-                        </OptionWrapper>
-                      </Option>
-                    );
-                  },
+                        </div>
+                      </OptionWrapper>
+                    </Option>
+                  ),
                 )}
               </Select>
             </Form.Item>
@@ -409,56 +451,58 @@ const ExecuteTransaction = (props: Props) => {
               className="collapse"
               items={[
                 {
-                  label: "Transaction settings",
+                  label: translate("workflow.transactionSettings"),
                   children: (
                     <Fragment>
-                      <Row gutter={16}>
-                        <Col span={12}>
-                          <Form.Item
-                            label={
-                              <FormLabelWrapper>
-                                <span className="text">Gas limit:</span>
-                                <WorkflowVariable
-                                  form={form}
-                                  fieldName="gasLimit"
-                                />
-                              </FormLabelWrapper>
-                            }
-                            name="gasLimit"
-                          >
-                            <Input
-                              placeholder={translate(
-                                "workflow.gasLimitPlaceholder",
-                              )}
-                              className="custom-input"
-                              size="large"
-                            />
-                          </Form.Item>
-                        </Col>
+                      {chainType === CHAIN_TYPE.EVM && (
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item
+                              label={
+                                <FormLabelWrapper>
+                                  <span className="text">{`${translate("workflow.gasLimit")}:`}</span>
+                                  <WorkflowVariable
+                                    form={form}
+                                    fieldName="gasLimit"
+                                  />
+                                </FormLabelWrapper>
+                              }
+                              name="gasLimit"
+                            >
+                              <Input
+                                placeholder={translate(
+                                  "workflow.gasLimitPlaceholder",
+                                )}
+                                className="custom-input"
+                                size="large"
+                              />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={12}>
-                          <Form.Item
-                            name="gasPrice"
-                            label={
-                              <FormLabelWrapper>
-                                <span className="text">Gas price (Gwei):</span>
-                                <WorkflowVariable
-                                  form={form}
-                                  fieldName="gasPrice"
-                                />
-                              </FormLabelWrapper>
-                            }
-                          >
-                            <Input
-                              placeholder={translate(
-                                "workflow.gasPricePlaceholder",
-                              )}
-                              className="custom-input"
-                              size="large"
-                            />
-                          </Form.Item>
-                        </Col>
-                      </Row>
+                          <Col span={12}>
+                            <Form.Item
+                              name="gasPrice"
+                              label={
+                                <FormLabelWrapper>
+                                  <span className="text">{`${translate("workflow.gasPrice")}:`}</span>
+                                  <WorkflowVariable
+                                    form={form}
+                                    fieldName="gasPrice"
+                                  />
+                                </FormLabelWrapper>
+                              }
+                            >
+                              <Input
+                                placeholder={translate(
+                                  "workflow.gasPricePlaceholder",
+                                )}
+                                className="custom-input"
+                                size="large"
+                              />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+                      )}
 
                       <Form.Item
                         label={
