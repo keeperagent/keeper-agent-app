@@ -97,7 +97,7 @@ const SwapKyberswap = (props: Props) => {
       sleep: config?.sleep,
       timeout: config?.timeout || DEFAULT_EXTENSION_TIMEOUT / 1000,
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
       onSuccess: config?.onSuccess || NODE_ACTION.CONTINUE_RUN,
       onError: config?.onError || NODE_ACTION.PAUSE_THREAD,

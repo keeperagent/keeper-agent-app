@@ -91,7 +91,7 @@ const ExecuteTransaction = (props: Props) => {
       chainType: selectedChain,
       variable: config?.variable || "TX_HASH_EXECUTE_TRANSACTION",
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
       transactionData: config?.transactionData || "",
       gasLimit: config?.gasLimit?.toString() || "",

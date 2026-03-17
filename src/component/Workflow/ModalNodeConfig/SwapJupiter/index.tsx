@@ -83,7 +83,7 @@ const SwapJupiter = (props: Props) => {
 
       variable: config?.variable || "TX_HASH_SWAP_JUPITER",
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       inputTokenAddress: config?.swapInput?.inputTokenAddress,
       outputTokenAddress: config?.swapInput?.outputTokenAddress,
       amount: config?.swapInput?.amount,

@@ -92,7 +92,7 @@ const LaunchTokenBonkfun = (props: Props) => {
       variableTokenAddress:
         config?.variableTokenAddress || "TOKEN_ADDRESS_BONKFUN",
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       tokenName: config?.tokenName,
       symbol: config?.symbol,
       description: config?.description,

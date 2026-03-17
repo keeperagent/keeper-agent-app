@@ -83,7 +83,7 @@ const SwapCetus = (props: Props) => {
 
       variable: config?.variable || "TX_HASH_SWAP_CETUS",
       privateKey:
-        config?.privateKey || `{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}`,
+        config?.privateKey || `{{${WALLET_VARIABLE.WALLET_PRIVATE_KEY}}}`,
       poolAddress: config?.swapInput?.poolAddress,
       inputTokenAddress: config?.swapInput?.inputTokenAddress,
       outputTokenAddress: config?.swapInput?.outputTokenAddress,
