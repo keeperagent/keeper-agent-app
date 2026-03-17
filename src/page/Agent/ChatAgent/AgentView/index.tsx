@@ -255,6 +255,8 @@ const AgentView = (props: any) => {
   } = useDashboardAgent();
 
   const [draftMessage, setDraftMessage] = useState("");
+  const attachedFilesRef = useRef<AttachedFile[]>([]);
+  const tempFilesToDeleteRef = useRef<string[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isDragOverAgent, setIsDragOverAgent] = useState(false);
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(
@@ -268,7 +270,6 @@ const AgentView = (props: any) => {
   const sendButtonRef = useRef<HTMLButtonElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
-  const attachedFilesRef = useRef<AttachedFile[]>([]);
   const prevConversationLenRef = useRef<number>(0);
   const conversationClearedRef = useRef(false);
 
@@ -411,32 +412,57 @@ const AgentView = (props: any) => {
     setAttachedFiles((prev) => [...prev, ...next]);
   };
 
+  const cleanupFile = (fileItem: AttachedFile) => {
+    if (fileItem?.previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(fileItem.previewUrl);
+    }
+    if (fileItem?.isTemp) {
+      deleteTempFile(fileItem.path);
+    }
+  };
+
   const removeAttachedFile = (index: number) => {
     setAttachedFiles((prev) => {
       const removed = prev[index];
-      if (removed?.previewUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(removed.previewUrl);
-      }
-      if (removed?.isTemp) {
-        deleteTempFile(removed.path);
+      if (removed) {
+        cleanupFile(removed);
       }
       return prev.filter((_, i) => i !== index);
     });
   };
 
-  attachedFilesRef.current = attachedFiles;
-  useEffect(() => {
-    return () => {
-      attachedFilesRef.current.forEach((fileItem) => {
+  const clearAttachedFiles = () => {
+    setAttachedFiles((prev) => {
+      prev.forEach((fileItem) => {
         if (fileItem?.previewUrl?.startsWith("blob:")) {
-          URL.revokeObjectURL(fileItem?.previewUrl);
+          URL.revokeObjectURL(fileItem.previewUrl);
         }
         if (fileItem?.isTemp) {
-          deleteTempFile(fileItem?.path);
+          tempFilesToDeleteRef.current.push(fileItem.path);
         }
       });
+      return [];
+    });
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      tempFilesToDeleteRef.current.forEach(deleteTempFile);
+      tempFilesToDeleteRef.current = [];
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    return () => {
+      attachedFilesRef.current.forEach(cleanupFile);
+      tempFilesToDeleteRef.current.forEach(deleteTempFile);
+      tempFilesToDeleteRef.current = [];
     };
   }, []);
+
+  useEffect(() => {
+    attachedFilesRef.current = attachedFiles;
+  }, [attachedFiles]);
 
   useEffect(() => {
     if (!sessionId && !creatingSession) {
@@ -595,6 +621,7 @@ const AgentView = (props: any) => {
 
     sendMessage(messageWithContext);
     setDraftMessage("");
+    clearAttachedFiles();
   };
 
   const onResetConversation = () => {
@@ -630,10 +657,9 @@ const AgentView = (props: any) => {
       {error && (
         <Alert
           type="error"
-          message={error}
+          title={error}
           showIcon
-          closable
-          onClose={() => setError(null)}
+          closable={{ onClose: () => setError(null) }}
           style={{ marginBottom: "var(--margin-bottom)" }}
         />
       )}
