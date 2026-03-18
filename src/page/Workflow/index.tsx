@@ -42,7 +42,7 @@ import {
   DownArrowIcon,
   UpArrowIcon,
 } from "@/component/Icon";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
 import {
   PageWrapper,
@@ -185,7 +185,12 @@ const renderColumns = (
 ];
 
 const ManageWorkflow = (props: any) => {
-  const { totalData, listWorkflow, sortField, pageSize = 30 } = props;
+  const {
+    totalData,
+    listWorkflow,
+    sortField,
+    pageSize = TABLE_PAGE_OPTION[0],
+  } = props;
 
   const { translate, locale } = useTranslation();
   const [page, onSetPage] = useState(1);
@@ -527,7 +532,7 @@ const ManageWorkflow = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

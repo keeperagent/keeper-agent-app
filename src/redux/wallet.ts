@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IWallet } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IWalletState {
   listWallet: IWallet[];
@@ -30,7 +29,7 @@ export const walletSlice = createSlice({
       const { payload } = action;
       state.listWallet = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedWallet: (
@@ -85,7 +84,7 @@ export const walletSlice = createSlice({
       state.tableViewMode = payload;
     },
     actSetPageSize: (state: IWalletState, action: PayloadAction<number>) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

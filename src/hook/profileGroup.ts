@@ -10,6 +10,7 @@ import type { IpcGetListProfileGroupPayload } from "@/electron/ipcTypes";
 import { IProfileGroup } from "@/electron/type";
 import { useTranslation } from "./useTranslation";
 import { useIpcAction } from "./useIpcAction";
+import { useState } from "react";
 
 const useGetListProfileGroup = () => {
   const { execute: getListProfileGroup, loading } =
@@ -62,6 +63,7 @@ const useUpdateProfileGroup = () => {
 
 const useCreateProfileGroup = () => {
   const { translate } = useTranslation();
+  const [createdData, setCreatedData] = useState<IProfileGroup | null>(null);
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.CREATE_PROFILE_GROUP,
     MESSAGE.CREATE_PROFILE_GROUP_RES,
@@ -71,12 +73,15 @@ const useCreateProfileGroup = () => {
           message.error(translate("dataDuplicate"));
           return;
         }
+
+        setCreatedData(payload?.data);
         dispatch(actSaveCreateProfileGroup(payload?.data));
       },
     },
   );
+
   const createProfileGroup = (data: IProfileGroup) => execute({ data });
-  return { createProfileGroup, loading, isSuccess };
+  return { createProfileGroup, loading, isSuccess, createdData };
 };
 
 export {

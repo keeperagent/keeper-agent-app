@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { INodeEndpoint } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface INodeEndpointState {
   listNodeEndpoint: INodeEndpoint[];
@@ -31,7 +30,7 @@ export const nodeEndpointSlice = createSlice({
       const { payload } = action;
       state.listNodeEndpoint = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedNodeEndpoint: (
@@ -85,7 +84,7 @@ export const nodeEndpointSlice = createSlice({
       state: INodeEndpointState,
       action: PayloadAction<number>,
     ) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

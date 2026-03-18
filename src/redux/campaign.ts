@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { ICampaign, ISorter } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface ICampaignState {
   listCampaign: ICampaign[];
@@ -43,7 +42,7 @@ export const campaignSlice = createSlice({
       const { payload } = action;
       state.listCampaign = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedCampaign: (
@@ -120,7 +119,7 @@ export const campaignSlice = createSlice({
       state.showProfileStatistic = action?.payload;
     },
     actSetPageSize: (state: ICampaignState, action: PayloadAction<number>) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

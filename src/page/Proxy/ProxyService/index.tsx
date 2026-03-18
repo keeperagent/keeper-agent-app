@@ -17,7 +17,7 @@ import { actSaveSelectedProxy, actSetSelectedService } from "@/redux/proxy";
 import { actSetPageSize } from "@/redux/proxy";
 import { useDeleteProxy, useGetListProxy, useTranslation } from "@/hook";
 import { EditIcon } from "@/component/Icon";
-import { LIST_PROXY_SERVICE } from "@/config/constant";
+import { LIST_PROXY_SERVICE, TABLE_PAGE_OPTION } from "@/config/constant";
 import decodoImg from "@/asset/decodo.png";
 import brightDataImg from "@/asset/brightdata.png";
 import { PageWrapper } from "./style";
@@ -78,7 +78,12 @@ const renderColumns = (
 
 const ProxyService = (props: any) => {
   const { translate } = useTranslation();
-  const { totalData, listProxy, selectedService, pageSize = 30 } = props;
+  const {
+    totalData,
+    listProxy,
+    selectedService,
+    pageSize = TABLE_PAGE_OPTION[0],
+  } = props;
 
   const [page, onSetPage] = useState(1);
   const [searchText, onSetSearchText] = useState("");
@@ -280,7 +285,7 @@ const ProxyService = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

@@ -22,6 +22,7 @@ import {
   EMPTY_STRING,
   CAMPAIGN_VIEW_MODE,
   DEFAULT_COLOR_PICKER,
+  TABLE_PAGE_OPTION,
 } from "@/config/constant";
 import {
   DownArrowIcon,
@@ -366,7 +367,7 @@ const ManageCampaignProfile = (props: IProps) => {
     mapOpenProfileId,
     showProfileStatistic,
     listColumnStats,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [page, onSetPage] = useState(1);
@@ -1194,7 +1195,7 @@ const ManageCampaignProfile = (props: IProps) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "300"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

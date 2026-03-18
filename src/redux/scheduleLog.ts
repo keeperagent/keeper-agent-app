@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { IScheduleLog, ISorter } from "@/electron/type";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
+import { DEFAULT_PAGE_SIZE, getNewPageSize } from "./util";
 
 interface IScheduleLogState {
   listScheduleLog: IScheduleLog[];
@@ -33,7 +33,7 @@ export const scheduleLogSlice = createSlice({
       const { payload } = action;
       state.listScheduleLog = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSetSorter: (
@@ -47,7 +47,7 @@ export const scheduleLogSlice = createSlice({
       state: IScheduleLogState,
       action: PayloadAction<number>,
     ) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

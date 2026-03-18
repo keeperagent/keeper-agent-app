@@ -35,7 +35,7 @@ import {
 } from "@/redux/resourceGroup";
 import { actSaveGetListResource } from "@/redux/resource";
 import { IProfileGroup, IResourceGroup, ISorter } from "@/electron/type";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
 import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
 import ModalResourceGroup from "./ModalResourceGroup";
@@ -165,7 +165,12 @@ const renderColumns = (
 
 const ResourceGroup = (props: any) => {
   const { translate, locale } = useTranslation();
-  const { totalData, listResourceGroup, sortField, pageSize = 30 } = props;
+  const {
+    totalData,
+    listResourceGroup,
+    sortField,
+    pageSize = TABLE_PAGE_OPTION[0],
+  } = props;
 
   const [page, onSetPage] = useState(1);
   const [isBtnLoading, setBtnLoading] = useState(false);
@@ -419,7 +424,7 @@ const ResourceGroup = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

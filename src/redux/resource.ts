@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IResource } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { updateOrDelete, DEFAULT_PAGE_SIZE, getNewPageSize } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IResourceState {
   listResource: IResource[];
@@ -31,7 +30,7 @@ export const resourceSlice = createSlice({
       const { payload } = action;
       state.listResource = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedResource: (
@@ -79,7 +78,7 @@ export const resourceSlice = createSlice({
       state.listResource = updateOrDelete(payload?.id!, state?.listResource);
     },
     actSetPageSize: (state: IResourceState, action: PayloadAction<number>) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

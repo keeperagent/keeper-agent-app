@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IMcpServer, IGetListResponse, ISorter } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IMcpServerState {
   listMcpServer: IMcpServer[];
@@ -45,7 +44,7 @@ export const mcpServerSlice = createSlice({
       }
       state.listMcpServer = payload.data || [];
       state.page = payload.page || 1;
-      state.pageSize = safePageSize(payload.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload.totalData || 0;
       state.totalPage = payload.totalPage || 0;
     },

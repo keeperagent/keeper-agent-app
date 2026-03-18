@@ -14,7 +14,7 @@ import {
   useGetListUserLog,
   useTranslation,
 } from "@/hook";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { SettingIcon } from "@/component/Icon";
 import { actSetPageName } from "@/redux/layout";
 import { actSetPageSize } from "@/redux/userLog";
@@ -64,7 +64,7 @@ const ManageLog = (props: any) => {
     listLog,
     listCampaign,
     listWorkflow,
-    pageSize = 50,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const { translate, locale } = useTranslation();
@@ -332,7 +332,7 @@ const ManageLog = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["50", "100", "300"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

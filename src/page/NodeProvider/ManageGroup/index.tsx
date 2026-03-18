@@ -24,7 +24,7 @@ import { actSaveSelectedNodeEndpointGroup } from "@/redux/nodeEndpointGroup";
 import { actSetPageSize } from "@/redux/nodeEndpointGroup";
 import { INodeEndpointGroup } from "@/electron/type";
 import { CHAIN_TYPE } from "@/electron/constant";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { getChainConfig } from "@/service/util";
 import ModalNodeEndpointGroup from "./ModalNodeEndpointGroup";
 import { PageWrapper, LinkHoverWrapper, ChainWrapper } from "./style";
@@ -121,7 +121,11 @@ const renderColumns = (
 
 const NodeProviderGroup = (props: any) => {
   const { translate, locale } = useTranslation();
-  const { totalData, listNodeEndpointGroup, pageSize = 30 } = props;
+  const {
+    totalData,
+    listNodeEndpointGroup,
+    pageSize = TABLE_PAGE_OPTION[0],
+  } = props;
 
   const [page, onSetPage] = useState(1);
   const [isBtnLoading, setBtnLoading] = useState(false);
@@ -271,7 +275,7 @@ const NodeProviderGroup = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",
