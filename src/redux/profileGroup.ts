@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IProfileGroup, ISorter } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IProfileGroupState {
   listProfileGroup: IProfileGroup[];
@@ -33,7 +32,7 @@ export const profileGroupSlice = createSlice({
       const { payload } = action;
       state.listProfileGroup = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedProfileGroup: (
@@ -94,7 +93,7 @@ export const profileGroupSlice = createSlice({
       state: IProfileGroupState,
       action: PayloadAction<number>,
     ) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

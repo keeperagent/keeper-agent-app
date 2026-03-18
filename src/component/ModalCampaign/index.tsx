@@ -74,7 +74,10 @@ const ModalCampaign = (props: IProps) => {
       numberOfThread: selectedCampaign?.numberOfThread || 1,
       numberOfRound: selectedCampaign?.numberOfRound || 1,
       sleepBetweenRound: selectedCampaign?.sleepBetweenRound || 0,
-      isSaveProfile: selectedCampaign?.isSaveProfile,
+      isSaveProfile:
+        selectedCampaign?.isSaveProfile === undefined
+          ? true
+          : selectedCampaign?.isSaveProfile,
       isUseProxy: selectedCampaign?.isUseProxy,
       proxyService: selectedCampaign?.proxyService,
       proxyIpGroupId: selectedCampaign?.proxyIpGroupId,

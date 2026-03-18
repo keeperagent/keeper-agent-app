@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { ILog } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IUserLogState {
   listLog: ILog[];
@@ -31,7 +30,7 @@ export const userLogSlice = createSlice({
       const { payload } = action;
       state.listLog = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedUserLog: (
@@ -72,7 +71,7 @@ export const userLogSlice = createSlice({
       state.listLog = updateOrDelete(payload?.id!, state?.listLog);
     },
     actSetPageSize: (state: IUserLogState, action: PayloadAction<number>) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

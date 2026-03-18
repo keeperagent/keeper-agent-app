@@ -38,7 +38,7 @@ import {
   actSetPageSize,
 } from "@/redux/profileGroup";
 import { actSaveGetListProfile } from "@/redux/profile";
-import { CAMPAIGN_VIEW_MODE } from "@/config/constant";
+import { CAMPAIGN_VIEW_MODE, TABLE_PAGE_OPTION } from "@/config/constant";
 import { ICampaign, IProfileGroup, ISorter } from "@/electron/type";
 import { EMPTY_STRING } from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
@@ -173,7 +173,12 @@ const renderColumns = (
 
 const ProfileGroup = (props: any) => {
   const { translate, locale } = useTranslation();
-  const { totalData, listProfileGroup, sortField, pageSize = 30 } = props;
+  const {
+    totalData,
+    listProfileGroup,
+    sortField,
+    pageSize = TABLE_PAGE_OPTION[0],
+  } = props;
 
   const [page, onSetPage] = useState(1);
   const [isBtnLoading, setBtnLoading] = useState(false);
@@ -480,7 +485,7 @@ const ProfileGroup = (props: any) => {
           pagination={{
             total: totalData,
             pageSize,
-            pageSizeOptions: ["30", "50", "70"],
+            pageSizeOptions: TABLE_PAGE_OPTION,
             current: page,
             showSizeChanger: true,
             size: "small",

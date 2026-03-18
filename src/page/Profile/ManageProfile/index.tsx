@@ -15,7 +15,7 @@ import {
 } from "@/component/Icon";
 import { SearchInput, PasswordInput } from "@/component/Input";
 import { formatTime } from "@/service/util";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { WalletAddress, TotalData, SecretText } from "@/component";
 import { actSaveSelectedProfile, actSetTableViewMode } from "@/redux/profile";
 import { actSetPageSize } from "@/redux/profile";
@@ -116,7 +116,7 @@ const ManageProfile = (props: any) => {
     listProfileGroup,
     selectedProfileGroup,
     tableViewMode,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -513,7 +513,7 @@ const ManageProfile = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "3000"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

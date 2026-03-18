@@ -38,7 +38,7 @@ import ModalDeleteDependency from "@/component/ModalDeleteDependency";
 import { actSaveGetListWallet } from "@/redux/wallet";
 import { IProfileGroup, ISorter, IWalletGroup } from "@/electron/type";
 import { PORTFOLIO_APP_NAME, SORT_ORDER } from "@/electron/constant";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
 import ModalWalletGroup from "./ModalWalletGroup";
 import {
@@ -181,7 +181,12 @@ const renderColumns = (
 
 const WalletGroup = (props: any) => {
   const { translate, locale } = useTranslation();
-  const { totalData, listWalletGroup, sortField, pageSize = 30 } = props;
+  const {
+    totalData,
+    listWalletGroup,
+    sortField,
+    pageSize = TABLE_PAGE_OPTION[0],
+  } = props;
 
   const [page, onSetPage] = useState(1);
   const [isBtnLoading, setBtnLoading] = useState(false);
@@ -461,7 +466,7 @@ const WalletGroup = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

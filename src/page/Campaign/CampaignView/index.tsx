@@ -60,7 +60,11 @@ import {
   ExpandLineIcon,
   CollapseLineIcon,
 } from "@/component/Icon";
-import { EMPTY_STRING, CAMPAIGN_VIEW_MODE } from "@/config/constant";
+import {
+  EMPTY_STRING,
+  CAMPAIGN_VIEW_MODE,
+  TABLE_PAGE_OPTION,
+} from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
 import {
   PageWrapper,
@@ -236,7 +240,7 @@ const ManageCampaign = (props: any) => {
     sortField,
     tableViewMode,
     listRunningWorkflow,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [page, onSetPage] = useState(1);
@@ -685,7 +689,7 @@ const ManageCampaign = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

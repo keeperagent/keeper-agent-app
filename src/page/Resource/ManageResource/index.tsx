@@ -22,7 +22,7 @@ import {
 } from "@/hook";
 import { actSaveSelectedResourceGroup } from "@/redux/resourceGroup";
 import { getResourceColumn } from "@/service/tableView";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import ModalImportResource from "./ModalImportResource";
 import ModalResource from "./ModalResource";
 import {
@@ -84,7 +84,7 @@ const ManageResource = (props: any) => {
     listResource,
     listResourceGroup,
     selectedResourceGroup,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [isModalImportOpen, setModalImportOpen] = useState(false);
@@ -388,7 +388,7 @@ const ManageResource = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "3000"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

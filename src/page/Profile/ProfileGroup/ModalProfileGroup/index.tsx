@@ -89,7 +89,7 @@ const ModalProfileGroup = (props: IModalProps) => {
 
       if (createdData) {
         navigate(
-          `/dashboard/profile?group=${createdData?.id}&mode=${VIEW_MODE.PROFILE}&openModal=true`
+          `/dashboard/profile?group=${createdData?.id}&mode=${VIEW_MODE.PROFILE}&openModal=true`,
         );
       }
     }
@@ -114,7 +114,7 @@ const ModalProfileGroup = (props: IModalProps) => {
       } else {
         createProfileGroup(profileGroup);
       }
-    } catch { }
+    } catch {}
   };
 
   const goBackStep = () => {
@@ -125,7 +125,7 @@ const ModalProfileGroup = (props: IModalProps) => {
     try {
       await form.validateFields(["name", "note"]);
       setCurrentStep(currentStep + 1);
-    } catch { }
+    } catch {}
   };
 
   const onChangeStep = (step: number) => {
@@ -218,5 +218,5 @@ export default connect(
     actSaveSelectedProfileGroup,
     actSaveCreateProfileGroup,
     actSaveUpdateProfileGroup,
-  }
+  },
 )(ModalProfileGroup);

@@ -1,10 +1,12 @@
 import _ from "lodash";
+import { TABLE_PAGE_OPTION } from "@/config/constant";
 
-const MIN_PAGE_SIZE = 1;
-export const DEFAULT_PAGE_SIZE = 30;
-export const safePageSize = (value: number): number => {
-  const pageSize = value || DEFAULT_PAGE_SIZE;
-  return pageSize < MIN_PAGE_SIZE ? MIN_PAGE_SIZE : pageSize;
+export const DEFAULT_PAGE_SIZE = TABLE_PAGE_OPTION[0];
+export const getNewPageSize = (
+  oldPageSize: number,
+  newPageSize: number,
+): number => {
+  return TABLE_PAGE_OPTION?.includes(newPageSize) ? newPageSize : oldPageSize;
 };
 
 const updateOrDelete = (id: number, listData: any[], data?: any) => {

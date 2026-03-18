@@ -17,7 +17,11 @@ import {
   useGetListScheduleLog,
   useTranslation,
 } from "@/hook";
-import { DEFAULT_COLOR_PICKER, EMPTY_STRING } from "@/config/constant";
+import {
+  DEFAULT_COLOR_PICKER,
+  EMPTY_STRING,
+  TABLE_PAGE_OPTION,
+} from "@/config/constant";
 import { SCHEDULE_LOG_TYPE, SORT_ORDER } from "@/electron/constant";
 import { PageWrapper, NameWrapper } from "./style";
 import ModalConfigLog from "./ModalConfigLog";
@@ -144,7 +148,7 @@ const ManageLog = (props: any) => {
     listScheduleLog,
     listSchedule,
     sorter,
-    pageSize = 50,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const { translate, locale } = useTranslation();
@@ -466,7 +470,7 @@ const ManageLog = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["50", "100", "300"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

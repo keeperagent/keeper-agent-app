@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IAgentSetting, IGetListResponse } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IAgentSettingState {
   listAgentSetting: IAgentSetting[];
@@ -28,9 +27,7 @@ export const agentSettingSlice = createSlice({
   reducers: {
     actSaveGetListAgentSetting: (
       state: IAgentSettingState,
-      action: PayloadAction<
-        IGetListResponse<IAgentSetting> | undefined | null
-      >,
+      action: PayloadAction<IGetListResponse<IAgentSetting> | undefined | null>,
     ) => {
       const payload = action.payload;
       if (!payload) {
@@ -43,7 +40,7 @@ export const agentSettingSlice = createSlice({
       }
       state.listAgentSetting = payload.data || [];
       state.page = payload.page || 1;
-      state.pageSize = safePageSize(payload.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload.totalData || 0;
       state.totalPage = payload.totalPage || 0;
     },

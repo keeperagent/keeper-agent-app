@@ -45,7 +45,7 @@ import {
   actSaveSelectedWalletGroup,
   actSetModalDependencyOpen,
 } from "@/redux/walletGroup";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import ModalCreateWallet from "./ModalCreateWallet";
 import ModalImportWallet from "./ModalImportWallet";
 import ModalUpdateWallet from "./ModalUpdateWallet";
@@ -159,7 +159,7 @@ const ManageWallet = (props: any) => {
     listWalletGroup,
     selectedWalletGroup,
     tableViewMode,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [isModalImportOpen, setModalImportOpen] = useState(false);
@@ -579,7 +579,7 @@ const ManageWallet = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "1000"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

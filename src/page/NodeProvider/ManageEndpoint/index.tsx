@@ -22,7 +22,7 @@ import {
   actSetPageSize,
 } from "@/redux/nodeEndpoint";
 import { INodeEndpoint, INodeEndpointGroup } from "@/electron/type";
-import { EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import ModalEndpoint from "./ModalEndpoint";
 import { PageWrapper, OptionWrapper } from "./style";
 
@@ -92,7 +92,7 @@ const NodeEndpoint = (props: any) => {
     listNodeEndpoint,
     listNodeEndpointGroup,
     selectedNodeEndpointGroup,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [page, onSetPage] = useState(1);
@@ -355,7 +355,7 @@ const NodeEndpoint = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

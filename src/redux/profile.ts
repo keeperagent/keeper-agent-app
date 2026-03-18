@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IProfile } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { safePageSize } from "./util";
 
 interface IProfileState {
   listProfile: IProfile[];
@@ -16,7 +15,7 @@ interface IProfileState {
 const initialState: IProfileState = {
   listProfile: [],
   page: 1,
-  pageSize: 20,
+  pageSize: DEFAULT_PAGE_SIZE,
   totalData: 0,
   selectedProfile: null,
   tableViewMode: "",
@@ -33,7 +32,7 @@ export const profileSlice = createSlice({
       const { payload } = action;
       state.listProfile = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedProfile: (
@@ -88,7 +87,7 @@ export const profileSlice = createSlice({
       state.tableViewMode = payload;
     },
     actSetPageSize: (state: IProfileState, action: PayloadAction<number>) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

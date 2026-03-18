@@ -9,6 +9,7 @@ import {
   Row,
   Alert,
 } from "antd";
+import qs from "qs";
 import { connect } from "react-redux";
 import _ from "lodash";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -23,7 +24,6 @@ import { actSaveSelectedProfileGroup } from "@/redux/profileGroup";
 import ProfileConfigChart from "../../ProfileConfigChart";
 import { ModalWrapper } from "./style";
 import { VIEW_MODE } from "../../index";
-import qs from "qs";
 
 type IModalProfileProps = {
   isModalOpen: boolean;
@@ -89,7 +89,7 @@ const ModalProfile = (props: IModalProfileProps) => {
   }, [selectedProfileGroup]);
 
   useEffect(() => {
-    setNumberOfProfile(Math.round((maxProfile * 25) / 100));
+    setNumberOfProfile(maxProfile);
   }, [maxProfile]);
 
   const onCloseModal = () => {

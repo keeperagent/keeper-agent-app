@@ -22,10 +22,10 @@ import { actSaveSelectedProxyIp } from "@/redux/proxyIp";
 import { actSetPageSize } from "@/redux/proxyIp";
 import { IProxyIp, IProxyIpGroup } from "@/electron/type";
 import { LIST_NETWORK_PROTOCOL } from "@/electron/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import ModalProxyIp from "./ModalProxyIp";
 import { PageWrapper, OptionWrapper } from "./style";
 import { VIEW_MODE } from "../../index";
-import { EMPTY_STRING } from "@/config/constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -88,7 +88,7 @@ const ProxyIp = (props: any) => {
     listProxyIp,
     listProxyIpGroup,
     selectedProxyIpGroup,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const [page, onSetPage] = useState(1);
@@ -313,7 +313,7 @@ const ProxyIp = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

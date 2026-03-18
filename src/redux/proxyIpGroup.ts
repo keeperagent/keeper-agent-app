@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IProxyIpGroup } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IProxyIpGroupState {
   listProxyIpGroup: IProxyIpGroup[];
@@ -31,7 +30,7 @@ export const proxyIpGroupSlice = createSlice({
       const { payload } = action;
       state.listProxyIpGroup = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedProxyIpGroup: (
@@ -85,7 +84,7 @@ export const proxyIpGroupSlice = createSlice({
       state: IProxyIpGroupState,
       action: PayloadAction<number>,
     ) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

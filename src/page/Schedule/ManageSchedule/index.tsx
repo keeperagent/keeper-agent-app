@@ -61,6 +61,7 @@ import {
   ExpandRowWrapper,
 } from "./style";
 import { VIEW_MODE } from "../index";
+import { TABLE_PAGE_OPTION } from "@/config/constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -190,7 +191,7 @@ const ManageSchedule = (props: any) => {
     preference,
     listRunningWorkflow,
     sortField,
-    pageSize = 30,
+    pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
   const { translate, locale } = useTranslation();
@@ -593,7 +594,7 @@ const ManageSchedule = (props: any) => {
         pagination={{
           total: totalData,
           pageSize,
-          pageSizeOptions: ["30", "50", "70"],
+          pageSizeOptions: TABLE_PAGE_OPTION,
           current: page,
           showSizeChanger: true,
           size: "small",

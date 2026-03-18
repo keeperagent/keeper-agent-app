@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IProxy } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IProxyState {
   listProxy: IProxy[];
@@ -30,7 +29,7 @@ export const proxySlice = createSlice({
       const { payload } = action;
       state.listProxy = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedProxy: (
@@ -70,7 +69,7 @@ export const proxySlice = createSlice({
       state.selectedService = payload;
     },
     actSetPageSize: (state: IProxyState, action: PayloadAction<number>) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });

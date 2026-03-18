@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IResourceGroup, ISorter } from "@/electron/type";
-import { updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
-import { DEFAULT_PAGE_SIZE, safePageSize } from "./util";
 
 interface IResourceGroupState {
   listResourceGroup: IResourceGroup[];
@@ -33,7 +32,7 @@ export const resourceGroupSlice = createSlice({
       const { payload } = action;
       state.listResourceGroup = payload?.data;
       state.page = payload?.page;
-      state.pageSize = safePageSize(payload?.pageSize);
+      state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;
     },
     actSaveSelectedResourceGroup: (
@@ -94,7 +93,7 @@ export const resourceGroupSlice = createSlice({
       state: IResourceGroupState,
       action: PayloadAction<number>,
     ) => {
-      state.pageSize = safePageSize(action.payload);
+      state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
   },
 });
