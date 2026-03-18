@@ -115,6 +115,114 @@ const OverideAntdStyle = createGlobalStyle`
     color: ${({ theme }: { theme: ITheme }) =>
       theme?.colorTextPrimary} !important;
   }
+
+  /* Custom Primary Button: outline → fill sweep + shadow */
+  .ant-btn-primary {
+    position: relative;
+    overflow: hidden;
+    background: transparent !important;
+    color: ${({ theme }: { theme: ITheme }) =>
+      theme?.colorTextPrimary} !important;
+    border: 1px solid var(--color-primary) !important;
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 4px 0px 0px rgba(79, 70, 229, 0.4) !important;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--color-primary);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+    }
+
+    > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover {
+      color: #fff !important;
+      box-shadow: 0px 0px 0px 0px rgba(79, 70, 229, 0.4) !important;
+
+      &::before {
+        transform: scaleX(1);
+      }
+    }
+
+    &:active {
+      box-shadow: 2px 2px 0px 0px rgba(79, 70, 229, 0.4) !important;
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+      box-shadow: none !important;
+
+      &::before {
+        display: none;
+      }
+    }
+  }
+
+  /* Default Button: outline → neutral fill sweep, no shadow */
+  .ant-btn-default {
+    position: relative;
+    overflow: hidden;
+    background: transparent !important;
+    color: ${({ theme }: { theme: ITheme }) =>
+      theme?.colorTextSecondary} !important;
+    border: 1px solid ${({ theme }: { theme: ITheme }) =>
+      theme?.colorBorder} !important;
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 3px 3px 0px 0px rgba(110, 107, 123, 0.25) !important;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: ${({ theme }: { theme: ITheme }) =>
+        theme?.colorTextSecondary};
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+    }
+
+    > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover {
+      color: #fff !important;
+      border-color: ${({ theme }: { theme: ITheme }) =>
+        theme?.colorTextSecondary} !important;
+      box-shadow: 0px 0px 0px 0px rgba(110, 107, 123, 0.25) !important;
+
+      &::before {
+        transform: scaleX(1);
+      }
+    }
+
+    &:active {
+      color: #fff !important;
+      box-shadow: 2px 2px 0px 0px rgba(110, 107, 123, 0.25) !important;
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+      box-shadow: none !important;
+
+      &::before {
+        display: none;
+      }
+    }
+  }
 `;
 
 export { OverideAntdStyle };

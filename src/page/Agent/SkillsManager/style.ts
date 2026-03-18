@@ -6,11 +6,11 @@ export const Wrapper = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: auto;
 
   .actions {
     display: flex;
     gap: 1.5rem;
+    align-items: center;
     width: 100%;
     margin-bottom: 2rem;
 
