@@ -18,11 +18,26 @@ const broadcastTransactionEvmSchema = z.object({
   toAddress: z
     .string()
     .optional()
+    .refine(
+      (val) => {
+        if (!val || val.trim() === "") {
+          return true;
+        }
+        return ethers.utils.isAddress(val);
+      },
+      {
+        message:
+          "Must be a valid EVM address (0x followed by 40 hex characters). Omit for contract deployment.",
+      },
+    )
     .describe(
       "Target contract or address for the transaction. Omit for contract deployment.",
     ),
   transactionData: z
     .string()
+    .refine((val) => /^0x[0-9a-fA-F]+$/.test(val), {
+      message: "Must be a 0x-prefixed hexadecimal string (e.g. 0xa9059cbb...).",
+    })
     .describe(
       "Hex-encoded transaction calldata (0x-prefixed). For contract interactions, this is the ABI-encoded function call.",
     ),
@@ -30,6 +45,17 @@ const broadcastTransactionEvmSchema = z.object({
     .string()
     .default("0")
     .optional()
+    .refine(
+      (val) => {
+        if (!val) {
+          return true;
+        }
+        return /^[0-9]+$/.test(val);
+      },
+      {
+        message: "Must be a non-negative integer string representing wei.",
+      },
+    )
     .describe("Value to send in wei (as string). Defaults to '0'."),
 });
 
@@ -57,13 +83,6 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
       if (!effectiveNodeEndpointGroupId) {
         throw new Error(
           "nodeEndpointGroupId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
-
-      // Validate toAddress if provided
-      if (toAddress && !ethers.utils.isAddress(toAddress)) {
-        throw new Error(
-          `Invalid EVM address: ${toAddress}. Please provide a valid EVM address (0x followed by 40 hex characters).`,
         );
       }
 

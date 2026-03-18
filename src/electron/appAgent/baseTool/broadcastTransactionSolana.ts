@@ -17,6 +17,20 @@ const CONFIRMATION_TIMEOUT = 30000;
 const broadcastTransactionSolanaSchema = z.object({
   transactionData: z
     .string()
+    .refine(
+      (val) => {
+        try {
+          const decoded = Buffer.from(val, "base64");
+          return decoded.length > 0 && decoded.toString("base64") === val;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          "Must be a valid base64-encoded string representing a serialized Solana transaction.",
+      },
+    )
     .describe(
       "Base64-encoded serialized Solana transaction. The transaction should have instructions set but does NOT need to be signed — the tool will sign it with the wallet's private key and set a fresh blockhash.",
     ),
