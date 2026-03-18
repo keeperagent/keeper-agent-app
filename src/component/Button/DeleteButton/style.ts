@@ -11,17 +11,49 @@ const DeleteButtonWrapper = styled.div`
   position: relative;
   border: none;
   outline: none;
-  background: none;
-  padding: 0.4rem 2.3rem;
+  background: transparent;
+  padding: 0.3rem 2.3rem;
   border-radius: var(--border-radius);
   white-space: nowrap;
-  color: var(--color-text-white);
-  background: var(--color-orange-red);
-  transform: scale(1);
-  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  color: var(--color-orange-red);
+  border: 1px solid var(--color-orange-red);
+  overflow: hidden;
+  transition:
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 4px 0px 0px rgba(255, 103, 103, 0.4);
   opacity: ${(props: BtnProps) => (props?.disabled ? 0.7 : 1)};
   cursor: ${(props: BtnProps) =>
     props?.loading || props?.disabled ? "not-allowed" : "pointer"};
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--color-orange-red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:hover {
+    color: #fff;
+    box-shadow: 0px 0px 0px 0px rgba(255, 103, 103, 0.4);
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+
+  &:active {
+    box-shadow: 2px 2px 0px 0px rgba(255, 103, 103, 0.4);
+  }
 
   span {
     font-size: 1.3rem;
@@ -29,7 +61,8 @@ const DeleteButtonWrapper = styled.div`
     font-weight: 500;
     opacity: var(--span-opacity, 1);
     transform: translateX(var(--span-x, 0)) translateZ(0);
-    transition: transform 0.4s ease var(--span-delay, 0.2s),
+    transition:
+      transform 0.4s ease var(--span-delay, 0.2s),
       opacity 0.3s ease var(--span-delay, 0.2s);
   }
 
@@ -37,7 +70,7 @@ const DeleteButtonWrapper = styled.div`
     position: relative;
     left: -8px;
     transform: translate(var(--trash-x, 0), var(--trash-y, 1px)) translateZ(0)
-      scale(var(--trash-scale, 0.64));
+      scale(var(--trash-scale, 0.5));
     transition: transform 0.5s;
 
     &:before,
@@ -47,12 +80,14 @@ const DeleteButtonWrapper = styled.div`
       height: 0.7rem;
       width: 3px;
       border-radius: 1px;
-      background: var(--color-text-white);
+      background: currentColor;
       bottom: 100%;
       transform-origin: 50% 6px;
       transform: translate(var(--x, 3px), 2px) scaleY(var(--sy, 0.7))
         rotate(var(--r, 0deg));
-      transition: transform 0.4s, background 0.3s;
+      transition:
+        transform 0.4s,
+        background 0.3s;
     }
 
     &:before {
@@ -79,12 +114,14 @@ const DeleteButtonWrapper = styled.div`
         content: "";
         position: absolute;
         border-radius: 1px;
-        background: var(--color-text-white);
+        background: currentColor;
         width: var(--w, 1.2rem);
         height: var(--h, 2px);
         left: var(--l, 0.8rem);
         bottom: var(--b, 5px);
-        transition: background 0.3s, transform 0.4s;
+        transition:
+          background 0.3s,
+          transform 0.4s;
 
         @media only screen and (max-width: 550px) {
           left: var(--l, 0.6rem);
@@ -119,9 +156,9 @@ const DeleteButtonWrapper = styled.div`
           position: absolute;
           left: 2px;
           top: var(--t, 2px);
-          background: var(--color-text-white);
+          background: currentColor;
           transform: scaleY(0.7);
-          box-shadow: 0 9px 0 var(--color-text-white);
+          box-shadow: 0 9px 0 currentColor;
         }
 
         &:after {
@@ -134,7 +171,7 @@ const DeleteButtonWrapper = styled.div`
     .box {
       width: 2rem;
       height: 2.5rem;
-      border: 2px solid var(--color-text-white);
+      border: 2px solid currentColor;
       border-radius: 1px 1px 4px 4px;
       position: relative;
       overflow: hidden;
@@ -150,16 +187,18 @@ const DeleteButtonWrapper = styled.div`
         height: var(--h, 2rem);
         top: 0;
         left: var(--l, 50%);
-        background: var(--b, var(--color-text-white));
+        background: var(--b, currentColor);
       }
 
       &:before {
         border-radius: 2px;
         margin-left: -2px;
         transform: translateX(-3px) scale(0.6);
-        box-shadow: 1rem 0 0 var(--color-text-white);
+        box-shadow: 1rem 0 0 currentColor;
         opacity: var(--trash-lines-opacity, 1);
-        transition: transform 0.4s, opacity 0.4s;
+        transition:
+          transform 0.4s,
+          opacity 0.4s;
       }
 
       &:after {
@@ -167,8 +206,10 @@ const DeleteButtonWrapper = styled.div`
         --b: var(--color-primary);
         --l: 1px;
         transform: translate(-0.5px, -1.6rem) scaleX(0.5);
-        box-shadow: 7px 0 0 var(--color-primary),
-          1.4rem 0 0 var(--color-primary), 2.1rem 0 0 var(--color-primary);
+        box-shadow:
+          7px 0 0 var(--color-primary),
+          1.4rem 0 0 var(--color-primary),
+          2.1rem 0 0 var(--color-primary);
       }
     }
   }

@@ -5,8 +5,9 @@ const UploadButtonWrapper = styled.div`
     --background: #2b3044;
     --background-hover: #1e2235;
     --text: #fff;
-    --icon: #fff;
-    --particle: #fff;
+    --icon: currentColor;
+    --particle: currentColor;
+    position: relative;
     display: flex;
     align-items: center;
     outline: none;
@@ -19,15 +20,41 @@ const UploadButtonWrapper = styled.div`
     font-family: inherit;
     font-size: 1.2rem;
     color: var(--text);
-    background: var(--color-primary);
-    transition: transform 0.3s, background 0.4s;
-    transform: scale(var(--scale, 1)) translateZ(0);
+    background: transparent;
+    border: 1px solid var(--color-primary) !important;
+    color: ${({ theme }: any) => theme?.colorTextPrimary};
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 4px 0px 0px rgba(79, 70, 229, 0.4);
+    overflow: hidden;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--color-primary);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+    }
+
+    > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover {
+      color: #fff;
+      box-shadow: 0px 0px 0px 0px rgba(79, 70, 229, 0.4);
+
+      &::after {
+        transform: scaleX(1);
+      }
+    }
 
     &:active {
-      --scale: 0.95;
-    }
-    &:hover {
-      --b: var(--background-hover);
+      box-shadow: 2px 2px 0px 0px rgba(79, 70, 229, 0.4);
     }
     .icon {
       --arrow-y: 0;

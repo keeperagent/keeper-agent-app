@@ -26,7 +26,7 @@ const UploadButton = (props: UploadButtonProps) => {
             i === 0
               ? `M ${point[0]},${point[1]}`
               : `${acc} ${getPoint(point, i, a, smoothing)}`,
-          ""
+          "",
         );
       return `<path d="${d}" />`;
     }
@@ -35,19 +35,19 @@ const UploadButton = (props: UploadButtonProps) => {
       point: number[],
       i: number,
       a: number[][],
-      smoothing: number
+      smoothing: number,
     ) {
       const cp = (
           current: number[],
           previous: number[],
           next: number[],
-          reverse: boolean
+          reverse: boolean,
         ) => {
           const p = previous || current,
             n = next || current,
             o = {
               length: Math.sqrt(
-                Math.pow(n[0] - p[0], 2) + Math.pow(n[1] - p[1], 2)
+                Math.pow(n[0] - p[0], 2) + Math.pow(n[1] - p[1], 2),
               ),
               angle: Math.atan2(n[1] - p[1], n[0] - p[0]),
             },
@@ -86,7 +86,7 @@ const UploadButton = (props: UploadButtonProps) => {
           get(target, key) {
             return target[key];
           },
-        }
+        },
       );
 
       const timeline = gsap.timeline({
@@ -120,7 +120,7 @@ const UploadButton = (props: UploadButtonProps) => {
             y: 15,
             duration: 0.15,
           },
-          0.65
+          0.65,
         )
         .to(
           svgPath,
@@ -129,7 +129,7 @@ const UploadButton = (props: UploadButtonProps) => {
             ease: "elastic.out(1.2, .7)",
             duration: 0.6,
           },
-          0.8
+          0.8,
         );
 
       button.addEventListener("mouseover", () => {
@@ -149,7 +149,7 @@ const UploadButton = (props: UploadButtonProps) => {
       x: number,
       y: number,
       minAngle: number,
-      maxAngle: number
+      maxAngle: number,
     ) {
       const minScale = 0.07;
       const maxScale = 0.5;
@@ -243,7 +243,7 @@ const UploadButton = (props: UploadButtonProps) => {
           </svg>
         </div>
 
-        {text}
+        <span>{text}</span>
       </button>
     </UploadButtonWrapper>
   );
