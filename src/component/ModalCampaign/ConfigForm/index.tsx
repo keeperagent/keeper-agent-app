@@ -217,10 +217,9 @@ const ConfigForm = (props: any) => {
             placeholder={translate("workflow.staticProxyGroupPlaceholder")}
             size="large"
             className="custom-select"
-            showSearch={{
-              onSearch: (value) => onSearchProxyIpGroup(value),
-              filterOption: false,
-            }}
+            showSearch
+            onSearch={onSearchProxyIpGroup}
+            filterOption={false}
             loading={proxyIpGroupLoading}
             optionLabelProp="label"
           >

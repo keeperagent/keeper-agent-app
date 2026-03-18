@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
 import { IProfile } from "@/electron/type";
-import { getNewPageSize, updateOrDelete } from "./util";
+import { getNewPageSize, updateOrDelete, DEFAULT_PAGE_SIZE } from "./util";
 import { RootState } from "./store";
 
 interface IProfileState {
@@ -15,7 +15,7 @@ interface IProfileState {
 const initialState: IProfileState = {
   listProfile: [],
   page: 1,
-  pageSize: 20,
+  pageSize: DEFAULT_PAGE_SIZE,
   totalData: 0,
   selectedProfile: null,
   tableViewMode: "",
