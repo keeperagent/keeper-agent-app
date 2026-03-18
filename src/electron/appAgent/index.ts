@@ -31,6 +31,8 @@ import {
   getTokenPriceTool,
   launchPumpfunTokenTool,
   launchBonkfunTokenTool,
+  broadcastTransactionEvmTool,
+  broadcastTransactionSolanaTool,
   executeJavaScriptTool,
   executePythonTool,
   webSearchTavilyTool,
@@ -221,6 +223,10 @@ const buildBaseSubAgents = (
       swapOnKyberswapTool(toolContext),
     isEnabled(BASE_TOOL_KEYS.TRANSFER_SOLANA_TOKEN) &&
       transferSolanaTokenTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.BROADCAST_TRANSACTION_EVM) &&
+      broadcastTransactionEvmTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.BROADCAST_TRANSACTION_SOLANA) &&
+      broadcastTransactionSolanaTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
   const codeExecutionTools = [
