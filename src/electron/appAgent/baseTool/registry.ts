@@ -27,6 +27,8 @@ export const BASE_TOOL_KEYS = {
   TRANSFER_SOLANA_TOKEN: "transfer_solana_token",
   LAUNCH_PUMPFUN_TOKEN: "launch_pumpfun_token",
   LAUNCH_BONKFUN_TOKEN: "launch_bonkfun_token",
+  BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
+  BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
   EXECUTE_JAVASCRIPT: "execute_javascript",
   EXECUTE_PYTHON: "execute_python",
   SEARCH_CAMPAIGNS: "search_campaigns",
@@ -132,6 +134,20 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     name: "Transfer Solana token",
     description:
       "Send SOL or SPL tokens from one wallet to multiple target wallets",
+    group: BaseToolGroup.TRANSACTION,
+  },
+  {
+    key: BASE_TOOL_KEYS.BROADCAST_TRANSACTION_EVM,
+    name: "Broadcast EVM transaction",
+    description:
+      "Broadcast a raw transaction to an EVM chain using campaign wallets",
+    group: BaseToolGroup.TRANSACTION,
+  },
+  {
+    key: BASE_TOOL_KEYS.BROADCAST_TRANSACTION_SOLANA,
+    name: "Broadcast Solana transaction",
+    description:
+      "Broadcast a serialized transaction to Solana using campaign wallets",
     group: BaseToolGroup.TRANSACTION,
   },
   // Workflow Tools

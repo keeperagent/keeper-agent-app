@@ -11,6 +11,8 @@ export { swapOnKyberswapTool } from "./swapOnKyberswap";
 export { getTokenPriceTool } from "./getTokenPrice";
 export { launchPumpfunTokenTool } from "./launchPumpfunToken";
 export { launchBonkfunTokenTool } from "./launchBonkfunToken";
+export { broadcastTransactionEvmTool } from "./broadcastTransactionEvm";
+export { broadcastTransactionSolanaTool } from "./broadcastTransactionSolana";
 export { executeJavaScriptTool } from "./executeJavaScript";
 export { executePythonTool } from "./executePython";
 export { searchCampaignsTool } from "./searchCampaigns";
