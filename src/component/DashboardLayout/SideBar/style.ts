@@ -127,7 +127,6 @@ const SidebarWrapper = styled.div`
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    margin-bottom: 2rem;
 
     .logo {
       height: 4rem;
@@ -148,6 +147,22 @@ const SidebarWrapper = styled.div`
 
   &.close {
     .menu-item-wrapper {
+      .menu-item {
+        margin: 0 1rem;
+
+        &__icon {
+          height: 2.3rem;
+          width: 2.3rem;
+
+          & svg {
+            height: 1.5rem;
+            width: 1.5rem;
+            min-width: 1.5rem;
+            min-height: 1.5rem;
+          }
+        }
+      }
+
       &.active {
         padding: 0 1rem;
 
@@ -363,14 +378,15 @@ const MenuItemWrapper = styled.li`
     }
 
     &__icon {
-      height: 3.1rem;
-      width: 3.1rem;
+      height: 2.5rem;
+      width: 2.5rem;
       color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
       font-size: ${({ isSidebarOpen }: MenuItemProps) =>
         isSidebarOpen ? "1.5rem" : "1.7rem"};
       margin-right: 1.1rem;
       display: flex;
       align-items: center;
+      justify-content: center;
       padding: ${({ isSidebarOpen }) => (isSidebarOpen ? "0.8rem" : "0.7rem")};
       border-radius: 3px;
       transition: all 0.3s ease-in-out;
