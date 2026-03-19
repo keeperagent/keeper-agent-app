@@ -61,6 +61,7 @@ const IconHighlightWrapper = styled.span`
   padding: 0.3rem 0.5rem;
   background-color: var(--color-bg-primary);
   border-radius: var(--border-radius);
+  cursor: pointer;
 
   &.disable {
     cursor: not-allowed;
@@ -85,11 +86,11 @@ const IconHighlightWrapper = styled.span`
       padding: 0.2rem;
       fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
     }
+  }
 
-    &:hover {
-      svg {
-        fill: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
-      }
+  &:hover {
+    svg {
+      fill: var(--color-text-hover);
     }
   }
 
@@ -193,10 +194,6 @@ const ExpandRowWrapper = styled.div`
         height: 1.3rem;
         min-width: 1.3rem;
         min-height: 1.3rem;
-
-        &:hover {
-          fill: var(--color-text);
-        }
       }
     }
   }

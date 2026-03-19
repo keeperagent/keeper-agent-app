@@ -44,6 +44,7 @@ import {
   BOOLEAN_RESULT,
   IS_WALLET_EXIST,
   IS_RESOURCE_EXIST,
+  NUMBER_OF_COLUMN,
 } from "@/electron/constant";
 import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { walletDB } from "@/electron/database/wallet";
@@ -418,28 +419,16 @@ export class OtherWorkflow {
         }
 
         if (!config?.isInsertMultipleResource) {
-          const col1 = getActualValue(config?.col1 || "", listVariable);
-          const col2 = getActualValue(config?.col2 || "", listVariable);
-          const col3 = getActualValue(config?.col3 || "", listVariable);
-          const col4 = getActualValue(config?.col4 || "", listVariable);
-          const col5 = getActualValue(config?.col5 || "", listVariable);
-          const col6 = getActualValue(config?.col6 || "", listVariable);
-          const col7 = getActualValue(config?.col7 || "", listVariable);
-          const col8 = getActualValue(config?.col8 || "", listVariable);
-          const col9 = getActualValue(config?.col9 || "", listVariable);
-          const col10 = getActualValue(config?.col10 || "", listVariable);
+          const colValues: any = {};
+          for (let i = 1; i <= NUMBER_OF_COLUMN; i++) {
+            colValues[`col${i}`] = getActualValue(
+              (config as any)?.[`col${i}`] || "",
+              listVariable,
+            );
+          }
 
           let newResource: IResource = {
-            col1,
-            col2,
-            col3,
-            col4,
-            col5,
-            col6,
-            col7,
-            col8,
-            col9,
-            col10,
+            ...colValues,
             isEncrypted: Boolean(encryptKey),
             groupId: config?.resourceGroup!,
           };
@@ -465,16 +454,11 @@ export class OtherWorkflow {
             }
 
             const mapVariableToColumn: any = {};
-            mapVariableToColumn[resourceGroup.col1Variable || ""] = "col1";
-            mapVariableToColumn[resourceGroup.col2Variable || ""] = "col2";
-            mapVariableToColumn[resourceGroup.col3Variable || ""] = "col3";
-            mapVariableToColumn[resourceGroup.col4Variable || ""] = "col4";
-            mapVariableToColumn[resourceGroup.col5Variable || ""] = "col5";
-            mapVariableToColumn[resourceGroup.col6Variable || ""] = "col6";
-            mapVariableToColumn[resourceGroup.col7Variable || ""] = "col7";
-            mapVariableToColumn[resourceGroup.col8Variable || ""] = "col8";
-            mapVariableToColumn[resourceGroup.col9Variable || ""] = "col9";
-            mapVariableToColumn[resourceGroup.col10Variable || ""] = "col10";
+            for (let i = 1; i <= NUMBER_OF_COLUMN; i++) {
+              mapVariableToColumn[
+                (resourceGroup as any)[`col${i}Variable`] || ""
+              ] = `col${i}`;
+            }
 
             Object.keys(item).forEach((key) => {
               if (!key) {

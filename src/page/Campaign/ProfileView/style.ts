@@ -392,7 +392,7 @@ const StatisticWrapper = styled.div`
 
     &:hover {
       svg {
-        fill: ${({ theme }: { theme: ITheme }) => theme?.colorPrimary};
+        fill: var(--color-text-hover);
       }
     }
   }

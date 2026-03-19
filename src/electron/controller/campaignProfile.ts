@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
-import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
+import { MESSAGE, RESPONSE_CODE, NUMBER_OF_COLUMN } from "@/electron/constant";
 import { decryptCampaignProfile } from "@/electron/service/campaignProfile";
 import { deleteFolder } from "@/electron/service/file";
 import { sleep } from "@/electron/service/util";
@@ -171,18 +171,12 @@ export const campaignProfileController = () => {
     async (event, payload) => {
       const { flowProfile } = payload;
       const campaignId = flowProfile?.campaignConfig?.campaignId;
-      const workflow = await workflowManager.getWorkflow(
-        0,
-        campaignId!,
-        0,
-      );
+      const workflow = await workflowManager.getWorkflow(0, campaignId!, 0);
 
-      const [, err] = await workflow.executor.threadManager.getOrCreateThread(
-        {
-          flowProfile,
-          openBrowser: true,
-        },
-      );
+      const [, err] = await workflow.executor.threadManager.getOrCreateThread({
+        flowProfile,
+        openBrowser: true,
+      });
 
       if (err) {
         event.reply(MESSAGE.OPEN_CAMPAIGN_PROFILE_IN_BROWSER_RES, {
@@ -208,11 +202,7 @@ export const campaignProfileController = () => {
     async (event, payload) => {
       const { flowProfile } = payload;
       const campaignId = flowProfile?.campaignConfig?.campaignId;
-      const workflow = await workflowManager.getWorkflow(
-        0,
-        campaignId,
-        0,
-      );
+      const workflow = await workflowManager.getWorkflow(0, campaignId, 0);
 
       await workflow.executor.threadManager.stopThread(
         false,
@@ -314,58 +304,17 @@ export const campaignProfileController = () => {
         return;
       }
 
-      const listColumn: ICampaignProfileColumn[] = [
-        {
-          variable: campaign?.col1Variable,
-          label: campaign?.col1Label,
-          fieldName: "col1Value",
+      const listColumn: ICampaignProfileColumn[] = Array.from(
+        { length: NUMBER_OF_COLUMN },
+        (_, i) => {
+          const num = i + 1;
+          return {
+            variable: (campaign as any)?.[`col${num}Variable`],
+            label: (campaign as any)?.[`col${num}Label`],
+            fieldName: `col${num}Value`,
+          };
         },
-        {
-          variable: campaign?.col2Variable,
-          label: campaign?.col2Label,
-          fieldName: "col2Value",
-        },
-        {
-          variable: campaign?.col3Variable,
-          label: campaign?.col3Label,
-          fieldName: "col3Value",
-        },
-        {
-          variable: campaign?.col4Variable,
-          label: campaign?.col4Label,
-          fieldName: "col4Value",
-        },
-        {
-          variable: campaign?.col5Variable,
-          label: campaign?.col5Label,
-          fieldName: "col5Value",
-        },
-        {
-          variable: campaign?.col6Variable,
-          label: campaign?.col6Label,
-          fieldName: "col6Value",
-        },
-        {
-          variable: campaign?.col7Variable,
-          label: campaign?.col7Label,
-          fieldName: "col7Value",
-        },
-        {
-          variable: campaign?.col8Variable,
-          label: campaign?.col8Label,
-          fieldName: "col8Value",
-        },
-        {
-          variable: campaign?.col9Variable,
-          label: campaign?.col9Label,
-          fieldName: "col9Value",
-        },
-        {
-          variable: campaign?.col10Variable,
-          label: campaign?.col10Label,
-          fieldName: "col10Value",
-        },
-      ]?.filter((column) => column?.variable && column?.label);
+      ).filter((column) => column?.variable && column?.label);
 
       const results: ICampaignProfileColumn[] = [];
       for (const column of listColumn) {

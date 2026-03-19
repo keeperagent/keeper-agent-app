@@ -55,6 +55,12 @@ const Wrapper = styled.div`
       align-items: center;
       cursor: pointer;
 
+      &:hover {
+        svg {
+          fill: var(--color-text-hover);
+        }
+      }
+
       svg {
         height: 1.3rem;
         width: 1.3rem;

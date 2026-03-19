@@ -11,6 +11,7 @@ import { IColumnConfig } from "./AdditionalColumn";
 import ModalImportCampaign from "../ModalImportCampaign";
 import ModalExportCampaign from "../ModalExportCampaign";
 import { Wrapper } from "./style";
+import { NUMBER_OF_COLUMN } from "@/electron/constant";
 
 const { TextArea } = Input;
 
@@ -30,30 +31,12 @@ const ModalConfig = (props: any) => {
       defaultOpenUrl: selectedCampaign?.defaultOpenUrl,
     });
 
-    setConfig(
-      _.pick(selectedCampaign, [
-        "col1Variable",
-        "col2Variable",
-        "col3Variable",
-        "col4Variable",
-        "col5Variable",
-        "col6Variable",
-        "col7Variable",
-        "col8Variable",
-        "col9Variable",
-        "col10Variable",
-        "col1Label",
-        "col2Label",
-        "col3Label",
-        "col4Label",
-        "col5Label",
-        "col6Label",
-        "col7Label",
-        "col8Label",
-        "col9Label",
-        "col10Label",
-      ])
-    );
+    const columnKeys = Array.from({ length: NUMBER_OF_COLUMN }, (_, i) => {
+      const num = i + 1;
+      return [`col${num}Variable`, `col${num}Label`];
+    }).flat();
+
+    setConfig(_.pick(selectedCampaign, columnKeys));
   }, [isModalOpen, form, selectedCampaign]);
 
   useEffect(() => {
@@ -178,5 +161,5 @@ export default connect(
   (state: RootState) => ({
     selectedCampaign: state?.Campaign?.selectedCampaign,
   }),
-  { actSaveSelectedCampaign }
+  { actSaveSelectedCampaign },
 )(ModalConfig);
