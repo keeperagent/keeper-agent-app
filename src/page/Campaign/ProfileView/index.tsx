@@ -68,6 +68,7 @@ import {
   PORTFOLIO_APP_NAME,
   MESSAGE,
   SORT_ORDER,
+  NUMBER_OF_COLUMN,
 } from "@/electron/constant";
 import {
   useGetListCampaignProfile,
@@ -1034,18 +1035,10 @@ const ManageCampaignProfile = (props: IProps) => {
       </div>
 
       <StatisticWrapper>
-        {[
-          selectedCampaign?.col1Variable,
-          selectedCampaign?.col2Variable,
-          selectedCampaign?.col3Variable,
-          selectedCampaign?.col4Variable,
-          selectedCampaign?.col5Variable,
-          selectedCampaign?.col6Variable,
-          selectedCampaign?.col7Variable,
-          selectedCampaign?.col8Variable,
-          selectedCampaign?.col9Variable,
-          selectedCampaign?.col10Variable,
-        ]?.filter((item: any) => Boolean(item))?.length > 0 && (
+        {Array.from(
+          { length: NUMBER_OF_COLUMN },
+          (_, i) => (selectedCampaign as any)?.[`col${i + 1}Variable`],
+        )?.filter((item: any) => Boolean(item))?.length > 0 && (
           <Fragment>
             <div className="toggle" onClick={onToggleStatistic}>
               <Tooltip

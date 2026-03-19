@@ -11,9 +11,8 @@ import ColumnPreview from "./ColumnPreview";
 import ColumnConfig from "./ColumnConfig";
 import ModalImportConfig from "./ModalImportConfig";
 import ModalExportConfig from "./ModalExportConfig";
+import { NUMBER_OF_COLUMN } from "@/electron/constant";
 import { HelpWrapper, FormWrapper } from "./style";
-
-const MAX_COLUMN = 10;
 
 type IConfigFormProps = {
   setConfig: (value: IColumnConfig) => void;
@@ -99,7 +98,7 @@ const ConfigForm = (props: IConfigFormProps) => {
       )}
 
       <div className="list-column">
-        {Array.from(Array(MAX_COLUMN).keys()).map(
+        {Array.from(Array(NUMBER_OF_COLUMN).keys()).map(
           (value: any, index: number) => (
             <ColumnConfig
               index={index}
@@ -115,7 +114,7 @@ const ConfigForm = (props: IConfigFormProps) => {
       </div>
 
       <div className="preview">
-        {Array.from(Array(MAX_COLUMN).keys()).map(
+        {Array.from(Array(NUMBER_OF_COLUMN).keys()).map(
           (value: any, index: number) => (
             <ColumnPreview
               index={index}

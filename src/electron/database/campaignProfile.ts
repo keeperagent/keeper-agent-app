@@ -16,7 +16,11 @@ import {
   WalletGroupModel,
   WalletModel,
 } from "./index";
-import { PROFILE_TYPE, SORT_ORDER } from "@/electron/constant";
+import {
+  NUMBER_OF_COLUMN,
+  PROFILE_TYPE,
+  SORT_ORDER,
+} from "@/electron/constant";
 import { logEveryWhere, searchProfile } from "@/electron/service/util";
 import { getProfilePath } from "@/electron/simulator/util";
 import { campaignDB } from "./campaign";
@@ -50,7 +54,9 @@ class CampaignProfileDB {
       listData = listData?.map((item: any) => formatCampaignProfile(item));
       return [listData || [], null];
     } catch (err: any) {
-      logEveryWhere({ message: `getAllProfileOfCampaign() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getAllProfileOfCampaign() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -79,18 +85,10 @@ class CampaignProfileDB {
     sortField?: ISorter;
   }): Promise<[IGetListResponse<ICampaignProfile> | null, Error | null]> {
     try {
-      const isSortSubColumn = [
-        "col1Value",
-        "col2Value",
-        "col3Value",
-        "col4Value",
-        "col5Value",
-        "col6Value",
-        "col7Value",
-        "col8Value",
-        "col9Value",
-        "col10Value",
-      ].includes(sortField?.field || "");
+      const isSortSubColumn = Array.from(
+        { length: NUMBER_OF_COLUMN },
+        (_, i) => `col${i + 1}Value`,
+      ).includes(sortField?.field || "");
 
       const isSearchInDatabase = searchText && !encryptKey;
       const isSearchManualy = searchText && encryptKey;
@@ -111,16 +109,11 @@ class CampaignProfileDB {
                   { "$wallet.address$": { [Op.like]: `%${searchText}%` } },
                   { "$wallet.phrase$": { [Op.like]: `%${searchText}%` } },
                   { "$wallet.privateKey$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col1$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col2$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col3$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col4$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col5$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col6$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col7$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col8$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col9$": { [Op.like]: `%${searchText}%` } },
-                  { "$Resources.col10$": { [Op.like]: `%${searchText}%` } },
+                  ...Array.from({ length: NUMBER_OF_COLUMN }, (_, i) => ({
+                    [`$Resources.col${i + 1}$`]: {
+                      [Op.like]: `%${searchText}%`,
+                    },
+                  })),
                 ],
               }
             : {},
@@ -210,7 +203,9 @@ class CampaignProfileDB {
 
       return [{ data: listData, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListCampaignProfile() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -257,7 +252,9 @@ class CampaignProfileDB {
       }
       return [formatCampaignProfile(data), null];
     } catch (err: any) {
-      logEveryWhere({ message: `getOneCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getOneCampaignProfile() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -289,7 +286,9 @@ class CampaignProfileDB {
 
       return [formatCampaignProfile(profile), null];
     } catch (err: any) {
-      logEveryWhere({ message: `createCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `createCampaignProfile() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -304,7 +303,9 @@ class CampaignProfileDB {
 
       return null;
     } catch (err: any) {
-      logEveryWhere({ message: `createBulkCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `createBulkCampaignProfile() error: ${err?.message}`,
+      });
       return err;
     }
   }
@@ -335,7 +336,9 @@ class CampaignProfileDB {
 
       return await this.getOneCampaignProfile(data?.id!);
     } catch (err: any) {
-      logEveryWhere({ message: `updateCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `updateCampaignProfile() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -361,19 +364,10 @@ class CampaignProfileDB {
         };
       }
 
-      [
-        "col1Value",
-        "col2Value",
-        "col3Value",
-        "col4Value",
-        "col5Value",
-        "col5Value",
-        "col6Value",
-        "col7Value",
-        "col8Value",
-        "col9Value",
-        "col10Value",
-      ].forEach((column: string) => {
+      Array.from(
+        { length: NUMBER_OF_COLUMN },
+        (_, i) => `col${i + 1}Value`,
+      ).forEach((column: string) => {
         const columnValue = (profile as any)?.[column];
         if (columnValue !== undefined) {
           updateValue = {
@@ -406,7 +400,9 @@ class CampaignProfileDB {
 
       return null;
     } catch (err: any) {
-      logEveryWhere({ message: `updateListCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `updateListCampaignProfile() error: ${err?.message}`,
+      });
       return err;
     }
   }
@@ -420,7 +416,9 @@ class CampaignProfileDB {
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteCampaignProfile() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -434,7 +432,9 @@ class CampaignProfileDB {
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteProfileInCampaign() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteProfileInCampaign() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -458,7 +458,9 @@ class CampaignProfileDB {
 
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `countTotalCampaignProfile() error: ${err?.message}` });
+      logEveryWhere({
+        message: `countTotalCampaignProfile() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -634,7 +636,9 @@ class CampaignProfileDB {
 
       return [listCampaign, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListCampaignByWalletGroupId() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListCampaignByWalletGroupId() error: ${err?.message}`,
+      });
       return [[], err];
     }
   };

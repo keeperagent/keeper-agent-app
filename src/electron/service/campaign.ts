@@ -3,7 +3,7 @@ import fs from "fs-extra";
 import { logEveryWhere, removeLastTrailingSlash } from "./util";
 import { encryptionService } from "./encrypt";
 import { campaignDB } from "@/electron/database/campaign";
-import { FILE_KEY } from "@/electron/constant";
+import { FILE_KEY, NUMBER_OF_COLUMN } from "@/electron/constant";
 
 export const exportCampaignConfig = async (
   campaignId: number,
@@ -19,27 +19,12 @@ export const exportCampaignConfig = async (
       return new Error("Campaign not found");
     }
 
+    const columnKeys = Array.from({ length: NUMBER_OF_COLUMN }, (_, i) => {
+      const num = i + 1;
+      return [`col${num}Variable`, `col${num}Label`];
+    }).flat();
     const campaignInfo = _.pick(campaign, [
-      "col1Variable",
-      "col2Variable",
-      "col3Variable",
-      "col4Variable",
-      "col5Variable",
-      "col6Variable",
-      "col7Variable",
-      "col8Variable",
-      "col9Variable",
-      "col10Variable",
-      "col1Label",
-      "col2Label",
-      "col3Label",
-      "col4Label",
-      "col5Label",
-      "col6Label",
-      "col7Label",
-      "col8Label",
-      "col9Label",
-      "col10Label",
+      ...columnKeys,
       "sortField",
       "sortOrder",
     ]);

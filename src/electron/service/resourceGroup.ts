@@ -1,9 +1,9 @@
 import _ from "lodash";
 import fs from "fs-extra";
+import { resourceGroupDB } from "@/electron/database/resourceGroup";
+import { FILE_KEY, NUMBER_OF_COLUMN } from "@/electron/constant";
 import { logEveryWhere, removeLastTrailingSlash } from "./util";
 import { encryptionService } from "./encrypt";
-import { resourceGroupDB } from "@/electron/database/resourceGroup";
-import { FILE_KEY } from "@/electron/constant";
 
 export const exportResourceGroupConfig = async (
   resourceGroupId: number,
@@ -20,38 +20,11 @@ export const exportResourceGroupConfig = async (
       return new Error("ResourceGroup not found");
     }
 
-    const configInfo = _.pick(resourceGroup, [
-      "col1Variable",
-      "col2Variable",
-      "col3Variable",
-      "col4Variable",
-      "col5Variable",
-      "col6Variable",
-      "col7Variable",
-      "col8Variable",
-      "col9Variable",
-      "col10Variable",
-      "col1Label",
-      "col2Label",
-      "col3Label",
-      "col4Label",
-      "col5Label",
-      "col6Label",
-      "col7Label",
-      "col8Label",
-      "col9Label",
-      "col10Label",
-      "col1IsEncrypt",
-      "col2IsEncrypt",
-      "col3IsEncrypt",
-      "col4IsEncrypt",
-      "col5IsEncrypt",
-      "col6IsEncrypt",
-      "col7IsEncrypt",
-      "col8IsEncrypt",
-      "col9IsEncrypt",
-      "col10IsEncrypt",
-    ]);
+    const columnKeys = Array.from({ length: NUMBER_OF_COLUMN }, (_, i) => {
+      const num = i + 1;
+      return [`col${num}Variable`, `col${num}Label`, `col${num}IsEncrypt`];
+    }).flat();
+    const configInfo = _.pick(resourceGroup, columnKeys);
     const fileData = JSON.stringify(configInfo);
     const encryptedData = encryptionService.encryptData(fileData, FILE_KEY);
     await fs.writeFile(
@@ -60,7 +33,9 @@ export const exportResourceGroupConfig = async (
     );
     return null;
   } catch (err: any) {
-    logEveryWhere({ message: `exportResourceGroupConfig() error: ${err?.message}` });
+    logEveryWhere({
+      message: `exportResourceGroupConfig() error: ${err?.message}`,
+    });
     return err;
   }
 };
@@ -85,7 +60,9 @@ export const importResourceGroupConfig = async (
       await resourceGroupDB.updateResourceGroup(resourceGroup);
     return errUpdate;
   } catch (err: any) {
-    logEveryWhere({ message: `importResourceGroupConfig() error: ${err?.message}` });
+    logEveryWhere({
+      message: `importResourceGroupConfig() error: ${err?.message}`,
+    });
     return err;
   }
 };

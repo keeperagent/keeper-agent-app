@@ -6,7 +6,7 @@ import {
   decryptResource,
   exportResource,
 } from "@/electron/service/resource";
-import { MESSAGE } from "@/electron/constant";
+import { NUMBER_OF_COLUMN, MESSAGE } from "@/electron/constant";
 import { IResource, IResourceGroup } from "@/electron/type";
 import { onIpc } from "./helpers";
 import type {
@@ -127,18 +127,15 @@ export const resourceController = () => {
       const { encryptKey, data } = payload;
       let encryptedData: IResource = data;
       // if update, then take config directly from Resource, don't get config from Resource Group
-      const config: IResourceGroup = {
-        col1IsEncrypt: encryptedData?.col1IsEncrypt,
-        col2IsEncrypt: encryptedData?.col2IsEncrypt,
-        col3IsEncrypt: encryptedData?.col3IsEncrypt,
-        col4IsEncrypt: encryptedData?.col4IsEncrypt,
-        col5IsEncrypt: encryptedData?.col5IsEncrypt,
-        col6IsEncrypt: encryptedData?.col6IsEncrypt,
-        col7IsEncrypt: encryptedData?.col7IsEncrypt,
-        col8IsEncrypt: encryptedData?.col8IsEncrypt,
-        col9IsEncrypt: encryptedData?.col9IsEncrypt,
-        col10IsEncrypt: encryptedData?.col10IsEncrypt,
-      };
+      const config: IResourceGroup = Object.fromEntries(
+        Array.from({ length: NUMBER_OF_COLUMN }, (_, i) => {
+          const num = i + 1;
+          return [
+            `col${num}IsEncrypt`,
+            (encryptedData as any)?.[`col${num}IsEncrypt`],
+          ];
+        }),
+      );
       if (encryptKey) {
         encryptedData = encryptResource(encryptedData, config, encryptKey);
       }

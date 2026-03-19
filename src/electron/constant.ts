@@ -6,6 +6,9 @@ export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
   [LLMProvider.GEMINI]: "gemini-2.0-flash",
 };
 
+// Maximum number of extra columns for campaigns, campaign profiles, resources, and resource groups.
+export const NUMBER_OF_COLUMN = 30;
+
 /** Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users. */
 export const FILE_KEY = "67keeperA@";
 

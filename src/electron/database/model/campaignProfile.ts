@@ -66,10 +66,110 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: "",
       },
+      col11Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col12Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col13Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col14Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col15Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col16Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col17Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col18Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col19Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col20Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col21Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col22Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col23Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col24Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col25Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col26Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col27Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col28Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col29Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      col30Value: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
     {
       timestamps: false,
-    }
+    },
   );
