@@ -117,7 +117,7 @@ const ModalResourceGroup = (props: any) => {
       }
       onCancel={onCloseModal}
       maskClosable={false}
-      width="50rem"
+      width="70rem"
       onOk={onSubmitForm}
       confirmLoading={isBtnLoading}
       footer={null}
@@ -132,7 +132,7 @@ const ModalResourceGroup = (props: any) => {
               title: translate("resource.groupInfo"),
             },
             {
-              title: translate("resource.excelConfig"),
+              title: translate("resource.columnConfig"),
             },
           ]}
           size="small"
@@ -183,5 +183,5 @@ export default connect(
     actSaveSelectedResourceGroup,
     actSaveCreateResourceGroup,
     actSaveUpdateResourceGroup,
-  }
+  },
 )(ModalResourceGroup);

@@ -255,7 +255,7 @@
   "resource.createGroup": "Create Resource group",
   "resource.editGroup": "Edit Resource group",
   "resource.groupInfo": "Group detail",
-  "resource.excelConfig": "Excel config",
+  "resource.columnConfig": "Column config",
   "resource.youCanPress": "You can press",
   "resource.toMoveBetweenColumn": "for quick switching between columns",
   "resource.variableName": "Variable name",

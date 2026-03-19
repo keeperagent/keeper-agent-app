@@ -43,9 +43,7 @@ const ColumnPreview = (props: IColumnPreviewProps) => {
         <div
           className="valid"
           style={{
-            backgroundColor: isValid
-              ? "var(--color-primary-light)"
-              : "transparent",
+            backgroundColor: isValid ? "var(--color-success)" : "transparent",
           }}
         ></div>
       }
@@ -54,7 +52,7 @@ const ColumnPreview = (props: IColumnPreviewProps) => {
         className="label"
         style={{ background: color, opacity: isValid ? 1 : 0.5 }}
       >
-        {translate("column")} {index + 1}
+        {index + 1}
       </div>
 
       <div className="grid">

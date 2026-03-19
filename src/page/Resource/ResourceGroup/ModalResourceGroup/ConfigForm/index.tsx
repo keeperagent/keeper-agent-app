@@ -55,6 +55,23 @@ const ConfigForm = (props: IConfigFormProps) => {
 
   return (
     <FormWrapper>
+      {showResourceHelpAlert && (
+        <Alert
+          title={
+            <HelpWrapper>
+              {translate("resource.youCanPress")}
+              <Code text="Tab" />
+              {translate("resource.toMoveBetweenColumn")}
+            </HelpWrapper>
+          }
+          type="warning"
+          showIcon
+          className="help"
+          closable
+          onClose={onCloseAlert}
+        />
+      )}
+
       {selectedResourceGroup && (
         <div className="import-export">
           <UploadButton
@@ -67,23 +84,6 @@ const ConfigForm = (props: IConfigFormProps) => {
               marginLeft: "auto",
             }}
           />
-
-          {showResourceHelpAlert && (
-            <Alert
-              title={
-                <HelpWrapper>
-                  {translate("resource.youCanPress")}
-                  <Code text="Tab" />
-                  {translate("resource.toMoveBetweenColumn")}
-                </HelpWrapper>
-              }
-              type="warning"
-              showIcon
-              className="help"
-              closable
-              onClose={onCloseAlert}
-            />
-          )}
 
           <UploadButton
             text="Export"
