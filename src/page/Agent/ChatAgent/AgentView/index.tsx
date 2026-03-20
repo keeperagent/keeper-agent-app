@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { guard, redact } from "@keeperagent/crypto-key-guard";
+import { guard } from "@keeperagent/crypto-key-guard";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { ChatPlatform } from "@/electron/chatGateway/types";
 import { connect } from "react-redux";
@@ -35,55 +35,14 @@ import {
 } from "@/component/Icon";
 import AttachedFiles, { type AttachedFile } from "./AttachedFiles";
 import { actSetLayoutMode, AGENT_LAYOUT_MODE } from "@/redux/agent";
-
-/** Absolute path for backend. Uses Electron getPathForFile when available (pick/drop). */
-const getFilePath = (file: File): string => {
-  try {
-    if (typeof window !== "undefined" && window.electron?.getPathForFile) {
-      const p = window.electron.getPathForFile(file);
-      if (p) return p;
-    }
-  } catch {}
-  return (file as File & { path?: string }).path || file.name;
-};
-
-/** From Electron dialog result: already absolute path from main process. No file:// preview (blocked by browser/security). */
-const fileInfoToAttached = (info: {
-  path: string;
-  name: string;
-  extension: string;
-}): AttachedFile => {
-  const isImage = /^(jpg|jpeg|png|gif|webp|bmp|svg|ico)$/i.test(
-    info.extension || "",
-  );
-  return {
-    path: info.path,
-    name: info.name,
-    extension: (info.extension || "").toLowerCase(),
-    type: isImage ? "image" : "other",
-    previewUrl: undefined, // avoid file:// in img src (not allowed to load local resource)
-  };
-};
-
-const getExtensionFromName = (name: string): string => {
-  const i = name.lastIndexOf(".");
-  return i === -1 ? "" : name.slice(i + 1).toLowerCase();
-};
-
-const fileToAttached = (file: File): AttachedFile => {
-  const path = getFilePath(file);
-  const name = file.name;
-  const extension =
-    getExtensionFromName(name) || (file.type || "").split("/")[1] || "";
-  const isImage = (file.type || "").startsWith("image/");
-  return {
-    path,
-    name,
-    extension,
-    type: isImage ? "image" : "other",
-    previewUrl: isImage ? URL.createObjectURL(file) : undefined,
-  };
-};
+import {
+  deriveClassName,
+  deriveLabel,
+  fileInfoToAttached,
+  fileToAttached,
+  sanitizeForDisplay,
+  type DisplayMessage,
+} from "./util";
 
 const { TextArea } = Input;
 
@@ -113,41 +72,6 @@ const CopyButton = ({
     {copiedIndex === index ? <CheckIcon /> : <CopyIcon />}
   </div>
 );
-
-type DisplayMessage = {
-  role: string;
-  label: string;
-  content: string;
-  className: string;
-  isLoading?: boolean;
-  timestamp?: Date;
-  executingToolText?: string;
-};
-
-const deriveLabel = (role: string, t: (key: string) => string) => {
-  const normalized = role?.toLowerCase() || "";
-  if (normalized.includes("human") || normalized.includes("user")) {
-    return t("agent.messageLabelYou");
-  }
-  if (normalized.includes("tool")) {
-    return t("agent.messageLabelToolOutput");
-  }
-  if (normalized.includes("system")) {
-    return t("agent.messageLabelKeeperSystem");
-  }
-  return t("agent.messageLabelKeeper");
-};
-
-const deriveClassName = (role: string) => {
-  const normalized = role?.toLowerCase() || "";
-  if (normalized.includes("human") || normalized.includes("user")) {
-    return "message user";
-  }
-  if (normalized.includes("tool")) {
-    return "message tool";
-  }
-  return "message assistant";
-};
 
 const markdownComponents = {
   a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
@@ -186,48 +110,6 @@ const MessageBody = ({
       </ReactMarkdown>
     </div>
   );
-};
-
-const stripContext = (text: string) => {
-  // Dynamically detect and strip any context blocks
-  // Look for pattern: \n\n followed by text ending with ":" followed by JSON object
-  // This catches any context header format like "CONTEXT: {...}" or "SOME HEADER: {...}"
-
-  // First, try to find context markers explicitly (case-insensitive)
-  const lowerText = text.toLowerCase();
-  const markers = [
-    "\n\ncontext:\n",
-    "\n\ncontext (for agent use only",
-    "\n\ncurrent context",
-  ];
-  for (const marker of markers) {
-    const idx = lowerText.indexOf(marker);
-    if (idx !== -1) {
-      return text.slice(0, idx).trim();
-    }
-  }
-
-  // Then, dynamically detect JSON context blocks
-  // Pattern: \n\n followed by text ending with ":" followed by whitespace and "{"
-  const contextHeaderPattern = /\n\n[^\n{]*:\s*\{/;
-  const headerMatch = text.match(contextHeaderPattern);
-  if (headerMatch && headerMatch.index !== undefined) {
-    const headerStart = headerMatch.index;
-    // Find the matching closing brace for the JSON object to verify it's complete
-    let braceCount = 0;
-    const jsonStart = headerMatch.index + headerMatch[0].length - 1; // Position of opening {
-
-    for (let i = jsonStart; i < text.length; i++) {
-      if (text[i] === "{") braceCount++;
-      if (text[i] === "}") braceCount--;
-      if (braceCount === 0) {
-        // Found complete JSON object, strip everything from the header start
-        return text.slice(0, headerStart).trim();
-      }
-    }
-  }
-
-  return text;
 };
 
 const AgentView = (props: any) => {
@@ -520,9 +402,11 @@ const AgentView = (props: any) => {
         (message) => !(message?.role || "").toLowerCase().includes("tool"),
       )
       .map((message) => {
-        // Layer 4: safety-net redaction — strip context then mask any remaining secrets
-        const stripped = stripContext(message?.content || "");
-        const { text: content } = redact(stripped);
+        // Layer 4: safety-net redaction — strip context block and mask any secrets
+        const { text: content } = sanitizeForDisplay(
+          message?.content || "",
+          true,
+        );
         const msgWithRaw = message as typeof message & {
           raw?: {
             additional_kwargs?: { timestamp?: number };
@@ -547,7 +431,10 @@ const AgentView = (props: any) => {
 
     // Add streaming content or loading indicator
     if (loading || streamingContent || executingTool) {
-      const content = streamingContent || "";
+      const { text: content } = sanitizeForDisplay(
+        streamingContent || "",
+        false,
+      );
       const isLoading = !content && loading;
       const executingToolText = executingTool
         ? translate("agent.executingTool").replace(
