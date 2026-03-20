@@ -7,6 +7,7 @@ import {
   agentSelector,
   LLMProvider,
 } from "@/redux/agent";
+import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
 
 enum AgentRole {
   HUMAN = "human",
@@ -68,6 +69,8 @@ const useDashboardAgent = () => {
   const dispatchRef = useRef(dispatch);
   // Tracks the latest conversation so IPC event callbacks always see the current value
   const conversationRef = useRef<AgentMessage[]>(conversation);
+  /* Set to true when the agent's last response asked the user for their encryptKey. */
+  const expectingEncryptKeyRef = useRef(false);
   /** If DASHBOARD_AGENT_READY arrives before CREATE_SESSION_RES, we apply it when sessionId is set. */
   const pendingReadyRef = useRef<{
     sessionId: string;
@@ -89,6 +92,17 @@ const useDashboardAgent = () => {
       content: msg.content,
       timestamp: msg.timestamp || Date.now(),
     });
+
+    // Detect when the agent asks the user for their encryptKey so the next
+    // user message can be intercepted and redacted before DB/display.
+    if (msg.role === AgentRole.AI) {
+      const lower = msg.content.toLowerCase();
+      expectingEncryptKeyRef.current =
+        lower.includes("encryptkey") ||
+        lower.includes("encrypt key") ||
+        lower.includes("secret key") ||
+        lower.includes("encryption key");
+    }
   }, []);
 
   // Load conversation history from SQLite on first mount only.
@@ -493,9 +507,22 @@ const useDashboardAgent = () => {
         return;
       }
 
-      // @displayText is the clean user-visible text (no context block).
-      // @input is the full message sent to the agent (includes context JSON).
-      const contentForDisplay = (options?.displayText || input).trim();
+      // If the agent previously asked for an encryptKey, treat this message as
+      // the key — store it in the IPC payload and replace display/DB content
+      // with a safe placeholder. Always reset the flag after one message.
+      let resolvedEncryptKey = options?.encryptKey;
+      let displayText = (options?.displayText || input).trim();
+      if (expectingEncryptKeyRef.current) {
+        expectingEncryptKeyRef.current = false;
+        if (displayText && looksLikeEncryptKey(displayText)) {
+          resolvedEncryptKey = displayText;
+          displayText = "[ENCRYPT_KEY]";
+        }
+      }
+
+      // displayText is the clean user-visible text (no context block).
+      // input is the full message sent to the agent (includes context JSON).
+      const contentForDisplay = displayText;
 
       const userMessage: AgentMessage = {
         role: AgentRole.HUMAN,
@@ -520,7 +547,7 @@ const useDashboardAgent = () => {
       window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
         sessionId: sessionIdRef.current,
         input,
-        encryptKey: options?.encryptKey,
+        encryptKey: resolvedEncryptKey,
       });
     },
     [],
@@ -538,6 +565,7 @@ const useDashboardAgent = () => {
     streamingContentRef.current = "";
     setExecutingTool(null);
     toolDepthRef.current = 0;
+    expectingEncryptKeyRef.current = false;
     // Clear SQLite history so the next session starts fresh
     window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {});
     // Reset the agent's LangGraph thread on the backend

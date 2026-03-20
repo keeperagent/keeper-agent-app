@@ -22,6 +22,7 @@ import {
   ToolContext,
   type IAttachedFileContext,
 } from "@/electron/appAgent";
+import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
 import { logEveryWhere } from "@/electron/service/util";
 import {
   chatHistoryDB,
@@ -845,7 +846,7 @@ class AgentChatBridge {
     if (session.expectingEncryptKey) {
       session.expectingEncryptKey = false;
       const rawKey = message.text.trim();
-      if (rawKey && this.looksLikeEncryptKey(rawKey)) {
+      if (rawKey && looksLikeEncryptKey(rawKey)) {
         session.toolContext.update({ encryptKey: rawKey });
         userText = "[ENCRYPT_KEY]";
         logEveryWhere({
@@ -1002,29 +1003,6 @@ class AgentChatBridge {
         message: `[AgentChatBridge] Message handling error: ${err?.message}`,
       });
     }
-  };
-
-  /*
-   * Best-effort heuristic: returns true when `text` looks like a raw
-   * encryptKey rather than a normal chat message (question, command, etc.).
-   */
-  private looksLikeEncryptKey = (text: string): boolean => {
-    if (text.length > 128) {
-      return false;
-    }
-    if (text.includes("?")) {
-      return false;
-    }
-    // Multiple sentences suggest conversational text
-    if (/[.!]\s+[A-Z]/.test(text)) {
-      return false;
-    }
-    // Real keys are compact — more than 5 words is almost certainly conversational
-    const wordCount = text.trim().split(/\s+/).length;
-    if (wordCount > 5) {
-      return false;
-    }
-    return true;
   };
 
   private splitMessage = (text: string, maxLength: number): string[] => {
