@@ -480,7 +480,10 @@ const useDashboardAgent = () => {
   }, [llmProvider]);
 
   const sendMessage = useCallback(
-    (input: string, options?: { encryptKey?: string }) => {
+    (
+      input: string,
+      options?: { encryptKey?: string; displayText?: string },
+    ) => {
       if (!sessionIdRef.current) {
         setError("Agent session is not ready. Please try again in a moment.");
         return;
@@ -490,15 +493,18 @@ const useDashboardAgent = () => {
         return;
       }
 
+      // @displayText is the clean user-visible text (no context block).
+      // @input is the full message sent to the agent (includes context JSON).
+      const contentForDisplay = (options?.displayText || input).trim();
+
       const userMessage: AgentMessage = {
         role: AgentRole.HUMAN,
-        content: input.trim(),
+        content: contentForDisplay,
         timestamp: Date.now(),
       };
       setConversation((prev) => [...prev, userMessage]);
 
-      // Persist the user message to SQLite immediately — before loading = true —
-      // so it's never lost even if the app is closed while the agent is thinking.
+      // Persist only the clean user text — never the appended context block.
       window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
         role: userMessage.role,
         content: userMessage.content,

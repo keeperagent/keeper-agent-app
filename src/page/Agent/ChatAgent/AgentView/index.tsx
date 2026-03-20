@@ -646,7 +646,7 @@ const AgentView = (props: any) => {
       context,
     )}`;
 
-    sendMessage(messageWithContext, { encryptKey });
+    sendMessage(messageWithContext, { encryptKey, displayText: trimmed });
     setDraftMessage("");
     clearAttachedFiles();
   };
