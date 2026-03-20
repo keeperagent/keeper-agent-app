@@ -499,6 +499,7 @@ export type IpcAgentCreateSessionPayload = {
 export type IpcAgentRunPayload = {
   sessionId: string;
   input: string;
+  encryptKey?: string;
 };
 export type IpcAgentStopPayload = {
   sessionId?: string;

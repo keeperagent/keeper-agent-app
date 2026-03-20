@@ -88,6 +88,14 @@ const AgentViewWrapper = styled.div`
   flex: 1;
   overflow: hidden;
 
+  .hidden-file-input {
+    display: none;
+  }
+
+  .error-alert {
+    margin-bottom: var(--margin-bottom);
+  }
+
   .conversation {
     flex: 1;
     overflow-y: auto;
@@ -206,12 +214,10 @@ const AgentViewWrapper = styled.div`
         word-break: break-word;
         box-shadow: var(--shadow-sm);
 
-        /* Plain-text user messages keep pre-wrap */
         &:not(:has(.markdown-content)) {
           white-space: pre-wrap;
         }
 
-        /* Markdown-rendered content (assistant/tool) – Claude-like formatting */
         .markdown-content {
           white-space: normal;
 
@@ -432,6 +438,23 @@ const AgentViewWrapper = styled.div`
       display: flex;
       margin-top: var(--margin-top);
 
+      .stop-button,
+      .reset-button {
+        margin-right: var(--margin-right);
+      }
+
+      .stop-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .send-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
       .paper-plane-icon {
         transform: rotate(-30deg);
         display: inline-block;
@@ -523,10 +546,40 @@ const PaperPlaneAnimation = styled.div<{ left?: string; top?: string }>`
   }
 `;
 
+const ComposerStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+`;
+
+const SecretWarning = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+`;
+
+const ToolSpacerDiv = styled.div<{ hasContent?: boolean }>`
+  margin-top: ${({ hasContent }) => (hasContent ? "0.8rem" : undefined)};
+`;
+
+const SendButtonWrapper = styled.div`
+  position: relative;
+`;
+
 export {
   AgentViewWrapper,
   DropOverlay,
   LoadingDotsWrapper,
   PaperPlaneAnimation,
   ExecutingToolBadge,
+  ComposerStatus,
+  SecretWarning,
+  ToolSpacerDiv,
+  SendButtonWrapper,
 };

@@ -1,0 +1,6 @@
+node_modules
+dist
+build
+release
+.git
+.DS_Store

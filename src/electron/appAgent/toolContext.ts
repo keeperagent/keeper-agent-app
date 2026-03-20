@@ -25,6 +25,21 @@ interface IToolContextData {
  */
 export class ToolContext {
   private data: IToolContextData = {};
+  private _secrets = new Map<string, string>();
+
+  get secrets(): Map<string, string> {
+    return this._secrets;
+  }
+
+  mergeSecrets(newSecrets: Map<string, string>): void {
+    for (const [token, value] of newSecrets) {
+      this._secrets.set(token, value);
+    }
+  }
+
+  clearSecrets(): void {
+    this._secrets.clear();
+  }
 
   update(data: Partial<IToolContextData>): void {
     if (data.nodeEndpointGroupId !== undefined) {

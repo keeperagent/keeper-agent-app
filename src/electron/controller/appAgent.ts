@@ -60,8 +60,6 @@ const parseToolContextFromInput = (
         typeof ctx.nodeEndpointGroupId === "number"
           ? ctx.nodeEndpointGroupId
           : undefined,
-      encryptKey:
-        typeof ctx.encryptKey === "string" ? ctx.encryptKey : undefined,
       listCampaignProfileId: Array.isArray(ctx.listCampaignProfileId)
         ? ctx.listCampaignProfileId.filter(
             (id: unknown) => typeof id === "number",
@@ -145,7 +143,7 @@ export const agentController = () => {
     MESSAGE.DASHBOARD_AGENT_RUN,
     MESSAGE.DASHBOARD_AGENT_RUN_RES,
     async (event, payload) => {
-      const { sessionId, input } = payload || {};
+      const { sessionId, input, encryptKey } = payload || {};
 
       try {
         if (!sessionId) {
@@ -160,8 +158,12 @@ export const agentController = () => {
           throw new Error("Session not found or has expired");
         }
 
-        // Parse context from user message and inject into tools before running
+        // Parse context from user message and inject into tools before running.
+        // encryptKey is passed via a separate IPC field (never embedded in message text).
         const parsedCtx = parseToolContextFromInput(input);
+        if (encryptKey) {
+          parsedCtx.encryptKey = encryptKey;
+        }
         session.toolContext.update(parsedCtx);
 
         const result = await agentChatBridge.runAgent(sessionId, input, {

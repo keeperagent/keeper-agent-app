@@ -1112,6 +1112,7 @@
   "agent.addFilesOrPhotos": "Add files or photos",
   "agent.removeAttachment": "Remove attachment",
   "agent.dropFilesHere": "Drop files here",
+  "agent.secretDetectedWarning": "Private key or seed phrase detected — redacted before sending",
   "masterPassword.setupHeading": "Setup Master password",
   "masterPassword.unlockHeading": "Unlock app",
   "masterPassword.label": "Master password",
