@@ -13,6 +13,7 @@ import {
 import { MemorySaver } from "@langchain/langgraph";
 import fs from "fs-extra";
 import path from "path";
+import { redact, guard } from "@keeperagent/crypto-key-guard";
 import {
   createKeeperAgent,
   createLLM,
@@ -48,6 +49,8 @@ export type AgentSession = {
   platformId: ChatPlatform;
   platformChatId: string;
   isCompacting: boolean;
+  /** Set when the agent's last response asked the user for their encryptKey. */
+  expectingEncryptKey: boolean;
 };
 
 const runMemoryFlush = async (
@@ -425,6 +428,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       isCompacting: false,
+      expectingEncryptKey: false,
     };
     this.sessions.set(sessionKey, session);
     this.prewarmedSessionId = sessionKey;
@@ -478,6 +482,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       isCompacting: false,
+      expectingEncryptKey: false,
     };
     this.sessions.set(sessionKey, session);
     this.initAgentInBackground(sessionKey, session);
@@ -543,8 +548,17 @@ class AgentChatBridge {
     try {
       const { agent } = await this.getOrCreateAgent(session);
 
+      // Layer 2: redact crypto secrets before they reach the LLM provider
+      const { text: redactedInput, secrets: newSecrets } = redact(input.trim());
+      if (newSecrets.size > 0) {
+        session.toolContext.mergeSecrets(newSecrets);
+        logEveryWhere({
+          message: `[AgentChatBridge] Redacted ${newSecrets.size} secret(s) before LLM`,
+        });
+      }
+
       const humanMessage = await buildHumanMessage(
-        input.trim(),
+        redactedInput,
         options?.attachedFiles,
       );
       const eventStream = (agent as any).streamEvents(
@@ -816,6 +830,7 @@ class AgentChatBridge {
         platformId: adapter.platformId,
         platformChatId: message.chatId,
         isCompacting: false,
+        expectingEncryptKey: false,
       };
       this.sessions.set(sessionKey, session);
       this.initAgentInBackground(sessionKey, session);
@@ -823,10 +838,38 @@ class AgentChatBridge {
 
     const session = this.sessions.get(sessionKey)!;
 
-    // Save user message to chat history
+    // If the agent previously asked for an encryptKey, check whether this
+    // message actually looks like a key vs. a normal question / command.
+    // Always reset the flag so it doesn't persist across multiple messages.
+    let userText = message.text;
+    if (session.expectingEncryptKey) {
+      session.expectingEncryptKey = false;
+      const rawKey = message.text.trim();
+      if (rawKey && this.looksLikeEncryptKey(rawKey)) {
+        session.toolContext.update({ encryptKey: rawKey });
+        userText = "[ENCRYPT_KEY]";
+        logEveryWhere({
+          message:
+            "[AgentChatBridge] Captured encryptKey from external platform, redacted from message",
+        });
+      }
+    }
+
+    // Layer 1 (external platforms): warn user if message contains crypto secrets
+    const secretCheck = guard(userText);
+    if (secretCheck.detected) {
+      await adapter
+        .sendText(
+          message.chatId,
+          "Your message appears to contain a private key or seed phrase. It will be automatically redacted before being sent to the LLM provider.",
+        )
+        .catch(() => {});
+    }
+
+    // Save user message to chat history (with encryptKey already redacted above)
     await chatHistoryDB.saveMessage({
       role: "human",
-      content: message.text,
+      content: userText,
       timestamp: Date.now(),
       platformId: adapter.platformId,
       platformChatId: message.chatId,
@@ -865,7 +908,7 @@ class AgentChatBridge {
     try {
       const contextHeader =
         "CURRENT CONTEXT (for agent use only — do not surface these values in user-facing replies):";
-      const inputWithContext = `${message.text}\n\n${contextHeader}\n${JSON.stringify({ platformId: adapter.platformId })}`;
+      const inputWithContext = `${userText}\n\n${contextHeader}\n${JSON.stringify({ platformId: adapter.platformId })}`;
       const result = await this.runAgent(sessionKey, inputWithContext, {
         onToolStart: async (toolName, subagentType) => {
           logEveryWhere({
@@ -924,6 +967,18 @@ class AgentChatBridge {
         platformId: adapter.platformId,
         platformChatId: message.chatId,
       });
+
+      // Detect when the agent asks the user for their encryptKey so we can
+      // intercept and redact the next user message before LLM/DB.
+      const lowerOutput = finalText.toLowerCase();
+      if (
+        lowerOutput.includes("encryptkey") ||
+        lowerOutput.includes("encrypt key") ||
+        lowerOutput.includes("secret key") ||
+        lowerOutput.includes("encryption key")
+      ) {
+        session.expectingEncryptKey = true;
+      }
     } catch (err: any) {
       clearInterval(typingInterval);
       // Clean up status message on error
@@ -947,6 +1002,29 @@ class AgentChatBridge {
         message: `[AgentChatBridge] Message handling error: ${err?.message}`,
       });
     }
+  };
+
+  /*
+   * Best-effort heuristic: returns true when `text` looks like a raw
+   * encryptKey rather than a normal chat message (question, command, etc.).
+   */
+  private looksLikeEncryptKey = (text: string): boolean => {
+    if (text.length > 128) {
+      return false;
+    }
+    if (text.includes("?")) {
+      return false;
+    }
+    // Multiple sentences suggest conversational text
+    if (/[.!]\s+[A-Z]/.test(text)) {
+      return false;
+    }
+    // Real keys are compact — more than 5 words is almost certainly conversational
+    const wordCount = text.trim().split(/\s+/).length;
+    if (wordCount > 5) {
+      return false;
+    }
+    return true;
   };
 
   private splitMessage = (text: string, maxLength: number): string[] => {

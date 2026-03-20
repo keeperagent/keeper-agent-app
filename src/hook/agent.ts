@@ -479,42 +479,46 @@ const useDashboardAgent = () => {
     });
   }, [llmProvider]);
 
-  const sendMessage = useCallback((input: string) => {
-    if (!sessionIdRef.current) {
-      setError("Agent session is not ready. Please try again in a moment.");
-      return;
-    }
-    if (!input || input.trim().length === 0) {
-      setError("Message must not be empty");
-      return;
-    }
+  const sendMessage = useCallback(
+    (input: string, options?: { encryptKey?: string }) => {
+      if (!sessionIdRef.current) {
+        setError("Agent session is not ready. Please try again in a moment.");
+        return;
+      }
+      if (!input || input.trim().length === 0) {
+        setError("Message must not be empty");
+        return;
+      }
 
-    const userMessage: AgentMessage = {
-      role: AgentRole.HUMAN,
-      content: input.trim(),
-      timestamp: Date.now(),
-    };
-    setConversation((prev) => [...prev, userMessage]);
+      const userMessage: AgentMessage = {
+        role: AgentRole.HUMAN,
+        content: input.trim(),
+        timestamp: Date.now(),
+      };
+      setConversation((prev) => [...prev, userMessage]);
 
-    // Persist the user message to SQLite immediately — before loading = true —
-    // so it's never lost even if the app is closed while the agent is thinking.
-    window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
-      role: userMessage.role,
-      content: userMessage.content,
-      timestamp: userMessage.timestamp,
-    });
+      // Persist the user message to SQLite immediately — before loading = true —
+      // so it's never lost even if the app is closed while the agent is thinking.
+      window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
+        role: userMessage.role,
+        content: userMessage.content,
+        timestamp: userMessage.timestamp,
+      });
 
-    setLoading(true);
-    setError(null);
-    setStreamingContent("");
-    streamingContentRef.current = "";
-    setExecutingTool(null);
-    toolDepthRef.current = 0;
-    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
-      sessionId: sessionIdRef.current,
-      input,
-    });
-  }, []);
+      setLoading(true);
+      setError(null);
+      setStreamingContent("");
+      streamingContentRef.current = "";
+      setExecutingTool(null);
+      toolDepthRef.current = 0;
+      window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
+        sessionId: sessionIdRef.current,
+        input,
+        encryptKey: options?.encryptKey,
+      });
+    },
+    [],
+  );
 
   const resetSession = useCallback(() => {
     if (!sessionIdRef.current) {

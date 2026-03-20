@@ -6,6 +6,7 @@ import { workflowManager } from "@/electron/simulator/workflow";
 import { RESPONSE_CODE } from "@/electron/constant";
 import { ICampaignProfile, IWorkflowVariable } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
+import type { ToolContext } from "@/electron/appAgent/toolContext";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -24,7 +25,7 @@ const schema = z.object({
     ),
 });
 
-export const runWorkflowTool = () =>
+export const runWorkflowTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
     name: "run_workflow",
     description:
@@ -41,7 +42,9 @@ export const runWorkflowTool = () =>
       encryptKey?: string;
       variables?: Record<string, string>;
     }) => {
-      const resolvedEncryptKey = encryptKey || "";
+      /* Prefer the authoritative value from toolContext (passed via secure IPC side-channel or captured by the bridge) over whatever the LLM provides, which may be a redacted placeholder like "[ENCRYPT_KEY]".
+       */
+      const resolvedEncryptKey = toolContext.encryptKey || encryptKey || "";
       const resolvedVariables = variables || undefined;
 
       const [campaign, campaignErr] =

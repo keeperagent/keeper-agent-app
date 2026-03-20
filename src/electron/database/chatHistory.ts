@@ -1,4 +1,5 @@
 import { Op } from "sequelize";
+import { redact } from "@keeperagent/crypto-key-guard";
 import { logEveryWhere } from "@/electron/service/util";
 import { ChatPlatform, IChatMessage } from "@/electron/chatGateway/types";
 import { ChatHistoryModel } from "./index";
@@ -18,7 +19,12 @@ class ChatHistoryDB {
     msg: IChatMessage,
   ): Promise<[IChatMessage | null, Error | null]> {
     try {
-      const data = await ChatHistoryModel.create({ ...msg });
+      // Layer 3: strip crypto secrets from message content before persisting
+      const { text } = redact(msg.content);
+      const data = await ChatHistoryModel.create({
+        ...msg,
+        content: text,
+      });
       return [data.toJSON() as IChatMessage, null];
     } catch (err: any) {
       logEveryWhere({

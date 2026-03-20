@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { COLORS } from "@/config/constant";
-import { useTranslation } from "@/hook";
 import { ColumnPreviewWrapper } from "./style";
 import { IColumnConfig } from "../index";
 
@@ -13,7 +12,6 @@ type IColumnPreviewProps = {
 
 const ColumnPreview = (props: IColumnPreviewProps) => {
   const { index, activeCol, setActiveCol, config } = props;
-  const { translate } = useTranslation();
 
   const variableFieldName = `col${index + 1}Variable`;
   const labelFieldName = `col${index + 1}Label`;

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { guard, redact } from "@keeperagent/crypto-key-guard";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { ChatPlatform } from "@/electron/chatGateway/types";
 import { connect } from "react-redux";
@@ -18,6 +19,10 @@ import {
   LoadingDotsWrapper,
   PaperPlaneAnimation,
   ExecutingToolBadge,
+  ComposerStatus,
+  SecretWarning,
+  ToolSpacerDiv,
+  SendButtonWrapper,
 } from "./style";
 import {
   CopyIcon,
@@ -262,6 +267,10 @@ const AgentView = (props: any) => {
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(
     null,
   );
+  const [secretWarning, setSecretWarning] = useState(false);
+  const secretWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [showPaperPlane, setShowPaperPlane] = useState(false);
   const [paperPlanePosition, setPaperPlanePosition] = useState<{
     x: number;
@@ -457,6 +466,9 @@ const AgentView = (props: any) => {
       attachedFilesRef.current.forEach(cleanupFile);
       tempFilesToDeleteRef.current.forEach(deleteTempFile);
       tempFilesToDeleteRef.current = [];
+      if (secretWarningTimerRef.current) {
+        clearTimeout(secretWarningTimerRef.current);
+      }
     };
   }, []);
 
@@ -508,7 +520,9 @@ const AgentView = (props: any) => {
         (message) => !(message?.role || "").toLowerCase().includes("tool"),
       )
       .map((message) => {
-        const content = stripContext(message?.content || "");
+        // Layer 4: safety-net redaction — strip context then mask any remaining secrets
+        const stripped = stripContext(message?.content || "");
+        const { text: content } = redact(stripped);
         const msgWithRaw = message as typeof message & {
           raw?: {
             additional_kwargs?: { timestamp?: number };
@@ -583,6 +597,20 @@ const AgentView = (props: any) => {
       setError("agent.emptyMessageError");
       return;
     }
+
+    // Layer 1: warn user when their message contains crypto secrets
+    const secretCheck = guard(trimmed);
+    if (secretCheck.detected) {
+      setSecretWarning(true);
+      if (secretWarningTimerRef.current) {
+        clearTimeout(secretWarningTimerRef.current);
+      }
+      secretWarningTimerRef.current = setTimeout(() => {
+        setSecretWarning(false);
+        secretWarningTimerRef.current = null;
+      }, 6000);
+    }
+
     // Trigger paper plane animation
     if (sendButtonRef.current) {
       const rect = sendButtonRef.current.getBoundingClientRect();
@@ -605,7 +633,6 @@ const AgentView = (props: any) => {
       campaignId,
       listCampaignProfileId: listProfileId,
       isAllWallet,
-      encryptKey,
       attachedFiles: attachedFiles.map((file) => ({
         name: file?.name,
         filePath: file?.path,
@@ -619,7 +646,7 @@ const AgentView = (props: any) => {
       context,
     )}`;
 
-    sendMessage(messageWithContext);
+    sendMessage(messageWithContext, { encryptKey });
     setDraftMessage("");
     clearAttachedFiles();
   };
@@ -650,7 +677,7 @@ const AgentView = (props: any) => {
         type="file"
         multiple
         accept="image/*,.pdf,.txt,.md"
-        style={{ display: "none" }}
+        className="hidden-file-input"
         onChange={handleFileSelect}
       />
 
@@ -660,7 +687,7 @@ const AgentView = (props: any) => {
           title={error}
           showIcon
           closable={{ onClose: () => setError(null) }}
-          style={{ marginBottom: "var(--margin-bottom)" }}
+          className="error-alert"
         />
       )}
 
@@ -709,28 +736,20 @@ const AgentView = (props: any) => {
                       <div className="bubble">
                         <MessageBody content={message.content} isUser={false} />
                         {message.executingToolText && (
-                          <div
-                            style={{
-                              marginTop: message.content ? "0.8rem" : undefined,
-                            }}
-                          >
+                          <ToolSpacerDiv hasContent={!!message.content}>
                             <ExecutingToolBadge>
                               <span className="spinner" />
                               {message.executingToolText}
                             </ExecutingToolBadge>
-                          </div>
+                          </ToolSpacerDiv>
                         )}
                         {message.isLoading && !message.executingToolText && (
-                          <div
-                            style={{
-                              marginTop: message.content ? "0.8rem" : undefined,
-                            }}
-                          >
+                          <ToolSpacerDiv hasContent={!!message.content}>
                             <ExecutingToolBadge>
                               <span className="spinner" />
                               {translate("agent.thinking")}
                             </ExecutingToolBadge>
-                          </div>
+                          </ToolSpacerDiv>
                         )}
                       </div>
 
@@ -763,20 +782,16 @@ const AgentView = (props: any) => {
 
       <div className="composer">
         {(creatingSession || (!!sessionId && !agentReady)) && (
-          <div
-            className="composer-status"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "8px",
-              fontSize: "13px",
-              color: "var(--color-text-secondary, #666)",
-            }}
-          >
+          <ComposerStatus>
             <LoadingDots />
             <span>{translate("agent.preparingAgent")}</span>
-          </div>
+          </ComposerStatus>
+        )}
+
+        {secretWarning && (
+          <SecretWarning>
+            <span>{translate("agent.secretDetectedWarning")}</span>
+          </SecretWarning>
         )}
 
         <AttachedFiles files={attachedFiles} onRemove={removeAttachedFile} />
@@ -844,12 +859,7 @@ const AgentView = (props: any) => {
               icon={
                 <StopCircle width={18} height={18} color="var(--color-error)" />
               }
-              style={{
-                marginRight: "var(--margin-right)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className="stop-button"
             />
           ) : (
             <Button
@@ -859,13 +869,13 @@ const AgentView = (props: any) => {
                 (!!sessionId && !agentReady) ||
                 conversation.length === 0
               }
-              style={{ marginRight: "var(--margin-right)" }}
+              className="reset-button"
             >
               {translate("agent.reset")}
             </Button>
           )}
 
-          <div style={{ position: "relative" }}>
+          <SendButtonWrapper>
             <Button
               ref={sendButtonRef}
               type="primary"
@@ -877,7 +887,7 @@ const AgentView = (props: any) => {
                 loading ||
                 draftMessage.trim().length === 0
               }
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              className="send-button"
             >
               {!showPaperPlane && !loading && (
                 <PaperPlaneIcon
@@ -899,15 +909,13 @@ const AgentView = (props: any) => {
 
             {showPaperPlane && paperPlanePosition && (
               <PaperPlaneAnimation
-                style={{
-                  left: `${paperPlanePosition.x}px`,
-                  top: `${paperPlanePosition.y}px`,
-                }}
+                left={`${paperPlanePosition.x}px`}
+                top={`${paperPlanePosition.y}px`}
               >
                 <PaperPlaneIcon width={24} height={24} color="#1890ff" />
               </PaperPlaneAnimation>
             )}
-          </div>
+          </SendButtonWrapper>
         </div>
       </div>
     </AgentViewWrapper>

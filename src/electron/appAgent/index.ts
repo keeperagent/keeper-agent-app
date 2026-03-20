@@ -11,6 +11,7 @@ import {
 import type { DeepAgent, SubAgent } from "deepagents";
 import path from "path";
 import fs from "fs-extra";
+import { restore } from "@keeperagent/crypto-key-guard";
 import {
   getSkillRootDir,
   getWorkspaceDir,
@@ -190,6 +191,45 @@ const createTaskSkillRedirectMiddleware = (allowedSubagentNames: string[]) => {
   });
 };
 
+/**
+ * Middleware that restores redacted crypto secret tokens (e.g. [EVM_KEY_1])
+ * back to their real values inside tool call arguments, so tools receive
+ * actual keys while the LLM only ever sees safe placeholders.
+ */
+const createSecretRestoreMiddleware = (toolContext: ToolContext) =>
+  createMiddleware({
+    name: "SecretRestore",
+    wrapToolCall: async (request: any = {}, handler: any) => {
+      if (toolContext.secrets.size === 0) {
+        return handler(request);
+      }
+
+      const args = request?.toolCall?.args || request?.toolCall?.kwargs || {};
+      if (!args) {
+        return handler(request);
+      }
+
+      const argsStr = JSON.stringify(args);
+      const restored = restore(argsStr, toolContext.secrets);
+      if (restored === argsStr) {
+        return handler(request);
+      }
+
+      try {
+        const restoredArgs = JSON.parse(restored);
+        return handler({
+          ...request,
+          toolCall: {
+            ...request?.toolCall,
+            args: restoredArgs,
+          },
+        });
+      } catch {
+        return handler(request);
+      }
+    },
+  });
+
 const buildBaseSubAgents = (
   toolContext: ToolContext,
   disabledTools: Set<string>,
@@ -332,7 +372,7 @@ const buildBaseSubAgents = (
   const workflowTools = [
     isEnabled(BASE_TOOL_KEYS.SEARCH_CAMPAIGNS) && searchCampaignsTool(),
     isEnabled(BASE_TOOL_KEYS.SEARCH_WORKFLOWS) && searchWorkflowsTool(),
-    isEnabled(BASE_TOOL_KEYS.RUN_WORKFLOW) && runWorkflowTool(),
+    isEnabled(BASE_TOOL_KEYS.RUN_WORKFLOW) && runWorkflowTool(toolContext),
     isEnabled(BASE_TOOL_KEYS.STOP_WORKFLOW) && stopWorkflowTool(),
     isEnabled(BASE_TOOL_KEYS.CHECK_WORKFLOW_STATUS) &&
       checkWorkflowStatusTool(),
@@ -463,6 +503,7 @@ const createKeeperAgent = async (
   const allowedTaskTypes = ["general-purpose", ...subagentNames];
   const taskSkillRedirectMiddleware =
     createTaskSkillRedirectMiddleware(allowedTaskTypes);
+  const secretRestoreMiddleware = createSecretRestoreMiddleware(toolContext);
 
   // Only expose enabled skills to the agent
   const [enabledSkills] = await agentSkillDB.getEnabledAgentSkills();
@@ -511,7 +552,7 @@ const createKeeperAgent = async (
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,
     checkpointer: options?.checkpointer || false,
-    middleware: [taskSkillRedirectMiddleware],
+    middleware: [taskSkillRedirectMiddleware, secretRestoreMiddleware],
   });
 
   const subAgentsCount = subagents.length;
