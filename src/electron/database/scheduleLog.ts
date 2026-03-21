@@ -1,6 +1,11 @@
 import { Op, Model, literal } from "sequelize";
 import _ from "lodash";
-import { IScheduleLog, IGetListResponse, ISorter } from "@/electron/type";
+import {
+  IScheduleLog,
+  IGetListResponse,
+  ISorter,
+  AgentScheduleStatus,
+} from "@/electron/type";
 import {
   ScheduleLogModel,
   CampaignModel,
@@ -215,8 +220,50 @@ class ScheduleLogDB {
       });
       return true;
     } catch (err: any) {
-      logEveryWhere({ message: `deleteScheduleLogCron() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteScheduleLogCron() error: ${err?.message}`,
+      });
       return false;
+    }
+  }
+
+  async getRetryingLogs(nowMs: number): Promise<IScheduleLog[]> {
+    try {
+      const data: any[] = await ScheduleLogModel.findAll({
+        where: {
+          status: AgentScheduleStatus.RETRYING,
+          nextRetryAt: { [Op.lte]: nowMs },
+        },
+        raw: false,
+      });
+      return data.map((item) => formatScheduleLog(item));
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getRetryingLogs() error: ${err?.message}`,
+      });
+      return [];
+    }
+  }
+
+  async getLatestJobLog(
+    scheduleId: number,
+    jobId: number,
+  ): Promise<IScheduleLog | null> {
+    try {
+      const data = await ScheduleLogModel.findOne({
+        where: { scheduleId, jobId, status: AgentScheduleStatus.SUCCESS },
+        order: [["createAt", "DESC"]],
+        raw: false,
+      });
+      if (!data) {
+        return null;
+      }
+      return formatScheduleLog(data);
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getLatestJobLog() error: ${err?.message}`,
+      });
+      return null;
     }
   }
 }

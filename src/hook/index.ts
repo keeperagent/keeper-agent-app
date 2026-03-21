@@ -162,6 +162,9 @@ export {
   useGetListSchedule,
   useDeleteSchedule,
   useGetOneSchedule,
+  usePauseSchedule,
+  useResumeSchedule,
+  useRunScheduleNow,
 } from "./schedule";
 export { useDeleteJob, useMarkJobCompleted, useCheckJobExisted } from "./job";
 export { useSaveNodeSecret, useGetNodeSecret } from "./nodeSecret";

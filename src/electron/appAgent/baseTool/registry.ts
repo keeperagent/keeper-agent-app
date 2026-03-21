@@ -3,6 +3,7 @@ export enum BaseToolGroup {
   TRANSACTION = "transaction",
   CODE_EXECUTION = "code_execution",
   WORKFLOW = "workflow",
+  SCHEDULER = "scheduler",
   RESEARCH = "research",
 }
 
@@ -40,6 +41,13 @@ export const BASE_TOOL_KEYS = {
   WEB_SEARCH_EXA: "web_search_exa",
   WEB_EXTRACT_TAVILY: "web_extract_tavily",
   FIND_SIMILAR_EXA: "find_similar_exa",
+  CREATE_AGENT_SCHEDULE: "create_agent_schedule",
+  LIST_AGENT_SCHEDULES: "list_agent_schedules",
+  UPDATE_AGENT_SCHEDULE: "update_agent_schedule",
+  DELETE_AGENT_SCHEDULE: "delete_agent_schedule",
+  PAUSE_AGENT_SCHEDULE: "pause_agent_schedule",
+  RESUME_AGENT_SCHEDULE: "resume_agent_schedule",
+  RUN_AGENT_SCHEDULE_NOW: "run_agent_schedule_now",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -182,6 +190,50 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
       "Check the progress and status of a workflow running on a campaign",
     group: BaseToolGroup.WORKFLOW,
   },
+  // Scheduler (agent schedules)
+  {
+    key: BASE_TOOL_KEYS.CREATE_AGENT_SCHEDULE,
+    name: "Create agent schedule",
+    description:
+      "Create a recurring agent task from natural language (cron runs in the background)",
+    group: BaseToolGroup.SCHEDULER,
+  },
+  {
+    key: BASE_TOOL_KEYS.LIST_AGENT_SCHEDULES,
+    name: "List agent schedules",
+    description: "List agent task schedules with optional search text",
+    group: BaseToolGroup.SCHEDULER,
+  },
+  {
+    key: BASE_TOOL_KEYS.UPDATE_AGENT_SCHEDULE,
+    name: "Update agent schedule",
+    description: "Update schedule name, cron, note, active state, or jobs",
+    group: BaseToolGroup.SCHEDULER,
+  },
+  {
+    key: BASE_TOOL_KEYS.DELETE_AGENT_SCHEDULE,
+    name: "Delete agent schedule",
+    description: "Delete an agent schedule by id or name",
+    group: BaseToolGroup.SCHEDULER,
+  },
+  {
+    key: BASE_TOOL_KEYS.PAUSE_AGENT_SCHEDULE,
+    name: "Pause agent schedule",
+    description: "Pause a schedule so cron no longer triggers it",
+    group: BaseToolGroup.SCHEDULER,
+  },
+  {
+    key: BASE_TOOL_KEYS.RESUME_AGENT_SCHEDULE,
+    name: "Resume agent schedule",
+    description: "Resume a paused schedule",
+    group: BaseToolGroup.SCHEDULER,
+  },
+  {
+    key: BASE_TOOL_KEYS.RUN_AGENT_SCHEDULE_NOW,
+    name: "Run agent schedule now",
+    description: "Trigger an agent schedule immediately (manual run)",
+    group: BaseToolGroup.SCHEDULER,
+  },
   // Research Tools
   {
     key: BASE_TOOL_KEYS.WEB_SEARCH_TAVILY,
@@ -233,5 +285,6 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.TRANSACTION]: "Transaction",
   [BaseToolGroup.CODE_EXECUTION]: "Code Execution",
   [BaseToolGroup.WORKFLOW]: "Workflow",
+  [BaseToolGroup.SCHEDULER]: "Scheduler",
   [BaseToolGroup.RESEARCH]: "Research",
 };

@@ -1,6 +1,11 @@
 import { Op, Model, literal } from "sequelize";
 import _ from "lodash";
-import { IGetListResponse, ISchedule, ISorter } from "@/electron/type";
+import {
+  IGetListResponse,
+  ISchedule,
+  ISorter,
+  ScheduleType,
+} from "@/electron/type";
 import {
   CampaignModel,
   JobModel,
@@ -32,6 +37,7 @@ class ScheduleDB {
     searchText?: string,
     sortField?: ISorter,
     scheduleId?: number,
+    type?: ScheduleType,
   ): Promise<[IGetListResponse<ISchedule> | null, Error | null]> => {
     try {
       let condition: any = {
@@ -44,10 +50,11 @@ class ScheduleDB {
             }
           : {},
       };
+      if (type) {
+        condition = { type, ...condition };
+      }
       if (scheduleId && !isNaN(scheduleId)) {
-        condition = {
-          id: scheduleId,
-        };
+        condition = { id: scheduleId };
       }
 
       const sortOrder = sortField?.order === SORT_ORDER.DESC ? "DESC" : "ASC";
@@ -300,7 +307,9 @@ class ScheduleDB {
         { where: { onlyRunOnce: false } },
       );
     } catch (err: any) {
-      logEveryWhere({ message: `resetScheduleEachDay() error: ${err?.message}` });
+      logEveryWhere({
+        message: `resetScheduleEachDay() error: ${err?.message}`,
+      });
     }
   };
 
@@ -410,7 +419,9 @@ class ScheduleDB {
 
       return [formatSchedule(data), null];
     } catch (err: any) {
-      logEveryWhere({ message: `getScheduleToRunOnceTimePerDay() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getScheduleToRunOnceTimePerDay() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };
@@ -445,7 +456,9 @@ class ScheduleDB {
 
       return [formatSchedule(data), null];
     } catch (err: any) {
-      logEveryWhere({ message: `getNoRepeatScheduleToRun() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getNoRepeatScheduleToRun() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };
@@ -473,7 +486,40 @@ class ScheduleDB {
 
       return [listSchedule, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getNoRepeatScheduleToRun() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getNoRepeatScheduleToRun() error: ${err?.message}`,
+      });
+      return [null, err];
+    }
+  };
+
+  getActiveAgentSchedules = async (): Promise<
+    [ISchedule[] | null, Error | null]
+  > => {
+    try {
+      const listData = await ScheduleModel.findAll({
+        where: {
+          isActive: true,
+          isPaused: false,
+          type: ScheduleType.AGENT,
+          cronExpr: { [Op.not]: null },
+        },
+        include: [
+          {
+            model: JobModel,
+            required: false,
+          },
+        ],
+        raw: false,
+      });
+      const listSchedule = listData?.map((item: Model<any, any>) =>
+        formatSchedule(item),
+      );
+      return [listSchedule, null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getActiveAgentSchedules() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };

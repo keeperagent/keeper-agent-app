@@ -300,17 +300,17 @@ ScheduleModel.belongsToMany(JobModel, {
 });
 
 // @JobModel
-// declare foreign key Job -> Workflow
+// declare foreign key Job -> Workflow (nullable: agent jobs have no workflowId)
 JobModel.belongsTo(WorkflowModel, {
-  foreignKey: { name: "workflowId", allowNull: false },
+  foreignKey: { name: "workflowId", allowNull: true },
   as: "workflow",
-  constraints: true,
+  constraints: false,
   onDelete: "CASCADE",
 });
 JobModel.belongsTo(CampaignModel, {
-  foreignKey: { name: "campaignId", allowNull: false },
+  foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
-  constraints: true,
+  constraints: false,
   onDelete: "CASCADE",
 });
 
@@ -331,7 +331,7 @@ UserLogModel.belongsTo(CampaignModel, {
 
 // @ScheduleLogModel -> @ScheduleModel
 ScheduleLogModel.belongsTo(ScheduleModel, {
-  foreignKey: { name: "scheduleId", allowNull: true },
+  foreignKey: { name: "scheduleId", allowNull: false },
   as: "schedule",
   constraints: true,
   onDelete: "CASCADE",
@@ -340,14 +340,14 @@ ScheduleLogModel.belongsTo(ScheduleModel, {
 ScheduleLogModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
-  constraints: true,
+  constraints: false,
   onDelete: "CASCADE",
 });
 // @ScheduleLogModel -> @WorkflowModel
 ScheduleLogModel.belongsTo(WorkflowModel, {
   foreignKey: { name: "workflowId", allowNull: true },
   as: "workflow",
-  constraints: true,
+  constraints: false,
   onDelete: "CASCADE",
 });
 

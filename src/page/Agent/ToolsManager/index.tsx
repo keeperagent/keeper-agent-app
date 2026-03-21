@@ -14,6 +14,7 @@ const GROUPS: BaseToolGroup[] = [
   BaseToolGroup.TRANSACTION,
   BaseToolGroup.CODE_EXECUTION,
   BaseToolGroup.WORKFLOW,
+  BaseToolGroup.SCHEDULER,
   BaseToolGroup.RESEARCH,
   BaseToolGroup.APP_MANAGEMENT,
 ];

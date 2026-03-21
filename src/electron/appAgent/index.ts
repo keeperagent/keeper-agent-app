@@ -46,6 +46,15 @@ import {
   stopWorkflowTool,
   checkWorkflowStatusTool,
 } from "./baseTool";
+import {
+  createAgentScheduleTool,
+  listAgentSchedulesTool,
+  updateAgentScheduleTool,
+  deleteAgentScheduleTool,
+  pauseAgentScheduleTool,
+  resumeAgentScheduleTool,
+  runAgentScheduleNowTool,
+} from "./baseTool/scheduler";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
 import {
@@ -61,21 +70,22 @@ import { LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { ToolContext } from "./toolContext";
 
-const MEMORY_FILE = "AGENT.md";
+const DEFAULT_MEMORY_FILE = "AGENT.md";
 const MEMORY_TEMPLATE = "# Agent Memory\n";
 
-const ensureAgentMemoryFile = async (): Promise<void> => {
+const ensureAgentMemoryFile = async (memoryFile: string): Promise<void> => {
   const memoryDir = getMemoryDir();
-  const memoryPath = path.join(memoryDir, MEMORY_FILE);
+  const memoryPath = path.join(memoryDir, memoryFile);
   await fs.ensureDir(memoryDir);
   if (!(await fs.pathExists(memoryPath))) {
     await fs.writeFile(memoryPath, MEMORY_TEMPLATE);
   }
 };
 
-const MEMORY_VIRTUAL_PATH = `/memories/${MEMORY_FILE}`;
-
-const buildSystemPrompt = (subagents: SubAgent[]) => {
+const buildSystemPrompt = (
+  subagents: SubAgent[],
+  memoryVirtualPath: string,
+) => {
   const workspacePath = getWorkspaceDir();
   const subagentNames = subagents.map((s) => s.name);
   const allowedAgents = subagentNames.map((n) => `"${n}"`).join(", ");
@@ -85,7 +95,7 @@ const buildSystemPrompt = (subagents: SubAgent[]) => {
   return `You are Keeper Agent, an AI assistant for crypto wallets, campaigns, profiles, and on-chain operations.
 
 ## Memory
-Read \`${MEMORY_VIRTUAL_PATH}\` at conversation start. Save user preferences there when told.
+Read \`${memoryVirtualPath}\` at conversation start. Save user preferences there when told.
 
 ## Priority: skills → subagents → tools
 1. Check \`/skills/\` first; read the relevant SKILL.md and follow it.
@@ -392,6 +402,33 @@ const buildBaseSubAgents = (
     });
   }
 
+  const schedulerTools = [
+    isEnabled(BASE_TOOL_KEYS.CREATE_AGENT_SCHEDULE) && createAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.LIST_AGENT_SCHEDULES) && listAgentSchedulesTool(),
+    isEnabled(BASE_TOOL_KEYS.UPDATE_AGENT_SCHEDULE) && updateAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.DELETE_AGENT_SCHEDULE) && deleteAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.PAUSE_AGENT_SCHEDULE) && pauseAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.RESUME_AGENT_SCHEDULE) && resumeAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.RUN_AGENT_SCHEDULE_NOW) && runAgentScheduleNowTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  if (schedulerTools.length > 0) {
+    agents.push({
+      name: "scheduler_agent",
+      description:
+        "Creates, lists, updates, deletes, pauses, resumes, and manually triggers agent schedules. " +
+        "Use this when the user wants to automate recurring tasks (e.g. 'check SOL price every 30 minutes', 'send portfolio summary every morning at 6AM').",
+      systemPrompt:
+        "You are a scheduling subagent. You manage agent task schedules.\n\n" +
+        "## Rules\n" +
+        "- Always confirm your understanding in plain language before creating (e.g. 'I'll run this every day at 6AM'). Never show the raw cron expression to the user.\n" +
+        "- For conditionType='llm': only use for deciding whether to send a notification, never for execution gating.\n" +
+        "- Return schedule IDs so the user can reference them.\n" +
+        "- Keep responses concise.",
+      tools: schedulerTools as any,
+    });
+  }
+
   return agents;
 };
 
@@ -399,8 +436,14 @@ type CreateAgentOptions = {
   temperature?: number;
   checkpointer?: MemorySaver;
   provider?: LLMProvider;
-  /** Shared mutable context injected into all tools (nodeEndpointGroupId, encryptKey). */
+  /* Shared mutable context injected into all tools (nodeEndpointGroupId, encryptKey). */
   toolContext?: ToolContext;
+  /*
+   * Memory file name (relative, no path). Defaults to "AGENT.md".
+   * Scheduled agent tasks pass a per-schedule file (e.g. "AGENT_SCHEDULED_1.md")
+   * to keep their memory isolated from the desktop chat session.
+   */
+  memoryFile?: string;
 };
 
 type KeeperAgent = {
@@ -474,6 +517,9 @@ const createKeeperAgent = async (
   const provider = options?.provider || LLMProvider.OPENAI;
   const llm = await createLLM(provider, options?.temperature || 0);
 
+  const memoryFile = options?.memoryFile || DEFAULT_MEMORY_FILE;
+  const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
+
   // Reuse the provided ToolContext (from the session) or create a new one.
   // The caller (controller) is responsible for updating it before each run.
   const toolContext = options?.toolContext || new ToolContext();
@@ -498,7 +544,7 @@ const createKeeperAgent = async (
   const workspaceDir = getWorkspaceDir();
   const memoryDir = getMemoryDir();
 
-  await ensureAgentMemoryFile();
+  await ensureAgentMemoryFile(memoryFile);
   const subagentNames = subagents.map((s) => s.name);
   const allowedTaskTypes = ["general-purpose", ...subagentNames];
   const taskSkillRedirectMiddleware =
@@ -545,7 +591,7 @@ const createKeeperAgent = async (
 
   const agent = createDeepAgent({
     model: llm,
-    systemPrompt: buildSystemPrompt(subagents),
+    systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
     backend,
     tools: [] as any,
     skills: ["/skills/"],

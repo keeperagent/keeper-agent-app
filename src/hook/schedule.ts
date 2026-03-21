@@ -8,6 +8,7 @@ import {
 import type { IpcGetListSchedulePayload } from "@/electron/ipcTypes";
 import { ISchedule } from "@/electron/type";
 import { useIpcAction } from "./useIpcAction";
+import { useTranslation } from "./useTranslation";
 
 const useCreateSchedule = () => {
   const { execute, loading, isSuccess } = useIpcAction(
@@ -46,10 +47,17 @@ const useUpdateSchedule = () => {
 };
 
 const useGetListSchedule = () => {
-  const { execute: getListSchedule, loading, isSuccess } = useIpcAction<IpcGetListSchedulePayload>(
+  const {
+    execute: getListSchedule,
+    loading,
+    isSuccess,
+  } = useIpcAction<IpcGetListSchedulePayload>(
     MESSAGE.GET_LIST_SCHEDULE,
     MESSAGE.GET_LIST_SCHEDULE_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveGetListSchedule(payload?.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveGetListSchedule(payload?.data)),
+    },
   );
   return { getListSchedule, loading, isSuccess };
 };
@@ -58,7 +66,10 @@ const useGetOneSchedule = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.GET_ONE_SCHEDULE,
     MESSAGE.GET_ONE_SCHEDULE_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveUpdateSchedule(payload?.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveUpdateSchedule(payload?.data)),
+    },
   );
   const getOneSchedule = (scheduleId: number) => execute({ scheduleId });
   return { getOneSchedule, loading, isSuccess };
@@ -78,10 +89,70 @@ const useDeleteSchedule = () => {
   return { deleteSchedule, loading, isSuccess };
 };
 
+const usePauseSchedule = () => {
+  const { translate } = useTranslation();
+  const { execute, loading } = useIpcAction(
+    MESSAGE.PAUSE_SCHEDULE,
+    MESSAGE.PAUSE_SCHEDULE_RES,
+    {
+      onSuccess: ({ error }: any) => {
+        if (error) {
+          message.error(error);
+        } else {
+          message.success(translate("schedule.paused"));
+        }
+      },
+    },
+  );
+  const pauseSchedule = (scheduleId: number) => execute({ scheduleId });
+  return { pauseSchedule, loading };
+};
+
+const useResumeSchedule = () => {
+  const { translate } = useTranslation();
+  const { execute, loading } = useIpcAction(
+    MESSAGE.RESUME_SCHEDULE,
+    MESSAGE.RESUME_SCHEDULE_RES,
+    {
+      onSuccess: ({ error }: any) => {
+        if (error) {
+          message.error(error);
+        } else {
+          message.success(translate("schedule.resumed"));
+        }
+      },
+    },
+  );
+  const resumeSchedule = (scheduleId: number) => execute({ scheduleId });
+  return { resumeSchedule, loading };
+};
+
+const useRunScheduleNow = () => {
+  const { translate } = useTranslation();
+  const { execute, loading } = useIpcAction(
+    MESSAGE.RUN_SCHEDULE_NOW,
+    MESSAGE.RUN_SCHEDULE_NOW_RES,
+    {
+      onSuccess: ({ error }: any) => {
+        if (error) {
+          message.error(error);
+        } else {
+          message.success(translate("schedule.triggeredBackground"));
+        }
+      },
+    },
+  );
+  const runScheduleNow = (scheduleId: number) => execute({ scheduleId });
+  return { runScheduleNow, loading };
+};
+
 export {
   useCreateSchedule,
   useUpdateSchedule,
   useDeleteSchedule,
   useGetListSchedule,
   useGetOneSchedule,
+  usePauseSchedule,
+  useResumeSchedule,
+  useRunScheduleNow,
 };

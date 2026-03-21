@@ -1,6 +1,7 @@
 import { MESSAGE } from "@/electron/constant";
 import { scheduleDB } from "@/electron/database/schedule";
 import { workflowManager } from "@/electron/simulator/workflow";
+import { agentTaskScheduler } from "@/electron/service/agentTaskScheduler";
 import { onIpc } from "./helpers";
 import type {
   IpcGetListSchedulePayload,
@@ -105,6 +106,33 @@ export const runScheduleController = () => {
       event.reply(MESSAGE.DELETE_SCHEDULE_RES, {
         error: err?.message,
       });
+    },
+  );
+
+  onIpc<{ scheduleId: number }>(
+    MESSAGE.PAUSE_SCHEDULE,
+    MESSAGE.PAUSE_SCHEDULE_RES,
+    async (event, payload) => {
+      await agentTaskScheduler.pause(payload.scheduleId);
+      event.reply(MESSAGE.PAUSE_SCHEDULE_RES, { error: null });
+    },
+  );
+
+  onIpc<{ scheduleId: number }>(
+    MESSAGE.RESUME_SCHEDULE,
+    MESSAGE.RESUME_SCHEDULE_RES,
+    async (event, payload) => {
+      await agentTaskScheduler.resume(payload.scheduleId);
+      event.reply(MESSAGE.RESUME_SCHEDULE_RES, { error: null });
+    },
+  );
+
+  onIpc<{ scheduleId: number }>(
+    MESSAGE.RUN_SCHEDULE_NOW,
+    MESSAGE.RUN_SCHEDULE_NOW_RES,
+    async (event, payload) => {
+      agentTaskScheduler.runNow(payload.scheduleId);
+      event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, { error: null });
     },
   );
 };
