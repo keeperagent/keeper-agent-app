@@ -302,27 +302,15 @@ class ScheduleLogDB {
       if (!scheduleIds.length) {
         return new Map();
       }
-      const rows: any[] = await ScheduleLogModel.findAll({
-        where: { scheduleId: { [Op.in]: scheduleIds } },
-        order: [["createAt", "DESC"]],
-        limit: scheduleIds.length * limitPerSchedule,
-        raw: false,
-      });
       const result = new Map<number, IScheduleLog[]>();
-      for (const row of rows) {
-        const log = formatScheduleLog(row);
-        if (log.scheduleId == null) {
-          continue;
-        }
-        const existing = result.get(log.scheduleId) || [];
-        if (existing.length < limitPerSchedule) {
-          existing.push(log);
-          result.set(log.scheduleId, existing);
-        }
-      }
-      // reverse so oldest is leftmost
-      for (const [id, logs] of result) {
-        result.set(id, logs.reverse());
+      for (const scheduleId of scheduleIds) {
+        const rows: any[] = await ScheduleLogModel.findAll({
+          where: { scheduleId },
+          order: [["createAt", "DESC"]],
+          limit: limitPerSchedule,
+          raw: false,
+        });
+        result.set(scheduleId, rows.map(formatScheduleLog).reverse());
       }
       return result;
     } catch (err: any) {

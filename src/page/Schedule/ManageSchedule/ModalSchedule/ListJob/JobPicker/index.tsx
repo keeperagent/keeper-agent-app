@@ -115,6 +115,7 @@ const JobPicker = (props: IProps) => {
           type: JobType.AGENT,
           workflowId: null,
           campaignId: null,
+          secretKey: "",
           llmProvider: job.llmProvider || LLMProvider.CLAUDE,
         },
         index,

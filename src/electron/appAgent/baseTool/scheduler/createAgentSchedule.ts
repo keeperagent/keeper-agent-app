@@ -196,6 +196,19 @@ export const createAgentScheduleTool = (toolContext: ToolContext) =>
               : undefined,
           });
         } else {
+          if (!job.prompt) {
+            return safeStringify({
+              error: `Agent job at order ${job.order} is missing a prompt.`,
+            });
+          }
+          if (
+            job.conditionType === JobConditionType.LLM &&
+            !job.conditionPrompt
+          ) {
+            return safeStringify({
+              error: `Agent job at order ${job.order} has conditionType 'llm' but is missing conditionPrompt.`,
+            });
+          }
           listJob.push({
             type: JobType.AGENT,
             order: job.order,

@@ -144,18 +144,22 @@ const ModalSchedule = (props: IProps) => {
   const onSubmitForm = async () => {
     try {
       if (isAgentSchedule) {
-        const { name, cronExpr, isActive, note } = await form.validateFields([
-          "name",
-          "cronExpr",
-          "isActive",
-          "note",
-        ]);
+        const { name, cronExpr, isActive, note, alertTelegram } =
+          await form.validateFields([
+            "name",
+            "cronExpr",
+            "isActive",
+            "note",
+            "alertTelegram",
+          ]);
         setBtnLoading(true);
         const data = {
           name,
           cronExpr,
           isActive,
           note,
+          alertTelegram,
+          type: ScheduleType.AGENT,
           listJob: listJob?.map((job, index: number) => ({
             ...job,
             order: index,

@@ -11,7 +11,6 @@ import {
   IRunningWorkflow,
   ISchedule,
   JobType,
-  ScheduleType,
 } from "@/electron/type";
 import { EMPTY_STRING } from "@/config/constant";
 import { TrashBoldIcon, DurationIcon, SpinIcon } from "@/component/Icon";
@@ -50,8 +49,7 @@ const Job = (props: IProps) => {
     }
   }, [loading, isSuccess]);
 
-  const isAgentJob =
-    job.type === JobType.AGENT || schedule.type === ScheduleType.AGENT;
+  const isAgentJob = job.type === JobType.AGENT;
   const isAgentRunning = job.lastLog?.status === AgentScheduleStatus.RUNNING;
   const startedAt = isAgentJob ? job.lastLog?.startedAt : job.lastRunTime;
   const finishedAt = isAgentJob ? job.lastLog?.finishedAt : job.lastEndTime;
