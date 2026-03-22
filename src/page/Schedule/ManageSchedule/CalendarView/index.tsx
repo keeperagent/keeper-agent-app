@@ -2,12 +2,13 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { EventContentArg, EventInput } from "@fullcalendar/core";
+import { DatesSetArg, EventContentArg, EventInput } from "@fullcalendar/core";
 import { CronExpressionParser } from "cron-parser";
 import { ISchedule, ScheduleType, AgentScheduleStatus } from "@/electron/type";
 import { Tooltip } from "antd";
 import cronstrue from "cronstrue";
 import dayjs from "dayjs";
+import { useMemo, useState } from "react";
 import { CalendarWrapper, EventTile, TooltipContent } from "./style";
 import { SCHEDULE_REPEAT } from "@/electron/constant";
 import { useTranslation } from "@/hook";
@@ -60,11 +61,10 @@ const getScheduleColor = (scheduleId: number): string => {
 const generateCalendarEvents = (
   listSchedule: ISchedule[],
   runningAgentScheduleIds: number[],
+  rangeStart: Date,
+  rangeEnd: Date,
 ): EventInput[] => {
   const events: EventInput[] = [];
-  const now = new Date();
-  const rangeStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const rangeEnd = new Date(now.getFullYear(), now.getMonth() + 3, 0);
 
   for (const schedule of listSchedule) {
     const isRunning = runningAgentScheduleIds.includes(schedule.id!);
@@ -82,11 +82,7 @@ const generateCalendarEvents = (
       extendedProps: { schedule, isRunning },
     };
 
-    if (
-      schedule.type === ScheduleType.AGENT &&
-      schedule.cronExpr &&
-      !isPaused
-    ) {
+    if (schedule.type === ScheduleType.AGENT && schedule.cronExpr) {
       try {
         // Detect interval by comparing two consecutive occurrences
         const probeInterval = CronExpressionParser.parse(schedule.cronExpr, {
@@ -97,9 +93,11 @@ const generateCalendarEvents = (
         const intervalMinutes =
           (secondOccurrence.getTime() - firstOccurrence.getTime()) / 60000;
 
-        // High-frequency (< 2 hours): show one representative event per day
-        // to avoid the 150-event limit exhausting within the first few hours
-        if (intervalMinutes < 120) {
+        const projectedOccurrences = Math.ceil(
+          (rangeEnd.getTime() - rangeStart.getTime()) /
+            (intervalMinutes * 60_000),
+        );
+        if (projectedOccurrences > 150) {
           const current = new Date(rangeStart);
           let dayCount = 0;
           while (current <= rangeEnd && dayCount < 150) {
@@ -201,7 +199,27 @@ const CalendarView = ({
   onEditSchedule,
 }: IProps) => {
   const { translate } = useTranslation();
-  const events = generateCalendarEvents(listSchedule, runningAgentScheduleIds);
+
+  const now = new Date();
+  const [visibleRange, setVisibleRange] = useState({
+    start: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+    end: new Date(now.getFullYear(), now.getMonth() + 3, 0),
+  });
+
+  const events = useMemo(
+    () =>
+      generateCalendarEvents(
+        listSchedule,
+        runningAgentScheduleIds,
+        visibleRange.start,
+        visibleRange.end,
+      ),
+    [listSchedule, runningAgentScheduleIds, visibleRange],
+  );
+
+  const onDatesSet = (dateInfo: DatesSetArg) => {
+    setVisibleRange({ start: dateInfo.start, end: dateInfo.end });
+  };
 
   const onEventClick = (clickInfo: any) => {
     const { schedule } = clickInfo.event.extendedProps;
@@ -302,6 +320,7 @@ const CalendarView = ({
         events={events}
         eventContent={renderEventContent}
         eventClick={onEventClick}
+        datesSet={onDatesSet}
         height="auto"
         dayMaxEvents={3}
         allDaySlot={false}
