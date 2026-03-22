@@ -97,6 +97,7 @@ export default defineConfig(({ mode }) => ({
     resolve: {
       alias: {
         "@": resolve(__dirname, "src"),
+        "fs/promises": resolve(__dirname, "src/stubs/fsPromises.ts"),
       },
     },
     define: {

@@ -109,6 +109,7 @@ export { default as ChartIcon } from "./Chart";
 export { default as PaperClipIcon } from "./PaperClip";
 export { default as CustomizationIcon } from "./Customization";
 export { default as SettingWindowIcon } from "./SettingWindow";
+export { default as CalendarIcon } from "./Calendar";
 
 export interface IIconProps {
   color?: string;
