@@ -1,5 +1,6 @@
-import _ from "lodash";
-import { useEffect, useMemo, useState, ComponentType } from "react";
+import lodash from "lodash";
+import cronstrue from "cronstrue";
+import { Fragment, useEffect, useMemo, useState, ComponentType } from "react";
 import {
   Button,
   PaginationProps,
@@ -19,7 +20,7 @@ import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { SCHEDULE_REPEAT, SORT_ORDER } from "@/electron/constant";
 import { DeleteButton } from "@/component/Button";
-import { SearchInput, TotalData } from "@/component";
+import { SearchInput, TotalData, Status } from "@/component";
 import { actSetPageName } from "@/redux/layout";
 import { actSetPageSize } from "@/redux/schedule";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
@@ -33,24 +34,38 @@ import {
   useGetListSchedule,
   useUpdatePreference,
   useStopAllWorkflow,
+  useRunScheduleNow,
+  useGetRunningAgentSchedule,
 } from "@/hook";
-import { IRunningWorkflow, ISchedule } from "@/electron/type";
 import {
-  EditIcon,
+  AgentScheduleStatus,
+  IJob,
+  IRunningWorkflow,
+  ISchedule,
+  IScheduleLog,
+} from "@/electron/type";
+import {
   SettingIcon,
   DownArrowIcon,
   UpArrowIcon,
   CollapseLineIcon,
   ExpandLineIcon,
   EyeOpenIcon,
+  PlayIcon,
+  SpinIcon,
 } from "@/component/Icon";
 import {
   actSaveSelectedSchedule,
   actSetTableViewMode,
   actSetSortField,
+  actSetActiveAgentRuns,
+  actSetModalOpen,
 } from "@/redux/schedule";
-import { actSetModalOpen } from "@/redux/schedule";
-import { formatTime, trimText } from "@/service/util";
+import {
+  formatTime,
+  formatDurationBetween,
+  formatTimeToDate,
+} from "@/service/util";
 import ModalSchedule from "./ModalSchedule";
 import ScheduleFlow from "./ScheduleFlow";
 import {
@@ -62,8 +77,20 @@ import {
 } from "./style";
 import { VIEW_MODE } from "../index";
 import { TABLE_PAGE_OPTION } from "@/config/constant";
+import { ScheduleType } from "@/electron/type";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
+
+const ElapsedCounter = ({ startedAt }: { startedAt: number }) => {
+  const [elapsed, setElapsed] = useState(Date.now() - startedAt);
+
+  useEffect(() => {
+    const timer = setInterval(() => setElapsed(Date.now() - startedAt), 1000);
+    return () => clearInterval(timer);
+  }, [startedAt]);
+
+  return <span>{formatDurationBetween(startedAt, startedAt + elapsed)}</span>;
+};
 
 let searchTimeOut: any = null;
 let getDataInterval: any = null;
@@ -82,14 +109,53 @@ const getRepeatationLabel = (value: string, translate: any) => {
   return mapValue[value];
 };
 
+const historyColorMap: Record<string, string> = {
+  [AgentScheduleStatus.SUCCESS]: "var(--color-success)",
+  [AgentScheduleStatus.ERROR]: "var(--color-error)",
+  [AgentScheduleStatus.RUNNING]: "var(--color-blue)",
+  [AgentScheduleStatus.RETRYING]: "var(--color-yellow)",
+};
+
+const deriveScheduleLastRunTime = (listJob: IJob[]): number | null => {
+  const timestamps = listJob
+    .map((job) => job.lastLog?.createAt)
+    .filter(Boolean) as number[];
+
+  return timestamps.length ? Math.max(...timestamps) : null;
+};
+
+const deriveScheduleLastRunStatus = (
+  listJob: IJob[],
+): AgentScheduleStatus | null => {
+  const statuses = listJob
+    .map((job) => job.lastLog?.status)
+    .filter(Boolean) as AgentScheduleStatus[];
+
+  if (!statuses.length) {
+    return null;
+  }
+  if (statuses.some((status) => status === AgentScheduleStatus.ERROR)) {
+    return AgentScheduleStatus.ERROR;
+  }
+  if (statuses.some((status) => status === AgentScheduleStatus.RUNNING)) {
+    return AgentScheduleStatus.RUNNING;
+  }
+  if (statuses.every((status) => status === AgentScheduleStatus.SUCCESS)) {
+    return AgentScheduleStatus.SUCCESS;
+  }
+
+  return null;
+};
+
 const renderColumns = (
-  onToggleActiveStatus: (scheduleId: number, isActive: boolean) => void,
+  onToggleActiveStatus: (scheduleId: number, isPaused: boolean) => void,
   onEditSchedule: (scheduleJob: ISchedule) => void,
-  onEditJob: (schedule: ISchedule) => void,
   translate: any,
   listRunningWorkflow: IRunningWorkflow[],
   onViewLog: (scheduleId: number) => void,
   searchText: string,
+  onRunScheduleNow: (scheduleId: number) => void,
+  runningAgentScheduleIds: number[],
 ) => [
   {
     title: translate("indexTable"),
@@ -99,29 +165,22 @@ const renderColumns = (
   {
     title: translate("name"),
     dataIndex: "name",
-    width: "43%",
-    render: (name: any, schedule: ISchedule) => {
+    width: "35%",
+    render: (_: any, schedule: ISchedule) => {
       return (
         <ScheduleNameWrapper onClick={() => onEditSchedule(schedule)}>
           <div className="name">
-            <Highlighter
-              textToHighlight={trimText(schedule?.name || "", 45)}
-              searchWords={[searchText]}
-              highlightClassName="highlight"
-            />
-
-            {_.find(listRunningWorkflow, {
-              scheduleId: schedule?.id,
-            }) && (
-              <Tooltip title={translate("running")}>
-                <Badge status="success" style={{ marginLeft: "1rem" }} />
-              </Tooltip>
-            )}
+            <span className="name-text">
+              <Highlighter
+                textToHighlight={schedule?.name || ""}
+                searchWords={[searchText]}
+                highlightClassName="highlight"
+              />
+            </span>
           </div>
-
           <div className="note">
             <Highlighter
-              textToHighlight={trimText(schedule?.note || "", 75)}
+              textToHighlight={schedule?.note || ""}
               searchWords={[searchText]}
               highlightClassName="highlight"
             />
@@ -132,53 +191,199 @@ const renderColumns = (
   },
 
   {
-    title: translate("schedule.startTime"),
-    dataIndex: "startTime",
-    width: "13%",
-    render: (text: any, _record: any) => {
-      const date = new Date(text);
-      return <span>{dayjs(date).format("hh:mm a")}</span>;
+    title: translate("schedule.type"),
+    dataIndex: "type",
+    width: "8%",
+    render: (type: string) => {
+      const bgMap: Record<string, string> = {
+        workflow: "var(--background-pink)",
+        agent: "var(--background-blue)",
+      };
+      const colorMap: Record<string, string> = {
+        workflow: "var(--color-pink)",
+        agent: "var(--color-blue)",
+      };
+      const labelMap: Record<string, string> = {
+        workflow: translate("schedule.typeWorkflow"),
+        agent: translate("schedule.typeAgent"),
+      };
+      const scheduleType = type || ScheduleType.WORKFLOW;
+
+      return (
+        <span style={{ display: "inline-flex" }}>
+          <Status
+            content={labelMap[scheduleType]}
+            style={{
+              background: bgMap[scheduleType] || "var(--background-pink)",
+              color: colorMap[scheduleType] || "var(--color-text-secondary)",
+            }}
+          />
+        </span>
+      );
     },
   },
   {
-    title: translate("schedule.repeatMode"),
-    dataIndex: "repeat",
-    width: "13%",
-    render: (repeat: any) => getRepeatationLabel(repeat, translate),
+    title: translate("schedule.scheduleColumn"),
+    dataIndex: "schedule",
+    width: "17%",
+    render: (_: any, record: ISchedule) => {
+      if (record.type === ScheduleType.AGENT) {
+        if (!record.cronExpr) {
+          return null;
+        }
+
+        let humanReadable = "";
+        try {
+          humanReadable = cronstrue.toString(record.cronExpr);
+        } catch {}
+
+        return (
+          <div className="schedule-cell">
+            {humanReadable && (
+              <span className="cron-human">{humanReadable}</span>
+            )}
+
+            {record.nextRunAt && (
+              <span className="next-run">
+                {translate("schedule.nextRun")}:{" "}
+                {dayjs(record.nextRunAt).fromNow()}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      const date = new Date(record.startTime!);
+
+      return (
+        <div className="schedule-cell">
+          <span className="cron-human">{dayjs(date).format("hh:mm a")}</span>
+          <span className="repeat-label">
+            {getRepeatationLabel(record.repeat || "", translate)}
+          </span>
+        </div>
+      );
+    },
   },
   {
-    title: "Active?",
-    dataIndex: "isActive",
-    width: "7%",
+    title: translate("schedule.lastStatus"),
+    dataIndex: "lastStatus",
+    width: "13%",
     align: "center",
-    render: (isActive: boolean, record: ISchedule) => (
+    render: (_: any, record: ISchedule) => {
+      const isWorkflowRunning = Boolean(
+        lodash.find(listRunningWorkflow, { scheduleId: record?.id }),
+      );
+      const lastRunStatus = deriveScheduleLastRunStatus(record.listJob || []);
+      const lastRunTime = deriveScheduleLastRunTime(record.listJob || []);
+      const lastRunBadgeStatusMap: Record<string, any> = {
+        [AgentScheduleStatus.SUCCESS]: "success",
+        [AgentScheduleStatus.ERROR]: "error",
+        [AgentScheduleStatus.RUNNING]: "processing",
+      };
+
+      return (
+        <div className="active-cell">
+          {(isWorkflowRunning || lastRunStatus) && (
+            <Tooltip
+              title={`${translate("schedule.lastStatus")}: ${isWorkflowRunning ? translate("running") : lastRunStatus}`}
+            >
+              <div className="last-run-row">
+                <Badge
+                  status={
+                    isWorkflowRunning
+                      ? "processing"
+                      : lastRunBadgeStatusMap[lastRunStatus || ""] || "default"
+                  }
+                />
+
+                {lastRunTime && !isWorkflowRunning && (
+                  <span className="last-run-time">
+                    {dayjs(lastRunTime).fromNow()}
+                  </span>
+                )}
+              </div>
+            </Tooltip>
+          )}
+
+          {(record.recentLogs || []).length > 0 && (
+            <div className="run-history">
+              {(record.recentLogs || []).map((log: IScheduleLog, i: number) => (
+                <Tooltip
+                  key={i}
+                  title={`${log.status}${log.createAt ? ` · ${dayjs(log.createAt).fromNow()}` : ""}`}
+                >
+                  <span
+                    className="history-dot"
+                    style={{
+                      backgroundColor:
+                        historyColorMap[log.status || ""] ||
+                        "var(--color-gray)",
+                    }}
+                  />
+                </Tooltip>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    title: translate("schedule.active"),
+    dataIndex: "isPaused",
+    width: "8%",
+    align: "center",
+    render: (isPaused: boolean, record: ISchedule) => (
       <Switch
-        checked={isActive}
+        checked={!isPaused}
         size="small"
         onChange={(checked: boolean) =>
-          onToggleActiveStatus(record?.id!, checked)
+          onToggleActiveStatus(record?.id!, !checked)
         }
       />
     ),
   },
   {
     title: "",
-    render: (text: any, record: ISchedule) => (
-      <div className="list-icon">
-        <Tooltip title={translate("schedule.viewLog")}>
-          <div className="view-icon" onClick={() => onViewLog(record?.id!)}>
-            <EyeOpenIcon />
-          </div>
-        </Tooltip>
+    render: (_: any, record: ISchedule) => {
+      const isAgentSchedule = record.type === ScheduleType.AGENT;
+      const isRunning = runningAgentScheduleIds.includes(record?.id!);
+      return (
+        <div className="list-icon">
+          {isAgentSchedule && isRunning && (
+            <Tooltip title={translate("running")}>
+              <span className="icon spin">
+                <SpinIcon />
+              </span>
+            </Tooltip>
+          )}
 
-        <SettingIcon
-          className="setting-icon"
-          onClick={() => onEditJob(record)}
-        />
+          {isAgentSchedule && !isRunning && (
+            <Tooltip title={translate("schedule.runNow")}>
+              <span
+                className="icon"
+                onClick={() => onRunScheduleNow(record?.id!)}
+              >
+                <PlayIcon />
+              </span>
+            </Tooltip>
+          )}
 
-        <EditIcon onClick={() => onEditSchedule(record)} />
-      </div>
-    ),
+          <Tooltip title={translate("schedule.viewLog")}>
+            <div className="icon" onClick={() => onViewLog(record?.id!)}>
+              <EyeOpenIcon />
+            </div>
+          </Tooltip>
+
+          <Tooltip title={translate("schedule.editJobs")}>
+            <span className="icon" onClick={() => onEditSchedule(record)}>
+              <SettingIcon />
+            </span>
+          </Tooltip>
+        </div>
+      );
+    },
   },
 ];
 
@@ -192,6 +397,7 @@ const ManageSchedule = (props: any) => {
     listRunningWorkflow,
     sortField,
     pageSize = TABLE_PAGE_OPTION[0],
+    runningAgentScheduleIds,
   } = props;
 
   const { translate, locale } = useTranslation();
@@ -201,6 +407,7 @@ const ManageSchedule = (props: any) => {
   const [selectedRowKeys, onSetSelectedRowKeys] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [expandedRowKeys, setExpanedRowKeys] = useState<any[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -213,6 +420,12 @@ const ManageSchedule = (props: any) => {
   const { updateSchedule } = useUpdateSchedule();
   const { updatePreference } = useUpdatePreference();
   const { stopAllWorkflow } = useStopAllWorkflow();
+  const { runScheduleNow } = useRunScheduleNow();
+
+  const handleRunScheduleNow = (scheduleId: number) => {
+    props.actSetActiveAgentRuns([...runningAgentScheduleIds, scheduleId]);
+    runScheduleNow(scheduleId);
+  };
 
   const {
     loading: isDeleteLoading,
@@ -220,6 +433,7 @@ const ManageSchedule = (props: any) => {
     deleteSchedule,
   } = useDeleteSchedule();
   const { getListRunningWorkflow } = useGetListRunningWorkflow();
+  const { getRunningAgentSchedule } = useGetRunningAgentSchedule();
   const location = useLocation();
   const { search } = location;
   const { scheduleId } = qs.parse(search, { ignoreQueryPrefix: true });
@@ -265,6 +479,13 @@ const ManageSchedule = (props: any) => {
     return () => {
       clearInterval(interval);
     };
+  }, []);
+
+  useEffect(() => {
+    getRunningAgentSchedule();
+    const runningScheduleInterval = setInterval(getRunningAgentSchedule, 3000);
+
+    return () => clearInterval(runningScheduleInterval);
   }, []);
 
   useEffect(() => {
@@ -318,21 +539,21 @@ const ManageSchedule = (props: any) => {
   };
 
   const dataSource: any[] = useMemo(() => {
-    return listSchedule?.map((schedule: ISchedule, index: number) => ({
+    const filtered =
+      typeFilter === "all"
+        ? listSchedule
+        : listSchedule?.filter(
+            (s: ISchedule) => (s.type || ScheduleType.WORKFLOW) === typeFilter,
+          );
+    return filtered?.map((schedule: ISchedule, index: number) => ({
       ...schedule,
       index: (page - 1) * pageSize + index + 1,
     }));
-  }, [listSchedule, page, pageSize]);
+  }, [listSchedule, page, pageSize, typeFilter]);
 
   const onEditSchedule = (scheduleJob: any) => {
     props?.actSetModalOpen(true);
     props?.actSaveSelectedSchedule(scheduleJob);
-  };
-
-  const onEditJob = (scheduleJob: any) => {
-    props?.actSetModalOpen(true);
-    props?.actSaveSelectedSchedule(scheduleJob);
-    setCurrentStep(1);
   };
 
   const onViewLog = (scheduleId: number) => {
@@ -342,6 +563,9 @@ const ManageSchedule = (props: any) => {
   };
 
   const expandedRowRender = (schedule: ISchedule) => {
+    const isRunning = runningAgentScheduleIds.includes(schedule?.id!);
+    const hasExecutionData = Boolean(schedule?.lastStartedAt);
+
     return (
       <ExpandRowWrapper>
         <div className="date">
@@ -358,6 +582,56 @@ const ManageSchedule = (props: any) => {
               {formatTime(Number(schedule?.updateAt), locale)}
             </div>
           </div>
+
+          {hasExecutionData && (
+            <Fragment>
+              <div className="item">
+                <div className="label">{translate("campaign.startTime")}:</div>
+                <div className="value">
+                  {formatTimeToDate(schedule.lastStartedAt!)}
+                </div>
+              </div>
+
+              {isRunning ? (
+                <div className="item">
+                  <div className="label">
+                    {translate("schedule.runningFor")}:
+                  </div>
+                  <div className="value">
+                    <ElapsedCounter startedAt={schedule.lastStartedAt!} />
+                  </div>
+                </div>
+              ) : (
+                <Fragment>
+                  {schedule.lastEndTime &&
+                    schedule.lastEndTime > schedule.lastStartedAt! && (
+                      <Fragment>
+                        <div className="item">
+                          <div className="label">
+                            {translate("campaign.endTime")}:
+                          </div>
+                          <div className="value">
+                            {formatTimeToDate(schedule.lastEndTime)}
+                          </div>
+                        </div>
+
+                        <div className="item">
+                          <div className="label">
+                            {translate("campaign.duration")}:
+                          </div>
+                          <div className="value">
+                            {formatDurationBetween(
+                              schedule.lastStartedAt!,
+                              schedule.lastEndTime,
+                            )}
+                          </div>
+                        </div>
+                      </Fragment>
+                    )}
+                </Fragment>
+              )}
+            </Fragment>
+          )}
         </div>
 
         <ScheduleFlow schedule={schedule} />
@@ -385,7 +659,7 @@ const ManageSchedule = (props: any) => {
     );
   };
 
-  const renderExpandIcon = ({ expanded, _onExpand, record }: any) => {
+  const renderExpandIcon = ({ expanded, record }: any) => {
     return expanded ? (
       <ExpandIconWrapper onClick={(_e: any) => handleExpand(expanded, record)}>
         <DownArrowIcon />
@@ -415,11 +689,11 @@ const ManageSchedule = (props: any) => {
 
   const onToggleActiveStatus = async (
     scheduleId: number,
-    isActive: boolean,
+    isPaused: boolean,
   ) => {
     updateSchedule({
       id: scheduleId,
-      isActive,
+      isPaused,
     });
   };
 
@@ -483,7 +757,25 @@ const ManageSchedule = (props: any) => {
           onChange={onSetSearchText}
           value={searchText}
           placeholder={translate("button.search")}
-          style={{ marginRight: "var(--margin-right)", width: "35rem" }}
+          style={{ marginRight: "var(--margin-right)", width: "30rem" }}
+        />
+
+        <Segmented
+          options={[
+            { label: translate("schedule.filterAll"), value: "all" },
+            {
+              label: translate("schedule.typeWorkflow"),
+              value: ScheduleType.WORKFLOW,
+            },
+            {
+              label: translate("schedule.typeAgent"),
+              value: ScheduleType.AGENT,
+            },
+          ]}
+          value={typeFilter}
+          onChange={(v) => setTypeFilter(v as string)}
+          style={{ marginRight: "var(--margin-right)" }}
+          size="large"
         />
 
         <Segmented
@@ -534,13 +826,15 @@ const ManageSchedule = (props: any) => {
           loading={false}
         />
 
-        <Switch
-          style={{ marginRight: "auto", marginLeft: "var(--margin-left)" }}
-          checkedChildren="On"
-          unCheckedChildren="Off"
-          onChange={onToggleSchedule}
-          checked={!preference?.isStopAllSchedule}
-        />
+        <Tooltip title={translate("schedule.globalScheduleLabel")}>
+          <Switch
+            style={{ marginRight: "auto", marginLeft: "var(--margin-left)" }}
+            checkedChildren={translate("schedule.switchOn")}
+            unCheckedChildren={translate("schedule.switchOff")}
+            onChange={onToggleSchedule}
+            checked={!preference?.isStopAllSchedule}
+          />
+        </Tooltip>
 
         <Button
           type="primary"
@@ -585,11 +879,12 @@ const ManageSchedule = (props: any) => {
         columns={renderColumns(
           onToggleActiveStatus,
           onEditSchedule,
-          onEditJob,
           translate,
           listRunningWorkflow,
           onViewLog,
           searchText,
+          handleRunScheduleNow,
+          runningAgentScheduleIds || [],
         )}
         pagination={{
           total: totalData,
@@ -629,6 +924,7 @@ export default connect(
     listRunningWorkflow: state?.WorkflowRunner?.listRunningWorkflow || [],
     sortField: state?.Schedule?.sortField,
     pageSize: state?.Schedule?.pageSize,
+    runningAgentScheduleIds: state?.Schedule?.runningAgentScheduleIds || [],
   }),
   {
     actSetPageName,
@@ -637,5 +933,6 @@ export default connect(
     actSetTableViewMode,
     actSetSortField,
     actSetPageSize,
+    actSetActiveAgentRuns,
   },
 )(ManageSchedule);

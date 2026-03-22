@@ -31,7 +31,30 @@ import {
 } from "./constant";
 import { NODE_ACTION } from "./simulator/constant";
 
-// LLM Provider
+export enum ScheduleType {
+  WORKFLOW = "workflow",
+  AGENT = "agent",
+}
+
+export enum JobType {
+  WORKFLOW = "workflow",
+  AGENT = "agent",
+}
+
+export enum JobConditionType {
+  NONE = "none",
+  SKIP_IF_PREV_FAILED = "skip_if_prev_failed",
+  LLM = "llm",
+}
+
+export enum AgentScheduleStatus {
+  RUNNING = "running",
+  SUCCESS = "success",
+  ERROR = "error",
+  SKIPPED = "skipped",
+  RETRYING = "retrying",
+}
+
 export enum LLMProvider {
   OPENAI = "openai",
   CLAUDE = "claude",
@@ -2369,57 +2392,100 @@ export type IProfileProxy = {
   proxyService?: string;
 };
 
-// ScheduleJob
 export type ISchedule = {
   id?: number;
   name?: string;
   note?: string;
+  type?: ScheduleType;
+  isActive?: boolean;
+  isCompleted?: boolean;
+  isRunning?: boolean;
+  lastEndTime?: number;
+  listJob?: IJob[];
+  createAt?: number;
+  updateAt?: number;
+
+  // workflow schedule
   repeat?: string;
   repeatPerDay?: string;
   durationBetweenRun?: number;
   startTime?: number;
-  isCompleted?: boolean;
-  isActive?: boolean;
   alertTelegram?: boolean;
-  lastEndTime?: number;
   onlyRunOnce?: boolean;
-  isRunning?: boolean;
-  listJob?: IJob[];
-  createAt?: number;
-  updateAt?: number;
+
+  // agent schedule
+  cronExpr?: string;
+  isPaused?: boolean;
+  memoryFileKey?: string; // Custom filename key for the agent's isolated memory file (AGENT_<memoryFileKey>.md).Defaults to schedule ID
+  lastStartedAt?: number;
+  nextRunAt?: number; // computed from cronExpr, not stored in DB
+  recentLogs?: IScheduleLog[]; // last N logs, not stored in DB
 };
 
 export type IJob = {
   id?: number;
-  workflowId?: number | null;
-  workflow?: IWorkflow;
-  campaignId?: number | null;
-  campaign?: ICampaign;
-  schedule?: ISchedule;
+  type?: JobType;
   scheduleId?: number;
-  secretKey?: string;
-  timeout?: number; // auto mark job complete if @runningDuration > @timeout
-  startTime?: string;
+  schedule?: ISchedule;
   order?: number;
   isRunWithSchedule?: boolean;
   isCompleted?: boolean;
   isRunning?: boolean;
   lastRunTime?: number;
   lastEndTime?: number;
+  createAt?: number;
+  updateAt?: number;
+
+  // workflow job
+  workflowId?: number | null;
+  workflow?: IWorkflow;
+  campaignId?: number | null;
+  campaign?: ICampaign;
+  secretKey?: string;
+  timeout?: number;
+  startTime?: string;
   onlyRunOnce?: boolean;
+
+  // agent job
+  prompt?: string;
+  notifyPlatform?: string;
+  notifyOnlyIfAgentSays?: boolean;
+  toolContextJson?: string;
+  useOutputFromPrev?: boolean; // If true, the previous job's result is injected as context into this job's prompt
+  conditionType?: JobConditionType;
+  conditionPrompt?: string;
+  maxRetries?: number;
+  retryDelayMinutes?: number;
+  llmProvider?: string; // LLM provider to use when running this job (defaults to CLAUDE)
+
+  // virtual — not stored in DB, merged at read time
+  lastLog?: IScheduleLog;
 };
 
 export type IScheduleLog = {
+  // common
   id?: number;
-  workflowId?: number;
-  workflow?: IWorkflow;
-  campaignId?: number;
-  campaign?: ICampaign;
   scheduleId?: number;
   schedule?: ISchedule;
   type?: string;
   createAt?: number;
   updateAt?: number;
+
+  // workflow log
+  workflowId?: number | null;
+  workflow?: IWorkflow;
+  campaignId?: number | null;
+  campaign?: ICampaign;
+
+  // agent log
+  jobId?: number;
+  status?: AgentScheduleStatus;
+  result?: string;
+  errorMessage?: string;
+  retryCount?: number;
+  nextRetryAt?: number;
+  startedAt?: number;
+  finishedAt?: number;
 };
 
 export type ISorter = {

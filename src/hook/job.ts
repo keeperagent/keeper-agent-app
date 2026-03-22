@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { MESSAGE } from "@/electron/constant";
-import type { IpcMarkJobCompletedPayload } from "@/electron/ipcTypes";
+import type {
+  IpcUpdateJobPayload,
+  IpcMarkJobCompletedPayload,
+} from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
+
+const useUpdateJob = () => {
+  const { execute, loading, isSuccess } = useIpcAction<IpcUpdateJobPayload>(
+    MESSAGE.UPDATE_JOB,
+    MESSAGE.UPDATE_JOB_RES,
+  );
+  const updateJob = (payload: IpcUpdateJobPayload) => execute(payload);
+  return { updateJob, loading, isSuccess };
+};
 
 const useDeleteJob = () => {
   const { execute, loading, isSuccess } = useIpcAction(
@@ -56,4 +68,4 @@ const useCheckJobExisted = () => {
   return { checkJobExisted, loading, isSuccess, existedJob };
 };
 
-export { useDeleteJob, useMarkJobCompleted, useCheckJobExisted };
+export { useUpdateJob, useDeleteJob, useMarkJobCompleted, useCheckJobExisted };

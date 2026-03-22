@@ -4,6 +4,7 @@ import { scheduleManager } from "@/electron/schedule";
 import { workflowManager } from "@/electron/simulator/workflow";
 import type {
   IpcDeletePayload,
+  IpcUpdateJobPayload,
   IpcMarkJobCompletedPayload,
   IpcCheckJobExistedPayload,
 } from "@/electron/ipcTypes";
@@ -37,6 +38,19 @@ export const runJobController = () => {
 
       const err = await jobDB.deleteJob({ id: data });
       event.reply(MESSAGE.DELETE_JOB_RES, {
+        error: err?.message,
+      });
+    },
+  );
+
+  onIpc<IpcUpdateJobPayload>(
+    MESSAGE.UPDATE_JOB,
+    MESSAGE.UPDATE_JOB_RES,
+    async (event, payload) => {
+      const { id, ...fields } = payload;
+      const [updated, err] = await jobDB.updateJob({ id, ...fields });
+      event.reply(MESSAGE.UPDATE_JOB_RES, {
+        data: updated,
         error: err?.message,
       });
     },

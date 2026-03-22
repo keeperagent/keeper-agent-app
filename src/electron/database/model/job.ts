@@ -1,4 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
+import { JobType } from "@/electron/type";
 
 export default (db: Sequelize) =>
   db.define(
@@ -10,13 +11,18 @@ export default (db: Sequelize) =>
         primaryKey: true,
         allowNull: false,
       },
+      type: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: JobType.WORKFLOW,
+      },
       campaignId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
       workflowId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
       isRunWithSchedule: {
         type: DataTypes.BOOLEAN,
@@ -60,10 +66,55 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: 0,
       },
+      prompt: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      notifyPlatform: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      notifyOnlyIfAgentSays: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      toolContextJson: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      useOutputFromPrev: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      conditionType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "none",
+      },
+      conditionPrompt: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      maxRetries: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      retryDelayMinutes: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 5,
+      },
+      llmProvider: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
     {
       timestamps: false,
-    }
+    },
   );

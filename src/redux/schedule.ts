@@ -12,6 +12,7 @@ interface IScheduleState {
   pageSize: number;
   tableViewMode: string | null;
   sortField: ISorter | {};
+  runningAgentScheduleIds: number[];
 }
 
 const initialState: IScheduleState = {
@@ -23,6 +24,7 @@ const initialState: IScheduleState = {
   pageSize: DEFAULT_PAGE_SIZE,
   tableViewMode: null,
   sortField: {},
+  runningAgentScheduleIds: [],
 };
 
 export const scheduleSlice = createSlice({
@@ -93,6 +95,12 @@ export const scheduleSlice = createSlice({
     actSetPageSize: (state: IScheduleState, action: PayloadAction<number>) => {
       state.pageSize = getNewPageSize(state.pageSize, action.payload);
     },
+    actSetActiveAgentRuns: (
+      state: IScheduleState,
+      action: PayloadAction<number[]>,
+    ) => {
+      state.runningAgentScheduleIds = action.payload;
+    },
   },
 });
 
@@ -106,6 +114,7 @@ export const {
   actSaveUpdateSchedule,
   actSetSortField,
   actSetPageSize,
+  actSetActiveAgentRuns,
 } = scheduleSlice.actions;
 export const scheduleSelector = (state: RootState) => state.Schedule;
 export default scheduleSlice.reducer;

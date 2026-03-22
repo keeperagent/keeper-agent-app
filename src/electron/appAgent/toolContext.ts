@@ -14,6 +14,7 @@ interface IToolContextData {
   campaignId?: number;
   chainKey?: string;
   attachedFiles?: IAttachedFileContext[];
+  llmProvider?: string;
 }
 
 /**
@@ -66,6 +67,9 @@ export class ToolContext {
     if (data.attachedFiles !== undefined) {
       this.data.attachedFiles = data.attachedFiles;
     }
+    if (data.llmProvider !== undefined) {
+      this.data.llmProvider = data.llmProvider;
+    }
   }
 
   get nodeEndpointGroupId(): number | undefined {
@@ -98,5 +102,9 @@ export class ToolContext {
 
   get attachedFiles(): IAttachedFileContext[] | undefined {
     return this.data.attachedFiles;
+  }
+
+  get llmProvider(): string | undefined {
+    return this.data.llmProvider;
   }
 }

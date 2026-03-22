@@ -31,6 +31,7 @@ import { runSecretKeyController } from "./controller/secretKeyCache";
 import { telegramBotService } from "./chatGateway/adapters/telegram";
 import { whatsappService } from "./chatGateway/adapters/whatsapp";
 import { scheduleManager } from "./schedule";
+import { agentTaskScheduler } from "./service/agentTaskScheduler";
 import { searchController } from "./controller/search";
 import { agentController } from "./controller/appAgent";
 import { mcpServerController } from "./controller/mcpServer";
@@ -83,6 +84,7 @@ const runMainProcess = () => {
   whatsappController();
 
   scheduleManager.start();
+  agentTaskScheduler.init();
   telegramBotService.start();
   whatsappService.start();
 };

@@ -1,4 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
+import { ScheduleType } from "@/electron/type";
 
 export default (db: Sequelize) =>
   db.define(
@@ -61,10 +62,32 @@ export default (db: Sequelize) =>
       note: {
         type: DataTypes.STRING,
       },
+      type: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: ScheduleType.WORKFLOW,
+      },
+      cronExpr: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      isPaused: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      memoryFileKey: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      lastStartedAt: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
     {
       timestamps: false,
-    }
+    },
   );
