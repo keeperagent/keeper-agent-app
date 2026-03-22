@@ -88,23 +88,61 @@ const generateCalendarEvents = (
       !isPaused
     ) {
       try {
-        const interval = CronExpressionParser.parse(schedule.cronExpr, {
+        // Detect interval by comparing two consecutive occurrences
+        const probeInterval = CronExpressionParser.parse(schedule.cronExpr, {
           currentDate: rangeStart,
-          endDate: rangeEnd,
         } as any);
-        let count = 0;
+        const firstOccurrence = probeInterval.next().toDate();
+        const secondOccurrence = probeInterval.next().toDate();
+        const intervalMinutes =
+          (secondOccurrence.getTime() - firstOccurrence.getTime()) / 60000;
 
-        while (count < 150) {
-          try {
-            const nextDate = interval.next().toDate();
-            events.push({
-              ...eventBase,
-              id: `agent-${schedule.id}-${count}`,
-              start: nextDate,
-            });
-            count++;
-          } catch {
-            break;
+        // High-frequency (< 2 hours): show one representative event per day
+        // to avoid the 150-event limit exhausting within the first few hours
+        if (intervalMinutes < 120) {
+          const current = new Date(rangeStart);
+          let dayCount = 0;
+          while (current <= rangeEnd && dayCount < 150) {
+            const dayStart = new Date(current);
+            dayStart.setHours(0, 0, 0, 0);
+            const dayEnd = new Date(current);
+            dayEnd.setHours(23, 59, 59, 999);
+            try {
+              const dayInterval = CronExpressionParser.parse(
+                schedule.cronExpr,
+                { currentDate: dayStart, endDate: dayEnd } as any,
+              );
+              const firstRunOfDay = dayInterval.next().toDate();
+              events.push({
+                ...eventBase,
+                id: `agent-${schedule.id}-day-${dayCount}`,
+                start: firstRunOfDay,
+              });
+            } catch {
+              // no occurrence on this day
+            }
+            current.setDate(current.getDate() + 1);
+            dayCount++;
+          }
+        } else {
+          // Normal frequency: show each individual occurrence
+          const interval = CronExpressionParser.parse(schedule.cronExpr, {
+            currentDate: rangeStart,
+            endDate: rangeEnd,
+          } as any);
+          let count = 0;
+          while (count < 150) {
+            try {
+              const nextDate = interval.next().toDate();
+              events.push({
+                ...eventBase,
+                id: `agent-${schedule.id}-${count}`,
+                start: nextDate,
+              });
+              count++;
+            } catch {
+              break;
+            }
           }
         }
       } catch {}
