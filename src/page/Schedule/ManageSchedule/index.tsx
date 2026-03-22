@@ -554,6 +554,17 @@ const ManageSchedule = (props: any) => {
     }));
   }, [listSchedule, page, pageSize, typeFilter]);
 
+  const calendarSchedules: ISchedule[] = useMemo(() => {
+    if (typeFilter === "all") {
+      return listSchedule || [];
+    }
+
+    return (listSchedule || []).filter(
+      (schedule: ISchedule) =>
+        (schedule.type || ScheduleType.WORKFLOW) === typeFilter,
+    );
+  }, [listSchedule, typeFilter]);
+
   const onEditSchedule = (scheduleJob: any) => {
     props?.actSetModalOpen(true);
     props?.actSaveSelectedSchedule(scheduleJob);
@@ -884,7 +895,7 @@ const ManageSchedule = (props: any) => {
 
       {tableViewMode === TABLE_VIEW_MODE.CALENDAR ? (
         <CalendarView
-          listSchedule={dataSource || []}
+          listSchedule={calendarSchedules}
           runningAgentScheduleIds={runningAgentScheduleIds || []}
           onEditSchedule={onEditSchedule}
         />

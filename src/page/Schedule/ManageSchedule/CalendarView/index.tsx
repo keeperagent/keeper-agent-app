@@ -152,13 +152,19 @@ const generateCalendarEvents = (
       const minutes = templateDate.getMinutes();
 
       if (schedule.repeat === SCHEDULE_REPEAT.NO_REPEAT) {
-        events.push({
-          ...eventBase,
-          id: `workflow-${schedule.id}`,
-          start: templateDate,
-        });
+        if (templateDate >= rangeStart && templateDate <= rangeEnd) {
+          events.push({
+            ...eventBase,
+            id: `workflow-${schedule.id}`,
+            start: templateDate,
+          });
+        }
       } else {
-        const current = new Date(rangeStart);
+        const loopStart = new Date(
+          Math.max(rangeStart.getTime(), templateDate.getTime()),
+        );
+        loopStart.setHours(0, 0, 0, 0);
+        const current = new Date(loopStart);
         let count = 0;
 
         while (current <= rangeEnd && count < 150) {
