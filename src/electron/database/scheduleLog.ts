@@ -46,6 +46,11 @@ class ScheduleLogDB {
                 [Op.or]: [
                   { "$campaign.name$": { [Op.like]: `%${searchText}%` } },
                   { "$workflow.name$": { [Op.like]: `%${searchText}%` } },
+                  { "$schedule.name$": { [Op.like]: `%${searchText}%` } },
+                  { result: { [Op.like]: `%${searchText}%` } },
+                  { errorMessage: { [Op.like]: `%${searchText}%` } },
+                  { status: { [Op.like]: `%${searchText}%` } },
+                  { type: { [Op.like]: `%${searchText}%` } },
                 ],
               }
             : {},
@@ -227,6 +232,22 @@ class ScheduleLogDB {
     }
   }
 
+  async resetRunningLogs(): Promise<void> {
+    try {
+      await ScheduleLogModel.update(
+        {
+          status: AgentScheduleStatus.ERROR,
+          errorMessage: "Interrupted: app restarted while job was running",
+          finishedAt: new Date().getTime(),
+          updateAt: new Date().getTime(),
+        },
+        { where: { status: AgentScheduleStatus.RUNNING } },
+      );
+    } catch (err: any) {
+      logEveryWhere({ message: `resetRunningLogs() error: ${err?.message}` });
+    }
+  }
+
   async getRetryingLogs(nowMs: number): Promise<IScheduleLog[]> {
     try {
       const data: any[] = await ScheduleLogModel.findAll({
@@ -242,6 +263,73 @@ class ScheduleLogDB {
         message: `getRetryingLogs() error: ${err?.message}`,
       });
       return [];
+    }
+  }
+
+  async getLatestLogsForJobs(
+    jobIds: number[],
+  ): Promise<Map<number, IScheduleLog>> {
+    try {
+      if (!jobIds.length) {
+        return new Map();
+      }
+      const rows: any[] = await ScheduleLogModel.findAll({
+        where: { jobId: { [Op.in]: jobIds } },
+        order: [["createAt", "DESC"]],
+        raw: false,
+      });
+      const result = new Map<number, IScheduleLog>();
+      for (const row of rows) {
+        const log = formatScheduleLog(row);
+        if (log.jobId != null && !result.has(log.jobId)) {
+          result.set(log.jobId, log);
+        }
+      }
+      return result;
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getLatestLogsForJobs() error: ${err?.message}`,
+      });
+      return new Map();
+    }
+  }
+
+  async getRecentLogsForSchedules(
+    scheduleIds: number[],
+    limitPerSchedule = 10,
+  ): Promise<Map<number, IScheduleLog[]>> {
+    try {
+      if (!scheduleIds.length) {
+        return new Map();
+      }
+      const rows: any[] = await ScheduleLogModel.findAll({
+        where: { scheduleId: { [Op.in]: scheduleIds } },
+        order: [["createAt", "DESC"]],
+        limit: scheduleIds.length * limitPerSchedule,
+        raw: false,
+      });
+      const result = new Map<number, IScheduleLog[]>();
+      for (const row of rows) {
+        const log = formatScheduleLog(row);
+        if (log.scheduleId == null) {
+          continue;
+        }
+        const existing = result.get(log.scheduleId) || [];
+        if (existing.length < limitPerSchedule) {
+          existing.push(log);
+          result.set(log.scheduleId, existing);
+        }
+      }
+      // reverse so oldest is leftmost
+      for (const [id, logs] of result) {
+        result.set(id, logs.reverse());
+      }
+      return result;
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getRecentLogsForSchedules() error: ${err?.message}`,
+      });
+      return new Map();
     }
   }
 

@@ -1,7 +1,9 @@
 import { Op, Model, literal } from "sequelize";
 import _ from "lodash";
+import { CronExpressionParser } from "cron-parser";
 import {
   IGetListResponse,
+  IJob,
   ISchedule,
   ISorter,
   ScheduleType,
@@ -21,8 +23,37 @@ import {
 import { logEveryWhere } from "@/electron/service/util";
 import { formatSchedule } from "@/electron/service/formatData";
 import { jobDB } from "./job";
+import { scheduleLogDB } from "./scheduleLog";
 
 class ScheduleDB {
+  private enrichSchedules = async (
+    listSchedule: ISchedule[],
+  ): Promise<ISchedule[]> => {
+    const allJobIds: number[] = [];
+    for (const schedule of listSchedule) {
+      for (const job of schedule?.listJob || []) {
+        if (job.id) {
+          allJobIds.push(job.id);
+        }
+      }
+    }
+    if (allJobIds.length > 0) {
+      const latestLogsMap = await scheduleLogDB.getLatestLogsForJobs(allJobIds);
+      for (const schedule of listSchedule) {
+        schedule.listJob = (schedule?.listJob || []).map((job: IJob) => ({
+          ...job,
+          lastLog: job.id ? latestLogsMap.get(job.id) : undefined,
+        }));
+      }
+    }
+    for (const schedule of listSchedule) {
+      if (schedule.type === ScheduleType.AGENT && schedule.cronExpr) {
+        schedule.nextRunAt = computeNextRunAt(schedule.cronExpr) || undefined;
+      }
+    }
+    return listSchedule;
+  };
+
   totalData = async (): Promise<[number | null, Error | null]> => {
     try {
       return [await ScheduleModel.count(), null];
@@ -90,9 +121,20 @@ class ScheduleDB {
         listDataAwait,
       ]);
       const totalPage = Math.ceil(totalData / Number(pageSize));
-      const listSchedule = listData?.map((item: Model<any, any>) =>
+      let listSchedule = listData?.map((item: Model<any, any>) =>
         formatSchedule(item),
       );
+
+      listSchedule = await this.enrichSchedules(listSchedule);
+
+      const scheduleIds = listSchedule
+        .map((schedule: ISchedule) => schedule.id!)
+        .filter(Boolean);
+      const recentLogsMap =
+        await scheduleLogDB.getRecentLogsForSchedules(scheduleIds);
+      for (const schedule of listSchedule) {
+        schedule.recentLogs = recentLogsMap.get(schedule.id!) || [];
+      }
 
       return [
         { data: listSchedule, totalData, page, pageSize, totalPage },
@@ -127,7 +169,8 @@ class ScheduleDB {
         return [null, null];
       }
 
-      return [formatSchedule(data), null];
+      const [schedule] = await this.enrichSchedules([formatSchedule(data)]);
+      return [schedule, null];
     } catch (err: any) {
       logEveryWhere({ message: `getOneSchedule() error: ${err?.message}` });
       return [null, err];
@@ -493,6 +536,20 @@ class ScheduleDB {
     }
   };
 
+  setLastStartedAt = async (
+    scheduleId: number,
+    timestamp: number,
+  ): Promise<void> => {
+    try {
+      await ScheduleModel.update(
+        { lastStartedAt: timestamp, updateAt: timestamp },
+        { where: { id: scheduleId } },
+      );
+    } catch (err: any) {
+      logEveryWhere({ message: `setLastStartedAt() error: ${err?.message}` });
+    }
+  };
+
   getActiveAgentSchedules = async (): Promise<
     [ISchedule[] | null, Error | null]
   > => {
@@ -524,6 +581,14 @@ class ScheduleDB {
     }
   };
 }
+
+const computeNextRunAt = (cronExpr: string): number | null => {
+  try {
+    return CronExpressionParser.parse(cronExpr).next().getTime();
+  } catch {
+    return null;
+  }
+};
 
 const scheduleDB = new ScheduleDB();
 export { scheduleDB };

@@ -403,13 +403,18 @@ const buildBaseSubAgents = (
   }
 
   const schedulerTools = [
-    isEnabled(BASE_TOOL_KEYS.CREATE_AGENT_SCHEDULE) && createAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.CREATE_AGENT_SCHEDULE) &&
+      createAgentScheduleTool(toolContext),
     isEnabled(BASE_TOOL_KEYS.LIST_AGENT_SCHEDULES) && listAgentSchedulesTool(),
-    isEnabled(BASE_TOOL_KEYS.UPDATE_AGENT_SCHEDULE) && updateAgentScheduleTool(),
-    isEnabled(BASE_TOOL_KEYS.DELETE_AGENT_SCHEDULE) && deleteAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.UPDATE_AGENT_SCHEDULE) &&
+      updateAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.DELETE_AGENT_SCHEDULE) &&
+      deleteAgentScheduleTool(),
     isEnabled(BASE_TOOL_KEYS.PAUSE_AGENT_SCHEDULE) && pauseAgentScheduleTool(),
-    isEnabled(BASE_TOOL_KEYS.RESUME_AGENT_SCHEDULE) && resumeAgentScheduleTool(),
-    isEnabled(BASE_TOOL_KEYS.RUN_AGENT_SCHEDULE_NOW) && runAgentScheduleNowTool(),
+    isEnabled(BASE_TOOL_KEYS.RESUME_AGENT_SCHEDULE) &&
+      resumeAgentScheduleTool(),
+    isEnabled(BASE_TOOL_KEYS.RUN_AGENT_SCHEDULE_NOW) &&
+      runAgentScheduleNowTool(),
   ].filter((tool): any => Boolean(tool));
 
   if (schedulerTools.length > 0) {
@@ -527,6 +532,7 @@ const createKeeperAgent = async (
   const [preference] = await preferenceDB.getOnePreference();
   const disabledTools = new Set<string>(preference?.disabledTools || []);
 
+  toolContext.update({ llmProvider: provider });
   const baseSubAgents = buildBaseSubAgents(toolContext, disabledTools);
   const { subAgents: mcpSubAgentInfos, closeClients } =
     await mcpToolLoader.loadMcpSubAgents();

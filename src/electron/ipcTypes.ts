@@ -343,6 +343,12 @@ export type IpcGetListScheduleLogPayload = IpcSortedPagePayload & {
 };
 
 // Job
+export type IpcUpdateJobPayload = {
+  id: number;
+  llmProvider?: string;
+  prompt?: string;
+};
+
 export type IpcMarkJobCompletedPayload = {
   jobId: number;
 };

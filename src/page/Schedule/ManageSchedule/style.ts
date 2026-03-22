@@ -10,6 +10,60 @@ const Wrapper = styled.div`
   align-items: center;
   font-size: 1.6rem;
 
+  .schedule-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .cron-human {
+      font-size: 1.1rem;
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    }
+    .repeat-label {
+      font-size: 1.1rem;
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    }
+
+    .next-run {
+      font-size: 1.1rem;
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    }
+  }
+
+  .active-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    .last-run-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      .last-run-time {
+        font-size: 1rem;
+        color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+        white-space: nowrap;
+      }
+    }
+
+    .run-history {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      .history-dot {
+        display: inline-block;
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 0.1rem;
+        flex-shrink: 0;
+        cursor: default;
+      }
+    }
+  }
+
   .heading {
     width: 100%;
     margin-bottom: var(--margin-bottom-large);
@@ -24,7 +78,7 @@ const Wrapper = styled.div`
     align-items: center;
     width: 100%;
 
-    .view-icon {
+    .icon {
       display: flex;
       justify-content: center;
       align-items: center;
@@ -45,6 +99,20 @@ const Wrapper = styled.div`
 
       &:hover {
         fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+      }
+    }
+
+    .spin svg {
+      cursor: default;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
       }
     }
   }
@@ -87,17 +155,39 @@ const ScheduleNameWrapper = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
+  overflow: hidden;
+  width: 100%;
 
   &:hover {
-    .name {
+    .name-text {
       color: var(--color-text-hover);
       font-weight: 500;
+    }
+  }
+
+  .name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    overflow: hidden;
+
+    .name-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      flex: 1;
     }
   }
 
   .note {
     font-size: 1.2rem;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
   }
 
   .ant-badge-status-dot {

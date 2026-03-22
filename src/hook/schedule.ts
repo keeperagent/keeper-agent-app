@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { message } from "antd";
+import { useDispatch } from "react-redux";
 import { MESSAGE } from "@/electron/constant";
 import {
   actSaveCreateSchedule,
   actSaveUpdateSchedule,
   actSaveGetListSchedule,
+  actSetActiveAgentRuns,
 } from "@/redux/schedule";
 import type { IpcGetListSchedulePayload } from "@/electron/ipcTypes";
 import { ISchedule } from "@/electron/type";
@@ -89,44 +92,6 @@ const useDeleteSchedule = () => {
   return { deleteSchedule, loading, isSuccess };
 };
 
-const usePauseSchedule = () => {
-  const { translate } = useTranslation();
-  const { execute, loading } = useIpcAction(
-    MESSAGE.PAUSE_SCHEDULE,
-    MESSAGE.PAUSE_SCHEDULE_RES,
-    {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message.error(error);
-        } else {
-          message.success(translate("schedule.paused"));
-        }
-      },
-    },
-  );
-  const pauseSchedule = (scheduleId: number) => execute({ scheduleId });
-  return { pauseSchedule, loading };
-};
-
-const useResumeSchedule = () => {
-  const { translate } = useTranslation();
-  const { execute, loading } = useIpcAction(
-    MESSAGE.RESUME_SCHEDULE,
-    MESSAGE.RESUME_SCHEDULE_RES,
-    {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message.error(error);
-        } else {
-          message.success(translate("schedule.resumed"));
-        }
-      },
-    },
-  );
-  const resumeSchedule = (scheduleId: number) => execute({ scheduleId });
-  return { resumeSchedule, loading };
-};
-
 const useRunScheduleNow = () => {
   const { translate } = useTranslation();
   const { execute, loading } = useIpcAction(
@@ -146,13 +111,39 @@ const useRunScheduleNow = () => {
   return { runScheduleNow, loading };
 };
 
+const useGetRunningAgentSchedule = () => {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    window?.electron?.on(
+      MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
+      (_event: any, payload: any) => {
+        dispatch(actSetActiveAgentRuns(payload?.data || []));
+        setLoading(false);
+      },
+    );
+    return () => {
+      window?.electron?.removeAllListeners(
+        MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
+      );
+    };
+  }, []);
+
+  const getRunningAgentSchedule = () => {
+    setLoading(true);
+    window?.electron?.send(MESSAGE.GET_RUNNING_AGENT_SCHEDULE, {});
+  };
+
+  return { getRunningAgentSchedule, loading };
+};
+
 export {
   useCreateSchedule,
   useUpdateSchedule,
   useDeleteSchedule,
   useGetListSchedule,
   useGetOneSchedule,
-  usePauseSchedule,
-  useResumeSchedule,
   useRunScheduleNow,
+  useGetRunningAgentSchedule,
 };

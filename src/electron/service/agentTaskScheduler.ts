@@ -1,15 +1,24 @@
 import cron from "node-cron";
+import _ from "lodash";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { createKeeperAgent, createLLM } from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
 import { encryptionService } from "@/electron/service/encrypt";
+import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { scheduleDB } from "@/electron/database/schedule";
 import { scheduleLogDB } from "@/electron/database/scheduleLog";
 import { preferenceDB } from "@/electron/database/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
-import { logEveryWhere } from "@/electron/service/util";
+import { logEveryWhere, sleep } from "@/electron/service/util";
+import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import { JobModel } from "@/electron/database/index";
-import type { ISchedule, IJob, IScheduleLog } from "@/electron/type";
+import { workflowManager } from "@/electron/simulator/workflow";
+import type {
+  ISchedule,
+  IJob,
+  IScheduleLog,
+  IWorkflowVariable,
+} from "@/electron/type";
 import {
   LLMProvider,
   ScheduleType,
@@ -23,11 +32,12 @@ const RETRY_POLL_INTERVAL_MS = 30_000;
 
 class AgentTaskScheduler {
   private tasks = new Map<number, cron.ScheduledTask>();
-  private activeRuns = new Set<number>();
+  private runningScheduleIds = new Set<number>();
   private retryPollTimer: NodeJS.Timeout | null = null;
 
   init = async (): Promise<void> => {
     try {
+      await scheduleLogDB.resetRunningLogs();
       const [schedules] = await scheduleDB.getActiveAgentSchedules();
       if (!schedules) {
         return;
@@ -96,34 +106,46 @@ class AgentTaskScheduler {
     }
   };
 
-  pause = async (scheduleId: number): Promise<void> => {
-    await scheduleDB.updateSchedule({
-      id: scheduleId,
-      isPaused: true,
-    } as ISchedule);
-  };
-
-  resume = async (scheduleId: number): Promise<void> => {
-    await scheduleDB.updateSchedule({
-      id: scheduleId,
-      isPaused: false,
-    } as ISchedule);
-  };
-
   runNow = async (scheduleId: number): Promise<void> => {
-    await this.executeSchedule(scheduleId);
+    await this.executeSchedule(scheduleId, true);
   };
 
-  private executeSchedule = async (scheduleId: number): Promise<void> => {
+  private executeSchedule = async (
+    scheduleId: number,
+    bypassPause = false,
+  ): Promise<void> => {
+    if (!masterPasswordManager.isMasterPasswordSet()) {
+      logEveryWhere({
+        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — app is locked`,
+      });
+      return;
+    }
+
+    logEveryWhere({
+      message: `AgentTaskScheduler: executeSchedule(${scheduleId}) started`,
+    });
+
     const [schedule] = await scheduleDB.getOneSchedule(scheduleId);
     if (!schedule) {
+      logEveryWhere({
+        message: `AgentTaskScheduler: schedule ${scheduleId} not found`,
+      });
       return;
     }
-    if (schedule.isPaused || !schedule.isActive) {
+    if (!schedule.isActive) {
+      logEveryWhere({
+        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — isActive=${schedule.isActive}`,
+      });
+      return;
+    }
+    if (!bypassPause && schedule.isPaused) {
+      logEveryWhere({
+        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — isPaused=${schedule.isPaused}`,
+      });
       return;
     }
 
-    if (this.activeRuns.size >= MAX_CONCURRENT_RUNS) {
+    if (this.runningScheduleIds.size >= MAX_CONCURRENT_RUNS) {
       await scheduleLogDB.createScheduleLog({
         scheduleId,
         status: AgentScheduleStatus.SKIPPED,
@@ -138,16 +160,34 @@ class AgentTaskScheduler {
       return;
     }
 
-    this.activeRuns.add(scheduleId);
-    try {
-      const jobs: IJob[] = (schedule.listJob || [])
-        .filter((j) => j.type === JobType.AGENT)
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
+    const jobs: IJob[] = _.orderBy(schedule.listJob || [], ["order"], ["asc"]);
 
+    if (jobs.length === 0) {
+      logEveryWhere({
+        message: `AgentTaskScheduler: schedule ${scheduleId} has no jobs — nothing to execute`,
+      });
+      return;
+    }
+
+    logEveryWhere({
+      message: `AgentTaskScheduler: schedule ${scheduleId} executing ${jobs.length} job(s)`,
+    });
+
+    this.runningScheduleIds.add(scheduleId);
+    await scheduleDB.setLastStartedAt(scheduleId, Date.now());
+    try {
       let prevLog: IScheduleLog | null = null;
 
       for (const job of jobs) {
-        prevLog = await this.executeAgentJob(schedule, job, prevLog);
+        logEveryWhere({
+          message: `AgentTaskScheduler: running job ${job.id} (type=${job.type}) for schedule ${scheduleId}`,
+        });
+        if (job.type === JobType.WORKFLOW) {
+          prevLog = await this.executeWorkflowJob(schedule, job);
+        } else {
+          prevLog = await this.executeAgentJob(schedule, job, prevLog);
+        }
+
         if (
           prevLog?.status === AgentScheduleStatus.ERROR ||
           prevLog?.status === AgentScheduleStatus.SKIPPED
@@ -161,7 +201,81 @@ class AgentTaskScheduler {
         );
       }
     } finally {
-      this.activeRuns.delete(scheduleId);
+      this.runningScheduleIds.delete(scheduleId);
+      logEveryWhere({
+        message: `AgentTaskScheduler: schedule ${scheduleId} finished`,
+      });
+    }
+  };
+
+  private executeWorkflowJob = async (
+    schedule: ISchedule,
+    job: IJob,
+  ): Promise<IScheduleLog> => {
+    if (!job.workflowId || !job.campaignId) {
+      const [log] = await scheduleLogDB.createScheduleLog({
+        scheduleId: schedule.id!,
+        jobId: job.id,
+        type: JobType.WORKFLOW,
+        status: AgentScheduleStatus.ERROR,
+        errorMessage: "Missing workflowId or campaignId",
+        startedAt: Date.now(),
+        finishedAt: Date.now(),
+      });
+      return log!;
+    }
+
+    const [logEntry] = await scheduleLogDB.createScheduleLog({
+      scheduleId: schedule.id!,
+      jobId: job.id,
+      type: JobType.WORKFLOW,
+      status: AgentScheduleStatus.RUNNING,
+      startedAt: Date.now(),
+    });
+
+    try {
+      let overrideListVariable: IWorkflowVariable[] | undefined;
+      if (job.toolContextJson) {
+        try {
+          const toolContext = JSON.parse(job.toolContextJson);
+          if (Array.isArray(toolContext.workflowVariables)) {
+            overrideListVariable = toolContext.workflowVariables;
+          }
+        } catch {
+          logEveryWhere({
+            message: `AgentTaskScheduler: failed to parse toolContextJson for workflow job ${job.id}`,
+          });
+        }
+      }
+
+      const workflow = await workflowManager.getWorkflow(
+        job.workflowId,
+        job.campaignId,
+        schedule.id!,
+      );
+
+      workflow.runWorkflow(job.secretKey || "", overrideListVariable);
+
+      while (workflow.monitor.isRunning) {
+        await sleep(1000);
+      }
+
+      const [updated] = await scheduleLogDB.updateScheduleLog({
+        id: logEntry!.id!,
+        status: AgentScheduleStatus.SUCCESS,
+        result: "Workflow completed",
+        finishedAt: Date.now(),
+      });
+      return updated!;
+    } catch (err: any) {
+      const [failed] = await scheduleLogDB.updateScheduleLog({
+        id: logEntry!.id!,
+        status: AgentScheduleStatus.ERROR,
+        errorMessage: err?.message,
+        finishedAt: Date.now(),
+      });
+      await this.notifyFailure(schedule, job, err?.message);
+      return failed!;
     }
   };
 
@@ -205,7 +319,6 @@ class AgentTaskScheduler {
   ): Promise<IScheduleLog> => {
     try {
       const result = await this.runAgentJob(schedule, job, prevLog);
-
       const [updated] = await scheduleLogDB.updateScheduleLog({
         id: logEntry.id!,
         status: AgentScheduleStatus.SUCCESS,
@@ -219,14 +332,12 @@ class AgentTaskScheduler {
 
       if (attempt < maxRetries) {
         const delayMs = (job.retryDelayMinutes || 5) * 60_000;
-        const nextRetryAt = Date.now() + delayMs;
-
         const [updated] = await scheduleLogDB.updateScheduleLog({
           id: logEntry.id!,
           status: AgentScheduleStatus.RETRYING,
           errorMessage: err?.message,
           retryCount: attempt + 1,
-          nextRetryAt,
+          nextRetryAt: Date.now() + delayMs,
         });
         return updated!;
       }
@@ -238,7 +349,6 @@ class AgentTaskScheduler {
         retryCount: attempt,
         finishedAt: Date.now(),
       });
-
       await this.notifyFailure(schedule, job, err?.message);
       return failed!;
     }
@@ -283,7 +393,7 @@ class AgentTaskScheduler {
     const [preference] = await preferenceDB.getOnePreference();
 
     const { agent, cleanup } = await createKeeperAgent({
-      provider: LLMProvider.CLAUDE,
+      provider: (job.llmProvider as LLMProvider) || LLMProvider.CLAUDE,
       toolContext,
       memoryFile,
     });
@@ -309,9 +419,7 @@ class AgentTaskScheduler {
       );
 
       const lastMessage = response?.messages?.[response.messages.length - 1];
-      return typeof lastMessage?.content === "string"
-        ? lastMessage.content
-        : JSON.stringify(lastMessage?.content || "");
+      return normalizeAgentMessageContent(lastMessage?.content);
     } finally {
       await cleanup();
     }
@@ -354,7 +462,11 @@ class AgentTaskScheduler {
       if (!prevLog?.result || !job.conditionPrompt) {
         return false;
       }
-      return this.evaluateLlmCondition(job.conditionPrompt, prevLog.result);
+      return this.evaluateLlmCondition(
+        job.conditionPrompt,
+        prevLog.result,
+        (job.llmProvider as LLMProvider) || LLMProvider.CLAUDE,
+      );
     }
 
     return false;
@@ -363,9 +475,10 @@ class AgentTaskScheduler {
   private evaluateLlmCondition = async (
     conditionPrompt: string,
     prevResult: string,
+    provider: LLMProvider,
   ): Promise<boolean> => {
     try {
-      const llm = await createLLM(LLMProvider.CLAUDE, 0);
+      const llm = await createLLM(provider, 0);
       const response = await llm.invoke([
         new SystemMessage(
           "You are a condition evaluator. Answer only YES or NO. Do not add any other text.",
@@ -462,9 +575,9 @@ class AgentTaskScheduler {
       if (!schedule) {
         return null;
       }
-      const sortedJobs = (schedule.listJob || [])
-        .filter((j) => j.type === JobType.AGENT)
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      const sortedJobs = (schedule.listJob || []).sort(
+        (a, b) => (a.order || 0) - (b.order || 0),
+      );
       const currentIdx = sortedJobs.findIndex((j) => j.id === currentJobId);
       if (currentIdx <= 0) {
         return null;
@@ -474,6 +587,30 @@ class AgentTaskScheduler {
     } catch {
       return null;
     }
+  };
+
+  onUnlock = async (): Promise<void> => {
+    try {
+      const [schedules] = await scheduleDB.getActiveAgentSchedules();
+      if (!schedules) {
+        return;
+      }
+      for (const schedule of schedules) {
+        this.register(schedule);
+      }
+      this.startRetryPoller();
+      logEveryWhere({
+        message: `AgentTaskScheduler.onUnlock(): re-registered ${schedules.length} schedule(s)`,
+      });
+    } catch (err: any) {
+      logEveryWhere({
+        message: `AgentTaskScheduler.onUnlock() error: ${err?.message}`,
+      });
+    }
+  };
+
+  getRunningScheduleIds = (): number[] => {
+    return Array.from(this.runningScheduleIds);
   };
 
   stopAll = (): void => {

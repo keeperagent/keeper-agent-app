@@ -1,11 +1,29 @@
-import { useEffect, useState, useMemo, ComponentType } from "react";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  ComponentType,
+  type ReactNode,
+} from "react";
 import { PaginationProps, Table, Popconfirm, Select, Tooltip } from "antd";
 import qs from "qs";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import { connect } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ICampaign, ISchedule, IScheduleLog, IWorkflow } from "@/electron/type";
-import { formatTimeToDate, trimText } from "@/service/util";
+import {
+  AgentScheduleStatus,
+  ICampaign,
+  ISchedule,
+  IScheduleLog,
+  ScheduleType,
+} from "@/electron/type";
+import { formatTimeToDate } from "@/service/util";
+import {
+  collapseResultToOneLine,
+  normalizeAgentMessageContent,
+} from "@/service/agentMessageContent";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { DeleteButton } from "@/component/Button";
 import { SearchInput, TotalData, Status } from "@/component";
 import { SettingIcon } from "@/component/Icon";
@@ -22,8 +40,15 @@ import {
   EMPTY_STRING,
   TABLE_PAGE_OPTION,
 } from "@/config/constant";
-import { SCHEDULE_LOG_TYPE, SORT_ORDER } from "@/electron/constant";
-import { PageWrapper, NameWrapper } from "./style";
+import { MESSAGE, SCHEDULE_LOG_TYPE, SORT_ORDER } from "@/electron/constant";
+import {
+  PageWrapper,
+  NameWrapper,
+  CampaignWorkflowWrapper,
+  EventCellWrapper,
+  ResultCellPreview,
+  ResultMarkdownTooltip,
+} from "./style";
 import ModalConfigLog from "./ModalConfigLog";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
@@ -33,112 +58,326 @@ let searchScheduleTimeOut: any = null;
 let getDataInterval: any = null;
 const { Option } = Select;
 
+type ILogTypeCell = {
+  content: string;
+  backgroundColor: string;
+  textColor: string;
+};
+
+type IStatusCell = {
+  content: string;
+  bg: string;
+  color: string;
+};
+
+const resultMarkdownComponents = {
+  a: ({ href, children }: { href?: string; children?: ReactNode }) => (
+    <a
+      href={href}
+      onClick={(e) => {
+        e.preventDefault();
+        if (href) {
+          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
+        }
+      }}
+    >
+      {children}
+    </a>
+  ),
+};
+
+const renderScheduleLogType = (
+  logType: string | undefined,
+  translate: (key: string) => string,
+): ILogTypeCell => {
+  if (!logType) {
+    return {
+      content: EMPTY_STRING,
+      backgroundColor: "transparent",
+      textColor: "var(--color-text-secondary)",
+    };
+  }
+
+  const workflowLabel = translate("schedule.typeWorkflow");
+  const agentLabel = translate("schedule.typeAgent");
+
+  if (logType === SCHEDULE_LOG_TYPE.JOB_START) {
+    return {
+      content: `${workflowLabel} - ${translate("scheduleLog.eventStart")}`,
+      backgroundColor: "var(--background-success)",
+      textColor: "var(--color-success)",
+    };
+  }
+  if (logType === SCHEDULE_LOG_TYPE.JOB_COMPLETED) {
+    return {
+      content: `${workflowLabel} - ${translate("scheduleLog.eventCompleted")}`,
+      backgroundColor: "var(--background-blue)",
+      textColor: "var(--color-blue)",
+    };
+  }
+  if (logType === SCHEDULE_LOG_TYPE.JOB_TIMEOUT) {
+    return {
+      content: `${workflowLabel} - ${translate("scheduleLog.eventTimeout")}`,
+      backgroundColor: "var(--background-error)",
+      textColor: "var(--color-error)",
+    };
+  }
+  if (logType === ScheduleType.AGENT) {
+    return {
+      content: agentLabel,
+      backgroundColor: "var(--background-blue)",
+      textColor: "var(--color-blue)",
+    };
+  }
+  if (logType === ScheduleType.WORKFLOW) {
+    return {
+      content: workflowLabel,
+      backgroundColor: "var(--background-pink)",
+      textColor: "var(--color-pink)",
+    };
+  }
+  return {
+    content: logType,
+    backgroundColor: "var(--background-blue)",
+    textColor: "var(--color-blue)",
+  };
+};
+
+const renderAgentStatus = (
+  status: AgentScheduleStatus | string | undefined,
+  translate: (key: string) => string,
+): IStatusCell => {
+  const map: Record<string, IStatusCell> = {
+    [AgentScheduleStatus.RUNNING]: {
+      content: translate("scheduleLog.statusRunning"),
+      bg: "var(--background-blue)",
+      color: "var(--color-blue)",
+    },
+    [AgentScheduleStatus.SUCCESS]: {
+      content: translate("scheduleLog.statusSuccess"),
+      bg: "var(--background-success)",
+      color: "var(--color-success)",
+    },
+    [AgentScheduleStatus.ERROR]: {
+      content: translate("scheduleLog.statusError"),
+      bg: "var(--background-error)",
+      color: "var(--color-error)",
+    },
+    [AgentScheduleStatus.SKIPPED]: {
+      content: translate("scheduleLog.statusSkipped"),
+      bg: "var(--color-text-secondary)",
+      color: "var(--color-text-primary)",
+    },
+    [AgentScheduleStatus.RETRYING]: {
+      content: translate("scheduleLog.statusRetrying"),
+      bg: "var(--background-yellow)",
+      color: "var(--color-yellow)",
+    },
+  };
+
+  const row = map[status || ""];
+
+  if (!status || !row) {
+    return {
+      content: EMPTY_STRING,
+      bg: "",
+      color: "",
+    };
+  }
+  return row;
+};
+
 const renderColumns = (
   searchText: string,
   translate: any,
-  locale: string,
   onViewWorkflow: (campaignId: number, workflowId: number) => void,
   onViewCampaign: (campaignId: number) => void,
 ) => [
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "6%",
+    width: "5%",
+    fixed: "left",
   },
   {
     title: translate("sidebar.schedule"),
     dataIndex: "schedule",
-    width: "30%",
-    render: (schedule: ISchedule) =>
-      schedule?.name ? trimText(schedule?.name, 30) : EMPTY_STRING,
-  },
-  {
-    title: translate("sidebar.campaign"),
-    dataIndex: "campaign",
-    width: "30%",
-    render: (campaign: ICampaign) => (
-      <NameWrapper
-        onClick={() => onViewCampaign(campaign?.id!)}
-        className="link"
-      >
-        <div
-          className="color"
-          style={{ backgroundColor: campaign?.color || DEFAULT_COLOR_PICKER }}
-        />
-        <div className="name">
-          <Highlighter
-            textToHighlight={
-              campaign?.name ? trimText(campaign?.name, 30) : EMPTY_STRING
-            }
-            searchWords={[searchText]}
-            highlightClassName="highlight"
+    width: "27%",
+    render: (schedule: ISchedule, record: IScheduleLog) => {
+      const typeStyled = renderScheduleLogType(record.type, translate);
+
+      return (
+        <EventCellWrapper>
+          <div className="event-left">
+            <Tooltip title={schedule?.name}>
+              <span className="schedule-name">{schedule?.name}</span>
+            </Tooltip>
+            <div className="event-time">
+              {formatTimeToDate(Number(record.createAt))}
+            </div>
+          </div>
+
+          <Status
+            content={typeStyled.content}
+            style={{
+              background: typeStyled.backgroundColor,
+              color: typeStyled.textColor,
+            }}
           />
-        </div>
-      </NameWrapper>
-    ),
+        </EventCellWrapper>
+      );
+    },
   },
   {
-    title: translate("sidebar.workflow"),
-    dataIndex: "workflow",
-    width: "30%",
-    render: (workflow: IWorkflow, record: IScheduleLog) => (
-      <NameWrapper
-        onClick={() => onViewWorkflow(record?.campaignId!, record.workflowId!)}
-        className="link"
-      >
-        <div
-          className="color"
-          style={{ backgroundColor: workflow?.color || DEFAULT_COLOR_PICKER }}
-        />
-        <div className="name">
-          <Highlighter
-            textToHighlight={
-              workflow?.name ? trimText(workflow?.name, 30) : EMPTY_STRING
-            }
-            searchWords={[searchText]}
-            highlightClassName="highlight"
-          />
-        </div>
-      </NameWrapper>
-    ),
-  },
-  {
-    title: "Type",
-    dataIndex: "type",
-    width: "10%",
+    title: translate("scheduleLog.status"),
+    dataIndex: "status",
+    width: "8%",
     align: "center",
-    render: (type: string) => {
-      let content = translate("end");
-      let backgroundColor = "var(--background-blue)";
-      let textColor = "var(--color-blue)";
-      if (type === SCHEDULE_LOG_TYPE.JOB_START) {
-        backgroundColor = "var(--background-success)";
-        textColor = "var(--color-success)";
-        content = translate("start");
-      } else if (type === SCHEDULE_LOG_TYPE.JOB_TIMEOUT) {
-        backgroundColor = "var(--background-error)";
-        textColor = "var(--color-error)";
-        content = translate("timeout");
+    render: (status: AgentScheduleStatus | undefined) => {
+      const styled = renderAgentStatus(status, translate);
+      if (!styled.bg) {
+        return (
+          <span style={{ color: "var(--color-text-secondary)" }}>
+            {styled.content}
+          </span>
+        );
       }
 
       return (
         <span style={{ display: "flex", justifyContent: "center" }}>
           <Status
-            content={content}
-            style={{
-              background: backgroundColor,
-              color: textColor,
-            }}
+            content={styled.content}
+            style={{ background: styled.bg, color: styled.color }}
           />
         </span>
       );
     },
   },
   {
-    title: translate("createdAt"),
-    dataIndex: "createAt",
-    width: "20%",
-    render: (value: number) => formatTimeToDate(Number(value)),
+    title: `${translate("scheduleLog.result")} / ${translate("scheduleLog.error")}`,
+    dataIndex: "result",
+    width: "30%",
+    ellipsis: true,
+    render: (result: string, record: IScheduleLog) => {
+      if (result) {
+        const normalized = normalizeAgentMessageContent(result);
+        const preview = collapseResultToOneLine(normalized);
+
+        return (
+          <Tooltip
+            overlayStyle={{ maxWidth: "50vw" }}
+            title={
+              <ResultMarkdownTooltip>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={resultMarkdownComponents}
+                >
+                  {normalized}
+                </ReactMarkdown>
+              </ResultMarkdownTooltip>
+            }
+          >
+            <ResultCellPreview>{preview}</ResultCellPreview>
+          </Tooltip>
+        );
+      }
+
+      if (record?.errorMessage) {
+        const preview = collapseResultToOneLine(record?.errorMessage);
+
+        return (
+          <Tooltip
+            overlayStyle={{ maxWidth: "50vw" }}
+            title={
+              <ResultMarkdownTooltip>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {record?.errorMessage}
+                </ReactMarkdown>
+              </ResultMarkdownTooltip>
+            }
+          >
+            <ResultCellPreview style={{ color: "var(--color-error)" }}>
+              {preview}
+            </ResultCellPreview>
+          </Tooltip>
+        );
+      }
+
+      return (
+        <span style={{ color: "var(--color-text-secondary)" }}>
+          {EMPTY_STRING}
+        </span>
+      );
+    },
+  },
+  {
+    title: `${translate("sidebar.campaign")} / ${translate("sidebar.workflow")}`,
+    dataIndex: "campaign",
+    width: 200,
+    render: (campaign: ICampaign, record: IScheduleLog) => {
+      const hasCampaign = Boolean(campaign?.id);
+      const hasWorkflow = Boolean(
+        record?.workflow?.id && record?.workflowId != null,
+      );
+
+      if (!hasCampaign && !hasWorkflow) {
+        return (
+          <span style={{ color: "var(--color-text-secondary)" }}>
+            {EMPTY_STRING}
+          </span>
+        );
+      }
+
+      return (
+        <CampaignWorkflowWrapper>
+          {hasCampaign && (
+            <NameWrapper
+              className="link campaign-row"
+              onClick={() => onViewCampaign(campaign.id!)}
+            >
+              <div
+                className="color"
+                style={{
+                  backgroundColor: campaign?.color || DEFAULT_COLOR_PICKER,
+                }}
+              />
+
+              <div className="name campaign-name">
+                <Highlighter
+                  textToHighlight={campaign?.name || EMPTY_STRING}
+                  searchWords={[searchText]}
+                  highlightClassName="highlight"
+                />
+              </div>
+            </NameWrapper>
+          )}
+
+          {hasWorkflow && (
+            <NameWrapper
+              className="link workflow-row"
+              onClick={() =>
+                onViewWorkflow(record.campaignId!, record.workflowId!)
+              }
+            >
+              <div
+                className="color"
+                style={{
+                  backgroundColor:
+                    record.workflow?.color || DEFAULT_COLOR_PICKER,
+                }}
+              />
+              <div className="name workflow-name">
+                <Highlighter
+                  textToHighlight={record.workflow?.name || EMPTY_STRING}
+                  searchWords={[searchText]}
+                  highlightClassName="highlight"
+                />
+              </div>
+            </NameWrapper>
+          )}
+        </CampaignWorkflowWrapper>
+      );
+    },
   },
 ];
 
@@ -151,7 +390,7 @@ const ManageLog = (props: any) => {
     pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
-  const { translate, locale } = useTranslation();
+  const { translate } = useTranslation();
   const [page, onSetPage] = useState(1);
   const [searchText, onSetSearchText] = useState("");
   const [isBtnLoading, setBtnLoading] = useState(false);
@@ -456,6 +695,7 @@ const ManageLog = (props: any) => {
       </div>
 
       <Table
+        tableLayout="fixed"
         rowSelection={rowSelection}
         rowKey={(data: IScheduleLog) => data?.id?.toString() || ""}
         dataSource={dataSource}
@@ -463,7 +703,6 @@ const ManageLog = (props: any) => {
         columns={renderColumns(
           searchText,
           translate,
-          locale,
           onViewWorkflow,
           onViewCampaign,
         )}
@@ -477,7 +716,7 @@ const ManageLog = (props: any) => {
           showTotal: onShowTotalData,
           locale: { items_per_page: `/ ${translate("page")}` },
         }}
-        scroll={{ x: 900, y: "70vh" }}
+        scroll={{ x: 1120, y: "70vh" }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

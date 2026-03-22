@@ -12,7 +12,13 @@ import {
 import { connect } from "react-redux";
 import { actSetModalOpen, actSaveSelectedSchedule } from "@/redux/schedule";
 import { RootState } from "@/redux/store";
-import { ISchedule, IJob, IRunningWorkflow } from "@/electron/type";
+import {
+  ISchedule,
+  IJob,
+  IRunningWorkflow,
+  JobType,
+  ScheduleType,
+} from "@/electron/type";
 import { SCHEDULE_REPEAT, SCHEDULE_REPEAT_PER_DAY } from "@/electron/constant";
 import InfoForm from "./InfoForm";
 import ListJob from "./ListJob";
@@ -100,6 +106,7 @@ const ModalSchedule = (props: IProps) => {
         selectedSchedule?.repeatPerDay || SCHEDULE_REPEAT_PER_DAY.ONCE_PER_DAY,
       durationBetweenRun: selectedSchedule?.durationBetweenRun || 15,
       note: selectedSchedule?.note || "",
+      cronExpr: selectedSchedule?.cronExpr || "",
     });
 
     setRepeatPerDay(
@@ -136,6 +143,32 @@ const ModalSchedule = (props: IProps) => {
 
   const onSubmitForm = async () => {
     try {
+      if (isAgentSchedule) {
+        const { name, cronExpr, isActive, note } = await form.validateFields([
+          "name",
+          "cronExpr",
+          "isActive",
+          "note",
+        ]);
+        setBtnLoading(true);
+        const data = {
+          name,
+          cronExpr,
+          isActive,
+          note,
+          listJob: listJob?.map((job, index: number) => ({
+            ...job,
+            order: index,
+          })),
+        };
+        if (selectedSchedule) {
+          updateSchedule({ ...data, id: selectedSchedule?.id });
+        } else {
+          createSchedule(data);
+        }
+        return;
+      }
+
       const {
         name,
         pickerTime,
@@ -196,15 +229,22 @@ const ModalSchedule = (props: IProps) => {
     setCurrentStep(currentStep - 1);
   };
 
+  const isAgentSchedule = selectedSchedule?.type === ScheduleType.AGENT;
+
   const goNextStep = async () => {
     try {
-      await form.validateFields(["repeat", "pickerTime"]);
+      const fieldsToValidate = isAgentSchedule
+        ? ["name", "cronExpr"]
+        : ["name", "repeat", "pickerTime"];
+      await form.validateFields(fieldsToValidate);
       setCurrentStep(currentStep + 1);
     } catch {}
   };
 
   const onChangeJob = (job: IJob, index: number) => {
-    checkJobExisted(job?.workflowId!, job?.campaignId!);
+    if (job.type !== JobType.AGENT) {
+      checkJobExisted(job?.workflowId!, job?.campaignId!);
+    }
     setListScheduleWorkflow(updateItemInList(index, listJob, job));
   };
 
@@ -241,8 +281,8 @@ const ModalSchedule = (props: IProps) => {
       }
       open={isModalOpen}
       destroyOnHidden={true}
-      maskClosable={false}
-      width="47rem"
+      mask={{ closable: true }}
+      width="50rem"
       style={{ top: "6rem" }}
       onCancel={onCloseModal}
       confirmLoading={isBtnLoading}
@@ -310,6 +350,7 @@ const ModalSchedule = (props: IProps) => {
             repeatPerDay={repeatPerDay}
             setRepeatMode={setRepeatMode}
             repeatMode={repeatMode}
+            scheduleType={selectedSchedule?.type}
           />
         )}
         {currentStep === 1 && (

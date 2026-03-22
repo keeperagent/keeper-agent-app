@@ -162,11 +162,15 @@ export {
   useGetListSchedule,
   useDeleteSchedule,
   useGetOneSchedule,
-  usePauseSchedule,
-  useResumeSchedule,
   useRunScheduleNow,
+  useGetRunningAgentSchedule,
 } from "./schedule";
-export { useDeleteJob, useMarkJobCompleted, useCheckJobExisted } from "./job";
+export {
+  useUpdateJob,
+  useDeleteJob,
+  useMarkJobCompleted,
+  useCheckJobExisted,
+} from "./job";
 export { useSaveNodeSecret, useGetNodeSecret } from "./nodeSecret";
 export { useGetListScheduleLog, useDeleteScheduleLog } from "./scheduleLog";
 export { useGetCacheSecretKey, useSetCacheSecretKey } from "./secretKeyCache";

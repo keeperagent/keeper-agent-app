@@ -80,6 +80,10 @@ export default (db: Sequelize) =>
         type: DataTypes.STRING,
         allowNull: true,
       },
+      lastStartedAt: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },

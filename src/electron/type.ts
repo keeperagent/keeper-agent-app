@@ -2417,6 +2417,9 @@ export type ISchedule = {
   cronExpr?: string;
   isPaused?: boolean;
   memoryFileKey?: string; // Custom filename key for the agent's isolated memory file (AGENT_<memoryFileKey>.md).Defaults to schedule ID
+  lastStartedAt?: number;
+  nextRunAt?: number; // computed from cronExpr, not stored in DB
+  recentLogs?: IScheduleLog[]; // last N logs, not stored in DB
 };
 
 export type IJob = {
@@ -2453,6 +2456,10 @@ export type IJob = {
   conditionPrompt?: string;
   maxRetries?: number;
   retryDelayMinutes?: number;
+  llmProvider?: string; // LLM provider to use when running this job (defaults to CLAUDE)
+
+  // virtual — not stored in DB, merged at read time
+  lastLog?: IScheduleLog;
 };
 
 export type IScheduleLog = {

@@ -123,7 +123,17 @@ export class Workflow {
 
     // Override workflow variables if provided (e.g. from Telegram bot)
     if (overrideListVariable?.length && this.workflow) {
-      this.workflow.listVariable = overrideListVariable;
+      this.workflow.listVariable = (this.workflow.listVariable || []).map(
+        (existingVariable: IWorkflowVariable) => {
+          const overrideVariable = overrideListVariable.find(
+            (candidateOverride: IWorkflowVariable) =>
+              candidateOverride.variable === existingVariable.variable,
+          );
+          return overrideVariable
+            ? { ...existingVariable, value: overrideVariable.value }
+            : existingVariable;
+        },
+      );
     }
 
     logEveryWhere({

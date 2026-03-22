@@ -3,8 +3,8 @@ import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
   padding: 1.5rem 2rem;
-  background-color: ${({ theme }: { theme: ITheme }) =>
-    theme?.colorBgTransparent};
+  background-color: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
+  border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
   border-radius: var(--border-radius);
   position: relative;
   min-height: 12rem;
@@ -12,6 +12,7 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  cursor: pointer;
 
   & > .header {
     position: absolute;
@@ -121,6 +122,21 @@ const Wrapper = styled.div`
       font-size: 1.2rem;
       color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
       cursor: pointer;
+
+      &:hover {
+        color: var(--color-text-hover);
+      }
+    }
+
+    .prompt-preview {
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 1.2rem;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
     }
   }
 `;
@@ -152,7 +168,115 @@ const DurationWrapper = styled.div`
       margin-left: 2rem;
       white-space: nowrap;
     }
+
+    &.log-markdown {
+      max-width: 40rem;
+      max-height: 30rem;
+      overflow-y: auto;
+
+      p,
+      li,
+      ul,
+      ol,
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        white-space: normal;
+      }
+
+      code {
+        font-size: 1.1rem;
+        background: ${({ theme }: { theme: ITheme }) =>
+          theme?.colorBgTransparent};
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.3rem;
+      }
+
+      pre {
+        background: ${({ theme }: { theme: ITheme }) =>
+          theme?.colorBgTransparent};
+        padding: 0.8rem;
+        border-radius: 0.4rem;
+        overflow-x: auto;
+      }
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background: ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+    margin: 0.3rem 1rem;
   }
 `;
 
-export { Wrapper, DurationWrapper };
+const ProviderBadge = styled.div`
+  align-items: center;
+  cursor: pointer;
+  padding: 0.2rem 0.7rem 0.2rem 0.7rem;
+  border-radius: 2rem;
+  border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+  width: fit-content;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--color-primary);
+  }
+
+  img {
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0.7rem;
+  }
+
+  span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+  }
+`;
+
+const EditProviderRow = styled.div`
+  display: flex;
+  gap: 1rem;
+
+  .provider-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    border-radius: 2rem;
+    border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+    cursor: pointer;
+    transition: border-color 0.15s;
+    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTransparent};
+
+    &:hover {
+      border-color: var(--color-primary);
+    }
+
+    &.active {
+      border-color: var(--color-primary);
+    }
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    span {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    }
+  }
+`;
+
+export { Wrapper, DurationWrapper, ProviderBadge, EditProviderRow };

@@ -3,6 +3,7 @@ import { scheduleDB } from "@/electron/database/schedule";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { agentTaskScheduler } from "@/electron/service/agentTaskScheduler";
 import { onIpc } from "./helpers";
+import { logEveryWhere } from "@/electron/service/util";
 import type {
   IpcGetListSchedulePayload,
   IpcGetOneSchedulePayload,
@@ -67,6 +68,11 @@ export const runScheduleController = () => {
       const { data } = payload;
 
       const [res, err] = await scheduleDB.updateSchedule(data);
+
+      if (res?.type === "agent") {
+        agentTaskScheduler.reschedule(res);
+      }
+
       event.reply(MESSAGE.UPDATE_SCHEDULE_RES, {
         data: res,
         error: err?.message,
@@ -110,29 +116,25 @@ export const runScheduleController = () => {
   );
 
   onIpc<{ scheduleId: number }>(
-    MESSAGE.PAUSE_SCHEDULE,
-    MESSAGE.PAUSE_SCHEDULE_RES,
-    async (event, payload) => {
-      await agentTaskScheduler.pause(payload.scheduleId);
-      event.reply(MESSAGE.PAUSE_SCHEDULE_RES, { error: null });
-    },
-  );
-
-  onIpc<{ scheduleId: number }>(
-    MESSAGE.RESUME_SCHEDULE,
-    MESSAGE.RESUME_SCHEDULE_RES,
-    async (event, payload) => {
-      await agentTaskScheduler.resume(payload.scheduleId);
-      event.reply(MESSAGE.RESUME_SCHEDULE_RES, { error: null });
-    },
-  );
-
-  onIpc<{ scheduleId: number }>(
     MESSAGE.RUN_SCHEDULE_NOW,
     MESSAGE.RUN_SCHEDULE_NOW_RES,
     async (event, payload) => {
-      agentTaskScheduler.runNow(payload.scheduleId);
       event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, { error: null });
+      agentTaskScheduler.runNow(payload.scheduleId).catch((err) => {
+        logEveryWhere({
+          message: `agentTaskScheduler.runNow(${payload.scheduleId}) error: ${err?.message}`,
+        });
+      });
+    },
+  );
+
+  onIpc(
+    MESSAGE.GET_RUNNING_AGENT_SCHEDULE,
+    MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
+    async (event) => {
+      event.reply(MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES, {
+        data: agentTaskScheduler.getRunningScheduleIds(),
+      });
     },
   );
 };

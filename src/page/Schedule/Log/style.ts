@@ -54,7 +54,108 @@ const NameWrapper = styled.div`
   }
 
   .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
 
-export { PageWrapper, NameWrapper };
+const EventCellWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+
+  .event-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .schedule-name {
+    font-weight: 600;
+    font-size: 1.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .event-time {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    white-space: nowrap;
+  }
+`;
+
+const CampaignWorkflowWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  .campaign-name {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    font-weight: 400;
+  }
+
+  .workflow-name {
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+`;
+
+const ResultMarkdownTooltip = styled.div`
+  font-size: 1.3rem;
+  line-height: 1.5;
+  max-width: 48rem;
+  color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.6rem 0;
+  }
+  th,
+  td {
+    border: 1px solid var(--color-border);
+    padding: 0.4rem 0.8rem;
+    text-align: left;
+  }
+  blockquote {
+    margin: 0.5rem 0;
+    padding-left: 0.8rem;
+    border-left: 3px solid var(--color-border);
+  }
+  p {
+    margin: 0.4rem 0;
+  }
+  p:first-child {
+    margin-top: 0;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
+  a {
+    color: var(--color-primary-light);
+  }
+`;
+
+const ResultCellPreview = styled.span`
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 100%;
+`;
+
+export {
+  PageWrapper,
+  NameWrapper,
+  EventCellWrapper,
+  CampaignWorkflowWrapper,
+  ResultMarkdownTooltip,
+  ResultCellPreview,
+};
