@@ -53,6 +53,7 @@ import {
   EyeOpenIcon,
   PlayIcon,
   SpinIcon,
+  CalendarIcon,
 } from "@/component/Icon";
 import {
   actSaveSelectedSchedule,
@@ -68,6 +69,7 @@ import {
 } from "@/service/util";
 import ModalSchedule from "./ModalSchedule";
 import ScheduleFlow from "./ScheduleFlow";
+import CalendarView from "./CalendarView";
 import {
   Wrapper,
   ExpandIconWrapper,
@@ -98,6 +100,7 @@ let getDataInterval: any = null;
 const TABLE_VIEW_MODE = {
   EXPAND_ROW: "EXPAND_ROW",
   COLLAPSE_ROW: "COLLAPSE_ROW",
+  CALENDAR: "CALENDAR",
 };
 const getRepeatationLabel = (value: string, translate: any) => {
   const mapValue = {
@@ -773,7 +776,7 @@ const ManageSchedule = (props: any) => {
             },
           ]}
           value={typeFilter}
-          onChange={(v) => setTypeFilter(v as string)}
+          onChange={(filterValue) => setTypeFilter(filterValue as string)}
           style={{ marginRight: "var(--margin-right)" }}
           size="large"
         />
@@ -793,6 +796,14 @@ const ManageSchedule = (props: any) => {
               icon: (
                 <IconWrapper>
                   <ExpandLineIcon />
+                </IconWrapper>
+              ),
+            },
+            {
+              value: TABLE_VIEW_MODE.CALENDAR,
+              icon: (
+                <IconWrapper>
+                  <CalendarIcon />
                 </IconWrapper>
               ),
             },
@@ -871,41 +882,49 @@ const ManageSchedule = (props: any) => {
         </Popconfirm>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
-        rowKey={(data) => data?.id!}
-        dataSource={dataSource}
-        // @ts-ignore
-        columns={renderColumns(
-          onToggleActiveStatus,
-          onEditSchedule,
-          translate,
-          listRunningWorkflow,
-          onViewLog,
-          searchText,
-          handleRunScheduleNow,
-          runningAgentScheduleIds || [],
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: { items_per_page: `/ ${translate("page")}` },
-        }}
-        scroll={{ x: 900, y: "70vh" }}
-        loading={false}
-        onChange={onTableChange}
-        size="middle"
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-          expandedRowKeys,
-        }}
-      />
+      {tableViewMode === TABLE_VIEW_MODE.CALENDAR ? (
+        <CalendarView
+          listSchedule={dataSource || []}
+          runningAgentScheduleIds={runningAgentScheduleIds || []}
+          onEditSchedule={onEditSchedule}
+        />
+      ) : (
+        <Table
+          rowSelection={rowSelection}
+          rowKey={(data) => data?.id!}
+          dataSource={dataSource}
+          // @ts-ignore
+          columns={renderColumns(
+            onToggleActiveStatus,
+            onEditSchedule,
+            translate,
+            listRunningWorkflow,
+            onViewLog,
+            searchText,
+            handleRunScheduleNow,
+            runningAgentScheduleIds || [],
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          scroll={{ x: 900, y: "70vh" }}
+          loading={false}
+          onChange={onTableChange}
+          size="middle"
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+            expandedRowKeys,
+          }}
+        />
+      )}
 
       <ModalSchedule
         setCurrentStep={setCurrentStep}
