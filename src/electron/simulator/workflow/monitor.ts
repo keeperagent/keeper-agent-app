@@ -35,7 +35,7 @@ export class Monitor {
     [threadID: string]: Error;
   };
   private mapNodeError: {
-    [nodeID: string]: Error;
+    [nodeID: string]: { timestamp: number; message: string };
   };
   private mapMinMaxDuration: {
     [nodeID: string]: {
@@ -416,7 +416,10 @@ export class Monitor {
   };
 
   setNodeError = ({ nodeID, error }: { nodeID: string; error: Error }) => {
-    this.mapNodeError[nodeID] = error;
+    this.mapNodeError[nodeID] = {
+      timestamp: Date.now(),
+      message: error.message,
+    };
     this.markPendingUpdate();
   };
 
