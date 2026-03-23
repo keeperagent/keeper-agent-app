@@ -28,9 +28,13 @@ export const Wrapper = styled.div`
   }
 
   .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
-    gap: 1.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+
+    & > * {
+      flex: 0 0 calc((100% - 4rem) / 3);
+    }
   }
 
   .loading-center {
