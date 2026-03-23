@@ -351,13 +351,15 @@ const CustomNode = (props: any) => {
                     style={{
                       backgroundColor: onErrorColor,
                       ...(Boolean(config?.retry) && {
-                        fontSize: "0.45rem",
+                        fontSize: "0.4rem",
                         fontWeight: 700,
                         color: "var(--color-text)",
                       }),
                     }}
                   >
-                    {config?.retry || null}
+                    {config?.retry
+                      ? config?.retry?.toString()?.slice(0, 2)
+                      : null}
                   </div>
                 </Tooltip>
 
