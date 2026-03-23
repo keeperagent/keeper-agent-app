@@ -338,13 +338,29 @@ const CustomNode = (props: any) => {
                     <TooltipWrapper>
                       <div className="condition error">on error</div>
                       <div className="text">{onErrorText}</div>
+                      {(config?.retry ?? 0) > 0 && (
+                        <div className="text">
+                          {translate("workflow.retryLabel")}: {config?.retry}
+                        </div>
+                      )}
                     </TooltipWrapper>
                   }
                 >
                   <div
                     className="node-action"
-                    style={{ backgroundColor: onErrorColor }}
-                  />
+                    style={{
+                      backgroundColor: onErrorColor,
+                      ...(Boolean(config?.retry) && {
+                        fontSize: "0.4rem",
+                        fontWeight: 700,
+                        color: "var(--color-text)",
+                      }),
+                    }}
+                  >
+                    {config?.retry
+                      ? config?.retry?.toString()?.slice(0, 2)
+                      : null}
+                  </div>
                 </Tooltip>
 
                 <Tooltip

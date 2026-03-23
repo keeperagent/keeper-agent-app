@@ -56,6 +56,7 @@ const RabbyWalletImportWallet = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setMode(config?.importType || IMPORT_WALLET_TYPE.IMPORT_BY_SEED_PHRASE);
     setActiveTab(TAB.DETAIL);
@@ -81,6 +82,7 @@ const RabbyWalletImportWallet = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "timeout",
@@ -94,6 +96,7 @@ const RabbyWalletImportWallet = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -113,6 +116,7 @@ const RabbyWalletImportWallet = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

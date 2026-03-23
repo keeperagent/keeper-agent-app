@@ -101,6 +101,7 @@ const LaunchTokenPumpfun = (props: Props) => {
       unitPrice: config?.unitPrice || "100",
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
       vanityAddressPrivateKey: config?.vanityAddressPrivateKey,
+      retry: config?.retry || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -147,6 +148,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         unitLimit,
         unitPrice,
         vanityAddressPrivateKey,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -173,6 +175,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         "unitLimit",
         "unitPrice",
         "vanityAddressPrivateKey",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -205,6 +208,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         unitLimit,
         unitPrice,
         vanityAddressPrivateKey,
+        retry,
       });
 
       onCloseModal();

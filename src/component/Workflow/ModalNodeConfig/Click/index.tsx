@@ -51,6 +51,7 @@ const Click = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setMode(config?.selectorType || SELECTOR_TYPE.CSS_SELECTOR);
     setActiveTab(TAB.DETAIL);
@@ -80,6 +81,7 @@ const Click = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -93,6 +95,7 @@ const Click = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         name,
@@ -112,6 +115,7 @@ const Click = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

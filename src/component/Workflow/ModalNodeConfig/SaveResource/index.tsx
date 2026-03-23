@@ -202,6 +202,7 @@ const SaveResource = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry: 0,
         ...rest,
       });
       onCloseModal();
@@ -382,7 +383,9 @@ const SaveResource = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting hideTimeout={true} />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideTimeout={true} hideRetry={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

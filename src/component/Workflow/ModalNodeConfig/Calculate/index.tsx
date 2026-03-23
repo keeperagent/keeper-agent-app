@@ -107,6 +107,7 @@ const Calculate = (props: Props) => {
           condition,
           isSkip,
         },
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -259,7 +260,11 @@ const Calculate = (props: Props) => {
         )}
 
         {activeTab === TAB.SETTING && (
-          <CommonSetting hideTimeout={true} hideTelegramCheckbox={true} />
+          <CommonSetting
+            hideTimeout={true}
+            hideTelegramCheckbox={true}
+            hideRetry={true}
+          />
         )}
 
         {activeTab === TAB.SKIP && (

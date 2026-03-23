@@ -93,6 +93,7 @@ const SetAttribute = (props: Props) => {
           condition,
           isSkip,
         },
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -296,6 +297,7 @@ const SetAttribute = (props: Props) => {
             hideCondition={true}
             hideTimeout={true}
             hideTelegramCheckbox={true}
+            hideRetry={true}
           />
         )}
 

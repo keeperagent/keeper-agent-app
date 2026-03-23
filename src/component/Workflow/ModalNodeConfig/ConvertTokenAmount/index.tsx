@@ -149,6 +149,7 @@ const ConvertTokenAmount = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry: 0,
       });
 
       onCloseModal();
@@ -466,7 +467,7 @@ const ConvertTokenAmount = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && <CommonSetting hideRetry={true} />}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

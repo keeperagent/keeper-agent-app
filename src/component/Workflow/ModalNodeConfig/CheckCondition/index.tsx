@@ -81,6 +81,7 @@ const CheckCondition = (props: Props) => {
         status: NODE_STATUS.RUN,
         onError,
         onSuccess,
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -178,6 +179,7 @@ const CheckCondition = (props: Props) => {
               hideTimeout={true}
               hideWaitingTime={true}
               hideTelegramCheckbox={true}
+              hideRetry={true}
             />
           </Fragment>
         ) : (
@@ -186,6 +188,7 @@ const CheckCondition = (props: Props) => {
               hideTimeout={true}
               hideTelegramCheckbox={true}
               hideCondition={true}
+              hideRetry={true}
             />
           </Fragment>
         )}

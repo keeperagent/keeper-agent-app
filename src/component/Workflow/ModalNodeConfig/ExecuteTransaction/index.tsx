@@ -105,6 +105,7 @@ const ExecuteTransaction = (props: Props) => {
       toAddress: config?.toAddress || "",
       transactionValue: config?.transactionValue || "0",
       transactionType: EVM_TRANSACTION_TYPE.LEGACY,
+      retry: config?.retry || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -144,6 +145,7 @@ const ExecuteTransaction = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -163,6 +165,7 @@ const ExecuteTransaction = (props: Props) => {
         "alertTelegramWhenError",
         "toAddress",
         "transactionValue",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -185,6 +188,7 @@ const ExecuteTransaction = (props: Props) => {
         toAddress,
         transactionValue,
         transactionType: EVM_TRANSACTION_TYPE.LEGACY,
+        retry,
       });
 
       onCloseModal();

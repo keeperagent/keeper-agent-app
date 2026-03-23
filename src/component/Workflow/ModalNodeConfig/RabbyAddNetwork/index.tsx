@@ -50,6 +50,7 @@ const RabbyAddNetwork = (props: Props) => {
       rpcUrl: config?.rpcUrl,
       symbol: config?.symbol,
       blockExplorer: config?.blockExplorer,
+      retry: config?.retry || 0,
     });
     setMode(config?.mode || RABBY_ADD_NETWORK_TYPE.FROM_CHAINLIST);
     setActiveTab(TAB.DETAIL);
@@ -77,6 +78,7 @@ const RabbyAddNetwork = (props: Props) => {
         rpcUrl,
         symbol,
         blockExplorer,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "timeout",
@@ -92,6 +94,7 @@ const RabbyAddNetwork = (props: Props) => {
         "rpcUrl",
         "symbol",
         "blockExplorer",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -112,6 +115,7 @@ const RabbyAddNetwork = (props: Props) => {
         symbol,
         blockExplorer,
         mode,
+        retry,
       });
       onCloseModal();
     } catch {}

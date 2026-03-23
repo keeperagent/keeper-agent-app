@@ -49,6 +49,7 @@ const GenerateVanityAddress = (props: Props) => {
       variableToSaveAddress: config?.variableToSaveAddress || "VANITY_ADDRESS",
       variableToSavePrivateKey:
         config?.variableToSavePrivateKey || "VANITY_PRIVATE_KEY",
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -74,6 +75,7 @@ const GenerateVanityAddress = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "prefix",
         "suffix",
@@ -88,6 +90,7 @@ const GenerateVanityAddress = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         prefix,
@@ -107,6 +110,7 @@ const GenerateVanityAddress = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

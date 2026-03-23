@@ -53,6 +53,7 @@ const AskAgent = (props: Props) => {
       prompt: config?.prompt,
       model: config?.model || "gpt-4o-mini",
       apiKey: config?.apiKey || preference?.openAIApiKey,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -78,6 +79,7 @@ const AskAgent = (props: Props) => {
         prompt,
         model,
         apiKey,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -92,6 +94,7 @@ const AskAgent = (props: Props) => {
         "prompt",
         "model",
         "apiKey",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -111,6 +114,7 @@ const AskAgent = (props: Props) => {
         prompt,
         model,
         apiKey,
+        retry,
       });
       onCloseModal();
     } catch {}

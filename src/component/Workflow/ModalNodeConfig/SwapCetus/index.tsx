@@ -96,6 +96,7 @@ const SwapCetus = (props: Props) => {
         typeof config?.swapInput?.shouldWaitTransactionComfirmed === "undefined"
           ? true
           : Boolean(config?.swapInput?.shouldWaitTransactionComfirmed),
+      retry: config?.retry || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -138,6 +139,7 @@ const SwapCetus = (props: Props) => {
         priceImpactPercentage,
         shouldWaitTransactionComfirmed,
         gasPrice,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -160,6 +162,7 @@ const SwapCetus = (props: Props) => {
         "priceImpactPercentage",
         "shouldWaitTransactionComfirmed",
         "gasPrice",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -190,6 +193,7 @@ const SwapCetus = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
 
       onCloseModal();

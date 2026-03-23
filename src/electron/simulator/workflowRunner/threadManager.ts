@@ -455,19 +455,43 @@ export class ThreadManager {
       }
 
       // run actual task here
-      const newFlowProfilePromise = taskFn(
-        page,
-        config,
-        listVariable,
-        flowProfile,
-        browser,
-      );
-      let newFlowProfile: IFlowProfile | null;
-      if (timeout) {
-        // run function with timeout
-        newFlowProfile = await sendWithTimeout(newFlowProfilePromise, timeout);
-      } else {
-        newFlowProfile = await newFlowProfilePromise;
+      const maxRetries = (config as any)?.retry || 0;
+      let attempt = 0;
+      let newFlowProfile: IFlowProfile | null = null;
+      let taskError: Error | null = null;
+
+      while (attempt <= maxRetries) {
+        try {
+          const newFlowProfilePromise = taskFn(
+            page,
+            config,
+            listVariable,
+            flowProfile,
+            browser,
+          );
+          if (timeout) {
+            newFlowProfile = await sendWithTimeout(
+              newFlowProfilePromise,
+              timeout,
+            );
+          } else {
+            newFlowProfile = await newFlowProfilePromise;
+          }
+          taskError = null;
+          break;
+        } catch (retryErr: any) {
+          taskError = retryErr;
+          if (attempt < maxRetries) {
+            logEveryWhere({
+              message: `runNormalTask ${taskName}() failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying error: ${retryErr?.message}`,
+            });
+          }
+          attempt++;
+        }
+      }
+
+      if (taskError) {
+        throw taskError;
       }
 
       if (withExtensionPopup && !shouldSkipNode) {

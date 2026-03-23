@@ -41,6 +41,7 @@ const OpenNewTab = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -63,6 +64,7 @@ const OpenNewTab = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "url",
         "sleep",
@@ -73,6 +75,7 @@ const OpenNewTab = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         url,
@@ -88,6 +91,7 @@ const OpenNewTab = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}
@@ -131,7 +135,7 @@ const OpenNewTab = (props: Props) => {
                         !value?.startsWith("http://"))
                     ) {
                       return Promise.reject(
-                        Error(translate("workflow.validateLinkURL"))
+                        Error(translate("workflow.validateLinkURL")),
                       );
                     }
 

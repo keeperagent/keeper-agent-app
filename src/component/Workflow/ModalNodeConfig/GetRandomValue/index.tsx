@@ -110,6 +110,7 @@ const GetGasPrice = (props: Props) => {
           condition,
           isSkip,
         },
+        retry: 0,
       });
 
       onCloseModal();
@@ -159,7 +160,7 @@ const GetGasPrice = (props: Props) => {
             >
               <Input
                 placeholder={translate(
-                  "workflow.variableToSaveResultPlaceholder"
+                  "workflow.variableToSaveResultPlaceholder",
                 )}
                 className="custom-input"
                 size="large"
@@ -305,6 +306,7 @@ const GetGasPrice = (props: Props) => {
             hideCondition={true}
             hideTimeout={true}
             hideTelegramCheckbox={true}
+            hideRetry={true}
           />
         )}
 

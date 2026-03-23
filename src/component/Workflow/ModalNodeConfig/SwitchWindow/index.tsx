@@ -44,6 +44,7 @@ const SwitchWindow = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setMode((config?.windowType as WINDOW_TYPE) || WINDOW_TYPE.POPUP_WINDOW);
@@ -66,6 +67,7 @@ const SwitchWindow = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "url",
         "sleep",
@@ -77,6 +79,7 @@ const SwitchWindow = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -92,6 +95,7 @@ const SwitchWindow = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

@@ -396,6 +396,7 @@
   "workflow.sleepTime": "Waiting time (seconds)",
   "workflow.placeholderSleepTime": "Eg 3s, 5s, ...",
   "workflow.timeoutLabel": "Timeout (seconds)",
+  "workflow.retryLabel": "Retry on failure",
   "workflow.extensionPopup": "Extension popup",
   "workflow.validateNameFile": "Filename cannot contain special characters like / \\",
   "workflow.queue": "queue",

@@ -79,6 +79,7 @@ const RandomOnOff = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -137,6 +138,7 @@ const RandomOnOff = (props: Props) => {
             hideCondition={true}
             hideTimeout={true}
             hideTelegramCheckbox={true}
+            hideRetry={true}
           />
         )}
 
