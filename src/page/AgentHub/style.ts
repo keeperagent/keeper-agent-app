@@ -1,17 +1,30 @@
 import styled from "styled-components";
 
 export const Wrapper = styled.div`
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  font-size: 1.6rem;
   gap: 1.6rem;
-  padding: 1.6rem;
-  height: 100%;
   overflow-y: auto;
 
   .header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
+
+    .header-search {
+      width: 32rem;
+      max-width: 100%;
+      flex-shrink: 0;
+    }
+
+    .header-add-btn {
+      flex-shrink: 0;
+    }
   }
 
   .card-grid {
@@ -44,6 +57,7 @@ export const Wrapper = styled.div`
 
     &__desc {
       font-size: 1.3rem;
+      margin-bottom: 2rem;
     }
   }
 

@@ -51,42 +51,6 @@ export const BASE_TOOL_KEYS = {
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
-  // App Management Tools
-  {
-    key: BASE_TOOL_KEYS.CREATE_WALLET_GROUP,
-    name: "Create wallet group",
-    description:
-      "Set up a new wallet group to organize and manage your wallets in one place",
-    group: BaseToolGroup.APP_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP,
-    name: "Generate wallets for group",
-    description:
-      "Automatically generate and assign multiple wallets to an existing wallet group",
-    group: BaseToolGroup.APP_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.CREATE_PROFILE_GROUP_WITH_PROFILES,
-    name: "Create profile group with profiles",
-    description:
-      "Create a profile group and bulk-provision browser profiles inside it",
-    group: BaseToolGroup.APP_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.CREATE_CAMPAIGN_FOR_PROFILE_GROUP,
-    name: "Create campaign for profile group",
-    description:
-      "Create a new campaign and attach it to a profile group for execution",
-    group: BaseToolGroup.APP_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.CREATE_NODE_PROVIDER_GROUP,
-    name: "Create node provider group",
-    description:
-      "Create a node provider group and register RPC endpoints for on-chain access",
-    group: BaseToolGroup.APP_MANAGEMENT,
-  },
   // Transaction Tools
   {
     key: BASE_TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE,
@@ -277,6 +241,42 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     description:
       "Run Python scripts to call APIs, process data, or automate any custom logic",
     group: BaseToolGroup.CODE_EXECUTION,
+  },
+  // App Management Tools
+  {
+    key: BASE_TOOL_KEYS.CREATE_WALLET_GROUP,
+    name: "Create wallet group",
+    description:
+      "Set up a new wallet group to organize and manage your wallets in one place",
+    group: BaseToolGroup.APP_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP,
+    name: "Generate wallets for group",
+    description:
+      "Automatically generate and assign multiple wallets to an existing wallet group",
+    group: BaseToolGroup.APP_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.CREATE_PROFILE_GROUP_WITH_PROFILES,
+    name: "Create profile group with profiles",
+    description:
+      "Create a profile group and bulk-provision browser profiles inside it",
+    group: BaseToolGroup.APP_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.CREATE_CAMPAIGN_FOR_PROFILE_GROUP,
+    name: "Create campaign for profile group",
+    description:
+      "Create a new campaign and attach it to a profile group for execution",
+    group: BaseToolGroup.APP_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.CREATE_NODE_PROVIDER_GROUP,
+    name: "Create node provider group",
+    description:
+      "Create a node provider group and register RPC endpoints for on-chain access",
+    group: BaseToolGroup.APP_MANAGEMENT,
   },
 ];
 

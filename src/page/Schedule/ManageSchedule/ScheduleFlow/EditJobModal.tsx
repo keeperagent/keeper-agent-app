@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Form, Input, Modal } from "antd";
 import { useTranslation, useGetOneSchedule, useUpdateJob } from "@/hook";
 import { IJob, ISchedule, LLMProvider } from "@/electron/type";
-import { LLM_PROVIDERS } from "@/config/llmProviders";
-import { EditProviderRow } from "./Job/style";
+import { LlmProviderPicker } from "@/component";
 
 type IProps = {
   open: boolean;
@@ -67,18 +66,7 @@ const EditJobModal = ({ open, job, schedule, onClose }: IProps) => {
         </Form.Item>
 
         <Form.Item label={`${translate("schedule.llmProvider")}:`}>
-          <EditProviderRow>
-            {LLM_PROVIDERS.map((provider) => (
-              <div
-                key={provider.key}
-                className={`provider-item ${editProvider === provider.key ? "active" : ""}`}
-                onClick={() => setEditProvider(provider.key)}
-              >
-                <img src={provider.icon} alt={provider.label} />
-                <span>{provider.label}</span>
-              </div>
-            ))}
-          </EditProviderRow>
+          <LlmProviderPicker value={editProvider} onChange={setEditProvider} />
         </Form.Item>
       </Form>
     </Modal>

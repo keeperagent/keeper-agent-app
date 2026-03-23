@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, current } from "@reduxjs/toolkit";
-import { IAgentRegistry, IGetListResponse } from "@/electron/type";
-import { getNewPageSize, updateOrDelete } from "./util";
+import { IAgentRegistry } from "@/electron/type";
+import { DEFAULT_PAGE_SIZE, getNewPageSize, updateOrDelete } from "./util";
 import { RootState } from "./store";
 
 interface IAgentRegistryState {
@@ -25,12 +25,10 @@ export const agentRegistrySlice = createSlice({
   reducers: {
     actSaveGetListAgentRegistry: (
       state: IAgentRegistryState,
-      action: PayloadAction<
-        IGetListResponse<IAgentRegistry> | undefined | null
-      >,
+      action: PayloadAction<any>,
     ) => {
       const { payload } = action;
-      state.listAgentRegistry = payload.data || [];
+      state.listAgentRegistry = payload?.data || [];
       state.page = payload?.page;
       state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
       state.totalData = payload?.totalData;

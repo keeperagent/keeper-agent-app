@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, Fragment } from "react";
 import { connect } from "react-redux";
 import { Button, Pagination, Spin } from "antd";
-import { PlusIcon } from "@/component/Icon";
 import { SearchInput } from "@/component/Input";
 import {
   useGetListAgentRegistry,
   useDeleteAgentRegistry,
 } from "@/hook/agentRegistry";
 import { actSaveSelectedAgentRegistry } from "@/redux/agentRegistry";
+import { actSetPageName } from "@/redux/layout";
 import { RootState } from "@/redux/store";
 import { IAgentRegistry } from "@/electron/type";
 import { useTranslation } from "@/hook/useTranslation";
@@ -19,9 +19,15 @@ import { Wrapper } from "./style";
 const PAGE_SIZE = 12;
 
 const AgentRegistry = (props: any) => {
-  const { listAgentRegistry, totalData, page, actSaveSelectedAgentRegistry } =
-    props;
+  const {
+    listAgentRegistry,
+    totalData,
+    page,
+    actSaveSelectedAgentRegistry,
+    actSetPageName,
+  } = props;
   const { translate } = useTranslation();
+
   const { loading, getListAgentRegistry } = useGetListAgentRegistry();
   const { deleteAgentRegistry } = useDeleteAgentRegistry();
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,6 +46,10 @@ const AgentRegistry = (props: any) => {
       searchText: searchText || undefined,
     });
   };
+
+  useEffect(() => {
+    actSetPageName(translate("sidebar.agentHub"));
+  }, [translate]);
 
   useEffect(() => {
     fetchList(1);
@@ -109,20 +119,24 @@ const AgentRegistry = (props: any) => {
   return (
     <Wrapper>
       <div className="header">
-        <SearchInput
-          value={searchText}
-          onChange={onSearch}
-          placeholder={translate("button.search")}
-          style={{ width: "32rem" }}
-        />
+        <div className="header-search">
+          <SearchInput
+            value={searchText}
+            onChange={onSearch}
+            placeholder={translate("button.search")}
+            style={{ width: "100%" }}
+          />
+        </div>
 
-        <Button
-          type="primary"
-          icon={<PlusIcon color="white" />}
-          onClick={onOpenCreate}
-        >
-          {translate("agent.addRegistry")}
-        </Button>
+        {listAgentRegistry.length > 0 && (
+          <Button
+            className="header-add-btn"
+            type="primary"
+            onClick={onOpenCreate}
+          >
+            {translate("agent.addRegistry")}
+          </Button>
+        )}
       </div>
 
       {loading && listAgentRegistry.length === 0 ? (
@@ -150,6 +164,14 @@ const AgentRegistry = (props: any) => {
                 <div className="empty-state__desc">
                   {translate("agent.addRegistryDesc")}
                 </div>
+
+                <Button
+                  className="header-add-btn"
+                  type="primary"
+                  onClick={onOpenCreate}
+                >
+                  {translate("agent.addRegistry")}
+                </Button>
               </div>
             )}
           </div>
@@ -185,5 +207,5 @@ export default connect(
     totalData: state?.AgentRegistry?.totalData || 0,
     page: state?.AgentRegistry?.page || 1,
   }),
-  { actSaveSelectedAgentRegistry },
+  { actSaveSelectedAgentRegistry, actSetPageName },
 )(AgentRegistry);

@@ -22,3 +22,4 @@ export { default as BeforeRouteChangeBlocker } from "./BeforeRouteChangeBlocker"
 export { default as TrimText } from "./TrimText";
 export { default as ErrorBoundary } from "./ErrorBoundary";
 export { default as LogViewer } from "./LogViewer";
+export { default as LlmProviderPicker } from "./LlmProviderPicker";

@@ -17,14 +17,11 @@ import ChatAgent from "./ChatAgent";
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
 const ToolsManager = lazy(() => import("./ToolsManager"));
-const AgentRegistry = lazy(() => import("./AgentRegistry"));
-
 const TAB = {
   AGENT: "AGENT",
   MCP_SERVER: "MCP_SERVER",
   SKILLS: "SKILLS",
   TOOLS: "TOOLS",
-  REGISTRY: "REGISTRY",
 };
 
 const PROVIDERS: {
@@ -77,7 +74,7 @@ const AgentPage = (props: any) => {
     return () => clearTimeout(t);
   }, []);
 
-  useAgentReadyStats(activeTab !== TAB.AGENT && activeTab !== TAB.REGISTRY);
+  useAgentReadyStats(activeTab !== TAB.AGENT);
 
   const onChangeTab = (key: string) => {
     setActiveTab(key);
@@ -132,10 +129,6 @@ const AgentPage = (props: any) => {
             {
               key: TAB.AGENT,
               label: translate("agent.tabAgent"),
-            },
-            {
-              key: TAB.REGISTRY,
-              label: translate("agent.tabRegistry"),
             },
             {
               key: TAB.MCP_SERVER,
@@ -289,23 +282,6 @@ const AgentPage = (props: any) => {
             </Suspense>
           )}
 
-          {activeTab === TAB.REGISTRY && (
-            <Suspense
-              fallback={
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "2rem",
-                  }}
-                >
-                  <Spin />
-                </div>
-              }
-            >
-              <AgentRegistry />
-            </Suspense>
-          )}
         </Fragment>
       )}
     </Wrapper>
