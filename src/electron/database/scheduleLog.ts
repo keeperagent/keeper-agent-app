@@ -11,6 +11,7 @@ import {
   CampaignModel,
   WorkflowModel,
   ScheduleModel,
+  JobModel,
 } from "./index";
 import { formatScheduleLog } from "@/electron/service/formatData";
 import { logEveryWhere } from "@/electron/service/util";
@@ -340,6 +341,54 @@ class ScheduleLogDB {
         message: `getLatestJobLog() error: ${err?.message}`,
       });
       return null;
+    }
+  }
+
+  async getLogsByAgentRegistryId(
+    agentRegistryId: number,
+    page: number,
+    pageSize: number,
+  ): Promise<[IGetListResponse<IScheduleLog> | null, Error | null]> {
+    try {
+      const jobRows: any[] = await JobModel.findAll({
+        where: { agentRegistryId },
+        attributes: ["id"],
+        raw: true,
+      });
+      const jobIds = jobRows.map((row) => row.id);
+
+      if (jobIds.length === 0) {
+        return [{ data: [], totalData: 0, page, pageSize, totalPage: 0 }, null];
+      }
+
+      const condition = { jobId: { [Op.in]: jobIds } };
+      const totalData: number = await ScheduleLogModel.count({
+        where: condition,
+      });
+      const listData: any[] = await ScheduleLogModel.findAll({
+        where: condition,
+        order: [["createAt", "DESC"]],
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+        raw: false,
+      });
+
+      const totalPage = Math.ceil(totalData / pageSize);
+      return [
+        {
+          data: listData.map((item) => formatScheduleLog(item)),
+          totalData,
+          page,
+          pageSize,
+          totalPage,
+        },
+        null,
+      ];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getLogsByAgentRegistryId() error: ${err?.message}`,
+      });
+      return [null, err];
     }
   }
 }

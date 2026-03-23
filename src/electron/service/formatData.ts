@@ -5,6 +5,7 @@ import {
   ICampaignProfile,
   ILog,
   IMcpServer,
+  IAgentRegistry,
   IPreference,
   IProfile,
   IProfileGroup,
@@ -253,6 +254,38 @@ const formatMcpServer = (data: any): IMcpServer => ({
       : data?.disabledTools || [],
 });
 
+const formatAgentRegistry = (data: any): IAgentRegistry => ({
+  ...data,
+  allowedBaseTools:
+    typeof data?.allowedBaseTools === "string"
+      ? JSON.parse(data?.allowedBaseTools || "[]")
+      : data?.allowedBaseTools || [],
+  allowedMcpServerIds:
+    typeof data?.allowedMcpServerIds === "string"
+      ? JSON.parse(data?.allowedMcpServerIds || "[]").map((item: any) =>
+          Number(item),
+        )
+      : data?.allowedMcpServerIds || [],
+  allowedSkillIds:
+    typeof data?.allowedSkillIds === "string"
+      ? JSON.parse(data?.allowedSkillIds || "[]").map((item: any) =>
+          Number(item),
+        )
+      : data?.allowedSkillIds || [],
+  allowedCampaignIds:
+    typeof data?.allowedCampaignIds === "string"
+      ? JSON.parse(data?.allowedCampaignIds || "[]").map((item: any) =>
+          Number(item),
+        )
+      : data?.allowedCampaignIds || [],
+  allowedSubAgentIds:
+    typeof data?.allowedSubAgentIds === "string"
+      ? JSON.parse(data?.allowedSubAgentIds || "[]").map((item: any) =>
+          Number(item),
+        )
+      : data?.allowedSubAgentIds || [],
+});
+
 const formatLog = (data: Model<any, any>): ILog => {
   const formatedData: ILog = formatDBResponse(data);
   return formatedData;
@@ -314,6 +347,7 @@ export {
   formatProfile,
   formatPreference,
   formatMcpServer,
+  formatAgentRegistry,
   formatWorkflow,
   formatLog,
   formatSchedule,

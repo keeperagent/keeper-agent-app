@@ -1,12 +1,17 @@
 import cron from "node-cron";
 import _ from "lodash";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { createKeeperAgent, createLLM } from "@/electron/appAgent";
+import {
+  createKeeperAgent,
+  createRegistryKeeperAgent,
+  createLLM,
+} from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
 import { encryptionService } from "@/electron/service/encrypt";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { scheduleDB } from "@/electron/database/schedule";
 import { scheduleLogDB } from "@/electron/database/scheduleLog";
+import { agentRegistryDB } from "@/electron/database/agentRegistry";
 import { preferenceDB } from "@/electron/database/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { logEveryWhere, sleep } from "@/electron/service/util";
@@ -392,11 +397,30 @@ class AgentTaskScheduler {
 
     const [preference] = await preferenceDB.getOnePreference();
 
-    const { agent, cleanup } = await createKeeperAgent({
-      provider: (job.llmProvider as LLMProvider) || LLMProvider.CLAUDE,
-      toolContext,
-      memoryFile,
-    });
+    // If the job has agentRegistryId, run it using that registry agent's config
+    let agentCreator: { agent: any; cleanup: () => Promise<void> };
+    if (job.agentRegistryId) {
+      const [registry] = await agentRegistryDB.getOneAgentRegistry(
+        job.agentRegistryId,
+      );
+      if (!registry) {
+        throw new Error(
+          `AgentRegistry #${job.agentRegistryId} not found for job ${job.id}`,
+        );
+      }
+      agentCreator = await createRegistryKeeperAgent({
+        registry,
+        toolContext,
+      });
+    } else {
+      agentCreator = await createKeeperAgent({
+        provider: (job.llmProvider as LLMProvider) || LLMProvider.CLAUDE,
+        toolContext,
+        memoryFile,
+      });
+    }
+
+    const { agent, cleanup } = agentCreator;
 
     try {
       let prompt = job.prompt || "";

@@ -8,16 +8,14 @@ interface IAgentSettingState {
   page: number;
   pageSize: number;
   totalData: number;
-  totalPage: number;
   selectedAgentSetting: IAgentSetting | null;
 }
 
 const initialState: IAgentSettingState = {
   listAgentSetting: [],
-  page: 1,
-  pageSize: 1000,
   totalData: 0,
-  totalPage: 0,
+  page: 1,
+  pageSize: DEFAULT_PAGE_SIZE,
   selectedAgentSetting: null,
 };
 
@@ -29,20 +27,11 @@ export const agentSettingSlice = createSlice({
       state: IAgentSettingState,
       action: PayloadAction<IGetListResponse<IAgentSetting> | undefined | null>,
     ) => {
-      const payload = action.payload;
-      if (!payload) {
-        state.listAgentSetting = [];
-        state.page = 1;
-        state.pageSize = DEFAULT_PAGE_SIZE;
-        state.totalData = 0;
-        state.totalPage = 0;
-        return;
-      }
-      state.listAgentSetting = payload.data || [];
-      state.page = payload.page || 1;
+      const { payload } = action;
+      state.listAgentSetting = payload?.data;
+      state.page = payload?.page;
       state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
-      state.totalData = payload.totalData || 0;
-      state.totalPage = payload.totalPage || 0;
+      state.totalData = payload?.totalData;
     },
     actSaveCreateAgentSetting: (
       state: IAgentSettingState,

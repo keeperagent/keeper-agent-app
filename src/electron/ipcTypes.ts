@@ -1,8 +1,5 @@
-/**
- * Shared IPC payload types for electron/controller handlers.
- */
-
 import type {
+  IAgentRegistry,
   IAgentSetting,
   IAgentSkill,
   ICampaign,
@@ -496,6 +493,42 @@ export type IpcCreateAgentSettingPayload = {
 };
 export type IpcUpdateAgentSettingPayload = {
   data: IAgentSetting;
+};
+
+// AgentRegistry
+export type IpcGetListAgentRegistryPayload = IpcPagePayload;
+export type IpcGetOneAgentRegistryPayload = {
+  id: number;
+};
+export type IpcCreateAgentRegistryPayload = {
+  data: Partial<IAgentRegistry>;
+};
+export type IpcUpdateAgentRegistryPayload = {
+  data: IAgentRegistry;
+};
+export type IpcGetAgentRegistryMemoryPayload = {
+  agentRegistryId: number;
+};
+export type IpcSaveAgentRegistryMemoryPayload = {
+  agentRegistryId: number;
+  content: string;
+};
+export type IpcGetListAgentRegistryLogPayload = IpcPagePayload & {
+  agentRegistryId: number;
+};
+export type IpcRegistryAgentCreateSessionPayload = {
+  agentRegistryId: number;
+};
+export type IpcRegistryAgentRunPayload = {
+  sessionId: string;
+  input: string;
+  encryptKey?: string;
+};
+export type IpcRegistryAgentStopPayload = {
+  sessionId: string;
+};
+export type IpcRegistryAgentResetSessionPayload = {
+  sessionId: string;
 };
 
 // AppAgent

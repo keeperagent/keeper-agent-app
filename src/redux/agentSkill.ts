@@ -8,7 +8,6 @@ interface IAgentSkillState {
   page: number;
   pageSize: number;
   totalData: number;
-  totalPage: number;
   sortField: ISorter | {};
   isModalOpen: boolean;
   selectedAgentSkill: IAgentSkill | null;
@@ -16,10 +15,9 @@ interface IAgentSkillState {
 
 const initialState: IAgentSkillState = {
   listAgentSkill: [],
-  page: 1,
-  pageSize: 1000,
   totalData: 0,
-  totalPage: 0,
+  page: 1,
+  pageSize: DEFAULT_PAGE_SIZE,
   sortField: {},
   isModalOpen: false,
   selectedAgentSkill: null,
@@ -33,20 +31,11 @@ export const agentSkillSlice = createSlice({
       state: IAgentSkillState,
       action: PayloadAction<IGetListResponse<IAgentSkill> | undefined | null>,
     ) => {
-      const payload = action.payload;
-      if (!payload) {
-        state.listAgentSkill = [];
-        state.page = 1;
-        state.pageSize = DEFAULT_PAGE_SIZE;
-        state.totalData = 0;
-        state.totalPage = 0;
-        return;
-      }
+      const { payload } = action;
       state.listAgentSkill = payload.data || [];
-      state.page = payload.page || 1;
+      state.page = payload?.page;
       state.pageSize = getNewPageSize(state.pageSize, payload?.pageSize);
-      state.totalData = payload.totalData || 0;
-      state.totalPage = payload.totalPage || 0;
+      state.totalData = payload?.totalData;
     },
     actSaveCreateAgentSkill: (
       state: IAgentSkillState,
