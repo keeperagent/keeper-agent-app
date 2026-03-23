@@ -96,6 +96,7 @@ const SaveLog = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -156,7 +157,7 @@ const SaveLog = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && <CommonSetting hideRetry={true} />}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

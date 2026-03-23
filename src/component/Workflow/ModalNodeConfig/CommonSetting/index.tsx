@@ -9,11 +9,17 @@ type IProps = {
   hideWaitingTime?: boolean;
   hideCondition?: boolean;
   hideTelegramCheckbox?: boolean;
+  hideRetry?: boolean;
 };
 
 const CommonSetting = (props: IProps) => {
-  const { hideTimeout, hideWaitingTime, hideCondition, hideTelegramCheckbox } =
-    props;
+  const {
+    hideTimeout,
+    hideWaitingTime,
+    hideCondition,
+    hideTelegramCheckbox,
+    hideRetry,
+  } = props;
 
   const { translate } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +71,17 @@ const CommonSetting = (props: IProps) => {
             size="large"
             style={{ width: "100%" }}
             min={3}
+          />
+        </Form.Item>
+      )}
+
+      {!hideRetry && (
+        <Form.Item label={`${translate("workflow.retryLabel")}:`} name="retry">
+          <InputNumber
+            className="custom-input-number"
+            size="large"
+            style={{ width: "100%" }}
+            min={0}
           />
         </Form.Item>
       )}

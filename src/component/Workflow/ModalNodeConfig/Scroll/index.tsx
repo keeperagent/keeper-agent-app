@@ -71,6 +71,7 @@ const Scroll = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
 
     setSelectorMode(
@@ -99,6 +100,7 @@ const Scroll = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -112,6 +114,7 @@ const Scroll = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         name,
@@ -132,6 +135,7 @@ const Scroll = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
 
       onCloseModal();

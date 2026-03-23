@@ -75,6 +75,7 @@ const GetWalletBalance = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setChainType(config?.chainType || CHAIN_TYPE.EVM);
     setMode(config?.tokenType || TOKEN_TYPE.NATIVE_TOKEN);
@@ -112,6 +113,7 @@ const GetWalletBalance = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -127,6 +129,7 @@ const GetWalletBalance = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -149,6 +152,7 @@ const GetWalletBalance = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
 
       onCloseModal();

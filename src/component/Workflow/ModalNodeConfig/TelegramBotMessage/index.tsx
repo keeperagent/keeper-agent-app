@@ -52,6 +52,7 @@ const TelegramBotMessage = (props: Props) => {
       leftSide: config?.skipSetting?.leftSide,
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -76,6 +77,7 @@ const TelegramBotMessage = (props: Props) => {
         leftSide,
         condition,
         rightSide,
+        retry,
       } = await form?.validateFields([
         "botToken",
         "chatId",
@@ -89,6 +91,7 @@ const TelegramBotMessage = (props: Props) => {
         "leftSide",
         "condition",
         "rightSide",
+        "retry",
       ]);
       onSaveNodeConfig({
         botToken,
@@ -107,6 +110,7 @@ const TelegramBotMessage = (props: Props) => {
           condition,
           isSkip,
         },
+        retry,
       });
       onCloseModal();
     } catch {}

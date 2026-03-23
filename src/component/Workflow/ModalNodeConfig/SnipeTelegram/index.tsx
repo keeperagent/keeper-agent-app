@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, useMemo } from "react";
-import {connect} from 'react-redux';
+import { connect } from "react-redux";
 import { Tabs, Form, Input, Row, Button, Select } from "antd";
 import { IPreference, ISnipeTelegramNodeConfig } from "@/electron/type";
 import { DEFAULT_TIMEOUT, NODE_ACTION } from "@/electron/simulator/constant";
@@ -22,7 +22,8 @@ type Props = {
 
 const SnipeTelegram = (props: Props) => {
   const { translate } = useTranslation();
-  const { onCloseModal, onSaveNodeConfig, config, isModalOpen, preference } = props;
+  const { onCloseModal, onSaveNodeConfig, config, isModalOpen, preference } =
+    props;
 
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
@@ -48,6 +49,7 @@ const SnipeTelegram = (props: Props) => {
       variable: config?.variable || "TELEGRAM_MESSAGE",
       profileMode:
         config?.profileMode || TELEGRAM_SNIPER_MODE.ONE_EVENT_ONE_PROFILE,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -73,6 +75,7 @@ const SnipeTelegram = (props: Props) => {
         chatId,
         variable,
         profileMode,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -87,6 +90,7 @@ const SnipeTelegram = (props: Props) => {
         "chatId",
         "variable",
         "profileMode",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -106,6 +110,7 @@ const SnipeTelegram = (props: Props) => {
         chatId,
         variable,
         profileMode,
+        retry,
       });
       onCloseModal();
     } catch {}
@@ -149,7 +154,7 @@ const SnipeTelegram = (props: Props) => {
             >
               <Input
                 placeholder={translate(
-                  "workflow.variableToSaveResultPlaceholder"
+                  "workflow.variableToSaveResultPlaceholder",
                 )}
                 className="custom-input"
                 size="large"
@@ -188,7 +193,7 @@ const SnipeTelegram = (props: Props) => {
                   message: translate("form.requiredField"),
                 },
               ]}
-               style={{ marginTop: "-1rem" }}
+              style={{ marginTop: "-1rem" }}
             >
               <Input
                 placeholder="e.g., @channelname or -1001234567890"
@@ -251,6 +256,5 @@ export default connect(
   (state: RootState) => ({
     preference: state?.Preference?.preference,
   }),
-  {}
+  {},
 )(SnipeTelegram);
-

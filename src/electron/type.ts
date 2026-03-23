@@ -702,6 +702,7 @@ export type IUpdateProfileNodeConfig = {
   onSuccess?: string;
   sleep: number;
   timeout?: number;
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting;
   alertTelegramWhenError?: boolean;
 
@@ -720,6 +721,7 @@ export type ICalculateNodeConfig = {
   sleep: number; // sleep time between each node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
+  retry?: number; // number of retries on failure
   variable?: string; // variable name to store the result
 
   leftSideEquation?: string; // left side of the equation
@@ -738,6 +740,7 @@ export type ICheckConditionNodeConfig = {
   sleep: number; // sleep time between each node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
+  retry?: number; // number of retries on failure
 
   leftSide?: string; // left side of the condition
   condition?: COMPARISION_EXPRESSION; // condition to check
@@ -753,6 +756,7 @@ export type IOnOffProfileNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -771,6 +775,7 @@ export type IGetRandomValueNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -792,6 +797,7 @@ export type ISaveResourceNodeConfig = {
   sleep: number; // sleep time between each node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
+  retry?: number; // number of retries on failure
 
   col1?: string; // value of the first column
   col2?: string; // value of the second column
@@ -840,6 +846,7 @@ export type ISaveWalletNodeConfig = {
   sleep: number; // sleep time between each node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
+  retry?: number; // number of retries on failure
 
   phrase?: string; // phrase of the wallet
   address?: string; // address of the wallet
@@ -858,6 +865,7 @@ export type IImportMartianWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -875,6 +883,7 @@ export type IUnlockMartianWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -891,6 +900,7 @@ export type IApproveMartianWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -904,6 +914,7 @@ export type ISwitchMartianWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -917,6 +928,7 @@ export type IImportPhantomWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -934,6 +946,7 @@ export type IUnlockPhantomWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting;
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -950,6 +963,7 @@ export type IConnectPhantomWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -963,6 +977,7 @@ export type IClickConfirmPhantomWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -976,6 +991,7 @@ export type IImportRabbyWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
 
   alertTelegramWhenError?: boolean; // alert telegram when error
@@ -996,6 +1012,7 @@ export type IConnectRabbyWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -1009,6 +1026,7 @@ export type ICancelRabbyWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -1022,6 +1040,7 @@ export type ISignRabbyWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1042,6 +1061,7 @@ export type IUnlockRabbyWalletNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1058,6 +1078,7 @@ export type IRabbyAddNetworkNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1079,6 +1100,7 @@ export type ILoginTwitterNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1095,6 +1117,7 @@ export type ICrawlTextNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the text
@@ -1113,6 +1136,7 @@ export type ISetAttributeNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the value
@@ -1137,6 +1161,7 @@ export type IOpenURLNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1152,6 +1177,7 @@ export type IFollowTwitterNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1168,6 +1194,7 @@ export type ILikeTwitterNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1184,6 +1211,7 @@ export type IReTweetTwitterNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1200,6 +1228,7 @@ export type IReplyTweetTwitterNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1216,6 +1245,7 @@ export type ISelectTokenNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1239,6 +1269,7 @@ export type ISelectChainNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1263,6 +1294,7 @@ export type ISendTelegramNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1281,6 +1313,7 @@ export type ISnipeTelegramNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1299,6 +1332,7 @@ export type ISaveLogNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1314,6 +1348,7 @@ export type IReloadPageNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -1328,6 +1363,7 @@ export type IRandomOnOffNodeConfig = {
   sleep: number; // sleep time between each node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
+  retry?: number; // number of retries on failure
 
   truePercentage?: number; // true percentage, how many percentage of the time to be true
 };
@@ -1341,6 +1377,7 @@ export type IGoBackNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 };
@@ -1354,6 +1391,7 @@ export type ICloseTabNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1369,6 +1407,7 @@ export type IClickNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1387,6 +1426,7 @@ export type IClickExtensionNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1402,6 +1442,7 @@ export type IUploadFileNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1420,6 +1461,7 @@ export type ICheckElementExistNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1438,6 +1480,7 @@ export type IGetWalletBalanceNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1458,6 +1501,7 @@ export type IConvertTokenAmountNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1478,6 +1522,7 @@ export type ITransferTokenNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1502,6 +1547,7 @@ export type IApproveRevokeEVMNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1525,6 +1571,7 @@ export type ISwapUniswapNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1570,6 +1617,7 @@ export type ISwapKyberswapNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1613,6 +1661,7 @@ export type ISwapJupiterNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1643,6 +1692,7 @@ export type ISwapCetusNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1672,6 +1722,7 @@ export type IExecuteTransactionNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1702,6 +1753,7 @@ export type IGetTokenPriceNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1722,6 +1774,7 @@ export type ICheckTokenPriceNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1746,6 +1799,7 @@ export type ICheckMarketcapNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1770,6 +1824,7 @@ export type IGetGasPriceNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1787,6 +1842,7 @@ export type IGetPriorityFeeNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1804,6 +1860,7 @@ export type IGenerateVanityAddressNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1823,6 +1880,7 @@ export type IEVMSnipeContractNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1854,6 +1912,7 @@ export type IEVMReadFromContractNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1874,6 +1933,7 @@ export type IEVMWriteContractNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1907,6 +1967,7 @@ export type IScrollNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1928,6 +1989,7 @@ export type ITypeTextNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1947,6 +2009,7 @@ export type ISelectTabNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1962,6 +2025,7 @@ export type IImportMetamaskNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1979,6 +2043,7 @@ export type IUnlockMetamaskNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1995,6 +2060,7 @@ export type IConnectMetamaskNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 };
@@ -2008,6 +2074,7 @@ export type IApproveMetamaskNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 };
@@ -2021,6 +2088,7 @@ export type ICancelMetamaskNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 };
@@ -2034,6 +2102,7 @@ export type IConfirmMetamaskNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2054,6 +2123,7 @@ export type ISolveCaptchaNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2068,6 +2138,7 @@ export type ISwitchWindowNodeConfig = {
   name: string; // name of the node
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   onSuccess?: NODE_ACTION; // action to perform when success
   onError?: NODE_ACTION; // action to perform when error occurs
   skipSetting?: ISkipSetting; // skip setting for the node
@@ -2085,6 +2156,7 @@ export type IOpenNewTabNodeConfig = {
   onError?: NODE_ACTION; // action to perform when error occurs
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2098,6 +2170,7 @@ export type ILoopNodeConfig = {
   name: string; // name of the node
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   onError?: NODE_ACTION; // action to perform when error occurs
   onSuccess?: NODE_ACTION; // action to perform when success
   skipSetting?: ISkipSetting; // skip setting for the node
@@ -2115,6 +2188,7 @@ export type IExecuteCodeNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2132,6 +2206,7 @@ export type ISelectWalletNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2151,6 +2226,7 @@ export type ICheckResourceNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2170,6 +2246,7 @@ export type IHttpRequestNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2191,6 +2268,7 @@ export type IStopWorkflowNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 };
@@ -2204,6 +2282,7 @@ export type ILaunchTokenPumpfunNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2238,6 +2317,7 @@ export type ILaunchTokenBonkfunNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2267,6 +2347,7 @@ export type IAskAgentNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2295,6 +2376,7 @@ export type IGenerateImageNodeConfig = {
   onSuccess?: NODE_ACTION; // action to perform when success
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2443,6 +2525,7 @@ export type IJob = {
   campaign?: ICampaign;
   secretKey?: string;
   timeout?: number;
+  retry?: number; // number of retries on failure
   startTime?: string;
   onlyRunOnce?: boolean;
 

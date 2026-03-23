@@ -93,6 +93,7 @@ const ReadContractEVM = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setContractAbi(config?.contractAbi || "");
     setMethod(config?.method || "");
@@ -166,6 +167,7 @@ const ReadContractEVM = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -182,6 +184,7 @@ const ReadContractEVM = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -204,6 +207,7 @@ const ReadContractEVM = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
 
       onCloseModal();

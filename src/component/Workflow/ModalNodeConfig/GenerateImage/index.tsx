@@ -66,6 +66,7 @@ const GenerateImage = (props: Props) => {
       size: config?.size || OPENAI_IMAGE_SIZE.SIZE_1024_1024,
       quality: config?.quality || OPENAI_IMAGE_QUALITY.MEDIUM,
       apiKey: config?.apiKey || preference?.openAIApiKey,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -107,6 +108,7 @@ const GenerateImage = (props: Props) => {
         fileName,
         size,
         quality,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -125,6 +127,7 @@ const GenerateImage = (props: Props) => {
         "fileName",
         "size",
         "quality",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -148,6 +151,7 @@ const GenerateImage = (props: Props) => {
         fileName,
         size,
         quality,
+        retry,
       });
       onCloseModal();
     } catch {}

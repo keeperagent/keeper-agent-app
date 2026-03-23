@@ -61,6 +61,7 @@ const TypeText = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setMode(config?.selectorType || SELECTOR_TYPE.CSS_SELECTOR);
     setActiveTab(TAB.DETAIL);
@@ -88,6 +89,7 @@ const TypeText = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "content",
@@ -103,6 +105,7 @@ const TypeText = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         name,
@@ -124,6 +127,7 @@ const TypeText = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

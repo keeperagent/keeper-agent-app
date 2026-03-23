@@ -128,6 +128,7 @@ const SwapKyberswap = (props: Props) => {
           : Boolean(config?.swapInput?.shouldWaitTransactionComfirmed),
       includedSources: config?.swapInput?.includedSources,
       excludedSources: config?.swapInput?.excludedSources,
+      retry: config?.retry || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -179,6 +180,7 @@ const SwapKyberswap = (props: Props) => {
         excludedSources,
         isInputNativeToken,
         isOutputNativeToken,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -207,6 +209,7 @@ const SwapKyberswap = (props: Props) => {
         "excludedSources",
         "isInputNativeToken",
         "isOutputNativeToken",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -248,6 +251,7 @@ const SwapKyberswap = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
 
       onCloseModal();

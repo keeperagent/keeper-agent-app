@@ -51,6 +51,7 @@ const MetamaskConfirm = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
 
     setActiveTab(TAB.DETAIL);
@@ -82,6 +83,7 @@ const MetamaskConfirm = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "timeout",
@@ -98,6 +100,7 @@ const MetamaskConfirm = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -118,6 +121,7 @@ const MetamaskConfirm = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

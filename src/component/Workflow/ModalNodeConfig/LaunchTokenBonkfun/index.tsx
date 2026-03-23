@@ -106,6 +106,7 @@ const LaunchTokenBonkfun = (props: Props) => {
       unitPrice: config?.unitPrice || "100",
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
       launchCurrency: config?.launchCurrency || BONKFUN_LAUNCH_CURRENCY.SOL,
+      retry: config?.retry || 0,
     });
     setLaunchCurrency(config?.launchCurrency || BONKFUN_LAUNCH_CURRENCY.SOL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -153,6 +154,7 @@ const LaunchTokenBonkfun = (props: Props) => {
         unitLimit,
         unitPrice,
         launchCurrency,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -179,6 +181,7 @@ const LaunchTokenBonkfun = (props: Props) => {
         "unitLimit",
         "unitPrice",
         "launchCurrency",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -211,6 +214,7 @@ const LaunchTokenBonkfun = (props: Props) => {
         unitLimit,
         unitPrice,
         launchCurrency,
+        retry,
       });
 
       onCloseModal();

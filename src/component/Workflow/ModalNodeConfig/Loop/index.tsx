@@ -34,6 +34,7 @@ const Loop = (props: Props) => {
       leftSide: config?.skipSetting?.leftSide,
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -64,6 +65,7 @@ const Loop = (props: Props) => {
           condition,
           isSkip,
         },
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -121,6 +123,7 @@ const Loop = (props: Props) => {
             hideTimeout={true}
             hideCondition={true}
             hideTelegramCheckbox={true}
+            hideRetry={true}
           />
         )}
 

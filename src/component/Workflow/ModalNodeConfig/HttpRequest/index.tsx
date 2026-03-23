@@ -81,6 +81,7 @@ const HttpRequest = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -114,6 +115,7 @@ const HttpRequest = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "variable",
         "url",
@@ -127,6 +129,7 @@ const HttpRequest = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         variable,
@@ -149,6 +152,7 @@ const HttpRequest = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

@@ -68,6 +68,7 @@ const SolveCaptcha = (props: Props) => {
       alertTelegramWhenError: config?.alertTelegramWhenError,
       captchaType: config?.captchaType,
       twoCaptchaAPIKey: config?.twoCaptchaAPIKey,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -91,6 +92,7 @@ const SolveCaptcha = (props: Props) => {
         alertTelegramWhenError,
         captchaType,
         twoCaptchaAPIKey,
+        retry,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -103,6 +105,7 @@ const SolveCaptcha = (props: Props) => {
         "alertTelegramWhenError",
         "captchaType",
         "twoCaptchaAPIKey",
+        "retry",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -119,6 +122,7 @@ const SolveCaptcha = (props: Props) => {
         alertTelegramWhenError,
         captchaType,
         twoCaptchaAPIKey,
+        retry,
       });
       onCloseModal();
     } catch {}

@@ -48,6 +48,7 @@ const ExecuteCode = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setCodeValue(config?.code || "return 'Write your code here';");
     setActiveTab(TAB.DETAIL);
@@ -76,6 +77,7 @@ const ExecuteCode = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "variable",
         "sleep",
@@ -87,6 +89,7 @@ const ExecuteCode = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         variable,
@@ -105,6 +108,7 @@ const ExecuteCode = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

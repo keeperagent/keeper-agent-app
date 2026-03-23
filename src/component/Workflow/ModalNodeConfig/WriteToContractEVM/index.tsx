@@ -120,6 +120,7 @@ const WriteToContractEVM = (props: Props) => {
         "undefined"
           ? true
           : Boolean(config?.transactionConfig?.shouldWaitTransactionComfirmed),
+      retry: config?.retry || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -163,6 +164,7 @@ const WriteToContractEVM = (props: Props) => {
         gasLimit,
         gasPrice,
         shouldWaitTransactionComfirmed,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -184,6 +186,7 @@ const WriteToContractEVM = (props: Props) => {
         "gasLimit",
         "gasPrice",
         "shouldWaitTransactionComfirmed",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -216,6 +219,7 @@ const WriteToContractEVM = (props: Props) => {
           shouldWaitTransactionComfirmed,
           nativeTokenAmount,
         },
+        retry,
       });
 
       onCloseModal();

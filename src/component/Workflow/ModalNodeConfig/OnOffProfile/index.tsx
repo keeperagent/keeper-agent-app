@@ -89,6 +89,7 @@ const OnOffProfile = (props: Props) => {
         onSuccess,
         timeout,
         profileStatus,
+        retry: 0,
       });
       onCloseModal();
     } catch {}
@@ -210,7 +211,7 @@ const OnOffProfile = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && <CommonSetting hideRetry={true} />}
       </Form>
 
       <Row justify="end">

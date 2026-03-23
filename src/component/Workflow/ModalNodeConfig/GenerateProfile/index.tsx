@@ -152,6 +152,7 @@ const GenerateProfile = (props: Props) => {
             hideCondition={true}
             hideTimeout={true}
             hideTelegramCheckbox={true}
+            hideRetry={true}
           />
         )}
       </Form>

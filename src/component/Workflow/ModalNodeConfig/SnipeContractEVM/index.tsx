@@ -98,6 +98,7 @@ const SnipeContractEVM = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setIsStartFromCurrentBlock(Boolean(config?.isStartFromCurrentBlock));
@@ -169,6 +170,7 @@ const SnipeContractEVM = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -189,6 +191,7 @@ const SnipeContractEVM = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
 
       onSaveNodeConfig({
@@ -220,6 +223,7 @@ const SnipeContractEVM = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
 
       onCloseModal();

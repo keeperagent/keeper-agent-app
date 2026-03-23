@@ -45,6 +45,7 @@ const ClickExtension = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -67,6 +68,7 @@ const ClickExtension = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "text",
         "sleep",
@@ -78,6 +80,7 @@ const ClickExtension = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         text,
@@ -94,6 +97,7 @@ const ClickExtension = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}

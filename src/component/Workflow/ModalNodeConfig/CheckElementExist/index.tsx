@@ -47,6 +47,7 @@ const CheckElementExist = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      retry: config?.retry || 0,
     });
     setMode(config?.selectorType || SELECTOR_TYPE.CSS_SELECTOR);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -70,6 +71,7 @@ const CheckElementExist = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        retry,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -81,6 +83,7 @@ const CheckElementExist = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "retry",
       ]);
       onSaveNodeConfig({
         name,
@@ -100,6 +103,7 @@ const CheckElementExist = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        retry,
       });
       onCloseModal();
     } catch {}
