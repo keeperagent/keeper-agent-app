@@ -323,6 +323,13 @@ JobModel.belongsTo(AgentRegistryModel, {
   constraints: false,
 });
 
+// @AgentRegistryModel -> @CampaignModel
+AgentRegistryModel.belongsTo(CampaignModel, {
+  foreignKey: { name: "campaignId", allowNull: true },
+  as: "campaign",
+  constraints: false,
+});
+
 // @UserLogModel
 // declare foreign key UserLogModel -> Workflow
 UserLogModel.belongsTo(WorkflowModel, {

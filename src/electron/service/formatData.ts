@@ -209,82 +209,92 @@ const formatProfile = (data: Model<any, any>): IProfile => {
 };
 
 const formatPreference = (data: any): IPreference => {
+  const formatedData = formatDBResponse(data);
   return {
-    ...data,
+    ...formatedData,
     nodeBlackList:
-      typeof data?.nodeBlackList === "string"
-        ? JSON.parse(data?.nodeBlackList || "[]")
-        : data?.nodeBlackList,
-    botTokenTelegram: data?.botTokenTelegram
-      ? encryptionService.decryptData(data?.botTokenTelegram)
+      typeof formatedData?.nodeBlackList === "string"
+        ? JSON.parse(formatedData?.nodeBlackList || "[]")
+        : formatedData?.nodeBlackList,
+    botTokenTelegram: formatedData?.botTokenTelegram
+      ? encryptionService.decryptData(formatedData?.botTokenTelegram)
       : "",
     jupiterApiKeys:
-      typeof data?.jupiterApiKeys === "string"
+      typeof formatedData?.jupiterApiKeys === "string"
         ? JSON.parse(
-            encryptionService.decryptData(data?.jupiterApiKeys) || "[]",
+            encryptionService.decryptData(formatedData?.jupiterApiKeys) || "[]",
           )
-        : data?.jupiterApiKeys,
-    openAIApiKey: data?.openAIApiKey
-      ? encryptionService.decryptData(data?.openAIApiKey)
+        : formatedData?.jupiterApiKeys,
+    openAIApiKey: formatedData?.openAIApiKey
+      ? encryptionService.decryptData(formatedData?.openAIApiKey)
       : "",
-    anthropicApiKey: data?.anthropicApiKey
-      ? encryptionService.decryptData(data?.anthropicApiKey)
+    anthropicApiKey: formatedData?.anthropicApiKey
+      ? encryptionService.decryptData(formatedData?.anthropicApiKey)
       : "",
-    googleGeminiApiKey: data?.googleGeminiApiKey
-      ? encryptionService.decryptData(data?.googleGeminiApiKey)
+    googleGeminiApiKey: formatedData?.googleGeminiApiKey
+      ? encryptionService.decryptData(formatedData?.googleGeminiApiKey)
       : "",
-    tavilyApiKey: data?.tavilyApiKey
-      ? encryptionService.decryptData(data?.tavilyApiKey)
+    tavilyApiKey: formatedData?.tavilyApiKey
+      ? encryptionService.decryptData(formatedData?.tavilyApiKey)
       : "",
-    exaApiKey: data?.exaApiKey
-      ? encryptionService.decryptData(data?.exaApiKey)
+    exaApiKey: formatedData?.exaApiKey
+      ? encryptionService.decryptData(formatedData?.exaApiKey)
       : "",
     disabledTools:
-      typeof data?.disabledTools === "string"
-        ? JSON.parse(data?.disabledTools || "[]")
-        : data?.disabledTools,
+      typeof formatedData?.disabledTools === "string"
+        ? JSON.parse(formatedData?.disabledTools || "[]")
+        : formatedData?.disabledTools,
   };
 };
 
-const formatMcpServer = (data: any): IMcpServer => ({
-  ...data,
-  disabledTools:
-    typeof data?.disabledTools === "string"
-      ? JSON.parse(data?.disabledTools || "[]")
-      : data?.disabledTools || [],
-});
+const formatMcpServer = (data: any): IMcpServer => {
+  const formatedData = formatDBResponse(data);
+  return {
+    ...formatedData,
+    disabledTools:
+      typeof formatedData?.disabledTools === "string"
+        ? JSON.parse(formatedData?.disabledTools || "[]")
+        : formatedData?.disabledTools || [],
+  };
+};
 
-const formatAgentRegistry = (data: any): IAgentRegistry => ({
-  ...data,
-  allowedBaseTools:
-    typeof data?.allowedBaseTools === "string"
-      ? JSON.parse(data?.allowedBaseTools || "[]")
-      : data?.allowedBaseTools || [],
-  allowedMcpServerIds:
-    typeof data?.allowedMcpServerIds === "string"
-      ? JSON.parse(data?.allowedMcpServerIds || "[]").map((item: any) =>
-          Number(item),
-        )
-      : data?.allowedMcpServerIds || [],
-  allowedSkillIds:
-    typeof data?.allowedSkillIds === "string"
-      ? JSON.parse(data?.allowedSkillIds || "[]").map((item: any) =>
-          Number(item),
-        )
-      : data?.allowedSkillIds || [],
-  allowedCampaignIds:
-    typeof data?.allowedCampaignIds === "string"
-      ? JSON.parse(data?.allowedCampaignIds || "[]").map((item: any) =>
-          Number(item),
-        )
-      : data?.allowedCampaignIds || [],
-  allowedSubAgentIds:
-    typeof data?.allowedSubAgentIds === "string"
-      ? JSON.parse(data?.allowedSubAgentIds || "[]").map((item: any) =>
-          Number(item),
-        )
-      : data?.allowedSubAgentIds || [],
-});
+const formatAgentRegistry = (data: any): IAgentRegistry => {
+  const formatedData = formatDBResponse(data);
+  return {
+    ...formatedData,
+    allowedBaseTools:
+      typeof formatedData?.allowedBaseTools === "string"
+        ? JSON.parse(formatedData?.allowedBaseTools || "[]")
+        : formatedData?.allowedBaseTools || [],
+    allowedMcpServerIds:
+      typeof formatedData?.allowedMcpServerIds === "string"
+        ? JSON.parse(formatedData?.allowedMcpServerIds || "[]").map(
+            (item: any) => Number(item),
+          )
+        : formatedData?.allowedMcpServerIds || [],
+    allowedSkillIds:
+      typeof formatedData?.allowedSkillIds === "string"
+        ? JSON.parse(formatedData?.allowedSkillIds || "[]").map((item: any) =>
+            Number(item),
+          )
+        : formatedData?.allowedSkillIds || [],
+    allowedSubAgentIds:
+      typeof formatedData?.allowedSubAgentIds === "string"
+        ? JSON.parse(formatedData?.allowedSubAgentIds || "[]").map(
+            (item: any) => Number(item),
+          )
+        : formatedData?.allowedSubAgentIds || [],
+    profileIds:
+      typeof formatedData?.profileIds === "string"
+        ? JSON.parse(formatedData?.profileIds || "[]").map((item: any) =>
+            Number(item),
+          )
+        : formatedData?.profileIds || [],
+    secretKey: formatedData?.secretKey
+      ? encryptionService.decryptData(formatedData.secretKey)
+      : "",
+  };
+};
 
 const formatLog = (data: Model<any, any>): ILog => {
   const formatedData: ILog = formatDBResponse(data);

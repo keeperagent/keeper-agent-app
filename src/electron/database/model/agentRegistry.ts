@@ -45,11 +45,6 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: "[]",
       },
-      allowedCampaignIds: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: "[]",
-      },
       allowedSubAgentIds: {
         type: DataTypes.TEXT,
         allowNull: true,
@@ -64,6 +59,32 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
         defaultValue: 1,
+      },
+      chainKey: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      nodeEndpointGroupId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      campaignId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      profileIds: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "[]",
+      },
+      isAllWallet: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 1,
+      },
+      secretKey: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       createAt: {
         type: DataTypes.INTEGER,

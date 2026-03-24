@@ -2674,10 +2674,17 @@ export type IAgentRegistry = {
   allowedBaseTools?: string[];
   allowedMcpServerIds?: number[];
   allowedSkillIds?: number[];
-  allowedCampaignIds?: number[];
   allowedSubAgentIds?: number[];
   isAgentInteractionEnabled?: boolean;
   isActive?: boolean;
+  // Execution context
+  chainKey?: string;
+  nodeEndpointGroupId?: number;
+  campaignId?: number;
+  campaign?: ICampaign;
+  profileIds?: number[];
+  isAllWallet?: boolean;
+  secretKey?: string;
   createAt?: number;
   updateAt?: number;
 };

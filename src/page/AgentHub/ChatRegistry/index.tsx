@@ -1,19 +1,20 @@
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 import { Button, Tabs, Spin } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import { BackIcon } from "@/component/Icon";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { IAgentRegistry } from "@/electron/type";
+import { IAgentRegistry, ICampaign } from "@/electron/type";
 import { agentRegistrySelector } from "@/redux/agentRegistry";
 import { useTranslation } from "@/hook/useTranslation";
 import { MESSAGE } from "@/electron/constant";
+import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
 import ChatInput from "@/page/Agent/ChatAgent/ChatInput";
 import MessageList from "@/page/Agent/ChatAgent/MessageList";
 import { useIpcAction } from "@/hook";
-import { useGetListAgentRegistryLog } from "@/hook/agentRegistry";
 import HistoryTab from "./HistoryTab";
 import MemoryTab from "./MemoryTab";
-import { Wrapper } from "./style";
+import { Wrapper, ContextChip } from "./style";
 
 const TAB = {
   CHAT: "CHAT",
@@ -25,6 +26,7 @@ type Props = {
   agentRegistryId: number;
   onBack: () => void;
   selectedAgentRegistry?: IAgentRegistry | null;
+  listCampaign?: ICampaign[];
 };
 
 type ChatMessage = {
@@ -35,7 +37,8 @@ type ChatMessage = {
 };
 
 const ChatRegistry = (props: Props) => {
-  const { agentRegistryId, onBack, selectedAgentRegistry } = props;
+  const { agentRegistryId, onBack, selectedAgentRegistry, listCampaign } =
+    props;
   const { translate } = useTranslation();
 
   const [activeTab, setActiveTab] = useState(TAB.CHAT);
@@ -44,8 +47,49 @@ const ChatRegistry = (props: Props) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [activeToolName, setActiveToolName] = useState<string | null>(null);
-  const [encryptKey, setEncryptKey] = useState("");
   const streamingContentRef = useRef("");
+
+  const provider = LLM_PROVIDERS.find(
+    (item) => item.key === selectedAgentRegistry?.llmProvider,
+  );
+  const providerIcon = provider?.icon;
+  const providerLabel = provider?.label;
+  const modelLabel = selectedAgentRegistry?.llmModel;
+
+  const chainConfig = useMemo(() => {
+    if (!selectedAgentRegistry?.chainKey) {
+      return null;
+    }
+    return (
+      listChainConfig.find(
+        (config) => config.dexscreenerKey === selectedAgentRegistry.chainKey,
+      ) || null
+    );
+  }, [selectedAgentRegistry?.chainKey]);
+
+  const campaign = useMemo(() => {
+    if (!selectedAgentRegistry?.campaignId) {
+      return null;
+    }
+    return (
+      (listCampaign || []).find(
+        (item) => item.id === selectedAgentRegistry.campaignId,
+      ) || null
+    );
+  }, [listCampaign, selectedAgentRegistry?.campaignId]);
+
+  const walletLabel = useMemo(() => {
+    if (!selectedAgentRegistry?.campaignId) {
+      return null;
+    }
+
+    if (selectedAgentRegistry?.isAllWallet !== false) {
+      return translate("agent.allWallet");
+    }
+
+    const profileCount = (selectedAgentRegistry?.profileIds || []).length;
+    return `${profileCount} ${translate("agent.wallets")}`;
+  }, [selectedAgentRegistry]);
 
   const { execute: createSession, loading: sessionLoading } = useIpcAction(
     MESSAGE.REGISTRY_AGENT_CREATE_SESSION,
@@ -59,11 +103,11 @@ const ChatRegistry = (props: Props) => {
     },
   );
 
-  const { execute: runAgent, loading: runLoading } = useIpcAction(
+  const { execute: runAgent } = useIpcAction(
     MESSAGE.REGISTRY_AGENT_RUN,
     MESSAGE.REGISTRY_AGENT_RUN_RES,
     {
-      onSuccess: (payload: any) => {
+      onSuccess: (_payload: any) => {
         setIsStreaming(false);
         setActiveToolName(null);
         const finalContent = streamingContentRef.current;
@@ -89,7 +133,6 @@ const ChatRegistry = (props: Props) => {
     MESSAGE.REGISTRY_AGENT_STOP_RES,
   );
 
-  // Listen for stream chunks from main process
   useEffect(() => {
     const handler = (_event: any, data: any) => {
       if (data?.sessionId !== sessionId) {
@@ -116,12 +159,17 @@ const ChatRegistry = (props: Props) => {
 
     window?.electron?.on(MESSAGE.REGISTRY_AGENT_STREAM_CHUNK, handler);
     window?.electron?.on(MESSAGE.REGISTRY_AGENT_TOOL_START, toolStartHandler);
-    window?.electron?.on(MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE, toolCompleteHandler);
+    window?.electron?.on(
+      MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE,
+      toolCompleteHandler,
+    );
 
     return () => {
       window?.electron?.removeAllListeners(MESSAGE.REGISTRY_AGENT_STREAM_CHUNK);
       window?.electron?.removeAllListeners(MESSAGE.REGISTRY_AGENT_TOOL_START);
-      window?.electron?.removeAllListeners(MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE);
+      window?.electron?.removeAllListeners(
+        MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE,
+      );
     };
   }, [sessionId]);
 
@@ -148,7 +196,7 @@ const ChatRegistry = (props: Props) => {
       },
     ]);
 
-    runAgent({ sessionId, input, encryptKey: encryptKey || undefined });
+    runAgent({ sessionId, input });
   };
 
   const onStop = () => {
@@ -159,20 +207,68 @@ const ChatRegistry = (props: Props) => {
     setActiveToolName(null);
   };
 
+  const agentName = selectedAgentRegistry?.name || `Agent #${agentRegistryId}`;
+  const isEmpty = messages.length === 0 && !isStreaming;
+
   return (
     <Wrapper>
       <div className="chat-header">
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
-          onClick={onBack}
-          className="btn-back"
-        >
-          {translate("back")}
-        </Button>
+        <div className="chat-header-top">
+          <Button type="text" onClick={onBack} className="btn-back">
+            <span className="btn-back-icon">
+              <BackIcon />
+            </span>
+            {translate("back")}
+          </Button>
 
-        <div className="chat-agent-name">
-          {selectedAgentRegistry?.name || `Agent #${agentRegistryId}`}
+          {chainConfig && (
+            <img
+              className="chain-logo"
+              src={chainConfig.logo}
+              alt={chainConfig.chainName}
+            />
+          )}
+
+          <div className="chat-agent-info">
+            <span className="chat-agent-name">{agentName}</span>
+            {selectedAgentRegistry?.description && (
+              <span className="chat-agent-desc">
+                {selectedAgentRegistry.description}
+              </span>
+            )}
+          </div>
+
+          {providerLabel && (
+            <ContextChip>
+              {providerIcon && <img src={providerIcon} alt={providerLabel} />}
+              <div className="chip-lines">
+                <span className="chip-label">{providerLabel}</span>
+                {modelLabel && <span className="chip-value">{modelLabel}</span>}
+              </div>
+            </ContextChip>
+          )}
+
+          {campaign && (
+            <ContextChip>
+              <div className="chip-lines">
+                <span className="chip-label">
+                  {translate("sidebar.campaign")}
+                </span>
+                <span className="chip-value">{campaign.name}</span>
+              </div>
+            </ContextChip>
+          )}
+
+          {walletLabel && (
+            <ContextChip>
+              <div className="chip-lines">
+                <span className="chip-label">
+                  {translate("agent.walletProfiles")}
+                </span>
+                <span className="chip-value">{walletLabel}</span>
+              </div>
+            </ContextChip>
+          )}
         </div>
 
         <Tabs
@@ -191,25 +287,38 @@ const ChatRegistry = (props: Props) => {
       <div className="chat-body">
         {activeTab === TAB.CHAT && (
           <Fragment>
-            {sessionLoading && messages.length === 0 ? (
+            {sessionLoading && isEmpty ? (
               <div className="loading-center">
                 <Spin />
               </div>
             ) : (
-              <Fragment>
-                <MessageList
-                  messages={messages}
-                  streamingContent={isStreaming ? streamingContent : ""}
-                  activeToolName={activeToolName}
-                />
+              <div className="chat-content">
+                {isEmpty ? (
+                  <div className="chat-empty-state">
+                    <div className="empty-icon">
+                      {providerIcon && (
+                        <img src={providerIcon} alt={providerLabel} />
+                      )}
+                    </div>
+
+                    <span className="empty-name">{agentName}</span>
+                    <span className="empty-hint">
+                      {translate("agent.chatEmptyHint")}
+                    </span>
+                  </div>
+                ) : (
+                  <MessageList
+                    messages={messages}
+                    streamingContent={isStreaming ? streamingContent : ""}
+                    activeToolName={activeToolName}
+                  />
+                )}
                 <ChatInput
                   onSend={onSendMessage}
                   onStop={onStop}
                   isStreaming={isStreaming}
-                  encryptKey={encryptKey}
-                  setEncryptKey={setEncryptKey}
                 />
-              </Fragment>
+              </div>
             )}
           </Fragment>
         )}
@@ -228,4 +337,5 @@ const ChatRegistry = (props: Props) => {
 
 export default connect((state: RootState) => ({
   selectedAgentRegistry: agentRegistrySelector(state).selectedAgentRegistry,
+  listCampaign: state?.Campaign?.listCampaign || [],
 }))(ChatRegistry);

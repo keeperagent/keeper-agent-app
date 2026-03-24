@@ -23,6 +23,7 @@ const AgentRegistry = (props: any) => {
     listAgentRegistry,
     totalData,
     page,
+    selectedAgentRegistry,
     actSaveSelectedAgentRegistry,
     actSetPageName,
   } = props;
@@ -34,9 +35,6 @@ const AgentRegistry = (props: any) => {
 
   const [searchText, setSearchText] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingRegistry, setEditingRegistry] = useState<IAgentRegistry | null>(
-    null,
-  );
   const [chatRegistryId, setChatRegistryId] = useState<number | null>(null);
 
   const fetchList = (currentPage: number = 1) => {
@@ -70,31 +68,29 @@ const AgentRegistry = (props: any) => {
   };
 
   const onOpenCreate = () => {
-    setEditingRegistry(null);
+    actSaveSelectedAgentRegistry(null);
     setModalOpen(true);
   };
 
   const onOpenEdit = (registry: IAgentRegistry) => {
-    setEditingRegistry(registry);
+    actSaveSelectedAgentRegistry(registry);
     setModalOpen(true);
   };
 
   const onCloseModal = () => {
     setModalOpen(false);
-    setEditingRegistry(null);
+    setTimeout(() => {
+      actSaveSelectedAgentRegistry(null);
+    }, 300);
   };
 
   const onDelete = (registry: IAgentRegistry) => {
-    if (registry.id) {
-      deleteAgentRegistry(registry.id);
-    }
+    deleteAgentRegistry(registry.id!);
   };
 
   const onOpenChat = (registry: IAgentRegistry) => {
     actSaveSelectedAgentRegistry(registry);
-    if (registry.id) {
-      setChatRegistryId(registry.id);
-    }
+    setChatRegistryId(registry.id!);
   };
 
   const onCloseChat = () => {
@@ -193,7 +189,7 @@ const AgentRegistry = (props: any) => {
 
       <ModalAgentRegistry
         open={modalOpen}
-        registry={editingRegistry}
+        registry={selectedAgentRegistry}
         onClose={onCloseModal}
         onRefresh={() => fetchList(1)}
       />
@@ -206,6 +202,7 @@ export default connect(
     listAgentRegistry: state?.AgentRegistry?.listAgentRegistry || [],
     totalData: state?.AgentRegistry?.totalData || 0,
     page: state?.AgentRegistry?.page || 1,
+    selectedAgentRegistry: state?.AgentRegistry?.selectedAgentRegistry || null,
   }),
   { actSaveSelectedAgentRegistry, actSetPageName },
 )(AgentRegistry);

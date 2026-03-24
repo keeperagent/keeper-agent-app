@@ -1,5 +1,16 @@
-import { useEffect, useState } from "react";
-import { Modal, Form, Input, Row, Col, Select, Switch } from "antd";
+import { useEffect, useState, useMemo } from "react";
+import {
+  Modal,
+  Form,
+  Input,
+  Row,
+  Col,
+  Select,
+  Switch,
+  Divider,
+  Radio,
+} from "antd";
+import _ from "lodash";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
@@ -7,18 +18,26 @@ import {
   ICampaign,
   IAgentSkill,
   IPreference,
+  INodeEndpointGroup,
+  ICampaignProfile,
   LLMProvider,
 } from "@/electron/type";
-import { DEFAULT_LLM_MODELS } from "@/electron/constant";
+import { DEFAULT_LLM_MODELS, CHAIN_TYPE } from "@/electron/constant";
 import {
   useCreateAgentRegistry,
   useUpdateAgentRegistry,
 } from "@/hook/agentRegistry";
 import { useGetListAgentSkill } from "@/hook/agentSkill";
-import { useTranslation } from "@/hook/useTranslation";
+import {
+  useGetListNodeEndpointGroup,
+  useGetListCampaignProfile,
+  useTranslation,
+} from "@/hook";
 import { BASE_TOOL_REGISTRY } from "@/electron/appAgent/baseTool/registry";
-import { LlmProviderPicker } from "@/component";
-import { OptionWrapper } from "./style";
+import { LlmProviderPicker, PasswordInput } from "@/component";
+import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
+import { getChainConfig, IChainConfig } from "@/service/util";
+import { OptionWrapper, ChainWrapper } from "./style";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -30,6 +49,8 @@ type Props = {
   onRefresh: () => void;
   listCampaign?: ICampaign[];
   listAgentSkill?: IAgentSkill[];
+  listNodeEndpointGroup?: INodeEndpointGroup[];
+  listCampaignProfile?: ICampaignProfile[];
   preference?: IPreference | null;
 };
 
@@ -58,18 +79,27 @@ const ModalAgentRegistry = (props: Props) => {
     onRefresh,
     listCampaign,
     listAgentSkill,
+    listNodeEndpointGroup,
+    listCampaignProfile,
     preference,
   } = props;
 
   const [llmProvider, setLlmProvider] = useState<string>(LLMProvider.CLAUDE);
+  const [secretKeyValue, setSecretKeyValue] = useState<string>("");
 
-  const { translate } = useTranslation();
+  const { translate, locale } = useTranslation();
   const [form] = Form.useForm();
   const { createAgentRegistry, loading: createLoading } =
     useCreateAgentRegistry();
   const { updateAgentRegistry, loading: updateLoading } =
     useUpdateAgentRegistry();
   const { getListAgentSkill } = useGetListAgentSkill();
+  const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
+  const { getListCampaignProfile } = useGetListCampaignProfile();
+
+  const watchedCampaignId = Form.useWatch("campaignId", form);
+  const watchedIsAllWallet = Form.useWatch("isAllWallet", form);
+  const chainKey = Form.useWatch("chainKey", form) || "";
 
   const isEdit = Boolean(registry?.id);
   const loading = createLoading || updateLoading;
@@ -77,30 +107,48 @@ const ModalAgentRegistry = (props: Props) => {
   useEffect(() => {
     if (open) {
       getListAgentSkill({ page: 1, pageSize: 100 });
+      getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
     }
   }, [open]);
 
   useEffect(() => {
     const allowedBaseTools = registry?.allowedBaseTools || [];
-    const allowedCampaignIds = registry?.allowedCampaignIds || [];
     const allowedSkillIds = registry?.allowedSkillIds || [];
     const provider = registry?.llmProvider || LLMProvider.CLAUDE;
     const llmModel =
       registry?.llmModel || getDefaultModelForProvider(provider, preference);
-
     setLlmProvider(provider);
+
+    setSecretKeyValue(registry?.secretKey || "");
     form.setFieldsValue({
       name: registry?.name,
       description: registry?.description || "",
       llmModel,
       systemPrompt: registry?.systemPrompt || "",
       allowedBaseTools,
-      allowedCampaignIds,
       allowedSkillIds,
       isAgentInteractionEnabled: Boolean(registry?.isAgentInteractionEnabled),
       isActive: Boolean(registry?.isActive),
+      chainKey: registry?.chainKey,
+      nodeEndpointGroupId: registry?.nodeEndpointGroupId,
+      campaignId: registry?.campaignId,
+      profileIds: registry?.profileIds || [],
+      isAllWallet: Boolean(registry?.isAllWallet),
     });
   }, [registry]);
+
+  useEffect(() => {
+    if (watchedCampaignId) {
+      if (watchedCampaignId !== registry?.campaignId) {
+        form.setFieldValue("profileIds", []);
+      }
+      getListCampaignProfile({
+        page: 1,
+        pageSize: 100,
+        campaignId: watchedCampaignId,
+      });
+    }
+  }, [watchedCampaignId]);
 
   const onChangeProvider = (newProvider: string) => {
     setLlmProvider(newProvider);
@@ -111,6 +159,20 @@ const ModalAgentRegistry = (props: Props) => {
       );
     }
   };
+
+  const onChangeChain = () => {
+    form.setFieldValue("nodeEndpointGroupId", null);
+  };
+
+  const filteredNodeProviders = useMemo(() => {
+    const chainConfig =
+      _.find(listChainConfig, { dexscreenerKey: chainKey }) || null;
+    const chainType = chainConfig?.isEvm ? CHAIN_TYPE.EVM : CHAIN_TYPE.SOLANA;
+
+    return (listNodeEndpointGroup || []).filter(
+      (item) => item?.chainType === chainType,
+    );
+  }, [listNodeEndpointGroup, chainKey]);
 
   const onSubmit = async () => {
     try {
@@ -123,10 +185,15 @@ const ModalAgentRegistry = (props: Props) => {
         llmModel: values.llmModel || "",
         systemPrompt: values.systemPrompt || "",
         allowedBaseTools: values.allowedBaseTools || [],
-        allowedCampaignIds: values.allowedCampaignIds || [],
         allowedSkillIds: values.allowedSkillIds || [],
         isAgentInteractionEnabled: Boolean(values.isAgentInteractionEnabled),
         isActive: Boolean(values.isActive),
+        chainKey: values?.chainKey,
+        nodeEndpointGroupId: values?.nodeEndpointGroupId,
+        campaignId: values?.campaignId,
+        profileIds: values?.profileIds || [],
+        isAllWallet: Boolean(values.isAllWallet),
+        secretKey: values.secretKey || "",
       };
 
       if (isEdit && registry?.id) {
@@ -156,7 +223,7 @@ const ModalAgentRegistry = (props: Props) => {
       okText={isEdit ? translate("button.update") : translate("button.create")}
       cancelText={translate("cancel")}
       confirmLoading={loading}
-      width="100rem"
+      width="110rem"
       destroyOnHidden
       style={{ top: "5rem" }}
     >
@@ -184,6 +251,247 @@ const ModalAgentRegistry = (props: Props) => {
               <TextArea
                 placeholder={translate("agent.enterRegistryDesc")}
                 rows={3}
+                className="custom-input"
+              />
+            </Form.Item>
+
+            <Divider style={{ fontSize: "1.2rem" }}>
+              {translate("agent.executionContext")}
+            </Divider>
+
+            <Row gutter={12}>
+              <Col span={12}>
+                <Form.Item
+                  label={`${translate("agent.chain")}:`}
+                  name="chainKey"
+                >
+                  <Select
+                    size="large"
+                    className="custom-select"
+                    placeholder={translate("workflow.selectChain")}
+                    onChange={onChangeChain}
+                    showSearch
+                    allowClear
+                    options={listChainConfig.map((config) => ({
+                      value: config.dexscreenerKey,
+                      label: config.chainName,
+                      logo: config.logo,
+                      chainId: config.chainId,
+                      isEvm: config.isEvm,
+                    }))}
+                    optionRender={(option) => (
+                      <ChainWrapper>
+                        <img src={option.data.logo} alt="" />
+                        <OptionWrapper>
+                          <div className="name">{option.label}</div>
+                          {option.data.isEvm && (
+                            <div className="description">
+                              Chain ID: {option.data.chainId}
+                            </div>
+                          )}
+                        </OptionWrapper>
+                      </ChainWrapper>
+                    )}
+                    labelRender={(option) => {
+                      if (!option.value) {
+                        return null;
+                      }
+                      const config = listChainConfig.find(
+                        (item) => item.dexscreenerKey === option.value,
+                      );
+                      if (!config) {
+                        return null;
+                      }
+                      return (
+                        <ChainWrapper>
+                          <img src={config.logo} alt="" />
+                          <span>{config.chainName}</span>
+                        </ChainWrapper>
+                      );
+                    }}
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item
+                  label={`${translate("nodeEndpoint.group")}:`}
+                  name="nodeEndpointGroupId"
+                >
+                  <Select
+                    size="large"
+                    className="custom-select"
+                    placeholder={translate("nodeEndpoint.groupPlaceholder")}
+                    showSearch
+                    allowClear
+                    disabled={!chainKey}
+                    options={filteredNodeProviders.map(
+                      (group: INodeEndpointGroup) => {
+                        const groupChainConfig = _.find(
+                          getChainConfig(locale),
+                          {
+                            key: group?.chainType || CHAIN_TYPE.EVM,
+                          },
+                        ) as IChainConfig;
+                        return {
+                          value: group.id,
+                          label: group.name,
+                          chainImage: groupChainConfig?.image,
+                          totalNodeEndpoint: group.totalNodeEndpoint,
+                        };
+                      },
+                    )}
+                    optionRender={(option) => (
+                      <ChainWrapper>
+                        {option.data.chainImage && (
+                          <img src={option.data.chainImage} alt="" />
+                        )}
+                        <OptionWrapper>
+                          <div className="name">{option.label}</div>
+                          <div className="description">
+                            {option.data.totalNodeEndpoint || 0} nodes
+                          </div>
+                        </OptionWrapper>
+                      </ChainWrapper>
+                    )}
+                    labelRender={(option) => {
+                      if (!option.value) {
+                        return null;
+                      }
+                      const group = filteredNodeProviders.find(
+                        (item) => item.id === option.value,
+                      );
+                      const groupChainConfig = _.find(getChainConfig(locale), {
+                        key: group?.chainType || CHAIN_TYPE.EVM,
+                      }) as IChainConfig;
+                      return (
+                        <ChainWrapper>
+                          {groupChainConfig?.image && (
+                            <img src={groupChainConfig.image} alt="" />
+                          )}
+                          <span>{option.label}</span>
+                        </ChainWrapper>
+                      );
+                    }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              label={`${translate("sidebar.campaign")}:`}
+              name="campaignId"
+            >
+              <Select
+                size="large"
+                className="custom-select"
+                placeholder={translate("schedule.selectCampaign")}
+                showSearch
+                optionFilterProp="label"
+                optionLabelProp="label"
+                allowClear
+              >
+                {(listCampaign || []).map((campaign: ICampaign) => (
+                  <Option
+                    key={campaign.id}
+                    value={campaign.id}
+                    label={campaign.name}
+                  >
+                    <OptionWrapper>
+                      <div className="name">{campaign.name}</div>
+                      {campaign.note && (
+                        <div className="description">{campaign.note}</div>
+                      )}
+                    </OptionWrapper>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item label={`${translate("agent.walletProfiles")}:`}>
+              <Form.Item name="isAllWallet" noStyle valuePropName="value">
+                <Radio.Group size="small" style={{ marginBottom: "0.8rem" }}>
+                  <Radio value={true}>{translate("agent.allWallet")}</Radio>
+                  <Radio value={false}>{translate("agent.customSelect")}</Radio>
+                </Radio.Group>
+              </Form.Item>
+
+              <Form.Item name="profileIds" noStyle>
+                <Select
+                  mode="multiple"
+                  size="large"
+                  className="custom-select"
+                  placeholder={translate("agent.selectWalletProfiles")}
+                  showSearch
+                  optionFilterProp="label"
+                  optionLabelProp="label"
+                  allowClear
+                  disabled={watchedIsAllWallet !== false}
+                >
+                  {(listCampaignProfile || []).map(
+                    (profile: ICampaignProfile) => (
+                      <Option
+                        key={profile.id}
+                        value={profile.id}
+                        label={profile.name}
+                      >
+                        <OptionWrapper>
+                          <div className="name">{profile.name}</div>
+                          {profile.note && (
+                            <div className="description">{profile.note}</div>
+                          )}
+                        </OptionWrapper>
+                      </Option>
+                    ),
+                  )}
+                </Select>
+              </Form.Item>
+            </Form.Item>
+
+            <Form.Item
+              label={`${translate("wallet.secretKey")}:`}
+              tooltip={translate("agent.encryptKeyTooltip")}
+            >
+              <PasswordInput
+                name="secretKey"
+                placeholder={
+                  isEdit
+                    ? translate("agent.encryptKeyEditPlaceholder")
+                    : translate("agent.encryptKeyPlaceholder")
+                }
+                extendClass="agentSecretKey"
+                onChange={setSecretKeyValue}
+                initialValue={secretKeyValue}
+                shouldHideValue={true}
+              />
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
+            <Form.Item label={`${translate("agent.llmProvider")}:`}>
+              <LlmProviderPicker
+                value={llmProvider}
+                onChange={onChangeProvider}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={`${translate("agent.llmModel")}:`}
+              name="llmModel"
+              rules={[
+                { required: true, message: translate("form.requiredField") },
+              ]}
+            >
+              <Input className="custom-input" size="large" />
+            </Form.Item>
+
+            <Form.Item
+              label={`${translate("agent.systemPrompt")}:`}
+              name="systemPrompt"
+            >
+              <TextArea
+                placeholder={translate("agent.systemPromptPlaceholder")}
+                rows={7}
                 className="custom-input"
               />
             </Form.Item>
@@ -243,38 +551,6 @@ const ModalAgentRegistry = (props: Props) => {
             </Form.Item>
 
             <Form.Item
-              label={`${translate("agent.allowedCampaigns")}:`}
-              name="allowedCampaignIds"
-              tooltip={translate("agent.emptyMeansAllCampaigns")}
-            >
-              <Select
-                mode="multiple"
-                size="large"
-                className="custom-select"
-                placeholder={translate("agent.selectCampaigns")}
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                optionLabelProp="label"
-              >
-                {(listCampaign || []).map((campaign: ICampaign) => (
-                  <Option
-                    key={campaign.id}
-                    value={campaign.id}
-                    label={campaign.name}
-                  >
-                    <OptionWrapper>
-                      <div className="name">{campaign.name}</div>
-                      {campaign.note && (
-                        <div className="description">{campaign.note}</div>
-                      )}
-                    </OptionWrapper>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
               label={translate("agent.agentInteraction")}
               name="isAgentInteractionEnabled"
               valuePropName="checked"
@@ -292,36 +568,6 @@ const ModalAgentRegistry = (props: Props) => {
               <Switch />
             </Form.Item>
           </Col>
-
-          <Col span={12}>
-            <Form.Item label={`${translate("agent.llmProvider")}:`}>
-              <LlmProviderPicker
-                value={llmProvider}
-                onChange={onChangeProvider}
-              />
-            </Form.Item>
-
-            <Form.Item
-              label={`${translate("agent.llmModel")}:`}
-              name="llmModel"
-              rules={[
-                { required: true, message: translate("form.requiredField") },
-              ]}
-            >
-              <Input className="custom-input" size="large" />
-            </Form.Item>
-
-            <Form.Item
-              label={`${translate("agent.systemPrompt")}:`}
-              name="systemPrompt"
-            >
-              <TextArea
-                placeholder={translate("agent.systemPromptPlaceholder")}
-                rows={17}
-                className="custom-input"
-              />
-            </Form.Item>
-          </Col>
         </Row>
       </Form>
     </Modal>
@@ -331,5 +577,7 @@ const ModalAgentRegistry = (props: Props) => {
 export default connect((state: RootState) => ({
   listCampaign: state?.Campaign?.listCampaign || [],
   listAgentSkill: state?.AgentSkill?.listAgentSkill || [],
+  listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup || [],
+  listCampaignProfile: state?.CampaignProfile?.listCampaignProfile || [],
   preference: state?.Preference?.preference || null,
 }))(ModalAgentRegistry);

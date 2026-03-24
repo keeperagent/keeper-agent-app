@@ -1,8 +1,25 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
+export const ChainWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+
+  img {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  span {
+    font-size: 1.2rem;
+  }
+`;
+
 export const OptionWrapper = styled.div`
-  padding-bottom: 0.5rem;
 
   &:hover {
     .name {

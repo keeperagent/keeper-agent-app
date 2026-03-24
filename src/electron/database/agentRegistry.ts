@@ -2,7 +2,8 @@ import _ from "lodash";
 import { IAgentRegistry, IGetListResponse } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { formatAgentRegistry } from "@/electron/service/formatData";
-import { AgentRegistryModel, JobModel } from "./index";
+import { encryptionService } from "@/electron/service/encrypt";
+import { AgentRegistryModel, CampaignModel, JobModel } from "./index";
 
 class AgentRegistryDB {
   async getListAgentRegistry(
@@ -23,7 +24,7 @@ class AgentRegistryDB {
           ? {}
           : { limit: pageSize, offset: (page - 1) * pageSize }),
         where: condition,
-        raw: true,
+        include: [{ model: CampaignModel, as: "campaign", attributes: ["id", "name"] }],
       });
 
       const [totalData, listData]: any = await Promise.all([
@@ -57,7 +58,7 @@ class AgentRegistryDB {
     try {
       const data = await AgentRegistryModel.findOne({
         where: { id },
-        raw: false,
+        include: [{ model: CampaignModel, as: "campaign", attributes: ["id", "name"] }],
       });
 
       if (!data) {
@@ -84,8 +85,11 @@ class AgentRegistryDB {
           allowedBaseTools: JSON.stringify(data?.allowedBaseTools || []),
           allowedMcpServerIds: JSON.stringify(data?.allowedMcpServerIds || []),
           allowedSkillIds: JSON.stringify(data?.allowedSkillIds || []),
-          allowedCampaignIds: JSON.stringify(data?.allowedCampaignIds || []),
           allowedSubAgentIds: JSON.stringify(data?.allowedSubAgentIds || []),
+          profileIds: JSON.stringify(data?.profileIds || []),
+          secretKey: data?.secretKey
+            ? encryptionService.encryptData(data.secretKey)
+            : "",
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
         } as any,
@@ -114,12 +118,15 @@ class AgentRegistryDB {
               data?.allowedMcpServerIds || [],
             ),
             allowedSkillIds: JSON.stringify(data?.allowedSkillIds || []),
-            allowedCampaignIds: JSON.stringify(data?.allowedCampaignIds || []),
             allowedSubAgentIds: JSON.stringify(data?.allowedSubAgentIds || []),
+            profileIds: JSON.stringify(data?.profileIds || []),
+            secretKey: data?.secretKey
+              ? encryptionService.encryptData(data.secretKey)
+              : "",
             updateAt: new Date().getTime(),
           },
           ["id"],
-        ) as any,
+        ),
         { where: { id: data?.id } },
       );
 

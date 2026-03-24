@@ -28,7 +28,6 @@ const AgentRegistryCard = (props: Props) => {
     ? trimText(registry.llmModel, 24)
     : EMPTY_STRING;
 
-  const allowedCampaignCount = registry.allowedCampaignIds?.length || 0;
   const allowedToolCount = registry.allowedBaseTools?.length || 0;
   const allowedSkillCount = registry.allowedSkillIds?.length || 0;
 
@@ -102,9 +101,7 @@ const AgentRegistryCard = (props: Props) => {
                 {translate("sidebar.campaign")}:
               </span>
               <span className="item-value">
-                {allowedCampaignCount > 0
-                  ? allowedCampaignCount
-                  : translate("agent.allCampaigns")}
+                {registry.campaign?.name || EMPTY_STRING}
               </span>
             </div>
           </div>

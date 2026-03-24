@@ -4,7 +4,7 @@ export { default as UploadFile } from "./UploadFile";
 export { default as WalletAddress } from "./WalletAddress";
 export { default as SecretText } from "./SecretText";
 export { default as SpoilerText } from "./SpoilerText";
-export { SearchInput } from "./Input";
+export { SearchInput, PasswordInput } from "./Input";
 export { default as TagOption } from "./TagOption";
 export { default as TotalData } from "./TotalData";
 export { default as Workflow } from "./Workflow";
