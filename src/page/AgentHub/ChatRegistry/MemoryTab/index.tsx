@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Input, Spin, message } from "antd";
+import { Button, Spin, message } from "antd";
+import { connect } from "react-redux";
 import {
   useGetAgentRegistryMemory,
   useSaveAgentRegistryMemory,
 } from "@/hook/agentRegistry";
 import { useTranslation } from "@/hook/useTranslation";
+import { RootState } from "@/redux/store";
+import CodeEditor from "@/component/CodeEditor";
 import { MemoryWrapper } from "./style";
-
-const { TextArea } = Input;
 
 type Props = {
   agentRegistryId: number;
+  isLightMode: boolean;
 };
 
-const MemoryTab = ({ agentRegistryId }: Props) => {
+const MemoryTab = ({ agentRegistryId, isLightMode }: Props) => {
   const { translate } = useTranslation();
   const [draft, setDraft] = useState("");
   const {
@@ -45,7 +47,7 @@ const MemoryTab = ({ agentRegistryId }: Props) => {
       message.success(translate("agent.memorySaved"));
       getAgentRegistryMemory(agentRegistryId);
     }
-  }, [isSaveSuccess, translate, getAgentRegistryMemory, agentRegistryId]);
+  }, [isSaveSuccess]);
 
   const onSave = () => {
     if (loadingSave) {
@@ -73,7 +75,7 @@ const MemoryTab = ({ agentRegistryId }: Props) => {
 
         <Button
           type="primary"
-          size="small"
+          size="middle"
           loading={loadingSave}
           disabled={!isContentChanged}
           onClick={onSave}
@@ -83,18 +85,19 @@ const MemoryTab = ({ agentRegistryId }: Props) => {
       </div>
 
       <div className="memory-editor">
-        <TextArea
+        <CodeEditor
           value={draft}
-          onChange={(event) => {
-            setDraft(event.target.value);
-          }}
-          placeholder={translate("agent.memoryPlaceholder")}
-          className="custom-input"
-          style={{ height: "100%", resize: "none" }}
+          onChange={setDraft}
+          language="markdown"
+          height="100%"
+          theme="dark"
+          fontSize={13}
         />
       </div>
     </MemoryWrapper>
   );
 };
 
-export default MemoryTab;
+export default connect((state: RootState) => ({
+  isLightMode: state.Layout.isLightMode,
+}))(MemoryTab);

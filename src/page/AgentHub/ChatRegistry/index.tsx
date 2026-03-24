@@ -6,12 +6,15 @@ import { RootState } from "@/redux/store";
 import { IAgentRegistry, ICampaign } from "@/electron/type";
 import { agentRegistrySelector } from "@/redux/agentRegistry";
 import { useTranslation } from "@/hook/useTranslation";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
-import ChatInput from "@/page/Agent/ChatAgent/ChatInput";
-import MessageList from "@/page/Agent/ChatAgent/MessageList";
 import { useIpcAction } from "@/hook";
+import AgentChatView, {
+  type DisplayMessage,
+  type AttachedFile,
+} from "@/component/AgentChatView";
+import { deriveLabel, deriveClassName } from "@/component/AgentChatView/util";
 import HistoryTab from "./HistoryTab";
 import MemoryTab from "./MemoryTab";
 import { Wrapper, ContextChip } from "./style";
@@ -82,11 +85,9 @@ const ChatRegistry = (props: Props) => {
     if (!selectedAgentRegistry?.campaignId) {
       return null;
     }
-
     if (selectedAgentRegistry?.isAllWallet !== false) {
       return translate("agent.allWallet");
     }
-
     const profileCount = (selectedAgentRegistry?.profileIds || []).length;
     return `${profileCount} ${translate("agent.wallets")}`;
   }, [selectedAgentRegistry]);
@@ -177,11 +178,39 @@ const ChatRegistry = (props: Props) => {
     createSession({ agentRegistryId });
   }, [agentRegistryId]);
 
-  const onSendMessage = (input: string) => {
-    if (!input.trim() || !sessionId || isStreaming) {
-      return;
+  const displayedMessages: DisplayMessage[] = useMemo(() => {
+    const result: DisplayMessage[] = messages.map((msg) => ({
+      role: msg.role === "user" ? "human" : "assistant",
+      label: deriveLabel(msg.role, translate),
+      content: msg.content,
+      className: deriveClassName(msg.role),
+      timestamp: new Date(msg.timestamp),
+    }));
+
+    if (isStreaming || streamingContent) {
+      result.push({
+        role: "assistant",
+        label: translate("agent.messageLabelKeeper"),
+        content: streamingContent,
+        className: "message assistant streaming",
+        isLoading: !streamingContent && isStreaming,
+        timestamp: new Date(),
+        executingToolText: activeToolName
+          ? translate("agent.executingTool").replace(
+              "{tool}",
+              getToolDisplayName(activeToolName),
+            )
+          : undefined,
+      });
     }
 
+    return result;
+  }, [messages, isStreaming, streamingContent, activeToolName, translate]);
+
+  const onSend = (draft: string, attachedFiles: AttachedFile[]) => {
+    if (!sessionId || isStreaming) {
+      return;
+    }
     streamingContentRef.current = "";
     setStreamingContent("");
     setIsStreaming(true);
@@ -191,12 +220,30 @@ const ChatRegistry = (props: Props) => {
       {
         id: `user-${Date.now()}`,
         role: "user",
-        content: input,
+        content: draft,
         timestamp: Date.now(),
       },
     ]);
 
-    runAgent({ sessionId, input });
+    runAgent({
+      sessionId,
+      input: draft,
+      attachedFiles: attachedFiles.map((fileItem) => ({
+        name: fileItem?.name,
+        filePath: fileItem?.path,
+        type: fileItem?.type,
+        extension: fileItem?.extension,
+      })),
+    });
+  };
+
+  const onResetConversation = () => {
+    setMessages([]);
+    setStreamingContent("");
+    setIsStreaming(false);
+    setActiveToolName(null);
+    streamingContentRef.current = "";
+    createSession({ agentRegistryId });
   };
 
   const onStop = () => {
@@ -208,7 +255,6 @@ const ChatRegistry = (props: Props) => {
   };
 
   const agentName = selectedAgentRegistry?.name || `Agent #${agentRegistryId}`;
-  const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
     <Wrapper>
@@ -287,36 +333,33 @@ const ChatRegistry = (props: Props) => {
       <div className="chat-body">
         {activeTab === TAB.CHAT && (
           <Fragment>
-            {sessionLoading && isEmpty ? (
+            {sessionLoading && messages.length === 0 ? (
               <div className="loading-center">
                 <Spin />
               </div>
             ) : (
               <div className="chat-content">
-                {isEmpty ? (
-                  <div className="chat-empty-state">
-                    <div className="empty-icon">
-                      {providerIcon && (
-                        <img src={providerIcon} alt={providerLabel} />
-                      )}
-                    </div>
-
-                    <span className="empty-name">{agentName}</span>
-                    <span className="empty-hint">
-                      {translate("agent.chatEmptyHint")}
-                    </span>
-                  </div>
-                ) : (
-                  <MessageList
-                    messages={messages}
-                    streamingContent={isStreaming ? streamingContent : ""}
-                    activeToolName={activeToolName}
-                  />
-                )}
-                <ChatInput
-                  onSend={onSendMessage}
+                <AgentChatView
+                  messages={displayedMessages}
+                  loading={isStreaming}
+                  composerDisabled={sessionLoading || !sessionId}
+                  canReset={messages.length > 0}
+                  onSend={onSend}
                   onStop={onStop}
-                  isStreaming={isStreaming}
+                  onReset={onResetConversation}
+                  emptyState={
+                    <div className="chat-empty-state">
+                      <div className="empty-icon">
+                        {providerIcon && (
+                          <img src={providerIcon} alt={providerLabel} />
+                        )}
+                      </div>
+                      <span className="empty-name">{agentName}</span>
+                      <span className="empty-hint">
+                        {translate("agent.chatEmptyHint")}
+                      </span>
+                    </div>
+                  }
                 />
               </div>
             )}

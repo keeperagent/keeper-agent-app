@@ -132,7 +132,7 @@ const AgentRegistryCard = (props: Props) => {
 
         <div className="item-actions">
           <Popconfirm
-            title={translate("agent.confirmDeleteRegistry")}
+            title={translate("confirmDelete")}
             onConfirm={() => onDelete(registry)}
             okText={translate("yes")}
             cancelText={translate("no")}

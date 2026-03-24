@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { ITheme } from "@/style/theme";
 
 export const MessageListWrapper = styled.div`
   flex: 1;
@@ -12,62 +13,241 @@ export const MessageListWrapper = styled.div`
   .message {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    max-width: 80%;
+    margin-bottom: var(--margin-bottom-small);
 
     &.user {
-      align-self: flex-end;
       align-items: flex-end;
+      width: 100%;
+
+      .message-content {
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: flex-end;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .message-bubble-wrapper {
+        align-items: flex-end;
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+      }
+
+      .bubble {
+        background: ${({ theme }: { theme: ITheme }) =>
+          theme?.colorBgUserMessage};
+        color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+        border: 1px solid
+          ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+      }
+
+      .message-footer {
+        justify-content: flex-end;
+      }
     }
 
     &.assistant {
-      align-self: flex-start;
       align-items: flex-start;
-    }
-  }
 
-  .message-label {
-    font-size: 1.1rem;
-    color: var(--color-text-secondary);
-  }
+      .message-content {
+        flex-direction: row;
+      }
 
-  .message-bubble {
-    padding: 0.8rem 1.2rem;
-    border-radius: 0.8rem;
-    font-size: 1.3rem;
-    line-height: 1.6;
-    max-width: 100%;
-    word-break: break-word;
+      .message-bubble-wrapper {
+        align-items: flex-start;
+      }
 
-    .user & {
-      background: var(--color-primary);
-      color: #fff;
-    }
+      .bubble {
+        background: transparent;
+        color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+        border: none;
+        box-shadow: none;
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: 0;
+      }
 
-    .assistant & {
-      background: var(--background-card);
-      border: 1px solid var(--border-color);
-      color: var(--color-text);
-    }
-  }
-
-  .markdown-content {
-    p {
-      margin: 0 0 0.6rem;
-      &:last-child {
-        margin-bottom: 0;
+      .message-footer {
+        justify-content: flex-start;
       }
     }
-    pre {
-      overflow-x: auto;
-      font-size: 1.2rem;
+
+    .message-content {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.8rem;
+      max-width: 100%;
     }
-    code {
-      font-size: 1.2rem;
+
+    .message-bubble-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 100%;
     }
-    ul,
-    ol {
-      padding-left: 1.6rem;
+
+    .bubble {
+      padding: var(--padding-small);
+      border-radius: 1.2rem;
+      font-size: 1.3rem;
+      line-height: 1.7rem;
+      word-break: break-word;
+      box-shadow: var(--shadow-sm);
+
+      &:not(:has(.markdown-content)) {
+        white-space: pre-wrap;
+      }
+
+      .markdown-content {
+        white-space: normal;
+        color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+          margin: 1rem 0 0.5rem 0;
+          font-weight: 600;
+          line-height: 1.3;
+          color: inherit;
+        }
+        h1,
+        h2 {
+          font-size: 1.55rem;
+        }
+        h3,
+        h4,
+        h5,
+        h6 {
+          font-size: 1.35rem;
+        }
+        h1:first-child,
+        h2:first-child,
+        h3:first-child {
+          margin-top: 0;
+        }
+
+        a {
+          color: var(--primary-light);
+        }
+
+        p {
+          margin: 0.5rem 0;
+          color: inherit;
+        }
+        p:first-child {
+          margin-top: 0;
+        }
+        p:last-child {
+          margin-bottom: 0;
+        }
+
+        strong {
+          font-weight: 600;
+          color: inherit;
+        }
+
+        em,
+        li,
+        td,
+        th,
+        blockquote {
+          color: inherit;
+        }
+
+        code {
+          background: ${({ theme }: { theme: ITheme }) =>
+            theme?.colorBgTag || "rgba(0,0,0,0.08)"};
+          padding: 0.2rem 0.5rem;
+          border-radius: 4px;
+          font-size: 1.2rem;
+          color: var(--color-error);
+          border: 1px solid
+            ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+        }
+        pre {
+          margin: 0.75rem 0;
+          padding: 1rem;
+          border-radius: 8px;
+          overflow-x: auto;
+          background: ${({ theme }: { theme: ITheme }) =>
+            theme?.colorBgTag || "rgba(0,0,0,0.06)"};
+        }
+        pre code {
+          background: none;
+          padding: 0;
+        }
+
+        ul,
+        ol {
+          margin: 0.5rem 0 0.5rem 0;
+          padding-left: 1.5rem;
+        }
+        li {
+          margin: 0.5rem 0;
+        }
+
+        table {
+          width: 100%;
+          margin: 0.75rem 0;
+          border-collapse: collapse;
+          font-size: 1.24rem;
+        }
+        th,
+        td {
+          border: 1px solid
+            ${({ theme }: { theme: ITheme }) => theme?.colorBorder || "#eee"};
+          padding: 0.4rem 0.6rem;
+          text-align: left;
+        }
+        th {
+          font-weight: 600;
+          background: ${({ theme }: { theme: ITheme }) =>
+            theme?.colorBgTag || "rgba(0,0,0,0.04)"};
+        }
+      }
+    }
+
+    .message-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .timestamp {
+      font-size: 1rem;
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    }
+
+    .copy-icon {
+      height: 1.2rem;
+      width: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      margin-left: 0.5rem;
+
+      &.copied {
+        svg {
+          fill: var(--color-success);
+        }
+      }
+
+      &:hover {
+        opacity: 1;
+      }
+
+      svg {
+        width: 100%;
+        height: 100%;
+        fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+      }
     }
   }
 

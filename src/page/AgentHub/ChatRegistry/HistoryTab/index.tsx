@@ -1,26 +1,12 @@
-import { useEffect, useState, Fragment } from "react";
-import { Pagination, Spin, Tag, Tooltip, Empty } from "antd";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { IScheduleLog, AgentScheduleStatus } from "@/electron/type";
+import { useEffect, useState } from "react";
+import { Pagination, Spin, Empty } from "antd";
+import { IScheduleLog } from "@/electron/type";
 import { useGetListAgentRegistryLog } from "@/hook/agentRegistry";
 import { useTranslation } from "@/hook/useTranslation";
-import { formatTimeToDate } from "@/service/util";
-import {
-  collapseResultToOneLine,
-  normalizeAgentMessageContent,
-} from "@/service/agentMessageContent";
 import { HistoryWrapper } from "./style";
+import HistoryItem from "./HistoryItem";
 
 const PAGE_SIZE = 10;
-
-const statusColorMap: Record<string, string> = {
-  [AgentScheduleStatus.SUCCESS]: "green",
-  [AgentScheduleStatus.ERROR]: "red",
-  [AgentScheduleStatus.RUNNING]: "blue",
-  [AgentScheduleStatus.RETRYING]: "orange",
-  [AgentScheduleStatus.SKIPPED]: "default",
-};
 
 type Props = {
   agentRegistryId: number;
@@ -83,83 +69,14 @@ const HistoryTab = ({ agentRegistryId }: Props) => {
           </div>
         )}
 
-        {logs.map((log: IScheduleLog) => {
-          const isExpanded = expandedIds.has(log.id!);
-          const statusTag = log.status ? (
-            <Tag color={statusColorMap[log.status] || "default"}>
-              {log.status.toUpperCase()}
-            </Tag>
-          ) : null;
-
-          const hasContent = Boolean(log.result || log.errorMessage);
-
-          return (
-            <div key={log.id} className="history-item">
-              <div
-                className="history-item-header"
-                onClick={() => hasContent && toggleExpand(log.id!)}
-              >
-                {statusTag}
-
-                <span className="history-item-time">
-                  {formatTimeToDate(Number(log.createAt))}
-                </span>
-
-                {hasContent && (
-                  <span
-                    style={{
-                      fontSize: "1.1rem",
-                      color: "var(--color-text-secondary)",
-                    }}
-                  >
-                    {isExpanded ? "▲" : "▼"}
-                  </span>
-                )}
-              </div>
-
-              {isExpanded && hasContent && (
-                <div className="history-item-body">
-                  {log.result && (
-                    <Fragment>
-                      <div className="markdown-result">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {normalizeAgentMessageContent(log.result)}
-                        </ReactMarkdown>
-                      </div>
-                    </Fragment>
-                  )}
-
-                  {!log.result && log.errorMessage && (
-                    <div className="error-text">{log.errorMessage}</div>
-                  )}
-                </div>
-              )}
-
-              {!isExpanded && hasContent && (
-                <div
-                  className="history-item-body"
-                  style={{ maxHeight: "4rem", overflow: "hidden" }}
-                >
-                  <Tooltip title={translate("agent.clickToExpand")}>
-                    <div
-                      style={{
-                        color: "var(--color-text-secondary)",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => toggleExpand(log.id!)}
-                    >
-                      {collapseResultToOneLine(
-                        normalizeAgentMessageContent(
-                          log.result || log.errorMessage || "",
-                        ),
-                      )}
-                    </div>
-                  </Tooltip>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {logs.map((log: IScheduleLog) => (
+          <HistoryItem
+            key={log.id}
+            log={log}
+            isExpanded={expandedIds.has(log.id!)}
+            onToggle={toggleExpand}
+          />
+        ))}
       </div>
 
       {totalData > PAGE_SIZE && (

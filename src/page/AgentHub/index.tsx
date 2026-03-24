@@ -6,7 +6,10 @@ import {
   useGetListAgentRegistry,
   useDeleteAgentRegistry,
 } from "@/hook/agentRegistry";
-import { actSaveSelectedAgentRegistry } from "@/redux/agentRegistry";
+import {
+  actSaveSelectedAgentRegistry,
+  actSaveGetListAgentRegistry,
+} from "@/redux/agentRegistry";
 import { actSetPageName } from "@/redux/layout";
 import { RootState } from "@/redux/store";
 import { IAgentRegistry } from "@/electron/type";
@@ -14,7 +17,7 @@ import { useTranslation } from "@/hook/useTranslation";
 import AgentRegistryCard from "./AgentRegistryCard";
 import ModalAgentRegistry from "./ModalAgentRegistry";
 import ChatRegistry from "./ChatRegistry";
-import { Wrapper } from "./style";
+import { Wrapper, ChatRegistryPage } from "./style";
 
 const PAGE_SIZE = 12;
 
@@ -25,6 +28,7 @@ const AgentRegistry = (props: any) => {
     page,
     selectedAgentRegistry,
     actSaveSelectedAgentRegistry,
+    actSaveGetListAgentRegistry,
     actSetPageName,
   } = props;
   const { translate } = useTranslation();
@@ -37,20 +41,12 @@ const AgentRegistry = (props: any) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [chatRegistryId, setChatRegistryId] = useState<number | null>(null);
 
-  const fetchList = (currentPage: number = 1) => {
-    getListAgentRegistry({
-      page: currentPage,
-      pageSize: PAGE_SIZE,
-      searchText: searchText || undefined,
-    });
-  };
-
   useEffect(() => {
     actSetPageName(translate("sidebar.agentHub"));
   }, [translate]);
 
   useEffect(() => {
-    fetchList(1);
+    getListAgentRegistry({ page: 1, pageSize: PAGE_SIZE });
   }, []);
 
   const onSearch = (value: string) => {
@@ -102,13 +98,15 @@ const AgentRegistry = (props: any) => {
     getListAgentRegistry({
       page: newPage,
       pageSize: PAGE_SIZE,
-      searchText: searchText || undefined,
+      searchText,
     });
   };
 
   if (chatRegistryId) {
     return (
-      <ChatRegistry agentRegistryId={chatRegistryId} onBack={onCloseChat} />
+      <ChatRegistryPage>
+        <ChatRegistry agentRegistryId={chatRegistryId} onBack={onCloseChat} />
+      </ChatRegistryPage>
     );
   }
 
@@ -191,7 +189,6 @@ const AgentRegistry = (props: any) => {
         open={modalOpen}
         registry={selectedAgentRegistry}
         onClose={onCloseModal}
-        onRefresh={() => fetchList(1)}
       />
     </Wrapper>
   );
@@ -204,5 +201,5 @@ export default connect(
     page: state?.AgentRegistry?.page || 1,
     selectedAgentRegistry: state?.AgentRegistry?.selectedAgentRegistry || null,
   }),
-  { actSaveSelectedAgentRegistry, actSetPageName },
+  { actSaveSelectedAgentRegistry, actSaveGetListAgentRegistry, actSetPageName },
 )(AgentRegistry);

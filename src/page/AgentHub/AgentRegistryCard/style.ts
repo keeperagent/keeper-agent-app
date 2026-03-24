@@ -64,7 +64,6 @@ export const Wrapper = styled.div`
     .item-chain-logo {
       width: 1.7rem;
       height: 1.7rem;
-      border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
     }

@@ -46,7 +46,6 @@ type Props = {
   open: boolean;
   registry: IAgentRegistry | null;
   onClose: () => void;
-  onRefresh: () => void;
   listCampaign?: ICampaign[];
   listAgentSkill?: IAgentSkill[];
   listNodeEndpointGroup?: INodeEndpointGroup[];
@@ -76,7 +75,7 @@ const ModalAgentRegistry = (props: Props) => {
     open,
     registry,
     onClose,
-    onRefresh,
+
     listCampaign,
     listAgentSkill,
     listNodeEndpointGroup,
@@ -206,7 +205,6 @@ const ModalAgentRegistry = (props: Props) => {
       }
 
       onClose();
-      onRefresh();
     } catch {}
   };
 

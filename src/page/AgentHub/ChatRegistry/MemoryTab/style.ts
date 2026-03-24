@@ -3,7 +3,8 @@ import styled from "styled-components";
 export const MemoryWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   padding: 1.2rem 1.6rem;
   gap: 1.2rem;
@@ -23,16 +24,23 @@ export const MemoryWrapper = styled.div`
   .memory-editor {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 
-    .ant-input {
+    & > div {
       flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .cm-editor {
       height: 100%;
-      resize: none;
-      font-family: "Courier New", Courier, monospace;
-      font-size: 1.2rem;
-      line-height: 1.6;
+      border-radius: var(--border-radius);
+    }
+
+    .cm-scroller {
+      overflow: auto;
     }
   }
 

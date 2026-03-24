@@ -4,11 +4,9 @@ import { ITheme } from "@/style/theme";
 export const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
-  margin: -1rem -3rem;
-  width: calc(100% + 6rem);
-  align-self: stretch;
 
   .chat-header {
     flex-shrink: 0;
@@ -41,11 +39,14 @@ export const Wrapper = styled.div`
     }
 
     .chain-logo {
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 3rem;
+      height: 3rem;
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
+      border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+      background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
+      padding: 0.5rem;
     }
 
     .chat-agent-info {
@@ -98,18 +99,23 @@ export const Wrapper = styled.div`
     width: 100%;
   }
 
+  .chat-composer {
+    flex-shrink: 0;
+    padding: 1.2rem 1.6rem;
+  }
+
   .chat-empty-state {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1.2rem;
     padding: 3rem;
+    height: 100%;
 
     .empty-icon {
-      width: 6rem;
-      height: 6rem;
+      width: 5rem;
+      height: 5rem;
       border-radius: 50%;
       background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
       border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
