@@ -30,6 +30,7 @@ import agentSettingFactory from "./model/agentSetting";
 import chatHistoryFactory from "./model/chatHistory";
 import nodeSecretFactory from "./model/nodeSecret";
 import agentRegistryFactory from "./model/agentRegistry";
+import mcpTokenFactory from "./model/mcpToken";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
 
@@ -67,6 +68,7 @@ export const AgentSettingModel = agentSettingFactory(db);
 export const ChatHistoryModel = chatHistoryFactory(db);
 export const NodeSecretModel = nodeSecretFactory(db);
 export const AgentRegistryModel = agentRegistryFactory(db);
+export const McpTokenModel = mcpTokenFactory(db);
 
 // @CampaignModel -> @ProfileGroupModel
 CampaignModel.belongsTo(ProfileGroupModel, {

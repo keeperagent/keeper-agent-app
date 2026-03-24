@@ -8,6 +8,7 @@ export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
 
 // Maximum number of extra columns for campaigns, campaign profiles, resources, and resource groups.
 export const NUMBER_OF_COLUMN = 30;
+export const DEFAULT_MCP_PORT = 55555;
 
 /** Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users. */
 export const FILE_KEY = "67keeperA@";
@@ -530,6 +531,15 @@ export const MESSAGE = {
   REGISTRY_AGENT_RESET_SESSION_RES: "REGISTRY_AGENT_RESET_SESSION_RES",
   REGISTRY_AGENT_DESTROY_SESSION: "REGISTRY_AGENT_DESTROY_SESSION",
   REGISTRY_AGENT_DESTROY_SESSION_RES: "REGISTRY_AGENT_DESTROY_SESSION_RES",
+
+  // Keeper MCP Token
+  GET_LIST_MCP_TOKEN: "GET_LIST_MCP_TOKEN",
+  GET_LIST_MCP_TOKEN_RES: "GET_LIST_MCP_TOKEN_RES",
+  CREATE_MCP_TOKEN: "CREATE_MCP_TOKEN",
+  CREATE_MCP_TOKEN_RES: "CREATE_MCP_TOKEN_RES",
+  DELETE_MCP_TOKEN: "DELETE_MCP_TOKEN",
+  DELETE_MCP_TOKEN_RES: "DELETE_MCP_TOKEN_RES",
+  MCP_CONNECTIONS_UPDATED: "MCP_CONNECTIONS_UPDATED",
 };
 
 //  Log level for UI coloring (e.g. system log viewer)
