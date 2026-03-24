@@ -29,6 +29,7 @@ import agentSkillFactory from "./model/agentSkill";
 import agentSettingFactory from "./model/agentSetting";
 import chatHistoryFactory from "./model/chatHistory";
 import nodeSecretFactory from "./model/nodeSecret";
+import agentRegistryFactory from "./model/agentRegistry";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
 
@@ -65,6 +66,7 @@ export const AgentSkillModel = agentSkillFactory(db);
 export const AgentSettingModel = agentSettingFactory(db);
 export const ChatHistoryModel = chatHistoryFactory(db);
 export const NodeSecretModel = nodeSecretFactory(db);
+export const AgentRegistryModel = agentRegistryFactory(db);
 
 // @CampaignModel -> @ProfileGroupModel
 CampaignModel.belongsTo(ProfileGroupModel, {
@@ -312,6 +314,20 @@ JobModel.belongsTo(CampaignModel, {
   as: "campaign",
   constraints: false,
   onDelete: "CASCADE",
+});
+
+// @JobModel -> @AgentRegistryModel
+JobModel.belongsTo(AgentRegistryModel, {
+  foreignKey: { name: "agentRegistryId", allowNull: true },
+  as: "agentRegistry",
+  constraints: false,
+});
+
+// @AgentRegistryModel -> @CampaignModel
+AgentRegistryModel.belongsTo(CampaignModel, {
+  foreignKey: { name: "campaignId", allowNull: true },
+  as: "campaign",
+  constraints: false,
 });
 
 // @UserLogModel

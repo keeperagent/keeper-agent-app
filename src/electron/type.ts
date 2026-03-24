@@ -2540,6 +2540,7 @@ export type IJob = {
   maxRetries?: number;
   retryDelayMinutes?: number;
   llmProvider?: string; // LLM provider to use when running this job (defaults to CLAUDE)
+  agentRegistryId?: number | null; // If set, this agent job runs using the named registry agent config
 
   // virtual — not stored in DB, merged at read time
   lastLog?: IScheduleLog;
@@ -2569,6 +2570,7 @@ export type IScheduleLog = {
   nextRetryAt?: number;
   startedAt?: number;
   finishedAt?: number;
+  traceData?: string; // JSON-encoded trace steps captured by TraceCollector
 };
 
 export type ISorter = {
@@ -2661,3 +2663,28 @@ export type IAgentSetting = {
 export enum AGENT_SETTING_TYPE {
   AGENT_PRESET = "AGENT_PRESET",
 }
+
+export type IAgentRegistry = {
+  id?: number;
+  name: string;
+  description?: string;
+  llmProvider?: string;
+  llmModel?: string;
+  systemPrompt?: string;
+  allowedBaseTools?: string[];
+  allowedMcpServerIds?: number[];
+  allowedSkillIds?: number[];
+  allowedSubAgentIds?: number[];
+  isAgentInteractionEnabled?: boolean;
+  isActive?: boolean;
+  // Execution context
+  chainKey?: string;
+  nodeEndpointGroupId?: number;
+  campaignId?: number;
+  campaign?: ICampaign;
+  profileIds?: number[];
+  isAllWallet?: boolean;
+  secretKey?: string;
+  createAt?: number;
+  updateAt?: number;
+};

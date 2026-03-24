@@ -18,11 +18,11 @@ import {
   LLMProvider,
   JobType,
 } from "@/electron/type";
-import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { TrashBoldIcon } from "@/component/Icon";
+import { LlmProviderPicker } from "@/component";
 import { PasswordInput } from "@/component/Input";
 import { EMPTY_STRING } from "@/config/constant";
-import { Wrapper, OptionWrapper, ProviderRow, ProviderItem } from "./style";
+import { Wrapper, OptionWrapper } from "./style";
 
 const { Option } = Select;
 
@@ -334,18 +334,10 @@ const JobPicker = (props: IProps) => {
           </Form.Item>
 
           <Form.Item label={`${translate("schedule.llmProvider")}:`}>
-            <ProviderRow>
-              {LLM_PROVIDERS.map((provider) => (
-                <ProviderItem
-                  key={provider.key}
-                  className={currentProvider === provider.key ? "active" : ""}
-                  onClick={() => onChangeProvider(provider.key)}
-                >
-                  <img src={provider.icon} alt={provider.label} />
-                  <span>{provider.label}</span>
-                </ProviderItem>
-              ))}
-            </ProviderRow>
+            <LlmProviderPicker
+              value={currentProvider}
+              onChange={onChangeProvider}
+            />
           </Form.Item>
         </Form>
       )}

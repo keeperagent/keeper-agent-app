@@ -65,7 +65,7 @@ const lightTheme: ITheme = {
   colorBgInput: "#f2f2f2",
   clearBtnColorHover: "#ece0ed",
   colorBgInputDisable: "#f2f2f2",
-  colorBgUserMessage: "rgb(236, 236, 236)",
+  colorBgUserMessage: "rgb(242, 242, 242)",
 };
 
 const darkTheme: ITheme = {

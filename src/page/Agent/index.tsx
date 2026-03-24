@@ -17,7 +17,6 @@ import ChatAgent from "./ChatAgent";
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
 const ToolsManager = lazy(() => import("./ToolsManager"));
-
 const TAB = {
   AGENT: "AGENT",
   MCP_SERVER: "MCP_SERVER",
@@ -282,6 +281,7 @@ const AgentPage = (props: any) => {
               <ToolsManager />
             </Suspense>
           )}
+
         </Fragment>
       )}
     </Wrapper>

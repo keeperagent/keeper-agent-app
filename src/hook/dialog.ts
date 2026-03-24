@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { sleep } from "@/service/util";
-import type { AttachedFile } from "@/page/Agent/ChatAgent/AgentView/AttachedFiles";
+import type { AttachedFile } from "@/component/AgentChatView/AttachedFiles";
 
 const useChooseFolder = () => {
   const [loading, setLoading] = useState(false);

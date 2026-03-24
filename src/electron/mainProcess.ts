@@ -41,6 +41,7 @@ import { chatHistoryController } from "./controller/chatHistory";
 import { nodeSecretController } from "./controller/nodeSecret";
 import { authStorageController } from "./controller/authStorage";
 import { whatsappController } from "./controller/whatsapp";
+import { agentRegistryController } from "./controller/agentRegistry";
 
 const runMainProcess = () => {
   telegramController();
@@ -82,6 +83,7 @@ const runMainProcess = () => {
   nodeSecretController();
   authStorageController();
   whatsappController();
+  agentRegistryController();
 
   scheduleManager.start();
   agentTaskScheduler.init();

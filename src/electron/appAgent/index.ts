@@ -66,7 +66,7 @@ import {
   getGoogleGeminiModel,
 } from "./utils";
 import { preferenceDB } from "@/electron/database/preference";
-import { LLMProvider } from "@/electron/type";
+import { IAgentRegistry, LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { ToolContext } from "./toolContext";
 
@@ -451,6 +451,12 @@ type CreateAgentOptions = {
   memoryFile?: string;
 };
 
+type CreateRegistryAgentOptions = {
+  registry: IAgentRegistry;
+  checkpointer?: MemorySaver;
+  toolContext?: ToolContext;
+};
+
 type KeeperAgent = {
   agent: DeepAgent;
   cleanup: () => Promise<void>;
@@ -460,7 +466,11 @@ type KeeperAgent = {
   skillsCount: number;
 };
 
-const createLLM = async (provider: LLMProvider, temperature = 0) => {
+const createLLM = async (
+  provider: LLMProvider,
+  temperature = 0,
+  modelOverride?: string,
+) => {
   switch (provider) {
     case LLMProvider.CLAUDE: {
       const [apiKey] = await getAnthropicKey();
@@ -469,7 +479,10 @@ const createLLM = async (provider: LLMProvider, temperature = 0) => {
           "Anthropic API key is not found, please set it in the Settings page",
         );
       }
-      const preferredModel = await getAnthropicModel();
+      let preferredModel = modelOverride;
+      if (!preferredModel) {
+        preferredModel = await getAnthropicModel();
+      }
       const modelName = preferredModel || DEFAULT_LLM_MODELS[provider];
       return new ChatAnthropic({
         anthropicApiKey: apiKey,
@@ -486,7 +499,10 @@ const createLLM = async (provider: LLMProvider, temperature = 0) => {
           "Google Gemini API key is not found, please set it in the Settings page",
         );
       }
-      const preferredModel = await getGoogleGeminiModel();
+      let preferredModel = modelOverride;
+      if (!preferredModel) {
+        preferredModel = await getGoogleGeminiModel();
+      }
       const modelName = preferredModel || DEFAULT_LLM_MODELS[provider];
       return new ChatGoogleGenerativeAI({
         apiKey,
@@ -504,7 +520,10 @@ const createLLM = async (provider: LLMProvider, temperature = 0) => {
           "OpenAI API key is not found, please set it in the Settings page",
         );
       }
-      const preferredModel = await getOpenAIModel();
+      let preferredModel = modelOverride;
+      if (!preferredModel) {
+        preferredModel = await getOpenAIModel();
+      }
       const modelName = preferredModel || DEFAULT_LLM_MODELS[provider];
       return new ChatOpenAI({
         apiKey,
@@ -624,6 +643,172 @@ const createKeeperAgent = async (
   };
 };
 
+/**
+ * Creates a KeeperAgent scoped to an AgentRegistry config.
+ * Respects allowedBaseTools whitelist, custom systemPrompt, llmProvider/model overrides,
+ * and uses an isolated memory file keyed by registry ID.
+ */
+const createRegistryKeeperAgent = async (
+  options: CreateRegistryAgentOptions,
+): Promise<KeeperAgent> => {
+  const { registry, checkpointer, toolContext: providedToolContext } = options;
+
+  const provider = (registry.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
+  const llm = await createLLM(provider, 0, registry.llmModel || undefined);
+
+  const memoryFile = `AGENT_REGISTRY_${registry.id}.md`;
+  const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
+
+  const toolContext = providedToolContext || new ToolContext();
+  toolContext.update({ llmProvider: provider });
+
+  // Parse whitelist — empty array = allow all base tools (same as default agent)
+  let allowedBaseToolsSet: Set<string> | null = null;
+  if (
+    Array.isArray(registry.allowedBaseTools) &&
+    registry.allowedBaseTools.length > 0
+  ) {
+    allowedBaseToolsSet = new Set(registry.allowedBaseTools);
+  }
+
+  const isEnabled = (key: string): boolean =>
+    allowedBaseToolsSet === null || allowedBaseToolsSet.has(key);
+
+  const baseSubAgents = buildBaseSubAgents(toolContext, new Set<string>());
+  // Filter subagents based on whether any of their tools pass the whitelist
+  const filteredSubAgents = baseSubAgents.filter((subagent) => {
+    if (allowedBaseToolsSet === null) {
+      return true;
+    }
+    const tools = (subagent.tools || []) as any[];
+    return tools.some((tool) => {
+      const toolKey = tool?.name || "";
+      return isEnabled(toolKey);
+    });
+  });
+
+  // Load only allowed MCP servers
+  let allowedMcpServerIds: Set<number> | null = null;
+  if (registry.allowedMcpServerIds !== undefined) {
+    // Empty array = no MCP servers (same behavior as previous JSON-parse logic)
+    allowedMcpServerIds = new Set<number>(registry.allowedMcpServerIds || []);
+  }
+
+  const { subAgents: mcpSubAgentInfos, closeClients } =
+    await mcpToolLoader.loadMcpSubAgents();
+
+  const mcpSubAgents = mcpSubAgentInfos
+    .filter((info) => {
+      if (allowedMcpServerIds === null) {
+        return true;
+      }
+      return allowedMcpServerIds.has(info.id || -1);
+    })
+    .map((info) => ({
+      name: info.name,
+      description: info.description,
+      systemPrompt: `You are a subagent with access to tools from the "${info.name}" MCP server. Use the available tools to complete the user's task. Return results directly.`,
+      tools: info.tools as any,
+    }));
+
+  const subagents = [...filteredSubAgents, ...mcpSubAgents];
+
+  const skillRootDir = getSkillRootDir();
+  const workspaceDir = getWorkspaceDir();
+  const memoryDir = getMemoryDir();
+
+  await ensureAgentMemoryFile(memoryFile);
+
+  // Treat `[]` as "no restriction" (allow all), matching the existing behavior
+  // pattern used for other whitelists in this app.
+  const allowedSkillIdSet: Set<number> | null =
+    Array.isArray(registry.allowedSkillIds) &&
+    registry.allowedSkillIds.length > 0
+      ? new Set<number>(registry.allowedSkillIds)
+      : null;
+
+  const [enabledSkillsResult] = await agentSkillDB.getEnabledAgentSkills();
+  const enabledSkills = enabledSkillsResult || [];
+  const enabledFolders = new Set(
+    enabledSkills
+      .filter((skill) =>
+        allowedSkillIdSet === null
+          ? true
+          : allowedSkillIdSet.has(skill.id || -1),
+      )
+      .map((skill) => skill.folderName)
+      .filter((folderName): folderName is string => !!folderName),
+  );
+
+  const rawSkillsBackend = new FilesystemBackend({
+    rootDir: skillRootDir,
+    virtualMode: true,
+  });
+  const skillsBackend = new Proxy(rawSkillsBackend, {
+    get(target, prop, receiver) {
+      if (prop === "lsInfo") {
+        return async (dirPath: string) => {
+          const items = await target.lsInfo(dirPath);
+          return items.filter((item) => {
+            const folder = item.path.replace(/\/$/, "").split("/").pop() || "";
+            return enabledFolders.has(folder);
+          });
+        };
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+
+  const backend = new CompositeBackend(
+    new FilesystemBackend({ rootDir: workspaceDir, virtualMode: true }),
+    {
+      "/skills/": skillsBackend,
+      "/memories/": new FilesystemBackend({
+        rootDir: memoryDir,
+        virtualMode: true,
+      }),
+    },
+  );
+
+  const subagentNames = subagents.map((subagent) => subagent.name);
+  const allowedTaskTypes = ["general-purpose", ...subagentNames];
+  const taskSkillRedirectMiddleware =
+    createTaskSkillRedirectMiddleware(allowedTaskTypes);
+  const secretRestoreMiddleware = createSecretRestoreMiddleware(toolContext);
+
+  const systemPrompt =
+    registry.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
+
+  const agent = createDeepAgent({
+    model: llm,
+    systemPrompt,
+    backend,
+    tools: [] as any,
+    skills: ["/skills/"],
+    memory: [MEMORY_VIRTUAL_PATH],
+    subagents,
+    checkpointer: checkpointer || false,
+    middleware: [taskSkillRedirectMiddleware, secretRestoreMiddleware],
+  });
+
+  const subAgentsCount = subagents.length;
+  const toolsCount = subagents.reduce(
+    (sum, subagent) =>
+      sum + (Array.isArray(subagent.tools) ? subagent.tools.length : 0),
+    0,
+  );
+  const skillsCount = enabledFolders.size;
+
+  return {
+    agent,
+    cleanup: closeClients,
+    toolContext,
+    subAgentsCount,
+    toolsCount,
+    skillsCount,
+  };
+};
+
 const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   switch (provider) {
     case LLMProvider.CLAUDE: {
@@ -642,5 +827,11 @@ const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   }
 };
 
-export { createKeeperAgent, createLLM, hasApiKey, type KeeperAgent };
+export {
+  createKeeperAgent,
+  createRegistryKeeperAgent,
+  createLLM,
+  hasApiKey,
+  type KeeperAgent,
+};
 export { ToolContext, type IAttachedFileContext } from "./toolContext";

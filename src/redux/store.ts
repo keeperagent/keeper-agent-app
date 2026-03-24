@@ -34,6 +34,7 @@ import agentReducer from "./agent";
 import mcpServerReducer from "./mcpServer";
 import agentSkillReducer from "./agentSkill";
 import agentSettingReducer from "./agentSetting";
+import agentRegistryReducer from "./agentRegistry";
 
 const reducers = combineReducers({
   Auth: authReducer,
@@ -68,6 +69,7 @@ const reducers = combineReducers({
   McpServer: mcpServerReducer,
   AgentSkill: agentSkillReducer,
   AgentSetting: agentSettingReducer,
+  AgentRegistry: agentRegistryReducer,
 });
 
 const persistedReducer = persistReducer(
@@ -100,6 +102,7 @@ const persistedReducer = persistReducer(
       "ProxyIp",
       "ProxyIpGroup",
       "UserLog",
+      "AgentRegistry",
     ],
     migrate: createMigrate(migration, { debug: true }),
     version: CURRENT_REDUX_PERSIST_VERSION,

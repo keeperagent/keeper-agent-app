@@ -18,6 +18,7 @@ import {
   LookupIcon,
   SearchIcon,
   AgentIcon,
+  SpiderIcon,
 } from "@/component/Icon";
 import { RootState } from "@/redux/store";
 import logoUrl from "@/asset/logo.ico";
@@ -106,6 +107,12 @@ const SidebarContent = ({
         label={translate("sidebar.askAgent")}
         icon={<AgentIcon />}
         url="/dashboard/ask-agent"
+      />
+
+      <MenuItem
+        label={translate("sidebar.agentHub")}
+        icon={<SpiderIcon />}
+        url="/dashboard/agent-hub"
       />
 
       <MenuItem

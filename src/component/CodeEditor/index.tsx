@@ -15,6 +15,7 @@ type CodeEditorProps = {
   readOnly?: boolean;
   fontSize?: number;
   className?: string;
+  theme?: "dark" | "light";
 };
 
 const langExtensions: Record<CodeEditorLanguage, () => Extension> = {
@@ -32,6 +33,7 @@ export default function CodeEditor(props: CodeEditorProps) {
     readOnly = false,
     fontSize = 14,
     className,
+    theme: editorTheme = "dark",
   } = props;
 
   const extensions = useMemo(() => [langExtensions[language]()], [language]);
@@ -40,7 +42,7 @@ export default function CodeEditor(props: CodeEditorProps) {
     <CodeMirror
       value={value}
       height={height}
-      theme="dark"
+      theme={editorTheme}
       extensions={extensions}
       onChange={(v) => onChange?.(v)}
       editable={!readOnly}

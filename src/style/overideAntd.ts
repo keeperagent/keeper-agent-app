@@ -145,7 +145,6 @@ const OverideAntdStyle = createGlobalStyle`
     }
 
     &:hover {
-      color: #fff !important;
       box-shadow: 0px 0px 0px 0px rgba(79, 70, 229, 0.4) !important;
 
       &::before {

@@ -240,43 +240,4 @@ const ProviderBadge = styled.div`
   }
 `;
 
-const EditProviderRow = styled.div`
-  display: flex;
-  gap: 1rem;
-
-  .provider-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 1rem 0.5rem 1rem;
-    border-radius: 2rem;
-    border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
-    cursor: pointer;
-    transition: border-color 0.15s;
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTransparent};
-
-    &:hover {
-      border-color: var(--color-primary);
-    }
-
-    &.active {
-      border-color: var(--color-primary);
-    }
-
-    img {
-      width: 1.5rem;
-      height: 1.5rem;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    span {
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
-    }
-  }
-`;
-
-export { Wrapper, DurationWrapper, ProviderBadge, EditProviderRow };
+export { Wrapper, DurationWrapper, ProviderBadge };

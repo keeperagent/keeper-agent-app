@@ -80,7 +80,7 @@ export const AttachedFileCard = styled.div`
     position: relative;
     padding: 22px 8px 10px;
 
-    /* Document lines – repeating horizontal rules */
+    /* Document lines – repeating horizontal */
     &::before {
       content: "";
       position: absolute;

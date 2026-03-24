@@ -193,3 +193,13 @@ export {
   useUpdateAgentSetting,
   useDeleteAgentSetting,
 } from "./agentSetting";
+export {
+  useGetListAgentRegistry,
+  useGetOneAgentRegistry,
+  useCreateAgentRegistry,
+  useUpdateAgentRegistry,
+  useDeleteAgentRegistry,
+  useGetAgentRegistryMemory,
+  useSaveAgentRegistryMemory,
+  useGetListAgentRegistryLog,
+} from "./agentRegistry";
