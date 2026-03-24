@@ -5,6 +5,7 @@ import { trimText, formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { EMPTY_STRING } from "@/config/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
 import Status from "@/component/Status";
 import { Wrapper, ProviderBadge } from "./style";
 
@@ -28,6 +29,12 @@ const AgentRegistryCard = (props: Props) => {
     ? trimText(registry.llmModel, 24)
     : EMPTY_STRING;
 
+  const chainConfig = registry.chainKey
+    ? listChainConfig.find(
+        (config) => config.dexscreenerKey === registry.chainKey,
+      ) || null
+    : null;
+
   const allowedToolCount = registry.allowedBaseTools?.length || 0;
   const allowedSkillCount = registry.allowedSkillIds?.length || 0;
 
@@ -47,6 +54,13 @@ const AgentRegistryCard = (props: Props) => {
         tabIndex={0}
         onClick={() => onEdit(registry)}
       >
+        {chainConfig && (
+          <img
+            className="item-chain-logo"
+            src={chainConfig.logo}
+            alt={chainConfig.chainName}
+          />
+        )}
         <span className="item-name">{registry.name}</span>
         <Status
           content={
@@ -72,7 +86,7 @@ const AgentRegistryCard = (props: Props) => {
         </div>
 
         <div className="item-center-row">
-          <span className="item-label">{translate("description")}:</span>
+          <span className="item-label">{translate("description")}</span>
           <span className="item-description">
             {registry.description || EMPTY_STRING}
           </span>
@@ -81,7 +95,7 @@ const AgentRegistryCard = (props: Props) => {
         <div className="item-center-row">
           <div className="item-stats">
             <div className="item-stat">
-              <span className="item-label">{translate("agent.tool")}:</span>
+              <span className="item-label">{translate("agent.tool")}</span>
               <span className="item-value">
                 {allowedToolCount > 0
                   ? allowedToolCount
@@ -89,7 +103,7 @@ const AgentRegistryCard = (props: Props) => {
               </span>
             </div>
             <div className="item-stat">
-              <span className="item-label">{translate("agent.skill")}:</span>
+              <span className="item-label">{translate("agent.skill")}</span>
               <span className="item-value">
                 {allowedSkillCount > 0
                   ? allowedSkillCount
@@ -98,7 +112,7 @@ const AgentRegistryCard = (props: Props) => {
             </div>
             <div className="item-stat">
               <span className="item-label">
-                {translate("sidebar.campaign")}:
+                {translate("sidebar.campaign")}
               </span>
               <span className="item-value">
                 {registry.campaign?.name || EMPTY_STRING}

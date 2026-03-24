@@ -55,11 +55,19 @@ export const Wrapper = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 1rem;
     padding: 0rem 1.2rem 1rem 1.2rem;
     border-bottom: 1px solid
       ${({ theme }: { theme: ITheme }) => theme.colorBorder};
     background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
+
+    .item-chain-logo {
+      width: 1.7rem;
+      height: 1.7rem;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
 
     .item-name {
       font-size: 1.4rem;
@@ -200,7 +208,7 @@ export const ProviderBadge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.2rem 0.8rem 0.2rem 0.5rem;
+  padding: 0.5rem 0.7rem;
   border-radius: 2rem;
   border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
   width: fit-content;
@@ -220,10 +228,11 @@ export const ProviderBadge = styled.div`
 
   .model-name {
     font-size: 1.1rem;
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    color: var(--color-text-hover);
 
     &::before {
       content: "·";
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
       margin-right: 0.4rem;
     }
   }
