@@ -46,6 +46,8 @@ import { authStorageController } from "./controller/authStorage";
 import { whatsappController } from "./controller/whatsapp";
 import { agentRegistryController } from "./controller/agentRegistry";
 import { mcpTokenController } from "./controller/mcpToken";
+import { agentTaskController } from "./controller/agentTask";
+import { agentTaskService } from "./service/agentTaskService";
 import { keeperMcpServer } from "./mcpServer";
 
 const runMainProcess = () => {
@@ -90,8 +92,10 @@ const runMainProcess = () => {
   whatsappController();
   agentRegistryController();
   mcpTokenController();
+  agentTaskController();
 
   scheduleManager.start();
+  agentTaskService.startExpireWorker();
   agentTaskScheduler.init();
   telegramBotService.start();
   whatsappService.start();
