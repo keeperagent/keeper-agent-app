@@ -1,4 +1,4 @@
-import { Form, Button, Row, message, InputNumber, Input } from "antd";
+import { Form, Button, Row, message, InputNumber, Input, Switch } from "antd";
 import { useEffect } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -25,6 +25,7 @@ const Other = (props: IProps) => {
   }, [preference]);
 
   const { updatePreference, loading, isSuccess } = useUpdatePreference();
+  const { updatePreference: updateProtection } = useUpdatePreference();
 
   useEffect(() => {
     if (!loading && isSuccess) {
@@ -83,6 +84,21 @@ const Other = (props: IProps) => {
             placeholder={translate("workflow.enterJupiterApiKeyPlaceholder")}
             className="custom-input"
             rows={2}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={translate("setting.screenCaptureProtection")}
+          tooltip={translate("setting.screenCaptureProtectionTooltip")}
+        >
+          <Switch
+            checked={Boolean(preference?.isScreenCaptureProtectionOn)}
+            onChange={(checked) =>
+              updateProtection({
+                id: preference?.id,
+                isScreenCaptureProtectionOn: checked,
+              })
+            }
           />
         </Form.Item>
       </Form>

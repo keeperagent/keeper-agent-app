@@ -144,6 +144,11 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: 55555,
       },
+      isScreenCaptureProtectionOn: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: 0,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },

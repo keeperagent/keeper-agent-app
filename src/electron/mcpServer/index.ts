@@ -24,7 +24,6 @@ class KeeperMcpServer {
   private isRunning = false;
 
   async start(port: number = DEFAULT_MCP_PORT): Promise<void> {
-    console.log("===== start");
     if (this.isRunning) {
       return;
     }
