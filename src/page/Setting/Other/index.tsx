@@ -25,7 +25,6 @@ const Other = (props: IProps) => {
   }, [preference]);
 
   const { updatePreference, loading, isSuccess } = useUpdatePreference();
-  const { updatePreference: updateProtection } = useUpdatePreference();
 
   useEffect(() => {
     if (!loading && isSuccess) {
@@ -94,7 +93,7 @@ const Other = (props: IProps) => {
           <Switch
             checked={Boolean(preference?.isScreenCaptureProtectionOn)}
             onChange={(checked) =>
-              updateProtection({
+              updatePreference({
                 id: preference?.id,
                 isScreenCaptureProtectionOn: checked,
               })
