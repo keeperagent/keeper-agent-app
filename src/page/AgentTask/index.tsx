@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
-import { Button, Modal, Form, Input, Select, Popconfirm } from "antd";
+import { Button, Form } from "antd";
 import {
   DndContext,
   DragEndEvent,
@@ -11,7 +11,6 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
 import { actSetPageName } from "@/redux/layout";
 import { agentTaskSelector } from "@/redux/agentTask";
 import { agentRegistrySelector } from "@/redux/agentRegistry";
@@ -29,8 +28,11 @@ import {
 } from "@/hook/agentTask";
 import { useGetListAgentRegistry } from "@/hook/agentRegistry";
 import { useTranslation } from "@/hook/useTranslation";
-import { TrashIcon, EditIcon } from "@/component/Icon";
-import { Wrapper, KanbanColumn, TaskCard, PriorityBadge } from "./style";
+import { EMPTY_STRING } from "@/config/constant";
+import { ModalAgentTask } from "./ModalAgentTask";
+import { TaskCard } from "./TaskCard";
+import { PriorityBadge, Wrapper as TaskCardShell } from "./TaskCard/style";
+import { Wrapper, KanbanColumn } from "./style";
 
 const KANBAN_COLUMNS: { status: AgentTaskStatus; labelKey: string }[] = [
   { status: AgentTaskStatus.INIT, labelKey: "agentTask.column.init" },
@@ -39,100 +41,6 @@ const KANBAN_COLUMNS: { status: AgentTaskStatus; labelKey: string }[] = [
   { status: AgentTaskStatus.FAILED, labelKey: "agentTask.column.failed" },
   { status: AgentTaskStatus.EXPIRED, labelKey: "agentTask.column.expired" },
 ];
-
-const formatDueDate = (dueAt?: number): string => {
-  if (!dueAt) {
-    return "";
-  }
-  return new Date(dueAt).toLocaleDateString();
-};
-
-interface TaskCardItemProps {
-  task: IAgentTask;
-  onEdit: (task: IAgentTask) => void;
-  onDelete: (id: number) => void;
-  isDragging?: boolean;
-}
-
-const DraggableCard = ({
-  task,
-  onEdit,
-  onDelete,
-  isDragging,
-}: TaskCardItemProps) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: String(task.id),
-  });
-
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined;
-
-  return (
-    <TaskCard
-      ref={setNodeRef}
-      style={style}
-      isDragging={isDragging}
-      {...listeners}
-      {...attributes}
-    >
-      <div className="task-title">{task.title}</div>
-
-      {task.description && (
-        <div className="task-description">{task.description}</div>
-      )}
-
-      <div className="task-meta">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.6rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <PriorityBadge priority={task.priority || AgentTaskPriority.MEDIUM}>
-            {task.priority || "MEDIUM"}
-          </PriorityBadge>
-
-          {task.assignedAgent && (
-            <span className="task-agent">{task.assignedAgent.name}</span>
-          )}
-
-          {task.dueAt && (
-            <span className="task-due">{formatDueDate(task.dueAt)}</span>
-          )}
-        </div>
-
-        <div className="task-actions">
-          <Button
-            type="text"
-            size="small"
-            icon={<EditIcon />}
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(task);
-            }}
-          />
-          <Popconfirm
-            title="Delete task?"
-            onConfirm={() => onDelete(task.id!)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<TrashIcon />}
-              onClick={(event) => event.stopPropagation()}
-            />
-          </Popconfirm>
-        </div>
-      </div>
-    </TaskCard>
-  );
-};
 
 interface DroppableColumnProps {
   status: AgentTaskStatus;
@@ -162,7 +70,7 @@ const DroppableColumn = ({
 
       <div ref={setNodeRef} className="column-body">
         {tasks.map((task) => (
-          <DraggableCard
+          <TaskCard
             key={task.id}
             task={task}
             onEdit={onEdit}
@@ -174,13 +82,6 @@ const DroppableColumn = ({
     </KanbanColumn>
   );
 };
-
-const PRIORITY_OPTIONS = [
-  { label: "Low", value: AgentTaskPriority.LOW },
-  { label: "Medium", value: AgentTaskPriority.MEDIUM },
-  { label: "High", value: AgentTaskPriority.HIGH },
-  { label: "Urgent", value: AgentTaskPriority.URGENT },
-];
 
 const AgentTaskPage = (props: any) => {
   const { listAgentTask, listAgentRegistry, actSetPageName } = props;
@@ -250,9 +151,7 @@ const AgentTaskPage = (props: any) => {
         createAgentTask(values);
       }
       onCloseModal();
-    } catch {
-      // validation failed
-    }
+    } catch {}
   };
 
   const onDragStart = (event: DragStartEvent) => {
@@ -273,7 +172,7 @@ const AgentTaskPage = (props: any) => {
       (task: IAgentTask) => task.id === draggedTaskId,
     );
 
-    if (!draggedTask || draggedTask.status === newStatus) {
+    if (draggedTask?.status === newStatus) {
       return;
     }
 
@@ -322,81 +221,27 @@ const AgentTaskPage = (props: any) => {
 
         <DragOverlay>
           {activeDragTask ? (
-            <TaskCard isDragging>
+            <TaskCardShell isDragging>
               <div className="task-title">{activeDragTask.title}</div>
               <PriorityBadge
                 priority={activeDragTask.priority || AgentTaskPriority.MEDIUM}
               >
-                {activeDragTask.priority || "MEDIUM"}
+                {activeDragTask.priority || EMPTY_STRING}
               </PriorityBadge>
-            </TaskCard>
+            </TaskCardShell>
           ) : null}
         </DragOverlay>
       </DndContext>
 
-      <Modal
-        title={
-          editingTask
-            ? translate("agentTask.modal.editTitle")
-            : translate("agentTask.modal.createTitle")
-        }
+      <ModalAgentTask
         open={modalOpen}
+        editingTask={editingTask}
+        form={form}
+        agentOptions={agentOptions}
+        confirmLoading={createLoading}
         onCancel={onCloseModal}
         onOk={onSubmit}
-        confirmLoading={createLoading}
-        destroyOnClose
-        width={520}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="title"
-            label={translate("agentTask.label.title")}
-            rules={[{ required: true }]}
-          >
-            <Input
-              placeholder={translate("agentTask.placeholder.title")}
-              className="custom-input"
-              size="large"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="description"
-            label={translate("agentTask.label.description")}
-          >
-            <Input.TextArea
-              placeholder={translate("agentTask.placeholder.description")}
-              rows={3}
-              className="custom-input"
-              size="large"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="priority"
-            label={translate("agentTask.label.priority")}
-          >
-            <Select
-              options={PRIORITY_OPTIONS}
-              className="custom-select"
-              size="large"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="assignedAgentId"
-            label={translate("agentTask.label.assignedAgent")}
-          >
-            <Select
-              options={agentOptions}
-              allowClear
-              placeholder={translate("agentTask.placeholder.assignedAgent")}
-              className="custom-select"
-              size="large"
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      />
     </Wrapper>
   );
 };
