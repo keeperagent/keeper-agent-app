@@ -809,6 +809,8 @@
   "setting.connectWhatsApp": "Connect WhatsApp",
   "setting.enableWhatsAppAgent": "Enable WhatsApp",
   "setting.otherSetting": "Other settings",
+  "setting.screenCaptureProtection": "Screen capture protection",
+  "setting.screenCaptureProtectionTooltip": "Blocks other apps from capturing or recording this app's screen",
   "setting.languageModel": "Model config",
   "setting.syncData": "Data synchronization",
   "setting.exportData": "Export data",

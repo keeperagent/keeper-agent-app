@@ -14,6 +14,7 @@ import {
 import { masterPasswordManager } from "./service/masterPassword";
 import { secretKeyCache } from "./service/secretKeyCache";
 import { cleanupAllAgentSessions } from "./controller/appAgent";
+import { applyScreenCaptureProtection } from "./controller/preference";
 import { parseWindowsPath, parseUnixPath } from "./util";
 
 let mainWindow: BrowserWindow;
@@ -146,6 +147,10 @@ app.on("activate", async () => {
 
 handleDeeplinkMacOS();
 handleDeeplinkWindow();
+
+app.on("browser-window-created", (_event, win) => {
+  applyScreenCaptureProtection(win);
+});
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 

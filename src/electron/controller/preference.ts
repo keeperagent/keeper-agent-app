@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, BrowserWindow } from "electron";
 import { preferenceDB } from "@/electron/database/preference";
 import { browserDownloader } from "@/electron/service/browserDownloader";
 import { MESSAGE, RESPONSE_CODE, DEFAULT_MCP_PORT } from "@/electron/constant";
@@ -86,6 +86,32 @@ export const perferenceController = () => {
           });
         });
       }
+
+      if (data?.isScreenCaptureProtectionOn !== undefined) {
+        const enabled = Boolean(res?.isScreenCaptureProtectionOn);
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.setContentProtection(enabled);
+        }
+      }
     },
   );
+};
+
+export const applyScreenCaptureProtection = async (
+  targetWindow?: BrowserWindow,
+) => {
+  try {
+    const [preference] = await preferenceDB.getOnePreference();
+    const enabled = Boolean(preference?.isScreenCaptureProtectionOn);
+    const windows = targetWindow
+      ? [targetWindow]
+      : BrowserWindow.getAllWindows();
+    for (const win of windows) {
+      win.setContentProtection(enabled);
+    }
+  } catch (err: any) {
+    logEveryWhere({
+      message: `Failed to apply screen capture protection: ${err?.message}`,
+    });
+  }
 };

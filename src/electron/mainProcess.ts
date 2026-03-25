@@ -10,7 +10,10 @@ import { proxyIpGroupController } from "./controller/proxyIpGroup";
 import { proxyController } from "./controller/proxy";
 import { profileGroupController } from "./controller/profileGroup";
 import { profileController } from "./controller/profile";
-import { perferenceController } from "./controller/preference";
+import {
+  perferenceController,
+  applyScreenCaptureProtection,
+} from "./controller/preference";
 import { nodeEndpointGroupController } from "./controller/nodeEndpointGroup";
 import { nodeEndpointController } from "./controller/nodeEndpoint";
 import { extensionController } from "./controller/extension";
@@ -93,7 +96,8 @@ const runMainProcess = () => {
   telegramBotService.start();
   whatsappService.start();
 
-  keeperMcpServer.startIfEnabled().catch(() => {});
+  keeperMcpServer.startIfEnabled();
+  applyScreenCaptureProtection();
 };
 
 export { runMainProcess };

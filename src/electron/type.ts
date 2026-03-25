@@ -2433,6 +2433,7 @@ export type IPreference = {
   disabledTools?: string[];
   isMcpServerOn?: boolean;
   mcpServerPort?: number;
+  isScreenCaptureProtectionOn?: boolean;
 };
 
 export enum McpTokenPermission {
