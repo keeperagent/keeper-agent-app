@@ -193,9 +193,15 @@ class KeeperMcpServer {
   }
 
   async startIfEnabled(): Promise<void> {
-    const [preference] = await preferenceDB.getOnePreference();
-    if (preference?.isMcpServerOn) {
-      await this.start(preference.mcpServerPort || DEFAULT_MCP_PORT);
+    try {
+      const [preference] = await preferenceDB.getOnePreference();
+      if (preference?.isMcpServerOn) {
+        await this.start(preference.mcpServerPort || DEFAULT_MCP_PORT);
+      }
+    } catch (err: any) {
+      logEveryWhere({
+        message: `Failed to start Keeper MCP server if enabled: ${err?.message}`,
+      });
     }
   }
 
