@@ -139,13 +139,15 @@ const OverideAntdStyle = createGlobalStyle`
       z-index: 0;
     }
 
-    > * {
+    & > * {
       position: relative;
       z-index: 1;
     }
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       box-shadow: 0px 0px 0px 0px rgba(79, 70, 229, 0.4) !important;
+      color: #fff !important;
 
       &::before {
         transform: scaleX(1);
@@ -154,6 +156,7 @@ const OverideAntdStyle = createGlobalStyle`
 
     &:active {
       box-shadow: 2px 2px 0px 0px rgba(79, 70, 229, 0.4) !important;
+      color: #fff !important;
     }
 
     &[disabled] {

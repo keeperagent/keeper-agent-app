@@ -11,10 +11,12 @@ import ExportDatabase from "./ExportDatabase";
 import Other from "./Other";
 import LanguageModel from "./LanguageModel";
 import WebSearch from "./WebSearch";
+import KeeperMcp from "./KeeperMcp";
 
 const TAB = {
   GENERAL_SETTING: "GENERAL_SETTING",
   AGENT_SETTING: "AGENT_SETTING",
+  KEEPER_MCP: "KEEPER_MCP",
   DATABASE_SETTING: "DATABASE_SETTING",
 };
 
@@ -51,6 +53,10 @@ const SettingPage = (props: any) => {
             {
               key: TAB.AGENT_SETTING,
               label: translate("setting.agent"),
+            },
+            {
+              key: TAB.KEEPER_MCP,
+              label: translate("setting.keeperMcp"),
             },
             {
               key: TAB.DATABASE_SETTING,
@@ -140,6 +146,8 @@ const SettingPage = (props: any) => {
           <Col span={7}></Col>
         </Row>
       )}
+
+      {activeTab === TAB.KEEPER_MCP && <KeeperMcp />}
     </Wrapper>
   );
 };

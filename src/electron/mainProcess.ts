@@ -42,6 +42,8 @@ import { nodeSecretController } from "./controller/nodeSecret";
 import { authStorageController } from "./controller/authStorage";
 import { whatsappController } from "./controller/whatsapp";
 import { agentRegistryController } from "./controller/agentRegistry";
+import { mcpTokenController } from "./controller/mcpToken";
+import { keeperMcpServer } from "./mcpServer";
 
 const runMainProcess = () => {
   telegramController();
@@ -84,11 +86,14 @@ const runMainProcess = () => {
   authStorageController();
   whatsappController();
   agentRegistryController();
+  mcpTokenController();
 
   scheduleManager.start();
   agentTaskScheduler.init();
   telegramBotService.start();
   whatsappService.start();
+
+  keeperMcpServer.startIfEnabled().catch(() => {});
 };
 
 export { runMainProcess };

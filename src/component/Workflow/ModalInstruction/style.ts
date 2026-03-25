@@ -46,7 +46,7 @@ const Wrapper = styled.div`
         }
       }
 
-      .emtpty {
+      .empty {
         display: flex;
         justify-content: center;
         width: 100%;

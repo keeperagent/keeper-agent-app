@@ -1,10 +1,12 @@
 import { ipcMain } from "electron";
 import { preferenceDB } from "@/electron/database/preference";
 import { browserDownloader } from "@/electron/service/browserDownloader";
-import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
+import { MESSAGE, RESPONSE_CODE, DEFAULT_MCP_PORT } from "@/electron/constant";
 import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
 import { recreateAllAgents } from "./appAgent";
+import { keeperMcpServer } from "@/electron/mcpServer/index";
+import { logEveryWhere } from "../service/util";
 
 export const perferenceController = () => {
   ipcMain.on(MESSAGE.INIT_PREFERENCE, async (_event, _payload) => {
@@ -68,6 +70,21 @@ export const perferenceController = () => {
 
       if (isUpdateAgentTool) {
         recreateAllAgents();
+      }
+
+      if (Boolean(data?.isMcpServerOn) && !keeperMcpServer.getIsRunning()) {
+        const port = res?.mcpServerPort || DEFAULT_MCP_PORT;
+        keeperMcpServer.start(port).catch((err) => {
+          logEveryWhere({
+            message: `Failed to start Keeper MCP server: ${err?.message}`,
+          });
+        });
+      } else if (!data?.isMcpServerOn && keeperMcpServer.getIsRunning()) {
+        keeperMcpServer.stop().catch((err) => {
+          logEveryWhere({
+            message: `Failed to stop Keeper MCP server: ${err?.message}`,
+          });
+        });
       }
     },
   );

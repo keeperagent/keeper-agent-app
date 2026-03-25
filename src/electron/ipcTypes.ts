@@ -9,6 +9,7 @@ import type {
   IFlowProfile,
   ILog,
   IMcpServer,
+  IMcpToken,
   INodeEndpoint,
   INodeEndpointGroup,
   IPreference,
@@ -630,4 +631,13 @@ export type IpcChatHistorySaveMessagePayload = {
 
 export type IpcChatHistoryLoadPayload = {
   limit?: number;
+};
+
+// Keeper MCP Token
+export type IpcCreateMcpTokenPayload = {
+  data: IMcpToken & { plainToken: string };
+};
+
+export type IpcDeleteMcpTokenPayload = {
+  data: number[];
 };

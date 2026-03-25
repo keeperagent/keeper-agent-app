@@ -2431,6 +2431,29 @@ export type IPreference = {
   exaApiKey?: string;
   masterPasswordVerifier?: string;
   disabledTools?: string[];
+  isMcpServerOn?: boolean;
+  mcpServerPort?: number;
+};
+
+export enum McpTokenPermission {
+  READ = "READ",
+  READ_WRITE = "READ_WRITE",
+}
+
+export type IMcpToken = {
+  id?: number;
+  name?: string;
+  tokenHash?: string;
+  permission?: McpTokenPermission;
+  createAt?: number;
+  updateAt?: number;
+};
+
+export type IMcpConnection = {
+  tokenId: number;
+  tokenName: string;
+  connectedAt: number;
+  clientInfo?: string;
 };
 
 // Statistic

@@ -111,7 +111,7 @@ const NodeInstruction = (props: any) => {
           {_.sum(
             listNode?.map((group: INodeGroup) => group?.children?.length),
           ) === 0 && (
-            <div className="emtpty">
+            <div className="empty">
               <Empty />
             </div>
           )}

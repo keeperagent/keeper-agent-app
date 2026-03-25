@@ -134,6 +134,16 @@ export default (db: Sequelize) =>
         type: DataTypes.STRING,
         defaultValue: "[]",
       },
+      isMcpServerOn: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      mcpServerPort: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 55555,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
