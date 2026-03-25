@@ -1,138 +1,241 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { walletDB } from "@/electron/database/wallet";
-import { walletGroupDB } from "@/electron/database/walletGroup";
-import { campaignDB } from "@/electron/database/campaign";
-import { preferenceDB } from "@/electron/database/preference";
+import {
+  searchCampaignsTool,
+  searchWorkflowsTool,
+  checkWorkflowStatusTool,
+  getTokenPriceTool,
+  webSearchTavilyTool,
+  webSearchExaTool,
+  webExtractTavilyTool,
+  findSimilarExaTool,
+  getSolanaTokenBalanceTool,
+  getEvmTokenBalanceTool,
+} from "@/electron/appAgent/baseTool";
+import { listAgentSchedulesTool } from "@/electron/appAgent/baseTool/scheduler";
+import { ToolContext } from "@/electron/appAgent/toolContext";
+
+const wrapText = (text: string) => ({
+  content: [{ type: "text" as const, text }],
+});
 
 const registerReadTools = (server: McpServer) => {
+  const searchCampaignsInstance = searchCampaignsTool();
   server.registerTool(
-    "list_wallet_groups",
-    { description: "List all wallet groups in Keeper Agent" },
-    async () => {
-      const [groups] = await walletGroupDB.getListWalletGroup(1, 15);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(groups?.data || []),
-          },
-        ],
-      };
-    },
-  );
-
-  server.registerTool(
-    "list_wallets",
+    "search_campaigns",
     {
-      description: "List wallets, optionally filtered by wallet group ID",
-      inputSchema: {
-        groupId: z.number().optional().describe("Wallet group ID to filter by"),
-        page: z.number().optional().describe("Page number (default 1)"),
-        pageSize: z.number().optional().describe("Page size (default 15)"),
-      },
+      description: searchCampaignsInstance.description,
+      inputSchema: searchCampaignsInstance.schema.shape,
     },
-    async ({ groupId, page, pageSize }) => {
-      const [result] = await walletDB.getListWallet({
-        page: page || 1,
-        pageSize: pageSize || 15,
-        groupId,
-      });
-
-      const wallets = (result?.data || []).map((wallet: any) => ({
-        id: wallet.id,
-        address: wallet.address,
-        groupId: wallet.groupId,
-        note: wallet.note,
-        typeName: wallet.typeName,
-      }));
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              wallets,
-              totalData: result?.totalData || 0,
-              totalPage: result?.totalPage || 0,
-            }),
-          },
-        ],
-      };
-    },
+    async (args: any) =>
+      wrapText((await (searchCampaignsInstance.func as any)(args)) as string),
   );
 
+  const searchWorkflowsInstance = searchWorkflowsTool();
   server.registerTool(
-    "list_campaigns",
+    "search_workflows",
     {
-      description: "List all automation campaigns in Keeper Agent",
-      inputSchema: {
-        page: z.number().optional().describe("Page number (default 1)"),
-        pageSize: z.number().optional().describe("Page size (default 15)"),
-        searchText: z.string().optional().describe("Search by campaign name"),
-      },
+      description: searchWorkflowsInstance.description,
+      inputSchema: searchWorkflowsInstance.schema.shape,
     },
-    async ({ page, pageSize, searchText }) => {
-      const [result] = await campaignDB.getListCampaign(
-        page || 1,
-        pageSize || 15,
-        searchText,
-      );
-      const campaigns = (result?.data || []).map((campaign: any) => ({
-        id: campaign.id,
-        name: campaign.name,
-        note: campaign.note,
-        color: campaign.color,
-      }));
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              campaigns,
-              totalData: result?.totalData || 0,
-              totalPage: result?.totalPage || 0,
-            }),
-          },
-        ],
-      };
+    async (args: any) =>
+      wrapText((await (searchWorkflowsInstance.func as any)(args)) as string),
+  );
+
+  const checkWorkflowStatusInstance = checkWorkflowStatusTool();
+  server.registerTool(
+    "check_workflow_status",
+    {
+      description: checkWorkflowStatusInstance.description,
+      inputSchema: checkWorkflowStatusInstance.schema.shape,
     },
+    async (args: any) =>
+      wrapText(
+        (await (checkWorkflowStatusInstance.func as any)(args)) as string,
+      ),
+  );
+
+  const listAgentSchedulesInstance = listAgentSchedulesTool();
+  server.registerTool(
+    "list_agent_schedules",
+    {
+      description: listAgentSchedulesInstance.description,
+      inputSchema: listAgentSchedulesInstance.schema.shape,
+    },
+    async (args: any) =>
+      wrapText(
+        (await (listAgentSchedulesInstance.func as any)(args)) as string,
+      ),
+  );
+
+  const getTokenPriceInstance = getTokenPriceTool();
+  server.registerTool(
+    "get_token_price",
+    {
+      description: getTokenPriceInstance.description,
+      inputSchema: getTokenPriceInstance.schema.shape,
+    },
+    async (args: any) =>
+      wrapText((await (getTokenPriceInstance.func as any)(args)) as string),
   );
 
   server.registerTool(
-    "get_preference",
+    "get_solana_token_balance",
     {
       description:
-        "Get Keeper Agent general preferences (LLM provider, chain settings, etc.)",
+        "Get SOL or SPL token balances across wallets in a campaign on Solana",
+      inputSchema: {
+        campaignId: z.number().describe("Campaign ID containing the wallets"),
+        nodeEndpointGroupId: z
+          .number()
+          .describe("Node endpoint group ID for Solana RPC connections"),
+        encryptKey: z
+          .string()
+          .optional()
+          .describe("Encryption key to decrypt wallet data"),
+        isAllWallet: z
+          .boolean()
+          .optional()
+          .describe("Use all wallets in campaign (default true)"),
+        listCampaignProfileId: z
+          .array(z.number())
+          .optional()
+          .describe(
+            "Specific profile IDs to check (when isAllWallet is false)",
+          ),
+        tokenAddress: z
+          .string()
+          .optional()
+          .describe("SPL mint address, 'SOL', or omit for native SOL balance"),
+      },
     },
-    async () => {
-      const [preference] = await preferenceDB.getOnePreference();
-      if (!preference) {
-        return {
-          content: [{ type: "text" as const, text: "No preference found" }],
-        };
-      }
-      // Only expose safe non-secret fields
-      const safePreference = {
-        hideMinimap: preference.hideMinimap,
-        maxConcurrentJob: preference.maxConcurrentJob,
-        openAIModel: preference.openAIModel,
-        anthropicModel: preference.anthropicModel,
-        googleGeminiModel: preference.googleGeminiModel,
-        dayResetJobStatus: preference.dayResetJobStatus,
-        maxLogAge: preference.maxLogAge,
-        maxHistoryLogAge: preference.maxHistoryLogAge,
-      };
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(safePreference),
-          },
-        ],
-      };
+    async ({
+      campaignId,
+      nodeEndpointGroupId,
+      encryptKey,
+      isAllWallet,
+      listCampaignProfileId,
+      tokenAddress,
+    }) => {
+      const toolCtx = new ToolContext();
+      toolCtx.update({
+        campaignId,
+        nodeEndpointGroupId,
+        encryptKey,
+        isAllWallet: isAllWallet !== false,
+        listCampaignProfileId,
+      });
+      const result = await (getSolanaTokenBalanceTool(toolCtx).func as any)({
+        tokenAddress,
+      });
+      return wrapText(result as string);
     },
+  );
+
+  server.registerTool(
+    "get_evm_token_balance",
+    {
+      description:
+        "Get native or ERC-20 token balances across wallets in a campaign on EVM chains",
+      inputSchema: {
+        campaignId: z.number().describe("Campaign ID containing the wallets"),
+        nodeEndpointGroupId: z
+          .number()
+          .describe("Node endpoint group ID for EVM RPC connections"),
+        chainKey: z
+          .string()
+          .describe(
+            "EVM chain key (e.g. 'ethereum', 'bsc', 'base', 'arbitrum', 'polygon')",
+          ),
+        encryptKey: z
+          .string()
+          .optional()
+          .describe("Encryption key to decrypt wallet data"),
+        isAllWallet: z
+          .boolean()
+          .optional()
+          .describe("Use all wallets in campaign (default true)"),
+        listCampaignProfileId: z
+          .array(z.number())
+          .optional()
+          .describe(
+            "Specific profile IDs to check (when isAllWallet is false)",
+          ),
+        tokenAddress: z
+          .string()
+          .optional()
+          .describe(
+            "ERC-20 token contract address (0x...), or omit for native token balance",
+          ),
+      },
+    },
+    async ({
+      campaignId,
+      nodeEndpointGroupId,
+      chainKey,
+      encryptKey,
+      isAllWallet,
+      listCampaignProfileId,
+      tokenAddress,
+    }) => {
+      const toolCtx = new ToolContext();
+      toolCtx.update({
+        campaignId,
+        nodeEndpointGroupId,
+        chainKey,
+        encryptKey,
+        isAllWallet: isAllWallet !== false,
+        listCampaignProfileId,
+      });
+      const result = await (getEvmTokenBalanceTool(toolCtx).func as any)({
+        tokenAddress,
+      });
+      return wrapText(result as string);
+    },
+  );
+
+  const webSearchTavilyInstance = webSearchTavilyTool();
+  server.registerTool(
+    "web_search_tavily",
+    {
+      description: webSearchTavilyInstance.description,
+      inputSchema: webSearchTavilyInstance.schema.shape,
+    },
+    async (args: any) =>
+      wrapText((await (webSearchTavilyInstance.func as any)(args)) as string),
+  );
+
+  const webSearchExaInstance = webSearchExaTool();
+  server.registerTool(
+    "web_search_exa",
+    {
+      description: webSearchExaInstance.description,
+      inputSchema: webSearchExaInstance.schema.shape,
+    },
+    async (args: any) =>
+      wrapText((await (webSearchExaInstance.func as any)(args)) as string),
+  );
+
+  const webExtractTavilyInstance = webExtractTavilyTool();
+  server.registerTool(
+    "web_extract_tavily",
+    {
+      description: webExtractTavilyInstance.description,
+      inputSchema: webExtractTavilyInstance.schema.shape,
+    },
+    async (args: any) =>
+      wrapText((await (webExtractTavilyInstance.func as any)(args)) as string),
+  );
+
+  const findSimilarExaInstance = findSimilarExaTool();
+  server.registerTool(
+    "find_similar_exa",
+    {
+      description: findSimilarExaInstance.description,
+      inputSchema: findSimilarExaInstance.schema.shape,
+    },
+    async (args: any) =>
+      wrapText((await (findSimilarExaInstance.func as any)(args)) as string),
   );
 };
 

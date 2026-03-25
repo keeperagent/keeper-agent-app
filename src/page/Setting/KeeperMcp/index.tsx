@@ -135,12 +135,13 @@ const KeeperMcp = ({ preference, isLightMode }: IProps) => {
 
             <div className="port-row">
               <InputNumber
-                className="port-input"
+                className="port-input custom-input"
                 value={port}
                 onChange={(value) => setPort(value || DEFAULT_MCP_PORT)}
                 min={1024}
                 max={65535}
                 placeholder={translate("mcp.serverPortPlaceholder")}
+                size="large"
               />
 
               <Button onClick={onSavePort} loading={updatingPreference}>
