@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { containsSecret } from "@keeperagent/crypto-key-guard";
 import { IMcpToken } from "@/electron/type";
 import { showApprovalDialog } from "../approvalDialog";
 import { ToolContext } from "@/electron/appAgent/toolContext";
@@ -38,10 +39,25 @@ const wrapText = (text: string) => ({
   content: [{ type: "text" as const, text }],
 });
 
+const SENSITIVE_KEY_PATTERN = /(key|secret|token|password|encrypt|phrase)/i;
+
+const shouldRedactArg = (key: string, value: unknown): boolean => {
+  if (SENSITIVE_KEY_PATTERN.test(key)) {
+    return true;
+  }
+  if (typeof value === "string" && containsSecret(value)) {
+    return true;
+  }
+  return false;
+};
+
 const formatArgs = (args: Record<string, unknown>) =>
   Object.entries(args)
     .filter(([_, value]) => value !== undefined && value !== null)
-    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+    .map(
+      ([key, value]) =>
+        `${key}: ${shouldRedactArg(key, value) ? "REDACTED" : JSON.stringify(value)}`,
+    )
     .join("\n");
 
 const buildToolContext = (params: {
@@ -89,6 +105,7 @@ const walletContextSchema = {
  * Only registered for MCP tokens with read-write permission.
  */
 const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
+  const displayName = mcpToken.name || "External agent";
   const createWalletGroupInstance = createWalletGroupTool();
   server.registerTool(
     "create_wallet_group",
@@ -98,7 +115,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "create_wallet_group",
         createWalletGroupInstance.description,
         formatArgs(args),
@@ -120,7 +137,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "generate_wallets_for_group",
         generateWalletsInstance.description,
         formatArgs(args),
@@ -142,7 +159,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "create_profile_group_with_profiles",
         createProfileGroupInstance.description,
         formatArgs(args),
@@ -164,7 +181,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "create_campaign_for_profile_group",
         createCampaignInstance.description,
         formatArgs(args),
@@ -192,7 +209,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "create_node_provider_group",
         createNodeProviderGroupInstance.description,
         formatArgs(args),
@@ -217,7 +234,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "stop_workflow",
         stopWorkflowInstance.description,
         formatArgs(args),
@@ -255,7 +272,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     async (args) => {
       const { campaignId, workflowId, encryptKey, variables } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "run_workflow",
         "Run a workflow on a campaign",
         formatArgs(args),
@@ -290,10 +307,10 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async ({ code }) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "execute_javascript",
         "Execute JavaScript code in Node.js",
-        `code: ${code.slice(0, 200)}${code.length > 200 ? "..." : ""}`,
+        `code: ${code}`,
       );
       if (approval === "denied") {
         return DENIED_RESPONSE;
@@ -316,10 +333,10 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async ({ code }) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "execute_python",
         "Execute Python code",
-        `code: ${code.slice(0, 200)}${code.length > 200 ? "..." : ""}`,
+        `code: ${code}`,
       );
       if (approval === "denied") {
         return DENIED_RESPONSE;
@@ -415,7 +432,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     async (args) => {
       const { llmProvider, ...scheduleArgs } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "create_agent_schedule",
         "Create a new agent schedule",
         formatArgs(args),
@@ -441,7 +458,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "update_agent_schedule",
         updateScheduleInstance.description,
         formatArgs(args),
@@ -463,7 +480,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "delete_agent_schedule",
         deleteScheduleInstance.description,
         formatArgs(args),
@@ -485,7 +502,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "pause_agent_schedule",
         pauseScheduleInstance.description,
         formatArgs(args),
@@ -507,7 +524,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "resume_agent_schedule",
         resumeScheduleInstance.description,
         formatArgs(args),
@@ -529,7 +546,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     },
     async (args: any) => {
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "run_agent_schedule_now",
         runScheduleNowInstance.description,
         formatArgs(args),
@@ -600,7 +617,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...swapArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "swap_on_jupiter",
         "Swap tokens on Jupiter for campaign wallets",
         formatArgs(args),
@@ -679,7 +696,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...swapArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "swap_on_kyberswap",
         "Swap tokens on KyberSwap for campaign wallets",
         formatArgs(args),
@@ -747,7 +764,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...transferArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "transfer_solana_token",
         "Transfer SOL or SPL token between campaign wallets",
         formatArgs(args),
@@ -802,7 +819,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...launchArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "launch_pumpfun_token",
         "Launch a new token on Pump.fun",
         formatArgs(args),
@@ -857,7 +874,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...launchArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "launch_bonkfun_token",
         "Launch a new token on Bonk.fun",
         formatArgs(args),
@@ -919,7 +936,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...txArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "broadcast_transaction_evm",
         "Broadcast an EVM transaction from campaign wallets",
         formatArgs(args),
@@ -970,7 +987,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         ...txArgs
       } = args;
       const approval = await showApprovalDialog(
-        mcpToken.name!,
+        displayName,
         "broadcast_transaction_solana",
         "Broadcast a Solana transaction from campaign wallets",
         formatArgs(args),

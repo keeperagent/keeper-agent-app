@@ -82,7 +82,7 @@ const ModalConfig = (props: any) => {
         open={isModalOpen}
         onCancel={onCloseModal}
         title={translate("campaign.configSubColumn")}
-        width="50rem"
+        width="70rem"
         confirmLoading={isBtnLoading}
         onOk={onSubmitForm}
         okText={translate("button.update")}

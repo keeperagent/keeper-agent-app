@@ -54,7 +54,7 @@ const ColumnPreview = (props: IColumnPreviewProps) => {
         className="label"
         style={{ background: color, opacity: isValid ? 1 : 0.5 }}
       >
-        {translate("column")} {index + 1}
+        {index + 1}
       </div>
 
       <div className="grid">

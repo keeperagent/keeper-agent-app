@@ -91,7 +91,7 @@ const KeeperMcp = ({ preference, isLightMode }: IProps) => {
   );
 
   const onCopyConfig = () => {
-    copy(mcpConfig);
+    copy(configType === "normal" ? mcpConfig : mcpConfigWithMcpRemote);
     message.success(translate("copied"));
     setCopiedConfig(true);
     setTimeout(() => {

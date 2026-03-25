@@ -19,7 +19,7 @@ const ModalTokenPreview = ({ plainToken, onClose }: IProps) => {
   return (
     <Modal
       title={translate("mcp.tokenPreview")}
-      open={!!plainToken}
+      open={Boolean(plainToken)}
       onCancel={onClose}
       mask={{ closable: false }}
       footer={null}

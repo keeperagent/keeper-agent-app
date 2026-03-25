@@ -45,8 +45,9 @@ export const mcpTokenController = () => {
         });
         return;
       }
+      const { tokenHash: _tokenHash, ...tokenWithoutHash } = token!;
       event.reply(MESSAGE.CREATE_MCP_TOKEN_RES, {
-        data: { ...token, plainToken },
+        data: { ...tokenWithoutHash, plainToken },
       });
     },
   );
