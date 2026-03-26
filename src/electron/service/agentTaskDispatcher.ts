@@ -178,9 +178,11 @@ class TaskDispatcher {
     task: IAgentTask,
     agents: IAgentRegistry[],
   ): IAgentRegistry[] => {
-    const taskText =
-      `${task.title || ""} ${task.description || ""}`.toLowerCase();
-    const words = taskText.split(/\s+/).filter((word) => word.length > 3);
+    const rawText = `${task.title || ""} ${task.description || ""}`;
+    const words = rawText
+      .split(/\s+/)
+      .filter((word) => word.length > 2 || /^[A-Z]{2,}$/.test(word))
+      .map((word) => word.toLowerCase());
     if (words.length === 0) {
       return [];
     }
