@@ -125,9 +125,9 @@ class AgentTaskExecutor {
         if (!isTimedOut && retryCount < maxRetries) {
           await agentTaskDB.updateAgentTask(taskId, {
             status: AgentTaskStatus.INIT,
-            assignedAgentId: undefined,
-            claimedAt: undefined,
-            startedAt: undefined,
+            assignedAgentId: null as any,
+            claimedAt: null as any,
+            startedAt: null as any,
             retryCount: retryCount + 1,
           });
         } else {
