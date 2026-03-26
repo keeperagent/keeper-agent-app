@@ -67,6 +67,7 @@ export const agentTaskController = () => {
       const [result] = await agentTaskDB.deleteAgentTask(payload?.data || []);
       event.reply(MESSAGE.DELETE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
+      agentTaskDispatcher.dispatch();
     },
   );
 };

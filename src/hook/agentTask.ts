@@ -1,11 +1,10 @@
-import { useRef, useEffect } from "react";
+import { useEffect } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { IAgentTask } from "@/electron/type";
 import {
   actSaveGetListAgentTask,
   actSaveCreateAgentTask,
   actSaveUpdateAgentTask,
-  actSaveDeleteAgentTask,
 } from "@/redux/agentTask";
 import type {
   IpcCreateAgentTaskPayload,
@@ -69,25 +68,12 @@ const useUpdateAgentTask = () => {
 };
 
 const useDeleteAgentTask = () => {
-  const pendingIdRef = useRef<number | null>(null);
-
   const { execute, loading, isSuccess } = useIpcAction<IpcDeletePayload>(
     MESSAGE.DELETE_AGENT_TASK,
     MESSAGE.DELETE_AGENT_TASK_RES,
-    {
-      onSuccess: (_payload, dispatch) => {
-        if (pendingIdRef.current != null) {
-          dispatch(actSaveDeleteAgentTask(pendingIdRef.current));
-          pendingIdRef.current = null;
-        }
-      },
-    },
   );
 
-  const deleteAgentTask = (id: number) => {
-    pendingIdRef.current = id;
-    execute({ data: [id] });
-  };
+  const deleteAgentTask = (id: number) => execute({ data: [id] });
 
   return { loading, isSuccess, deleteAgentTask };
 };

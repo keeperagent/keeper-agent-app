@@ -46,7 +46,7 @@ export const ModalAgentTask = ({
   const { translate } = useTranslation();
   const [form] = Form.useForm();
   const { createAgentTask, loading: createLoading } = useCreateAgentTask();
-  const { updateAgentTask } = useUpdateAgentTask();
+  const { updateAgentTask, loading: updateLoading } = useUpdateAgentTask();
 
   const canEditDueDate =
     !editingTask || editingTask.status === AgentTaskStatus.INIT;
@@ -95,7 +95,7 @@ export const ModalAgentTask = ({
       open={open}
       onCancel={onClose}
       onOk={onSubmit}
-      confirmLoading={createLoading}
+      confirmLoading={createLoading || updateLoading}
       destroyOnHidden
       width={520}
       style={{ top: "5rem" }}

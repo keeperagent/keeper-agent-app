@@ -8,9 +8,11 @@ import { agentRegistryDB } from "@/electron/database/agentRegistry";
 class TaskDispatcher {
   private staleIntervalId: ReturnType<typeof setInterval> | null = null;
   private isDispatching = false;
+  private pendingDispatch = false;
 
   dispatch = async (): Promise<void> => {
     if (this.isDispatching) {
+      this.pendingDispatch = true;
       return;
     }
     this.isDispatching = true;
@@ -23,6 +25,10 @@ class TaskDispatcher {
       });
     } finally {
       this.isDispatching = false;
+      if (this.pendingDispatch) {
+        this.pendingDispatch = false;
+        setImmediate(() => this.dispatch());
+      }
     }
   };
 
@@ -48,8 +54,10 @@ class TaskDispatcher {
   };
 
   private runDispatch = async (): Promise<void> => {
-    const [tasks] = await agentTaskDB.getTasksByStatus(AgentTaskStatus.INIT);
-    if (!tasks || tasks.length === 0) {
+    const [tasks, tasksErr] = await agentTaskDB.getTasksByStatus(
+      AgentTaskStatus.INIT,
+    );
+    if (tasksErr || !tasks || tasks.length === 0) {
       return;
     }
 
@@ -62,9 +70,11 @@ class TaskDispatcher {
         const maxConcurrent = await this.getAgentMaxConcurrent(
           task.assignedAgentId,
         );
-        const [runningCount] = await agentTaskDB.countInProgressByAgent(
-          task.assignedAgentId,
-        );
+        const [runningCount, runningCountErr] =
+          await agentTaskDB.countInProgressByAgent(task.assignedAgentId);
+        if (runningCountErr) {
+          continue;
+        }
         if (runningCount >= maxConcurrent) {
           continue;
         }
@@ -79,6 +89,7 @@ class TaskDispatcher {
             taskId: task.id,
             agentId: task.assignedAgentId,
           });
+          sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
         }
       }
     }
