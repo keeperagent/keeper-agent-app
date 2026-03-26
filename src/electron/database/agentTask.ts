@@ -133,6 +133,29 @@ class AgentTaskDB {
     }
   }
 
+  async requeueAllInProgressTasks(): Promise<[number, Error | null]> {
+    try {
+      const now = Date.now();
+      const [count] = await AgentTaskModel.update(
+        {
+          status: AgentTaskStatus.INIT,
+          assignedAgentId: null,
+          claimedAt: null,
+          startedAt: null,
+          retryCount: literal("retryCount + 1"),
+          updateAt: now,
+        } as any,
+        { where: { status: AgentTaskStatus.IN_PROGRESS } },
+      );
+      return [count, null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `requeueAllInProgressTasks() error: ${err?.message}`,
+      });
+      return [0, err];
+    }
+  }
+
   async requeueStaleTasks(now: number): Promise<[number, Error | null]> {
     try {
       const [count] = await AgentTaskModel.update(

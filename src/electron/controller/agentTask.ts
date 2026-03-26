@@ -2,6 +2,7 @@ import { AgentTaskStatus } from "@/electron/type";
 import { MESSAGE } from "@/electron/constant";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
+import { agentTaskExecutor } from "@/electron/service/agentTaskExecutor";
 import { sendToRenderer } from "@/electron/main";
 import type {
   IpcGetListAgentTaskPayload,
@@ -53,6 +54,9 @@ export const agentTaskController = () => {
     MESSAGE.UPDATE_AGENT_TASK_RES,
     async (event, payload) => {
       const { id, data } = payload;
+      if (data.status === AgentTaskStatus.CANCELLED) {
+        agentTaskExecutor.cancelTask(id);
+      }
       const [result] = await agentTaskDB.updateAgentTask(id, data);
       event.reply(MESSAGE.UPDATE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
@@ -64,7 +68,11 @@ export const agentTaskController = () => {
     MESSAGE.DELETE_AGENT_TASK,
     MESSAGE.DELETE_AGENT_TASK_RES,
     async (event, payload) => {
-      const [result] = await agentTaskDB.deleteAgentTask(payload?.data || []);
+      const ids = payload?.data || [];
+      for (const id of ids) {
+        agentTaskExecutor.cancelTask(id);
+      }
+      const [result] = await agentTaskDB.deleteAgentTask(ids);
       event.reply(MESSAGE.DELETE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       agentTaskDispatcher.dispatch();

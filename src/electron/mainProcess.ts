@@ -97,8 +97,10 @@ const runMainProcess = () => {
   scheduleManager.start();
   whatsappService.start();
   telegramBotService.start();
+
   agentTaskScheduler.init();
   agentTaskDispatcher.startStaleWorker();
+  agentTaskDispatcher.recoverOnStartup();
   agentTaskDispatcher.dispatch();
 
   keeperMcpServer.startIfEnabled();
