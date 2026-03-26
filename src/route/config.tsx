@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { IRoute } from "./index";
 
 const HomePage = lazy(() => import("@/page/Home"));
+const AgentTaskPage = lazy(() => import("@/page/AgentTask"));
 const AgentPage = lazy(() => import("@/page/Agent"));
 const AgentHubPage = lazy(() => import("@/page/AgentHub"));
 const WorkflowPage = lazy(() => import("@/page/Workflow"));
@@ -24,6 +25,11 @@ const routesConfig: IRoute[] = [
     isPrivateRoute: true,
     path: "/dashboard/home",
     element: <HomePage />,
+  },
+  {
+    isPrivateRoute: true,
+    path: "/dashboard/agent-task",
+    element: <AgentTaskPage />,
   },
   {
     isPrivateRoute: true,

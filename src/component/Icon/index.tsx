@@ -19,6 +19,8 @@ export { default as CheckIcon } from "./Check";
 export { default as SettingIcon } from "./Setting";
 export { default as MixIcon } from "./Mix";
 export { default as TrashIcon } from "./Trash";
+export { default as DeleteIcon } from "./Delete";
+export { default as PinIcon } from "./Pin";
 export { default as CloseCircleIcon } from "./CloseCircle";
 export { default as CheckCircleIcon } from "./CheckCircle";
 export { default as BubbleIcon } from "./Bubble";
@@ -111,6 +113,7 @@ export { default as CustomizationIcon } from "./Customization";
 export { default as SettingWindowIcon } from "./SettingWindow";
 export { default as CalendarIcon } from "./Calendar";
 export { default as SpiderIcon } from "./Spider";
+export { default as DistributeIcon } from "./Distribute";
 
 export interface IIconProps {
   color?: string;

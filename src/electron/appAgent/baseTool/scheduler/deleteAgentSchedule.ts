@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { scheduleDB } from "@/electron/database/schedule";
-import { agentTaskScheduler } from "@/electron/service/agentTaskScheduler";
+import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
 import { safeStringify } from "@/electron/appAgent/utils";
 import {
   lookupSchedule,

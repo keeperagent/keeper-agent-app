@@ -34,7 +34,7 @@ import { runSecretKeyController } from "./controller/secretKeyCache";
 import { telegramBotService } from "./chatGateway/adapters/telegram";
 import { whatsappService } from "./chatGateway/adapters/whatsapp";
 import { scheduleManager } from "./schedule";
-import { agentTaskScheduler } from "./service/agentTaskScheduler";
+import { agentTaskScheduler } from "./service/agentJobScheduler";
 import { searchController } from "./controller/search";
 import { agentController } from "./controller/appAgent";
 import { mcpServerController } from "./controller/mcpServer";
@@ -46,6 +46,8 @@ import { authStorageController } from "./controller/authStorage";
 import { whatsappController } from "./controller/whatsapp";
 import { agentRegistryController } from "./controller/agentRegistry";
 import { mcpTokenController } from "./controller/mcpToken";
+import { agentTaskController } from "./controller/agentTask";
+import { agentTaskDispatcher } from "./service/agentTaskDispatcher";
 import { keeperMcpServer } from "./mcpServer";
 
 const runMainProcess = () => {
@@ -90,11 +92,14 @@ const runMainProcess = () => {
   whatsappController();
   agentRegistryController();
   mcpTokenController();
+  agentTaskController();
 
   scheduleManager.start();
-  agentTaskScheduler.init();
-  telegramBotService.start();
   whatsappService.start();
+  telegramBotService.start();
+  agentTaskScheduler.init();
+  agentTaskDispatcher.startStaleWorker();
+  agentTaskDispatcher.dispatch();
 
   keeperMcpServer.startIfEnabled();
   applyScreenCaptureProtection();

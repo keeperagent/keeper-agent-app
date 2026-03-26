@@ -2,6 +2,7 @@ import type {
   IAgentRegistry,
   IAgentSetting,
   IAgentSkill,
+  IAgentTask,
   ICampaign,
   ICampaignProfile,
   ICheckTokenPriceNodeConfig,
@@ -530,6 +531,19 @@ export type IpcRegistryAgentStopPayload = {
 };
 export type IpcRegistryAgentResetSessionPayload = {
   sessionId: string;
+};
+
+// AgentTask
+export type IpcGetListAgentTaskPayload = Record<string, never>;
+export type IpcGetOneAgentTaskPayload = {
+  id: number;
+};
+export type IpcCreateAgentTaskPayload = {
+  data: Partial<IAgentTask>;
+};
+export type IpcUpdateAgentTaskPayload = {
+  id: number;
+  data: Partial<IAgentTask>;
 };
 
 // AppAgent

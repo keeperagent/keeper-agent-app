@@ -170,6 +170,7 @@ const GlobalStyle = createGlobalStyle`
     border-radius: 0.4rem !important;
     outline: none !important;
     border: 1px solid transparent !important;
+    box-shadow: none !important;
     
     .ant-picker-input * {
       font-size: 1.3rem !important;

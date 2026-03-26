@@ -35,6 +35,7 @@ import mcpServerReducer from "./mcpServer";
 import agentSkillReducer from "./agentSkill";
 import agentSettingReducer from "./agentSetting";
 import agentRegistryReducer from "./agentRegistry";
+import agentTaskReducer from "./agentTask";
 
 const reducers = combineReducers({
   Auth: authReducer,
@@ -70,6 +71,7 @@ const reducers = combineReducers({
   AgentSkill: agentSkillReducer,
   AgentSetting: agentSettingReducer,
   AgentRegistry: agentRegistryReducer,
+  AgentTask: agentTaskReducer,
 });
 
 const persistedReducer = persistReducer(

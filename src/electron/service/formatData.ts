@@ -6,6 +6,7 @@ import {
   ILog,
   IMcpServer,
   IAgentRegistry,
+  IAgentTask,
   IPreference,
   IProfile,
   IProfileGroup,
@@ -349,6 +350,14 @@ const formatScheduleLog = (data: any): IScheduleLog => {
   return scheduleLog;
 };
 
+const formatAgentTask = (raw: any): IAgentTask => {
+  return {
+    ...raw,
+    metadata: raw.metadata ? JSON.parse(raw.metadata) : {},
+    result: raw.result ? JSON.parse(raw.result) : null,
+  };
+};
+
 export {
   formatResourceGroup,
   formatProfileGroup,
@@ -363,4 +372,5 @@ export {
   formatSchedule,
   formatJob,
   formatScheduleLog,
+  formatAgentTask,
 };

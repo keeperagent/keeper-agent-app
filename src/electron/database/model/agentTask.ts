@@ -1,8 +1,9 @@
 import { DataTypes, Sequelize } from "sequelize";
+import { AgentTaskCreatorType } from "@/electron/type";
 
 export default (db: Sequelize) =>
   db.define(
-    "AgentRegistry",
+    "AgentTask",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -10,7 +11,7 @@ export default (db: Sequelize) =>
         primaryKey: true,
         allowNull: false,
       },
-      name: {
+      title: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -18,77 +19,93 @@ export default (db: Sequelize) =>
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      llmProvider: {
+      status: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: "INIT",
       },
-      llmModel: {
+      priority: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: "MEDIUM",
       },
-      systemPrompt: {
-        type: DataTypes.TEXT,
-        allowNull: true,
+      source: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "INTERNAL",
       },
-      allowedBaseTools: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: "[]",
-      },
-      allowedMcpServerIds: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: "[]",
-      },
-      allowedSkillIds: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: "[]",
-      },
-      allowedSubAgentIds: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: "[]",
-      },
-      isAgentInteractionEnabled: {
+      assignedAgentId: {
         type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      creatorType: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: AgentTaskCreatorType.USER,
+      },
+      creatorAgentId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      scheduledAt: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      dueAt: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      ttlSeconds: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      timeout: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      metadata: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        defaultValue: "{}",
+      },
+      result: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      errorMessage: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      retryCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
         defaultValue: 0,
       },
-      isActive: {
+      maxRetries: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 1,
+        allowNull: false,
+        defaultValue: 3,
       },
-      chainKey: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      nodeEndpointGroupId: {
+      claimedAt: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      campaignId: {
+      startedAt: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      profileIds: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        defaultValue: "[]",
-      },
-      isAllWallet: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 1,
-      },
-      maxConcurrentTasks: {
+      completedAt: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      secretKey: {
-        type: DataTypes.STRING,
+      cancelledAt: {
+        type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      isPinned: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
       createAt: {
         type: DataTypes.INTEGER,

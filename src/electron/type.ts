@@ -2688,6 +2688,68 @@ export enum AGENT_SETTING_TYPE {
   AGENT_PRESET = "AGENT_PRESET",
 }
 
+export enum AgentTaskStatus {
+  INIT = "INIT",
+  AWAITING_APPROVAL = "AWAITING_APPROVAL",
+  APPROVED = "APPROVED",
+  ASSIGNED = "ASSIGNED",
+  IN_PROGRESS = "IN_PROGRESS",
+  DONE = "DONE",
+  FAILED = "FAILED",
+  EXPIRED = "EXPIRED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum AgentTaskPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  URGENT = "URGENT",
+}
+
+export enum AgentTaskCreatorType {
+  USER = "USER",
+  AGENT = "AGENT",
+  TELEGRAM = "TELEGRAM",
+  WHATSAPP = "WHATSAPP",
+  MCP = "MCP",
+}
+
+export enum AgentTaskSource {
+  INTERNAL = "INTERNAL",
+  PUBLIC = "PUBLIC",
+}
+
+export type IAgentTask = {
+  id?: number;
+  title: string;
+  description?: string;
+  status?: AgentTaskStatus;
+  priority?: AgentTaskPriority;
+  source?: AgentTaskSource;
+  assignedAgentId?: number;
+  assignedAgent?: IAgentRegistry;
+  creatorType?: AgentTaskCreatorType;
+  creatorAgentId?: number;
+  creatorAgent?: IAgentRegistry;
+  scheduledAt?: number;
+  dueAt?: number;
+  ttlSeconds?: number;
+  timeout?: number;
+  metadata?: Record<string, any>;
+  result?: Record<string, any>;
+  errorMessage?: string;
+  retryCount?: number;
+  maxRetries?: number;
+  claimedAt?: number;
+  startedAt?: number;
+  completedAt?: number;
+  cancelledAt?: number;
+  isPinned?: boolean;
+  createAt?: number;
+  updateAt?: number;
+};
+
 export type IAgentRegistry = {
   id?: number;
   name: string;
@@ -2701,6 +2763,7 @@ export type IAgentRegistry = {
   allowedSubAgentIds?: number[];
   isAgentInteractionEnabled?: boolean;
   isActive?: boolean;
+  maxConcurrentTasks?: number;
   // Execution context
   chainKey?: string;
   nodeEndpointGroupId?: number;
