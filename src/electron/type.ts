@@ -2434,6 +2434,7 @@ export type IPreference = {
   isMcpServerOn?: boolean;
   mcpServerPort?: number;
   isScreenCaptureProtectionOn?: boolean;
+  llmProvider?: string;
 };
 
 export enum McpTokenPermission {

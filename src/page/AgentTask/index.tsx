@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { CSSProperties } from "react";
 import { connect } from "react-redux";
-import { Button, Input, Select } from "antd";
+import { Alert, Button, Input, Select } from "antd";
 import {
   DndContext,
   DragEndEvent,
@@ -15,11 +15,14 @@ import { useDroppable } from "@dnd-kit/core";
 import { actSetPageName } from "@/redux/layout";
 import { agentTaskSelector } from "@/redux/agentTask";
 import { agentRegistrySelector } from "@/redux/agentRegistry";
+import { preferenceSelector } from "@/redux/preference";
 import { RootState } from "@/redux/store";
 import {
   IAgentTask,
+  IPreference,
   AgentTaskStatus,
   AgentTaskPriority,
+  LLMProvider,
 } from "@/electron/type";
 import {
   useGetListAgentTask,
@@ -159,8 +162,33 @@ const DroppableColumn = ({
   );
 };
 
+const isLLMConfigured = (preference: IPreference | null): boolean => {
+  if (!preference?.llmProvider) {
+    return false;
+  }
+  switch (preference.llmProvider as LLMProvider) {
+    case LLMProvider.CLAUDE:
+      return (
+        Boolean(preference.anthropicApiKey) &&
+        Boolean(preference.anthropicModel)
+      );
+    case LLMProvider.OPENAI:
+      return (
+        Boolean(preference.openAIApiKey) && Boolean(preference.openAIModel)
+      );
+    case LLMProvider.GEMINI:
+      return (
+        Boolean(preference.googleGeminiApiKey) &&
+        Boolean(preference.googleGeminiModel)
+      );
+    default:
+      return false;
+  }
+};
+
 const AgentTaskPage = (props: any) => {
-  const { listAgentTask, listAgentRegistry, actSetPageName } = props;
+  const { listAgentTask, listAgentRegistry, preference, actSetPageName } =
+    props;
   const { translate } = useTranslation();
 
   const { getListAgentTask } = useGetListAgentTask();
@@ -390,6 +418,14 @@ const AgentTaskPage = (props: any) => {
         </div>
       </div>
 
+      {!isLLMConfigured(preference) && (
+        <Alert
+          type="warning"
+          title={translate("agentTask.warning.llmNotConfigured")}
+          showIcon
+        />
+      )}
+
       <DndContext
         sensors={sensors}
         onDragStart={onDragStart}
@@ -434,6 +470,7 @@ export default connect(
   (state: RootState) => ({
     listAgentTask: agentTaskSelector(state).listAgentTask,
     listAgentRegistry: agentRegistrySelector(state).listAgentRegistry,
+    preference: preferenceSelector(state).preference,
   }),
   { actSetPageName },
 )(AgentTaskPage);

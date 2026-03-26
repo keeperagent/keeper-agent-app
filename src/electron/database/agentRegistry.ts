@@ -24,7 +24,9 @@ class AgentRegistryDB {
           ? {}
           : { limit: pageSize, offset: (page - 1) * pageSize }),
         where: condition,
-        include: [{ model: CampaignModel, as: "campaign", attributes: ["id", "name"] }],
+        include: [
+          { model: CampaignModel, as: "campaign", attributes: ["id", "name"] },
+        ],
       });
 
       const [totalData, listData]: any = await Promise.all([
@@ -58,7 +60,9 @@ class AgentRegistryDB {
     try {
       const data = await AgentRegistryModel.findOne({
         where: { id },
-        include: [{ model: CampaignModel, as: "campaign", attributes: ["id", "name"] }],
+        include: [
+          { model: CampaignModel, as: "campaign", attributes: ["id", "name"] },
+        ],
       });
 
       if (!data) {
@@ -136,6 +140,23 @@ class AgentRegistryDB {
         message: `updateAgentRegistry() error: ${err?.message}`,
       });
       return [null, err];
+    }
+  }
+
+  async getActiveAgentRegistries(): Promise<[IAgentRegistry[], Error | null]> {
+    try {
+      const list = await AgentRegistryModel.findAll({
+        where: { isActive: true },
+      });
+      return [
+        list.map((item: any) => formatAgentRegistry(item.toJSON())),
+        null,
+      ];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getActiveAgentRegistries() error: ${err?.message}`,
+      });
+      return [[], err];
     }
   }
 

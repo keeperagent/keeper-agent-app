@@ -184,6 +184,7 @@
   "agentTask.placeholder.description": "Task description",
   "agentTask.placeholder.assignedAgent": "Select agent",
   "agentTask.label.noActiveTasks": "No active tasks",
+  "agentTask.warning.llmNotConfigured": "LLM provider not configured. Unassigned tasks will not be dispatched. Please set a provider in Agent settings.",
   "agentTask.placeholder.dueAt": "Select due date",
   "agentTask.label.timeout": "Timeout (minutes)",
   "agentTask.placeholder.timeout": "For example: 30",
