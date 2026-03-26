@@ -19,6 +19,15 @@ import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 
+const LLM_MATCH_TIMEOUT_MS = 15_000;
+
+interface UnassignedDispatchContext {
+  preference: IPreference;
+  activeAgents: IAgentRegistry[];
+  allSkills: IAgentSkill[];
+  allMcpServers: IMcpServer[];
+}
+
 class TaskDispatcher {
   private staleIntervalId: ReturnType<typeof setInterval> | null = null;
   private isDispatching = false;
@@ -75,6 +84,13 @@ class TaskDispatcher {
       return;
     }
 
+    const hasUnassigned = tasks.some((task) => !task.assignedAgentId);
+    let unassignedContext: UnassignedDispatchContext | null = null;
+
+    if (hasUnassigned) {
+      unassignedContext = await this.buildUnassignedContext();
+    }
+
     for (const task of tasks) {
       if (!task.id) {
         continue;
@@ -105,32 +121,47 @@ class TaskDispatcher {
           });
           sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
         }
-      } else {
-        await this.claimForAvailableAgent(task);
+      } else if (unassignedContext) {
+        await this.claimForAvailableAgent(task, unassignedContext);
       }
     }
   };
 
-  private claimForAvailableAgent = async (task: IAgentTask): Promise<void> => {
-    const [preference, prefErr] = await preferenceDB.getOnePreference();
-    if (prefErr || !preference?.llmProvider) {
-      return;
-    }
+  private buildUnassignedContext =
+    async (): Promise<UnassignedDispatchContext | null> => {
+      const [preference, prefErr] = await preferenceDB.getOnePreference();
+      if (prefErr || !preference?.llmProvider) {
+        return null;
+      }
 
-    const llmConfig = this.getLLMConfig(preference);
-    if (!llmConfig) {
-      return;
-    }
+      const llmConfig = this.getLLMConfig(preference);
+      if (!llmConfig) {
+        return null;
+      }
 
-    const [activeAgents, agentsErr] =
-      await agentRegistryDB.getActiveAgentRegistries();
-    if (agentsErr || !activeAgents || activeAgents.length === 0) {
-      return;
-    }
+      const [activeAgents, agentsErr] =
+        await agentRegistryDB.getActiveAgentRegistries();
+      if (agentsErr || !activeAgents || activeAgents.length === 0) {
+        return null;
+      }
 
-    const [allSkills] = await agentSkillDB.getEnabledAgentSkills();
-    const [allMcpResult] = await mcpServerDB.getListMcpServer(1, 1000);
-    const allMcpServers = allMcpResult?.data || [];
+      const [allSkills] = await agentSkillDB.getEnabledAgentSkills();
+      const [allMcpResult] = await mcpServerDB.getListMcpServer(1, 1000);
+      const allMcpServers = allMcpResult?.data || [];
+
+      return {
+        preference,
+        activeAgents,
+        allSkills: allSkills || [],
+        allMcpServers,
+      };
+    };
+
+  private claimForAvailableAgent = async (
+    task: IAgentTask,
+    context: UnassignedDispatchContext,
+  ): Promise<void> => {
+    const { preference, activeAgents, allSkills, allMcpServers } = context;
 
     const candidates = this.textPreFilter(task, activeAgents);
     const candidateIds = new Set(candidates.map((agent) => agent.id));
@@ -142,7 +173,7 @@ class TaskDispatcher {
     const chosenAgentId = await this.llmMatchAgent(
       task,
       agentsToCheck,
-      allSkills || [],
+      allSkills,
       allMcpServers,
       preference,
     );
@@ -260,6 +291,19 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
       const provider = preference.llmProvider as LLMProvider;
       let responseContent: string;
 
+      const abortController = new AbortController();
+      let timeoutId: any = null;
+      const timeoutPromise = new Promise<any>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          abortController.abort();
+          reject(
+            new Error(
+              `llmMatchAgent timed out after ${LLM_MATCH_TIMEOUT_MS}ms`,
+            ),
+          );
+        }, LLM_MATCH_TIMEOUT_MS);
+      });
+
       switch (provider) {
         case LLMProvider.CLAUDE: {
           const llm = new ChatAnthropic({
@@ -267,7 +311,13 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
             model: llmConfig.model,
             temperature: 0,
           });
-          const result = await llm.invoke([{ role: "user", content: prompt }]);
+          const result = await Promise.race([
+            llm.invoke([{ role: "user", content: prompt }], {
+              signal: abortController.signal,
+            }),
+            timeoutPromise,
+          ]);
+          clearTimeout(timeoutId!);
           responseContent = String(result.content).trim();
           break;
         }
@@ -277,7 +327,13 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
             model: llmConfig.model,
             temperature: 0,
           });
-          const result = await llm.invoke([{ role: "user", content: prompt }]);
+          const result = await Promise.race([
+            llm.invoke([{ role: "user", content: prompt }], {
+              signal: abortController.signal,
+            }),
+            timeoutPromise,
+          ]);
+          clearTimeout(timeoutId!);
           responseContent = String(result.content).trim();
           break;
         }
@@ -287,7 +343,13 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
             model: llmConfig.model,
             temperature: 0,
           });
-          const result = await llm.invoke([{ role: "user", content: prompt }]);
+          const result = await Promise.race([
+            llm.invoke([{ role: "user", content: prompt }], {
+              signal: abortController.signal,
+            }),
+            timeoutPromise,
+          ]);
+          clearTimeout(timeoutId!);
           responseContent = String(result.content).trim();
           break;
         }
