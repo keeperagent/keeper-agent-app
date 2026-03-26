@@ -120,12 +120,24 @@ class AgentTaskExecutor {
           cancelledAt: Date.now(),
         });
       } else {
-        await this.failTask(
-          taskId,
-          isTimedOut
-            ? `Task execution timed out after ${timeoutMinutes} minutes`
-            : err?.message,
-        );
+        const retryCount = task.retryCount || 0;
+        const maxRetries = task.maxRetries || 0;
+        if (!isTimedOut && retryCount < maxRetries) {
+          await agentTaskDB.updateAgentTask(taskId, {
+            status: AgentTaskStatus.INIT,
+            assignedAgentId: null as any,
+            claimedAt: null as any,
+            startedAt: null as any,
+            retryCount: retryCount + 1,
+          });
+        } else {
+          await this.failTask(
+            taskId,
+            isTimedOut
+              ? `Task execution timed out after ${timeoutMinutes} minutes`
+              : err?.message,
+          );
+        }
       }
     } finally {
       await cleanup();

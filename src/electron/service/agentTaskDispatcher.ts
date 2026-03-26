@@ -70,6 +70,14 @@ class TaskDispatcher {
     }, 60 * 1000);
   };
 
+  recoverOnStartup = async (): Promise<void> => {
+    const [count] = await agentTaskDB.requeueAllInProgressTasks();
+    if (count > 0) {
+      sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
+      await this.dispatch();
+    }
+  };
+
   stopStaleWorker = (): void => {
     if (this.staleIntervalId) {
       clearInterval(this.staleIntervalId);
