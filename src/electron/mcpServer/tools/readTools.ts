@@ -14,6 +14,7 @@ import {
 } from "@/electron/appAgent/baseTool";
 import { listAgentSchedulesTool } from "@/electron/appAgent/baseTool/scheduler";
 import { ToolContext } from "@/electron/appAgent/toolContext";
+import { registerAgentTaskReadTools } from "./agentTaskTools";
 
 const wrapText = (text: string) => ({
   content: [{ type: "text" as const, text }],
@@ -237,6 +238,8 @@ const registerReadTools = (server: McpServer) => {
     async (args: any) =>
       wrapText((await (findSimilarExaInstance.func as any)(args)) as string),
   );
+
+  registerAgentTaskReadTools(server);
 };
 
 export { registerReadTools };

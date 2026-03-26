@@ -5,6 +5,7 @@ export enum BaseToolGroup {
   WORKFLOW = "workflow",
   SCHEDULER = "scheduler",
   RESEARCH = "research",
+  AGENT_TASK_MANAGEMENT = "agent_task_management",
 }
 
 export type BaseToolRegistryItem = {
@@ -48,6 +49,11 @@ export const BASE_TOOL_KEYS = {
   PAUSE_AGENT_SCHEDULE: "pause_agent_schedule",
   RESUME_AGENT_SCHEDULE: "resume_agent_schedule",
   RUN_AGENT_SCHEDULE_NOW: "run_agent_schedule_now",
+  LIST_AGENT_TASKS: "list_agent_tasks",
+  GET_AGENT_TASK: "get_agent_task",
+  CREATE_AGENT_TASK: "create_agent_task",
+  UPDATE_AGENT_TASK: "update_agent_task",
+  DELETE_AGENT_TASK: "delete_agent_task",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -227,6 +233,40 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
       "Find web pages similar to a given URL using Exa semantic search",
     group: BaseToolGroup.RESEARCH,
   },
+  // Agent Task Management Tools
+  {
+    key: BASE_TOOL_KEYS.LIST_AGENT_TASKS,
+    name: "List agent tasks",
+    description:
+      "List tasks in the agent task pool with optional filters by status, agent, or keyword",
+    group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.GET_AGENT_TASK,
+    name: "Get agent task",
+    description: "Get full details of a specific agent task by ID",
+    group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.CREATE_AGENT_TASK,
+    name: "Create agent task",
+    description:
+      "Create a new task in the agent task pool; the dispatcher auto-assigns if no agent is specified",
+    group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.UPDATE_AGENT_TASK,
+    name: "Update agent task",
+    description:
+      "Update a task's title, description, priority, status, assigned agent, or result",
+    group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
+  },
+  {
+    key: BASE_TOOL_KEYS.DELETE_AGENT_TASK,
+    name: "Delete agent task",
+    description: "Permanently delete an agent task by ID",
+    group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
+  },
   // Code Execution Tools
   {
     key: BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT,
@@ -287,4 +327,5 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.WORKFLOW]: "Workflow",
   [BaseToolGroup.SCHEDULER]: "Scheduler",
   [BaseToolGroup.RESEARCH]: "Research",
+  [BaseToolGroup.AGENT_TASK_MANAGEMENT]: "Agent task management",
 };
