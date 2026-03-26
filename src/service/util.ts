@@ -243,9 +243,29 @@ const getChainConfig = (locale: string): IChainConfig[] => {
   ];
 };
 
+const formatDuration = (ms: number): string => {
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 1) {
+    return "<1m";
+  }
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+  const days = Math.floor(hours / 24);
+  if (days < 30) {
+    return `${days}d`;
+  }
+  return `${Math.floor(days / 7)}w`;
+};
+
 export {
   formatTime,
   formatTimeToDate,
+  formatDuration,
   formatDurationBetween,
   getTranslateContent,
   getMoneyString,

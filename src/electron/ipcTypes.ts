@@ -545,10 +545,6 @@ export type IpcUpdateAgentTaskPayload = {
   id: number;
   data: Partial<IAgentTask>;
 };
-export type IpcClaimAgentTaskPayload = {
-  taskId: number;
-  agentId: number;
-};
 
 // AppAgent
 export type IpcAgentCreateSessionPayload = {

@@ -1,8 +1,13 @@
 import _ from "lodash";
+import { Op, literal } from "sequelize";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { formatAgentTask } from "@/electron/service/formatData";
 import { AgentTaskModel, AgentRegistryModel } from "./index";
+
+const PRIORITY_ORDER = literal(
+  `CASE priority WHEN 'URGENT' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 END`,
+);
 
 class AgentTaskDB {
   async getListAgentTask(): Promise<[IAgentTask[] | null, Error | null]> {
@@ -69,7 +74,9 @@ class AgentTaskDB {
       const list = await AgentTaskModel.findAll({
         where: { status },
         order: [
-          ["priority", "DESC"],
+          [PRIORITY_ORDER, "DESC"],
+          [literal("CASE WHEN dueAt IS NULL THEN 1 ELSE 0 END"), "ASC"],
+          ["dueAt", "ASC"],
           ["createAt", "ASC"],
         ],
       });
@@ -98,6 +105,99 @@ class AgentTaskDB {
     } catch (err: any) {
       logEveryWhere({ message: `createAgentTask() error: ${err?.message}` });
       return [null, err];
+    }
+  }
+
+  async expireOverdueTasks(now: number): Promise<[number, Error | null]> {
+    try {
+      const [count] = await AgentTaskModel.update(
+        { status: AgentTaskStatus.EXPIRED, updateAt: now } as any,
+        {
+          where: {
+            status: [AgentTaskStatus.INIT, AgentTaskStatus.IN_PROGRESS],
+            [Op.or]: [
+              { dueAt: { [Op.lt]: now } },
+              literal(
+                `(ttlSeconds IS NOT NULL AND createAt + ttlSeconds * 1000 < ${now})`,
+              ),
+            ],
+          },
+        },
+      );
+      return [count, null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `expireOverdueTasks() error: ${err?.message}`,
+      });
+      return [0, err];
+    }
+  }
+
+  async requeueStaleTasks(now: number): Promise<[number, Error | null]> {
+    try {
+      const [count] = await AgentTaskModel.update(
+        {
+          status: AgentTaskStatus.INIT,
+          assignedAgentId: null,
+          claimedAt: null,
+          startedAt: null,
+          retryCount: literal("retryCount + 1"),
+          updateAt: now,
+        } as any,
+        {
+          where: {
+            status: AgentTaskStatus.IN_PROGRESS,
+            [Op.and]: [
+              literal("timeout IS NOT NULL"),
+              literal(`updateAt < (${now} - timeout * 60000)`),
+            ],
+          },
+        },
+      );
+      return [count, null];
+    } catch (err: any) {
+      logEveryWhere({ message: `requeueStaleTasks() error: ${err?.message}` });
+      return [0, err];
+    }
+  }
+
+  async countInProgressByAgent(
+    agentId: number,
+  ): Promise<[number, Error | null]> {
+    try {
+      const count = await AgentTaskModel.count({
+        where: {
+          assignedAgentId: agentId,
+          status: AgentTaskStatus.IN_PROGRESS,
+        },
+      });
+      return [count, null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `countInProgressByAgent() error: ${err?.message}`,
+      });
+      return [0, err];
+    }
+  }
+
+  async expireAgentTask(id: number): Promise<[boolean, Error | null]> {
+    try {
+      const [count] = await AgentTaskModel.update(
+        {
+          status: AgentTaskStatus.EXPIRED,
+          updateAt: new Date().getTime(),
+        } as any,
+        {
+          where: {
+            id,
+            status: [AgentTaskStatus.INIT, AgentTaskStatus.IN_PROGRESS],
+          },
+        },
+      );
+      return [count > 0, null];
+    } catch (err: any) {
+      logEveryWhere({ message: `expireAgentTask() error: ${err?.message}` });
+      return [false, err];
     }
   }
 
@@ -134,14 +234,22 @@ class AgentTaskDB {
   async claimAgentTask(
     taskId: number,
     agentId: number,
+    maxConcurrent: number,
   ): Promise<[IAgentTask | null, Error | null]> {
     try {
+      const [runningCount] = await this.countInProgressByAgent(agentId);
+      if (runningCount >= maxConcurrent) {
+        return [null, new Error("capacity_exceeded")];
+      }
+
+      const now = new Date().getTime();
       const [count] = await AgentTaskModel.update(
         {
-          status: AgentTaskStatus.ASSIGNED,
+          status: AgentTaskStatus.IN_PROGRESS,
           assignedAgentId: agentId,
-          claimedAt: new Date().getTime(),
-          updateAt: new Date().getTime(),
+          claimedAt: now,
+          startedAt: now,
+          updateAt: now,
         } as any,
         { where: { id: taskId, status: AgentTaskStatus.INIT } },
       );

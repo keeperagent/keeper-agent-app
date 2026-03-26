@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { IAgentTask } from "@/electron/type";
 import {
@@ -10,7 +10,6 @@ import {
 import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
-  IpcClaimAgentTaskPayload,
   IpcDeletePayload,
 } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
@@ -69,26 +68,6 @@ const useUpdateAgentTask = () => {
   return { loading, isSuccess, updateAgentTask };
 };
 
-const useClaimAgentTask = () => {
-  const { execute, loading, isSuccess } =
-    useIpcAction<IpcClaimAgentTaskPayload>(
-      MESSAGE.CLAIM_AGENT_TASK,
-      MESSAGE.CLAIM_AGENT_TASK_RES,
-      {
-        onSuccess: (payload, dispatch) => {
-          if (payload?.data) {
-            dispatch(actSaveUpdateAgentTask(payload.data));
-          }
-        },
-      },
-    );
-
-  const claimAgentTask = (taskId: number, agentId: number) =>
-    execute({ taskId, agentId });
-
-  return { loading, isSuccess, claimAgentTask };
-};
-
 const useDeleteAgentTask = () => {
   const pendingIdRef = useRef<number | null>(null);
 
@@ -113,10 +92,19 @@ const useDeleteAgentTask = () => {
   return { loading, isSuccess, deleteAgentTask };
 };
 
+const useAgentTaskRealtime = (onChanged: () => void) => {
+  useEffect(() => {
+    window?.electron?.on(MESSAGE.AGENT_TASK_CHANGED, onChanged);
+    return () => {
+      window?.electron?.removeAllListeners(MESSAGE.AGENT_TASK_CHANGED);
+    };
+  }, [onChanged]);
+};
+
 export {
   useGetListAgentTask,
   useCreateAgentTask,
   useUpdateAgentTask,
-  useClaimAgentTask,
   useDeleteAgentTask,
+  useAgentTaskRealtime,
 };

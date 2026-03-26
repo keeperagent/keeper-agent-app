@@ -59,6 +59,10 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      timeout: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       metadata: {
         type: DataTypes.TEXT,
         allowNull: false,
@@ -97,6 +101,11 @@ export default (db: Sequelize) =>
       cancelledAt: {
         type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      isPinned: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
       createAt: {
         type: DataTypes.INTEGER,

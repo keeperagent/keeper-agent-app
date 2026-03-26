@@ -2735,6 +2735,7 @@ export type IAgentTask = {
   scheduledAt?: number;
   dueAt?: number;
   ttlSeconds?: number;
+  timeout?: number;
   metadata?: Record<string, any>;
   result?: Record<string, any>;
   errorMessage?: string;
@@ -2744,6 +2745,7 @@ export type IAgentTask = {
   startedAt?: number;
   completedAt?: number;
   cancelledAt?: number;
+  isPinned?: boolean;
   createAt?: number;
   updateAt?: number;
 };
@@ -2761,6 +2763,7 @@ export type IAgentRegistry = {
   allowedSubAgentIds?: number[];
   isAgentInteractionEnabled?: boolean;
   isActive?: boolean;
+  maxConcurrentTasks?: number;
   // Execution context
   chainKey?: string;
   nodeEndpointGroupId?: number;

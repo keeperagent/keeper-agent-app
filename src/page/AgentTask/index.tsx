@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import type { CSSProperties } from "react";
 import { connect } from "react-redux";
-import { Button, Form } from "antd";
+import { Button, Input, Select } from "antd";
 import {
   DndContext,
   DragEndEvent,
@@ -22,59 +23,134 @@ import {
 } from "@/electron/type";
 import {
   useGetListAgentTask,
-  useCreateAgentTask,
   useUpdateAgentTask,
   useDeleteAgentTask,
+  useAgentTaskRealtime,
 } from "@/hook/agentTask";
 import { useGetListAgentRegistry } from "@/hook/agentRegistry";
+import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
-import { EMPTY_STRING } from "@/config/constant";
 import { ModalAgentTask } from "./ModalAgentTask";
-import { TaskCard } from "./TaskCard";
-import { PriorityBadge, Wrapper as TaskCardShell } from "./TaskCard/style";
-import { Wrapper, KanbanColumn } from "./style";
+import { TaskCard, TaskCardDragOverlay } from "./TaskCard";
+import { Wrapper, KanbanColumn, OptionWrapper } from "./style";
 
-const KANBAN_COLUMNS: { status: AgentTaskStatus; labelKey: string }[] = [
-  { status: AgentTaskStatus.INIT, labelKey: "agentTask.column.init" },
-  { status: AgentTaskStatus.ASSIGNED, labelKey: "agentTask.column.assigned" },
-  { status: AgentTaskStatus.DONE, labelKey: "agentTask.column.done" },
-  { status: AgentTaskStatus.FAILED, labelKey: "agentTask.column.failed" },
-  { status: AgentTaskStatus.EXPIRED, labelKey: "agentTask.column.expired" },
+interface KanbanColumnDef {
+  dropStatus: AgentTaskStatus;
+  displayStatuses: AgentTaskStatus[];
+  labelKey: string;
+}
+
+const KANBAN_COLUMNS: KanbanColumnDef[] = [
+  {
+    dropStatus: AgentTaskStatus.INIT,
+    displayStatuses: [AgentTaskStatus.INIT],
+    labelKey: "agentTask.column.init",
+  },
+  {
+    dropStatus: AgentTaskStatus.IN_PROGRESS,
+    displayStatuses: [AgentTaskStatus.IN_PROGRESS],
+    labelKey: "agentTask.column.inProgress",
+  },
+  {
+    dropStatus: AgentTaskStatus.DONE,
+    displayStatuses: [AgentTaskStatus.DONE],
+    labelKey: "agentTask.column.done",
+  },
+  {
+    dropStatus: AgentTaskStatus.FAILED,
+    displayStatuses: [AgentTaskStatus.FAILED],
+    labelKey: "agentTask.column.failed",
+  },
+  {
+    dropStatus: AgentTaskStatus.CANCELLED,
+    displayStatuses: [AgentTaskStatus.CANCELLED, AgentTaskStatus.EXPIRED],
+    labelKey: "agentTask.column.cancelled",
+  },
+];
+
+const getStatusColor = (status: AgentTaskStatus): string => {
+  switch (status) {
+    case AgentTaskStatus.INIT:
+      return "#94a3b8";
+    case AgentTaskStatus.IN_PROGRESS:
+      return "#3b82f6";
+    case AgentTaskStatus.DONE:
+      return "#22c55e";
+    case AgentTaskStatus.FAILED:
+      return "#ef4444";
+    case AgentTaskStatus.CANCELLED:
+      return "#94a3b8";
+    default:
+      return "#94a3b8";
+  }
+};
+
+const PRIORITY_FILTER_OPTIONS = [
+  { label: "Urgent", value: AgentTaskPriority.URGENT },
+  { label: "High", value: AgentTaskPriority.HIGH },
+  { label: "Medium", value: AgentTaskPriority.MEDIUM },
+  { label: "Low", value: AgentTaskPriority.LOW },
 ];
 
 interface DroppableColumnProps {
-  status: AgentTaskStatus;
+  dropStatus: AgentTaskStatus;
+  displayStatuses: AgentTaskStatus[];
   label: string;
   tasks: IAgentTask[];
+  totalCount: number;
+  isFiltered: boolean;
   activeDragId: string | null;
   onEdit: (task: IAgentTask) => void;
   onDelete: (id: number) => void;
+  onPin: (id: number, isPinned: boolean) => void;
 }
 
 const DroppableColumn = ({
-  status,
+  dropStatus,
   label,
   tasks,
+  totalCount,
+  isFiltered,
   activeDragId,
   onEdit,
   onDelete,
+  onPin,
 }: DroppableColumnProps) => {
-  const { setNodeRef, isOver } = useDroppable({ id: status });
+  const { setNodeRef, isOver } = useDroppable({ id: dropStatus });
+  const { translate } = useTranslation();
 
   return (
-    <KanbanColumn isDragOver={isOver}>
+    <KanbanColumn
+      isDragOver={isOver}
+      style={{ "--status-color": getStatusColor(dropStatus) } as CSSProperties}
+    >
       <div className="column-header">
-        <span className="column-title">{label}</span>
-        <span className="column-count">{tasks.length}</span>
+        <div className="column-title-group">
+          <span className="column-status-dot" />
+          <span className="column-title">{label}</span>
+        </div>
+
+        <span className="column-count">
+          {isFiltered ? `${tasks.length} / ${totalCount}` : tasks.length}
+        </span>
       </div>
 
       <div ref={setNodeRef} className="column-body">
+        {tasks.length === 0 && (
+          <div className="column-empty">
+            {isFiltered
+              ? translate("agentTask.column.emptyFiltered")
+              : translate("agentTask.column.empty")}
+          </div>
+        )}
+
         {tasks.map((task) => (
           <TaskCard
             key={task.id}
             task={task}
             onEdit={onEdit}
             onDelete={onDelete}
+            onPin={onPin}
             isDragging={activeDragId === String(task.id)}
           />
         ))}
@@ -89,15 +165,18 @@ const AgentTaskPage = (props: any) => {
 
   const { getListAgentTask } = useGetListAgentTask();
   const { getListAgentRegistry } = useGetListAgentRegistry();
-  const { createAgentTask, loading: createLoading } = useCreateAgentTask();
   const { updateAgentTask } = useUpdateAgentTask();
   const { deleteAgentTask } = useDeleteAgentTask();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<IAgentTask | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [form] = Form.useForm();
-
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number>(Date.now());
+  const [lastUpdatedText, setLastUpdatedText] = useState("just now");
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterPriority, setFilterPriority] =
+    useState<AgentTaskPriority | null>(null);
+  const [filterAgentId, setFilterAgentId] = useState<number | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -113,45 +192,92 @@ const AgentTaskPage = (props: any) => {
     getListAgentRegistry({ page: 1, pageSize: 200 });
   }, []);
 
-  const getTasksByStatus = (status: AgentTaskStatus): IAgentTask[] =>
-    (listAgentTask || []).filter((task: IAgentTask) => task.status === status);
+  useEffect(() => {
+    setLastUpdatedAt(Date.now());
+  }, [listAgentTask]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdatedText(formatTime(lastUpdatedAt));
+    }, 10_000);
+
+    return () => clearInterval(interval);
+  }, [lastUpdatedAt]);
+
+  const onTasksChanged = useCallback(() => {
+    getListAgentTask();
+  }, []);
+
+  useAgentTaskRealtime(onTasksChanged);
+
+  const hasActiveFilter =
+    Boolean(filterKeyword) || filterPriority !== null || filterAgentId !== null;
+
+  const onClearFilters = () => {
+    setFilterKeyword("");
+    setFilterPriority(null);
+    setFilterAgentId(null);
+  };
+
+  const applyFilters = (tasks: IAgentTask[]): IAgentTask[] => {
+    return tasks.filter((task) => {
+      if (filterKeyword) {
+        const keyword = filterKeyword.toLowerCase();
+        const matchesTitle = task.title?.toLowerCase().includes(keyword);
+        const matchesDesc = task.description?.toLowerCase().includes(keyword);
+        if (!matchesTitle && !matchesDesc) {
+          return false;
+        }
+      }
+      if (filterPriority !== null && task.priority !== filterPriority) {
+        return false;
+      }
+      if (filterAgentId !== null && task.assignedAgentId !== filterAgentId) {
+        return false;
+      }
+      return true;
+    });
+  };
+
+  const getTasksByStatuses = (statuses: AgentTaskStatus[]): IAgentTask[] => {
+    const all = (listAgentTask || []).filter((task: IAgentTask) =>
+      statuses.includes(task.status!),
+    );
+    const filtered = applyFilters(all);
+
+    return [...filtered].sort((taskA, taskB) => {
+      if (taskA.isPinned && !taskB.isPinned) {
+        return -1;
+      }
+      if (!taskA.isPinned && taskB.isPinned) {
+        return 1;
+      }
+      return 0;
+    });
+  };
+
+  const onPinAgentTask = (id: number, isPinned: boolean) => {
+    updateAgentTask(id, { isPinned });
+  };
+
+  const getTotalByStatuses = (statuses: AgentTaskStatus[]): number =>
+    (listAgentTask || []).filter((task: IAgentTask) =>
+      statuses.includes(task.status!),
+    ).length;
 
   const onOpenCreate = () => {
     setEditingTask(null);
-    form.resetFields();
-    form.setFieldsValue({ priority: AgentTaskPriority.MEDIUM });
     setModalOpen(true);
   };
 
   const onOpenEdit = (task: IAgentTask) => {
     setEditingTask(task);
-    form.setFieldsValue({
-      title: task.title,
-      description: task.description || "",
-      priority: task.priority || AgentTaskPriority.MEDIUM,
-      assignedAgentId: task.assignedAgentId || undefined,
-    });
     setModalOpen(true);
   };
 
   const onCloseModal = () => {
     setModalOpen(false);
-    setTimeout(() => {
-      setEditingTask(null);
-      form.resetFields();
-    }, 300);
-  };
-
-  const onSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      if (editingTask) {
-        updateAgentTask(editingTask.id!, values);
-      } else {
-        createAgentTask(values);
-      }
-      onCloseModal();
-    } catch {}
+    setTimeout(() => setEditingTask(null), 300);
   };
 
   const onDragStart = (event: DragStartEvent) => {
@@ -186,18 +312,82 @@ const AgentTaskPage = (props: any) => {
         )
       : null;
 
-  const agentOptions = (listAgentRegistry || []).map((agent: any) => ({
-    label: agent.name,
-    value: agent.id,
-  }));
+  const agentOptions = (listAgentRegistry || []).map((agent: any) => {
+    const activeCount = (listAgentTask || []).filter(
+      (task: IAgentTask) =>
+        task.assignedAgentId === agent.id &&
+        task.status === AgentTaskStatus.IN_PROGRESS,
+    ).length;
+
+    return {
+      label: agent.name,
+      value: agent.id,
+      activeCount,
+    };
+  });
 
   return (
     <Wrapper>
       <div className="header">
-        <span className="header-title">{translate("sidebar.agentTask")}</span>
-        <Button type="primary" onClick={onOpenCreate}>
-          {translate("agentTask.button.newTask")}
-        </Button>
+        <div className="header-filters">
+          <Input
+            className="filter-search custom-input"
+            placeholder={translate("agentTask.filter.placeholder.search")}
+            value={filterKeyword}
+            onChange={(event) => setFilterKeyword(event.target.value)}
+            allowClear
+            size="large"
+          />
+
+          <Select
+            className="filter-select custom-select"
+            placeholder={translate("agentTask.filter.placeholder.priority")}
+            options={PRIORITY_FILTER_OPTIONS}
+            value={filterPriority}
+            onChange={(value) => setFilterPriority(value)}
+            allowClear
+            size="large"
+          />
+
+          <Select
+            className="filter-select custom-select"
+            placeholder={translate("agentTask.filter.placeholder.agent")}
+            options={agentOptions}
+            value={filterAgentId}
+            onChange={(value) => setFilterAgentId(value)}
+            allowClear
+            size="large"
+            optionRender={(option) => (
+              <OptionWrapper>
+                <div className="name">{option.data.label}</div>
+                <div className="description">
+                  {option.data.activeCount > 0
+                    ? `${option.data.activeCount} active task${option.data.activeCount > 1 ? "s" : ""}`
+                    : translate("agentTask.label.noActiveTasks")}
+                </div>
+              </OptionWrapper>
+            )}
+          />
+
+          {hasActiveFilter && (
+            <Button onClick={onClearFilters}>
+              {translate("agentTask.filter.clearAll")}
+            </Button>
+          )}
+        </div>
+
+        <div className="header-right">
+          <div className="realtime-indicator">
+            <span className="realtime-dot" />
+            <span className="realtime-text">
+              Last updated: {lastUpdatedText}
+            </span>
+          </div>
+
+          <Button type="primary" onClick={onOpenCreate}>
+            {translate("agentTask.button.newTask")}
+          </Button>
+        </div>
       </div>
 
       <DndContext
@@ -208,27 +398,24 @@ const AgentTaskPage = (props: any) => {
         <div className="board">
           {KANBAN_COLUMNS.map((column) => (
             <DroppableColumn
-              key={column.status}
-              status={column.status}
+              key={column.dropStatus}
+              dropStatus={column.dropStatus}
+              displayStatuses={column.displayStatuses}
               label={translate(column.labelKey)}
-              tasks={getTasksByStatus(column.status)}
+              tasks={getTasksByStatuses(column.displayStatuses)}
+              totalCount={getTotalByStatuses(column.displayStatuses)}
+              isFiltered={hasActiveFilter}
               activeDragId={activeDragId}
               onEdit={onOpenEdit}
               onDelete={deleteAgentTask}
+              onPin={onPinAgentTask}
             />
           ))}
         </div>
 
         <DragOverlay>
           {activeDragTask ? (
-            <TaskCardShell isDragging>
-              <div className="task-title">{activeDragTask.title}</div>
-              <PriorityBadge
-                priority={activeDragTask.priority || AgentTaskPriority.MEDIUM}
-              >
-                {activeDragTask.priority || EMPTY_STRING}
-              </PriorityBadge>
-            </TaskCardShell>
+            <TaskCardDragOverlay task={activeDragTask} />
           ) : null}
         </DragOverlay>
       </DndContext>
@@ -236,11 +423,8 @@ const AgentTaskPage = (props: any) => {
       <ModalAgentTask
         open={modalOpen}
         editingTask={editingTask}
-        form={form}
         agentOptions={agentOptions}
-        confirmLoading={createLoading}
-        onCancel={onCloseModal}
-        onOk={onSubmit}
+        onClose={onCloseModal}
       />
     </Wrapper>
   );

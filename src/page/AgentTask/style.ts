@@ -1,44 +1,130 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { ITheme } from "@/style/theme";
 
+const pulseRing = keyframes`
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.6); opacity: 0; }
+`;
+
 export const Wrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-size: 1.4rem;
   box-sizing: border-box;
   gap: 1.6rem;
+  padding: 0 1.6rem 1.6rem;
 
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    gap: 1rem;
+    padding-top: 1.6rem;
+    gap: 1.2rem;
+  }
 
-    .header-title {
-      font-size: 1.8rem;
-      font-weight: 600;
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+  .header-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--margin-right);
+
+    .filter-search {
+      width: 30rem;
     }
+
+    .filter-select {
+      width: 20rem;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    flex-shrink: 0;
+
+    .realtime-indicator {
+      margin-right: 2rem;
+    }
+  }
+
+  .realtime-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .realtime-dot {
+    position: relative;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: ${pulseRing} 2s ease-out infinite;
+    }
+  }
+
+  .realtime-text {
+    font-size: 1.2rem;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
   }
 
   .board {
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(24rem, 1fr));
     gap: 1.2rem;
-    align-content: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.6rem;
 
-    @media (max-width: 1100px) {
-      grid-template-columns: repeat(5, minmax(11rem, 1fr));
-      overflow-x: auto;
-      padding-bottom: 0.6rem;
+    &::-webkit-scrollbar {
+      height: 0.5rem;
     }
+
+    &::-webkit-scrollbar-track {
+      background: ${({ theme }: { theme: ITheme }) =>
+        theme.scrollBarTrackColor};
+      border-radius: 10rem;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: ${({ theme }: { theme: ITheme }) =>
+        theme.scrollBarThumbColor};
+      border-radius: 10rem;
+    }
+  }
+`;
+
+export const OptionWrapper = styled.div`
+  &:hover {
+    .name {
+      color: var(--color-text-hover);
+    }
+  }
+
+  .name {
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+
+  .description {
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    font-size: 1.1rem;
+    font-weight: 300;
   }
 `;
 
@@ -52,45 +138,103 @@ export const KanbanColumn = styled.div<{ isDragOver?: boolean }>`
   overflow: hidden;
   border: 1px solid
     ${(props) =>
-      props.isDragOver
-        ? props.theme.colorPrimary
-        : props.theme.colorBorder};
-  transition: border-color 0.15s ease;
+      props.isDragOver ? props.theme.colorPrimary : props.theme.colorBorder};
+  box-shadow: ${(props) =>
+    props.isDragOver ? `0 0 0 3px ${props.theme.colorPrimary}25` : "none"};
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   .column-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.2rem;
+    padding: 0.9rem 0.8rem;
     background: ${({ theme }: { theme: ITheme }) => theme.colorBgTag};
     flex-shrink: 0;
+    border-bottom: 1px solid
+      ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+  }
 
-    .column-title {
-      font-weight: 600;
-      font-size: 1.2rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
-    }
+  .column-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+  }
 
-    .column-count {
-      background: ${({ theme }: { theme: ITheme }) =>
-        theme.colorBgUserMessage};
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
-      border-radius: 10rem;
-      padding: 0.1rem 0.7rem;
-      font-size: 1.1rem;
-      font-weight: 500;
-    }
+  .column-status-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(
+      --status-color,
+      ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary}
+    );
+    flex-shrink: 0;
+  }
+
+  .column-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .column-count {
+    background: color-mix(
+      in srgb,
+      var(--status-color, #94a3b8) 15%,
+      transparent
+    );
+    color: var(--status-color, #94a3b8);
+    border-radius: 0.5rem;
+    padding: 0.2rem 0.8rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 2.4rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .column-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+    opacity: 0.5;
+    padding: 2rem 1rem;
+    text-align: center;
   }
 
   .column-body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 0.8rem;
+    padding: 0.6rem;
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.6rem;
+
+    &::-webkit-scrollbar {
+      width: 0.4rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: ${({ theme }: { theme: ITheme }) =>
+        theme.scrollBarThumbColor};
+      border-radius: 10rem;
+    }
   }
 `;

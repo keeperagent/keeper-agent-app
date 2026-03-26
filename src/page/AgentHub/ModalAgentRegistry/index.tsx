@@ -3,6 +3,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   Row,
   Col,
   Select,
@@ -133,6 +134,7 @@ const ModalAgentRegistry = (props: Props) => {
       campaignId: registry?.campaignId,
       profileIds: registry?.profileIds || [],
       isAllWallet: Boolean(registry?.isAllWallet),
+      maxConcurrentTasks: registry?.maxConcurrentTasks || 3,
     });
   }, [registry]);
 
@@ -193,6 +195,7 @@ const ModalAgentRegistry = (props: Props) => {
         profileIds: values?.profileIds || [],
         isAllWallet: Boolean(values.isAllWallet),
         secretKey: values.secretKey || "",
+        maxConcurrentTasks: values.maxConcurrentTasks,
       };
 
       if (isEdit && registry?.id) {
@@ -250,6 +253,20 @@ const ModalAgentRegistry = (props: Props) => {
                 placeholder={translate("agent.enterRegistryDesc")}
                 rows={3}
                 className="custom-input"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={`${translate("agent.maxConcurrentTasks")}:`}
+              name="maxConcurrentTasks"
+              tooltip={translate("agent.maxConcurrentTasksTooltip")}
+            >
+              <InputNumber
+                placeholder={translate("agent.maxConcurrentTasksPlaceholder")}
+                className="custom-input"
+                size="large"
+                min={1}
+                style={{ width: "100%" }}
               />
             </Form.Item>
 

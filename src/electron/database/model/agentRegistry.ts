@@ -82,6 +82,10 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: 1,
       },
+      maxConcurrentTasks: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       secretKey: {
         type: DataTypes.STRING,
         allowNull: true,
