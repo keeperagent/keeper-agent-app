@@ -12,6 +12,7 @@ const DEFAULT_TASK_TIMEOUT_MINUTES = 30;
 
 class AgentTaskExecutor {
   private runningTasks = new Map<number, AbortController>();
+  private cancelledTasks = new Set<number>();
 
   execute = (
     taskId: number,
@@ -28,6 +29,7 @@ class AgentTaskExecutor {
   cancelTask = (taskId: number): void => {
     const controller = this.runningTasks.get(taskId);
     if (controller) {
+      this.cancelledTasks.add(taskId);
       controller.abort();
     }
   };
@@ -112,15 +114,23 @@ class AgentTaskExecutor {
       }
     } catch (err: any) {
       clearTimeout(timeoutId!);
-      await this.failTask(
-        taskId,
-        isTimedOut
-          ? `Task execution timed out after ${timeoutMinutes} minutes`
-          : err?.message,
-      );
+      if (this.cancelledTasks.has(taskId)) {
+        await agentTaskDB.updateAgentTask(taskId, {
+          status: AgentTaskStatus.CANCELLED,
+          cancelledAt: Date.now(),
+        });
+      } else {
+        await this.failTask(
+          taskId,
+          isTimedOut
+            ? `Task execution timed out after ${timeoutMinutes} minutes`
+            : err?.message,
+        );
+      }
     } finally {
       await cleanup();
       this.runningTasks.delete(taskId);
+      this.cancelledTasks.delete(taskId);
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       onComplete?.();
     }
