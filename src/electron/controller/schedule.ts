@@ -1,7 +1,7 @@
 import { MESSAGE } from "@/electron/constant";
 import { scheduleDB } from "@/electron/database/schedule";
 import { workflowManager } from "@/electron/simulator/workflow";
-import { agentTaskScheduler } from "@/electron/service/agentTaskScheduler";
+import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
 import { onIpc } from "./helpers";
 import { logEveryWhere } from "@/electron/service/util";
 import type {

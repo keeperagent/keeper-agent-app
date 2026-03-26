@@ -105,5 +105,5 @@ class TaskDispatcher {
   };
 }
 
-const taskDispatcher = new TaskDispatcher();
-export { taskDispatcher };
+const agentTaskDispatcher = new TaskDispatcher();
+export { agentTaskDispatcher };

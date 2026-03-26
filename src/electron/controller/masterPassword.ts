@@ -2,7 +2,7 @@ import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { preferenceDB } from "@/electron/database/preference";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
-import { agentTaskScheduler } from "@/electron/service/agentTaskScheduler";
+import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
 import {
   IpcSetupMasterPasswordPayload,
   IpcVerifyMasterPasswordPayload,

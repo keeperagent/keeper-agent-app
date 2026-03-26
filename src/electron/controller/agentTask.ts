@@ -1,7 +1,7 @@
 import { AgentTaskStatus } from "@/electron/type";
 import { MESSAGE } from "@/electron/constant";
 import { agentTaskDB } from "@/electron/database/agentTask";
-import { taskDispatcher } from "@/electron/service/taskDispatcher";
+import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
 import { sendToRenderer } from "@/electron/main";
 import type {
   IpcGetListAgentTaskPayload,
@@ -44,7 +44,7 @@ export const agentTaskController = () => {
       });
       event.reply(MESSAGE.CREATE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
-      taskDispatcher.dispatch();
+      agentTaskDispatcher.dispatch();
     },
   );
 
@@ -56,7 +56,7 @@ export const agentTaskController = () => {
       const [result] = await agentTaskDB.updateAgentTask(id, data);
       event.reply(MESSAGE.UPDATE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
-      taskDispatcher.dispatch();
+      agentTaskDispatcher.dispatch();
     },
   );
 
