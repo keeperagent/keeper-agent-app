@@ -55,6 +55,13 @@ import {
   resumeAgentScheduleTool,
   runAgentScheduleNowTool,
 } from "./baseTool/scheduler";
+import {
+  listAgentTasksTool,
+  getAgentTaskTool,
+  createAgentTaskTool,
+  updateAgentTaskTool,
+  deleteAgentTaskTool,
+} from "./baseTool/agentTask";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
 import {
@@ -434,6 +441,31 @@ const buildBaseSubAgents = (
     });
   }
 
+  const agentTaskTools = [
+    isEnabled(BASE_TOOL_KEYS.LIST_AGENT_TASKS) && listAgentTasksTool(),
+    isEnabled(BASE_TOOL_KEYS.GET_AGENT_TASK) && getAgentTaskTool(),
+    isEnabled(BASE_TOOL_KEYS.CREATE_AGENT_TASK) && createAgentTaskTool(),
+    isEnabled(BASE_TOOL_KEYS.UPDATE_AGENT_TASK) && updateAgentTaskTool(),
+    isEnabled(BASE_TOOL_KEYS.DELETE_AGENT_TASK) && deleteAgentTaskTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  if (agentTaskTools.length > 0) {
+    agents.push({
+      name: "task_management_agent",
+      description:
+        "Creates, lists, retrieves, updates, and deletes tasks in the agent task pool. " +
+        "Use this when the user wants to manage work items for agents — creating tasks, checking status, reassigning, or closing tasks.",
+      systemPrompt:
+        "You are a task management subagent. You manage the agent task pool.\n\n" +
+        "## Rules\n" +
+        "- When creating a task, omit assignedAgentId unless the user specifies an agent — the dispatcher will auto-assign.\n" +
+        "- Prefer setting status to cancelled over deleting, unless the user explicitly wants permanent removal.\n" +
+        "- Return task IDs so the user can reference them later.\n" +
+        "- Keep responses concise.",
+      tools: agentTaskTools as any,
+    });
+  }
+
   return agents;
 };
 
@@ -479,7 +511,7 @@ const createLLM = async (
           "Anthropic API key is not found, please set it in the Settings page",
         );
       }
-      let preferredModel = modelOverride;
+      let preferredModel = modelOverride || null;
       if (!preferredModel) {
         preferredModel = await getAnthropicModel();
       }
@@ -499,7 +531,7 @@ const createLLM = async (
           "Google Gemini API key is not found, please set it in the Settings page",
         );
       }
-      let preferredModel = modelOverride;
+      let preferredModel = modelOverride || null;
       if (!preferredModel) {
         preferredModel = await getGoogleGeminiModel();
       }
@@ -520,7 +552,7 @@ const createLLM = async (
           "OpenAI API key is not found, please set it in the Settings page",
         );
       }
-      let preferredModel = modelOverride;
+      let preferredModel = modelOverride || null;
       if (!preferredModel) {
         preferredModel = await getOpenAIModel();
       }

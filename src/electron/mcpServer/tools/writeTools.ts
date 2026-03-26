@@ -30,6 +30,7 @@ import {
   resumeAgentScheduleTool,
   runAgentScheduleNowTool,
 } from "@/electron/appAgent/baseTool/scheduler";
+import { registerAgentTaskWriteTools } from "./agentTaskTools";
 
 const DENIED_RESPONSE = {
   content: [{ type: "text" as const, text: "Action denied by user." }],
@@ -1008,6 +1009,8 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       return wrapText(result as string);
     },
   );
+
+  registerAgentTaskWriteTools(server, mcpToken);
 };
 
 export { registerWriteTools };

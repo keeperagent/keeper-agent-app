@@ -18,6 +18,7 @@ import { preferenceDB } from "@/electron/database/preference";
 import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
+import { agentTaskExecutor } from "@/electron/service/agentTaskExecutor";
 
 const LLM_MATCH_TIMEOUT_MS = 15_000;
 
@@ -115,6 +116,9 @@ class TaskDispatcher {
           maxConcurrent,
         );
         if (claimed) {
+          agentTaskExecutor.execute(task.id, task.assignedAgentId, () =>
+            this.dispatch(),
+          );
           sendToRenderer(MESSAGE.AGENT_TASK_ASSIGNED, {
             taskId: task.id,
             agentId: task.assignedAgentId,
@@ -201,6 +205,9 @@ class TaskDispatcher {
       maxConcurrent,
     );
     if (claimed) {
+      agentTaskExecutor.execute(task.id!, chosenAgent.id, () =>
+        this.dispatch(),
+      );
       sendToRenderer(MESSAGE.AGENT_TASK_ASSIGNED, {
         taskId: task.id,
         agentId: chosenAgent.id,

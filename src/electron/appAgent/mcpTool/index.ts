@@ -39,6 +39,7 @@ type McpToolInfo = {
 };
 
 type McpSubAgentInfo = {
+  id: number;
   name: string;
   description: string;
   tools: DynamicStructuredTool[];
@@ -424,6 +425,7 @@ export class McpToolLoader {
 
       if (tools.length > 0) {
         subAgents.push({
+          id: serverId,
           name: server.name,
           description:
             server.description || `Tools from MCP server: ${server.name}`,
