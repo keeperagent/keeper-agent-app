@@ -149,6 +149,11 @@ export default (db: Sequelize) =>
         allowNull: false,
         defaultValue: 0,
       },
+      llmProvider: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },

@@ -46,11 +46,13 @@ const useUpdatePreference = () => {
       window?.electron?.on(
         MESSAGE.UPDATE_PREFERENCE_RES,
         (event: any, payload: any) => {
-          const { requestId, data } = payload;
-          if (requestId !== uniqueID) return;
+          const { requestId } = payload;
+          if (requestId !== uniqueID) {
+            return;
+          }
           setLoading(false);
           setIsSuccess(true);
-          dispatch(actSaveUpdatePreference(data));
+          dispatch(actSaveUpdatePreference(payload?.data));
           resolve(true);
         },
       );
