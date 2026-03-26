@@ -84,7 +84,10 @@ export const updateAgentTaskTool = () =>
         updateData.description = description;
       }
       if (priority !== undefined) {
-        updateData.priority = PRIORITY_MAP[priority];
+        const mappedPriority = PRIORITY_MAP[priority];
+        if (mappedPriority !== undefined) {
+          updateData.priority = mappedPriority;
+        }
       }
       if (assignedAgentId !== undefined) {
         updateData.assignedAgentId = assignedAgentId;
@@ -103,11 +106,14 @@ export const updateAgentTaskTool = () =>
         updateData.errorMessage = errorMessage;
       }
       if (status !== undefined) {
-        updateData.status = STATUS_MAP[status];
-        if (status === "done" || status === "failed") {
-          updateData.completedAt = now;
-        } else if (status === "cancelled") {
-          updateData.cancelledAt = now;
+        const mappedStatus = STATUS_MAP[status];
+        if (mappedStatus !== undefined) {
+          updateData.status = mappedStatus;
+          if (status === "done" || status === "failed") {
+            updateData.completedAt = now;
+          } else if (status === "cancelled") {
+            updateData.cancelledAt = now;
+          }
         }
       }
 

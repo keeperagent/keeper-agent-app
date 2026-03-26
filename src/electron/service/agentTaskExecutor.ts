@@ -90,7 +90,10 @@ class AgentTaskExecutor {
       const response = await Promise.race([
         (agent as any).invoke(
           { messages: [new HumanMessage(prompt)] },
-          { configurable: { thread_id: `agent_task_${taskId}` } },
+          {
+            configurable: { thread_id: `agent_task_${taskId}` },
+            signal: abortController.signal,
+          },
         ),
         timeoutPromise,
       ]);

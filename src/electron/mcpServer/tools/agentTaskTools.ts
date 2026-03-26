@@ -85,7 +85,7 @@ export const registerAgentTaskWriteTools = (
       const approval = await showApprovalDialog(
         displayName,
         "update_task",
-        "Update agent task outcome",
+        updateInstance.description,
         formatArgs(args),
       );
       if (approval === "denied") {
