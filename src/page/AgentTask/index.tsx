@@ -168,11 +168,19 @@ const isLLMConfigured = (preference: IPreference | null): boolean => {
   }
   switch (preference.llmProvider as LLMProvider) {
     case LLMProvider.CLAUDE:
-      return Boolean(preference.anthropicApiKey);
+      return (
+        Boolean(preference.anthropicApiKey) &&
+        Boolean(preference.anthropicModel)
+      );
     case LLMProvider.OPENAI:
-      return Boolean(preference.openAIApiKey);
+      return (
+        Boolean(preference.openAIApiKey) && Boolean(preference.openAIModel)
+      );
     case LLMProvider.GEMINI:
-      return Boolean(preference.googleGeminiApiKey);
+      return (
+        Boolean(preference.googleGeminiApiKey) &&
+        Boolean(preference.googleGeminiModel)
+      );
     default:
       return false;
   }

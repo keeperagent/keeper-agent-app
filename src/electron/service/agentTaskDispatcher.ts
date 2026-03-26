@@ -133,7 +133,11 @@ class TaskDispatcher {
     const allMcpServers = allMcpResult?.data || [];
 
     const candidates = this.textPreFilter(task, activeAgents);
-    const agentsToCheck = candidates.length > 0 ? candidates : activeAgents;
+    const candidateIds = new Set(candidates.map((agent) => agent.id));
+    const agentsToCheck = [
+      ...candidates,
+      ...activeAgents.filter((agent) => !candidateIds.has(agent.id)),
+    ];
 
     const chosenAgentId = await this.llmMatchAgent(
       task,
@@ -206,52 +210,51 @@ class TaskDispatcher {
       return null;
     }
 
-    const agentDescriptions = agents
-      .map((agent) => {
-        const skills = (agent.allowedSkillIds || [])
-          .map((skillId) => allSkills.find((skill) => skill.id === skillId))
-          .filter(Boolean)
-          .map(
-            (skill) =>
-              `${skill!.name}${skill!.description ? ": " + skill!.description : ""}`,
-          )
-          .join(", ");
+    const candidateIds = new Set(agents.map((agent) => agent.id));
 
-        const mcpServers = (agent.allowedMcpServerIds || [])
-          .map((mcpId) => allMcpServers.find((mcp) => mcp.id === mcpId))
-          .filter(Boolean)
-          .map(
-            (mcp) =>
-              `${mcp!.name}${mcp!.description ? ": " + mcp!.description : ""}`,
-          )
-          .join(", ");
+    const agentPayloads = agents.map((agent) => {
+      const skills = (agent.allowedSkillIds || [])
+        .map((skillId) => allSkills.find((skill) => skill.id === skillId))
+        .filter(Boolean)
+        .map((skill) => ({
+          name: skill!.name,
+          description: skill!.description || "",
+        }));
 
-        const tools = (agent.allowedBaseTools || []).join(", ");
+      const mcpServers = (agent.allowedMcpServerIds || [])
+        .map((mcpId) => allMcpServers.find((mcp) => mcp.id === mcpId))
+        .filter(Boolean)
+        .map((mcp) => ({
+          name: mcp!.name,
+          description: mcp!.description || "",
+        }));
 
-        return [
-          `- ID: ${agent.id}, Name: "${agent.name}"`,
-          agent.description ? `  Description: ${agent.description}` : "",
-          tools ? `  Tools: [${tools}]` : "",
-          skills ? `  Skills: [${skills}]` : "",
-          mcpServers ? `  MCP Servers: [${mcpServers}]` : "",
-        ]
-          .filter(Boolean)
-          .join("\n");
-      })
-      .join("\n\n");
+      return {
+        id: agent.id,
+        name: agent.name,
+        description: agent.description || "",
+        tools: agent.allowedBaseTools || [],
+        skills,
+        mcpServers,
+      };
+    });
 
-    const taskDescription = task.description
-      ? `\n- Description: "${task.description}"`
-      : "";
+    const payload = {
+      task: {
+        id: task.id,
+        title: task.title,
+        description: task.description || "",
+      },
+      agents: agentPayloads,
+    };
+
     const prompt = `You are a task router. Given a task and a list of agents, return the ID of the most suitable agent.
 
-Task:
-- Title: "${task.title}"${taskDescription}
+Input:
+${JSON.stringify(payload, null, 2)}
 
-Agents:
-${agentDescriptions}
-
-Reply with only the agent ID number. If none are suitable, reply with 0.`;
+Reply with a JSON object in this exact format: { "agentId": <number> }
+Use agentId 0 if no agent is suitable. Return only the JSON object, no other text.`;
 
     try {
       const provider = preference.llmProvider as LLMProvider;
@@ -290,8 +293,9 @@ Reply with only the agent ID number. If none are suitable, reply with 0.`;
         }
       }
 
-      const agentId = parseInt(responseContent, 10);
-      if (isNaN(agentId) || agentId === 0) {
+      const parsed = JSON.parse(responseContent);
+      const agentId = parsed?.agentId;
+      if (!agentId || !candidateIds.has(agentId)) {
         return null;
       }
       return agentId;
