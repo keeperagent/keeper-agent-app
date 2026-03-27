@@ -119,13 +119,22 @@ const renderLogStatus = (log: IAppLog) => {
   );
 };
 
+const isHttpUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 const resultMarkdownComponents = {
   a: ({ href, children }: { href?: string; children?: ReactNode }) => (
     <a
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        if (href) {
+        if (href && isHttpUrl(href)) {
           window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
         }
       }}
@@ -259,7 +268,6 @@ const ActivityLogPage = (props: any) => {
   const [searchText, onSetSearchText] = useState("");
   const [logType, setLogType] = useState<AppLogType | "">("");
   const [selectedRowKeys, onSetSelectedRowKeys] = useState<number[]>([]);
-  const [isBtnLoading, setBtnLoading] = useState(false);
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -303,7 +311,6 @@ const ActivityLogPage = (props: any) => {
     if (!isDeleteLoading && isSuccess) {
       onSetSelectedRowKeys([]);
       setShouldRefetch(true);
-      setTimeout(() => setBtnLoading(false), 3000);
     }
   }, [isDeleteLoading, isSuccess]);
 
@@ -322,7 +329,6 @@ const ActivityLogPage = (props: any) => {
   };
 
   const onDeleteLog = () => {
-    setBtnLoading(true);
     deleteAppLog(selectedRowKeys);
   };
 
@@ -404,7 +410,7 @@ const ActivityLogPage = (props: any) => {
             <span style={{ marginLeft: "auto" }}>
               <DeleteButton
                 text={translate("button.delete")}
-                loading={isBtnLoading}
+                loading={isDeleteLoading}
               />
             </span>
           </Popconfirm>

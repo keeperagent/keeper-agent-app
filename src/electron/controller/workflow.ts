@@ -5,7 +5,7 @@ import { campaignDB } from "@/electron/database/campaign";
 import { MESSAGE } from "@/electron/constant";
 import { exportWorkflow, importWorkflow } from "@/electron/service/workflow";
 import { jobDB } from "@/electron/database/job";
-import { AppLogType, ICampaign, IWorkflow } from "@/electron/type";
+import { ICampaign, IWorkflow } from "@/electron/type";
 import { AppLogModel } from "@/electron/database";
 import type {
   IpcGetListWorkflowPayload,
@@ -137,7 +137,6 @@ export const runWorkflowController = () => {
       await AppLogModel.destroy({
         where: {
           workflowId: { [Op.in]: listWorkflowId },
-          logType: AppLogType.SCHEDULE,
         },
       });
 
