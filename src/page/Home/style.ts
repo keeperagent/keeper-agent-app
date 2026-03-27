@@ -14,20 +14,20 @@ const Wrapper = styled.div`
   .data-statistic {
     width: 100%;
     display: flex;
-    justify-content: space-between;
     margin-bottom: var(--margin-bottom-large);
-    background-color: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
-    padding: 2rem 2rem;
-    border-radius: var(--border-radius);
+    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgSecondary};
+    border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+    border-radius: 1rem;
 
-    & > * {
-      flex-basis: 24%;
+    & > * + * {
+      border-left: 1px solid
+        ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
     }
   }
 
   .chart {
     width: 100%;
-    margin-top: var(--margin-top);
+    margin-bottom: 3rem;
   }
 
   .file-statistic {

@@ -25,7 +25,7 @@ import {
   DownArrowIcon,
   UpArrowIcon,
 } from "@/component/Icon";
-import { TotalData, ProfileGroupChart } from "@/component";
+import { TotalData } from "@/component";
 import { RootState } from "@/redux/store";
 import {
   useGetListProfileGroup,
@@ -43,6 +43,7 @@ import { ICampaign, IProfileGroup, ISorter } from "@/electron/type";
 import { EMPTY_STRING } from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
 import ModalProfileGroup from "./ModalProfileGroup";
+import ProfileGroupChart from "./ProfileGroupChart";
 import {
   ProfileGroupWrapper,
   IconWrapper,

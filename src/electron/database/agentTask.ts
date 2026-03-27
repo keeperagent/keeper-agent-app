@@ -317,6 +317,170 @@ class AgentTaskDB {
     }
   }
 
+  async getAgentAnalytics(fromTimestamp: number): Promise<[any, Error | null]> {
+    try {
+      const now = Date.now();
+
+      // tasks completed/failed/cancelled/expired within period
+      const periodTasks = await AgentTaskModel.findAll({
+        where: { createAt: { [Op.gte]: fromTimestamp } },
+        include: [
+          {
+            model: AgentRegistryModel,
+            as: "assignedAgent",
+            attributes: ["id", "name"],
+            required: false,
+          },
+        ],
+        raw: false,
+      });
+
+      const doneTasks = periodTasks.filter(
+        (task: any) => task.status === AgentTaskStatus.DONE,
+      );
+      const failedTasks = periodTasks.filter(
+        (task: any) => task.status === AgentTaskStatus.FAILED,
+      );
+
+      const totalDone = doneTasks.length;
+      const totalFailed = failedTasks.length;
+
+      // Avg duration: completedAt - startedAt for DONE tasks
+      const durationsMs = doneTasks
+        .filter((task: any) => task.completedAt && task.startedAt)
+        .map((task: any) => task.completedAt - task.startedAt);
+      const avgDurationMs =
+        durationsMs.length > 0
+          ? Math.round(
+              durationsMs.reduce(
+                (sum: number, value: number) => sum + value,
+                0,
+              ) / durationsMs.length,
+            )
+          : 0;
+
+      // Avg wait time: startedAt - createAt for tasks that were started in period
+      const waitTimesMs = periodTasks
+        .filter((task: any) => task.startedAt && task.createAt)
+        .map((task: any) => task.startedAt - task.createAt);
+      const avgWaitTimeMs =
+        waitTimesMs.length > 0
+          ? Math.round(
+              waitTimesMs.reduce(
+                (sum: number, value: number) => sum + value,
+                0,
+              ) / waitTimesMs.length,
+            )
+          : 0;
+
+      // Live counts (ignore period)
+      const pendingNow = await AgentTaskModel.count({
+        where: { status: AgentTaskStatus.INIT },
+      });
+      const inProgressNow = await AgentTaskModel.count({
+        where: { status: AgentTaskStatus.IN_PROGRESS },
+      });
+
+      // Daily activity: bucket tasks by day
+      const dayBuckets: Record<string, { done: number; failed: number }> = {};
+      const msPerDay = 86400000;
+      const totalDays = Math.ceil((now - fromTimestamp) / msPerDay);
+
+      for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
+        const date = new Date(fromTimestamp + dayIndex * msPerDay);
+        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
+        dayBuckets[dateKey] = { done: 0, failed: 0 };
+      }
+
+      for (const task of periodTasks as any[]) {
+        const taskDate = new Date(task.createAt);
+        const dateKey = `${taskDate.getMonth() + 1}/${taskDate.getDate()}`;
+        if (!dayBuckets[dateKey]) {
+          continue;
+        }
+
+        if (task.status === AgentTaskStatus.DONE) {
+          dayBuckets[dateKey].done += 1;
+        } else if (task.status === AgentTaskStatus.FAILED) {
+          dayBuckets[dateKey].failed += 1;
+        }
+      }
+      const dailyActivity = Object.entries(dayBuckets).map(
+        ([date, counts]) => ({ date, ...counts }),
+      );
+
+      // Per-agent stats
+      const agentMap: Record<
+        number,
+        {
+          agentId: number;
+          name: string;
+          done: number;
+          failed: number;
+          durationsMs: number[];
+        }
+      > = {};
+      for (const task of periodTasks as any[]) {
+        const agentId = task.assignedAgentId;
+        if (!agentId) {
+          continue;
+        }
+
+        if (!agentMap[agentId]) {
+          agentMap[agentId] = {
+            agentId,
+            name: task.assignedAgent?.name || `Agent #${agentId}`,
+            done: 0,
+            failed: 0,
+            durationsMs: [],
+          };
+        }
+
+        if (task.status === AgentTaskStatus.DONE) {
+          agentMap[agentId].done += 1;
+          if (task.completedAt && task.startedAt) {
+            agentMap[agentId].durationsMs.push(
+              task.completedAt - task.startedAt,
+            );
+          }
+        } else if (task.status === AgentTaskStatus.FAILED) {
+          agentMap[agentId].failed += 1;
+        }
+      }
+
+      const perAgentStats = Object.values(agentMap).map((agentEntry) => ({
+        agentId: agentEntry.agentId,
+        name: agentEntry.name,
+        done: agentEntry.done,
+        failed: agentEntry.failed,
+        avgDurationMs:
+          agentEntry.durationsMs.length > 0
+            ? Math.round(
+                agentEntry.durationsMs.reduce((sum, value) => sum + value, 0) /
+                  agentEntry.durationsMs.length,
+              )
+            : 0,
+      }));
+
+      return [
+        {
+          totalDone,
+          totalFailed,
+          avgDurationMs,
+          avgWaitTimeMs,
+          pendingNow,
+          inProgressNow,
+          dailyActivity,
+          perAgentStats,
+        },
+        null,
+      ];
+    } catch (err: any) {
+      logEveryWhere({ message: `getAgentAnalytics() error: ${err?.message}` });
+      return [null, err];
+    }
+  }
+
   async deleteAgentTask(
     listId: number[],
   ): Promise<[number | null, Error | null]> {

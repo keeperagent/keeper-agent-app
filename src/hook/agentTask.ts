@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { IAgentTask } from "@/electron/type";
 import {
@@ -10,6 +10,7 @@ import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
   IpcDeletePayload,
+  IpcGetAgentAnalyticsPayload,
 } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
 
@@ -87,10 +88,30 @@ const useAgentTaskRealtime = (onChanged: () => void) => {
   }, [onChanged]);
 };
 
+const useGetAgentAnalytics = () => {
+  const [analytics, setAnalytics] = useState<any>(null);
+
+  const { execute, loading } = useIpcAction<IpcGetAgentAnalyticsPayload>(
+    MESSAGE.GET_AGENT_ANALYTICS,
+    MESSAGE.GET_AGENT_ANALYTICS_RES,
+    {
+      onSuccess: (payload: any) => {
+        setAnalytics(payload?.data || null);
+      },
+    },
+  );
+
+  const getAgentAnalytics = (fromTimestamp: number) =>
+    execute({ fromTimestamp });
+
+  return { loading, analytics, getAgentAnalytics };
+};
+
 export {
   useGetListAgentTask,
   useCreateAgentTask,
   useUpdateAgentTask,
   useDeleteAgentTask,
   useAgentTaskRealtime,
+  useGetAgentAnalytics,
 };

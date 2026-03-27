@@ -20,7 +20,6 @@ export const ChainWrapper = styled.div`
 `;
 
 export const OptionWrapper = styled.div`
-
   &:hover {
     .name {
       color: var(--color-text-hover);

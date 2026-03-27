@@ -537,6 +537,9 @@ export type IpcUpdateAgentTaskPayload = {
   id: number;
   data: Partial<IAgentTask>;
 };
+export type IpcGetAgentAnalyticsPayload = {
+  fromTimestamp: number;
+};
 
 // AppAgent
 export type IpcAgentCreateSessionPayload = {

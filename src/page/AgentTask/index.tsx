@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
+import AnimatedNumbers from "react-animated-numbers";
 import type { CSSProperties } from "react";
 import { connect } from "react-redux";
 import { Alert, Button, Select } from "antd";
@@ -34,6 +35,7 @@ import { useGetListAgentRegistry } from "@/hook/agentRegistry";
 import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { SearchInput } from "@/component";
+import RealtimeIndicator from "@/component/RealtimeIndicator";
 import { ModalAgentTask } from "./ModalAgentTask";
 import { TaskCard, TaskCardDragOverlay } from "./TaskCard";
 import { Wrapper, KanbanColumn, OptionWrapper } from "./style";
@@ -135,7 +137,13 @@ const DroppableColumn = ({
         </div>
 
         <span className="column-count">
-          {isFiltered ? `${tasks.length} / ${totalCount}` : tasks.length}
+          <AnimatedNumbers animateToNumber={tasks.length} />
+          {isFiltered && (
+            <Fragment>
+              {" / "}
+              <AnimatedNumbers animateToNumber={totalCount} />
+            </Fragment>
+          )}
         </span>
       </div>
 
@@ -404,12 +412,7 @@ const AgentTaskPage = (props: any) => {
         </div>
 
         <div className="header-right">
-          <div className="realtime-indicator">
-            <span className="realtime-dot" />
-            <span className="realtime-text">
-              Last updated: {lastUpdatedText}
-            </span>
-          </div>
+          <RealtimeIndicator text={`Last updated: ${lastUpdatedText}`} />
 
           <Button type="primary" onClick={onOpenCreate}>
             {translate("agentTask.button.newTask")}
