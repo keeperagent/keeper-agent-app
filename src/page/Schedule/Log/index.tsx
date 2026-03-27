@@ -314,7 +314,7 @@ const renderColumns = (
   {
     title: `${translate("sidebar.campaign")} / ${translate("sidebar.workflow")}`,
     dataIndex: "campaign",
-    width: 200,
+    width: "30%",
     render: (campaign: ICampaign, record: IAppLog) => {
       const hasCampaign = Boolean(campaign?.id);
       const hasWorkflow = Boolean(
@@ -639,7 +639,7 @@ const ManageLog = (props: any) => {
           showTotal: onShowTotalData,
           locale: { items_per_page: `/ ${translate("page")}` },
         }}
-        scroll={{ x: 1120, y: "70vh" }}
+        scroll={{ x: 1000, y: "70vh" }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

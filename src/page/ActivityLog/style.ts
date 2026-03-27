@@ -2,13 +2,14 @@ import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
 const PageWrapper = styled.div`
-  position: absolute;
-  inset: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
   font-size: 1.6rem;
-  overflow: hidden;
-  padding: 2rem 2.4rem;
+  margin-top: var(--margin-top);
 
   .heading {
     width: 100%;
@@ -16,7 +17,7 @@ const PageWrapper = styled.div`
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: var(--margin-right);
     flex-shrink: 0;
   }
 
@@ -32,11 +33,11 @@ const PageWrapper = styled.div`
     align-items: center;
 
     svg {
-      width: 2rem;
-      height: 2rem;
-      min-width: 2rem;
-      min-height: 2rem;
-      fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+      width: 1.7rem;
+      height: 1.7rem;
+      min-width: 1.7rem;
+      min-height: 1.7rem;
+      fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
     }
 
     &:hover svg {
@@ -45,14 +46,61 @@ const PageWrapper = styled.div`
   }
 `;
 
+const ActorCellWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+
+  .actor-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+  }
+
+  .actor-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+
+  .log-type-tag {
+    font-size: 1.1rem;
+    align-self: flex-start;
+    margin: 0;
+  }
+`;
+
+const TimeCellWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+
+  .time-created {
+    font-size: 1.2rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    white-space: nowrap;
+  }
+
+  .time-duration {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    font-variant-numeric: tabular-nums;
+  }
+`;
+
 const DetailsCellWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.3rem;
   min-width: 0;
 
   .primary {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -60,7 +108,7 @@ const DetailsCellWrapper = styled.div`
   }
 
   .secondary {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
     overflow: hidden;
     text-overflow: ellipsis;
@@ -68,6 +116,8 @@ const DetailsCellWrapper = styled.div`
 
     &.mono {
       font-family: monospace;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
     }
   }
 `;
@@ -103,4 +153,10 @@ const ResultTooltip = styled.div`
   }
 `;
 
-export { PageWrapper, DetailsCellWrapper, ResultTooltip };
+export {
+  PageWrapper,
+  ActorCellWrapper,
+  TimeCellWrapper,
+  DetailsCellWrapper,
+  ResultTooltip,
+};

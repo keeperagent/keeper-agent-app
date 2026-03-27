@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, ComponentType, ReactNode } from "react";
-import { PaginationProps, Table, Popconfirm, Select, Tooltip } from "antd";
+import { PaginationProps, Table, Popconfirm, Select, Tag, Tooltip } from "antd";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -16,14 +16,20 @@ import {
   normalizeAgentMessageContent,
 } from "@/service/agentMessageContent";
 import { DeleteButton } from "@/component/Button";
-import { SearchInput, TotalData, Status } from "@/component";
+import { SearchInput, TotalData } from "@/component";
 import { SettingIcon } from "@/component/Icon";
 import { RootState } from "@/redux/store";
 import { actSetAppLogPageSize } from "@/redux/appLog";
 import { useGetListAppLog, useDeleteAppLog, useTranslation } from "@/hook";
 import { TABLE_PAGE_OPTION, EMPTY_STRING } from "@/config/constant";
 import { MESSAGE } from "@/electron/constant";
-import { PageWrapper, DetailsCellWrapper, ResultTooltip } from "./style";
+import {
+  PageWrapper,
+  ActorCellWrapper,
+  TimeCellWrapper,
+  DetailsCellWrapper,
+  ResultTooltip,
+} from "./style";
 import ModalConfigLog from "./ModalConfigLog";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
@@ -33,7 +39,7 @@ let refreshInterval: any = null;
 
 const formatDuration = (startedAt?: number, finishedAt?: number): string => {
   if (!startedAt || !finishedAt) {
-    return EMPTY_STRING;
+    return "";
   }
   const ms = finishedAt - startedAt;
   if (ms < 1000) {
@@ -48,117 +54,68 @@ const formatDuration = (startedAt?: number, finishedAt?: number): string => {
   return `${minutes}m ${remainSeconds}s`;
 };
 
-const renderLogTypeBadge = (logType: AppLogType) => {
-  const map: Record<AppLogType, { label: string; bg: string; color: string }> =
-    {
-      [AppLogType.WORKFLOW]: {
-        label: "Workflow",
-        bg: "var(--background-pink)",
-        color: "var(--color-pink)",
-      },
-      [AppLogType.SCHEDULE]: {
-        label: "Schedule",
-        bg: "var(--background-blue)",
-        color: "var(--color-blue)",
-      },
-      [AppLogType.TASK]: {
-        label: "Task",
-        bg: "var(--background-success)",
-        color: "var(--color-success)",
-      },
-      [AppLogType.MCP]: {
-        label: "MCP",
-        bg: "var(--background-yellow)",
-        color: "var(--color-yellow)",
-      },
-    };
+const LOG_TYPE_TAG_COLOR: Record<AppLogType, string> = {
+  [AppLogType.WORKFLOW]: "purple",
+  [AppLogType.SCHEDULE]: "blue",
+  [AppLogType.TASK]: "cyan",
+  [AppLogType.MCP]: "orange",
+};
 
-  const style = map[logType] || {
-    label: logType,
-    bg: "var(--background-blue)",
-    color: "var(--color-blue)",
-  };
+const LOG_TYPE_TAG_LABEL: Record<AppLogType, string> = {
+  [AppLogType.WORKFLOW]: "Workflow",
+  [AppLogType.SCHEDULE]: "Schedule",
+  [AppLogType.TASK]: "Task",
+  [AppLogType.MCP]: "MCP",
+};
 
-  return (
-    <Status
-      content={style.label}
-      style={{ background: style.bg, color: style.color }}
-    />
-  );
+const STATUS_LABEL_MAP: Record<string, string> = {
+  running: "Running",
+  success: "Success",
+  error: "Error",
+  skipped: "Skipped",
+  retrying: "Retrying",
+  DONE: "Done",
+  FAILED: "Failed",
+  CANCELLED: "Cancelled",
+  IN_PROGRESS: "In Progress",
+  INIT: "Pending",
+  AWAITING_APPROVAL: "Awaiting",
+  ASSIGNED: "Assigned",
+  approved: "Approved",
+  denied: "Denied",
+};
+
+const STATUS_TAG_COLOR: Record<string, string> = {
+  [AgentScheduleStatus.RUNNING]: "blue",
+  [AgentScheduleStatus.SUCCESS]: "green",
+  [AgentScheduleStatus.ERROR]: "red",
+  [AgentScheduleStatus.SKIPPED]: "default",
+  [AgentScheduleStatus.RETRYING]: "gold",
+  [AgentTaskStatus.DONE]: "green",
+  [AgentTaskStatus.FAILED]: "red",
+  [AgentTaskStatus.CANCELLED]: "default",
+  [AgentTaskStatus.IN_PROGRESS]: "blue",
+  [AgentTaskStatus.INIT]: "blue",
+  approved: "green",
+  denied: "red",
 };
 
 const renderLogStatus = (log: IAppLog) => {
   const status = log.status;
   if (!status) {
-    return (
-      <span style={{ color: "var(--color-text-secondary)" }}>
-        {EMPTY_STRING}
-      </span>
-    );
+    return null;
   }
 
-  const statusMap: Record<string, { bg: string; color: string }> = {
-    [AgentScheduleStatus.RUNNING]: {
-      bg: "var(--background-blue)",
-      color: "var(--color-blue)",
-    },
-    [AgentScheduleStatus.SUCCESS]: {
-      bg: "var(--background-success)",
-      color: "var(--color-success)",
-    },
-    [AgentScheduleStatus.ERROR]: {
-      bg: "var(--background-error)",
-      color: "var(--color-error)",
-    },
-    [AgentScheduleStatus.SKIPPED]: {
-      bg: "var(--color-text-secondary)",
-      color: "var(--color-text-primary)",
-    },
-    [AgentScheduleStatus.RETRYING]: {
-      bg: "var(--background-yellow)",
-      color: "var(--color-yellow)",
-    },
-    [AgentTaskStatus.DONE]: {
-      bg: "var(--background-success)",
-      color: "var(--color-success)",
-    },
-    [AgentTaskStatus.FAILED]: {
-      bg: "var(--background-error)",
-      color: "var(--color-error)",
-    },
-    [AgentTaskStatus.CANCELLED]: {
-      bg: "var(--color-text-secondary)",
-      color: "var(--color-text-primary)",
-    },
-    [AgentTaskStatus.IN_PROGRESS]: {
-      bg: "var(--background-blue)",
-      color: "var(--color-blue)",
-    },
-    [AgentTaskStatus.INIT]: {
-      bg: "var(--background-blue)",
-      color: "var(--color-blue)",
-    },
-    approved: {
-      bg: "var(--background-success)",
-      color: "var(--color-success)",
-    },
-    denied: { bg: "var(--background-error)", color: "var(--color-error)" },
-  };
-
-  const style = statusMap[status];
-  if (!style) {
-    return (
-      <span style={{ color: "var(--color-text-secondary)" }}>{status}</span>
-    );
-  }
+  const label = STATUS_LABEL_MAP[status] || status;
+  const tagColor = STATUS_TAG_COLOR[status];
 
   return (
-    <span style={{ display: "flex", justifyContent: "center" }}>
-      <Status
-        content={status}
-        style={{ background: style.bg, color: style.color }}
-      />
-    </span>
+    <Tag
+      color={tagColor || "default"}
+      style={{ fontSize: "1.1rem", margin: 0 }}
+    >
+      {label}
+    </Tag>
   );
 };
 
@@ -182,91 +139,108 @@ const renderDetails = (log: IAppLog, searchText: string) => {
   let primary = "";
   let secondary = "";
   let secondaryMono = false;
-  let tooltip: string | null = null;
+  let fullContent = "";
 
   if (log.logType === AppLogType.WORKFLOW) {
     primary = log.message || EMPTY_STRING;
     secondary = [log.campaign?.name, log.workflow?.name]
       .filter(Boolean)
       .join(" › ");
+    fullContent = normalizeAgentMessageContent(log.message || "");
   } else if (log.logType === AppLogType.SCHEDULE) {
     primary = log.schedule?.name || `Schedule #${log.scheduleId}`;
     const resultText = log.result
       ? normalizeAgentMessageContent(log.result)
       : null;
-    const errorText = log.errorMessage;
-    const rawDetail = resultText || errorText || "";
-    secondary = rawDetail ? collapseResultToOneLine(rawDetail) : EMPTY_STRING;
-    if (rawDetail.length > secondary.length) {
-      tooltip = rawDetail;
-    }
+    fullContent = resultText || log.errorMessage || "";
+    secondary = fullContent
+      ? collapseResultToOneLine(fullContent)
+      : EMPTY_STRING;
   } else if (log.logType === AppLogType.TASK) {
     primary = log.action || "task_event";
     secondary = log.message || EMPTY_STRING;
+    fullContent = log.message || "";
   } else if (log.logType === AppLogType.MCP) {
     primary = log.action || "tool_call";
     secondary = log.message || EMPTY_STRING;
     secondaryMono = true;
+    fullContent = log.message || "";
   }
 
-  const primaryNode = (
-    <Highlighter
-      textToHighlight={primary}
-      searchWords={[searchText]}
-      highlightClassName="highlight"
-    />
+  const cell = (
+    <DetailsCellWrapper>
+      <span className="primary">
+        <Highlighter
+          textToHighlight={primary}
+          searchWords={[searchText]}
+          highlightClassName="highlight"
+        />
+      </span>
+
+      {secondary && (
+        <span className={`secondary${secondaryMono ? " mono" : ""}`}>
+          <Highlighter
+            textToHighlight={secondary}
+            searchWords={[searchText]}
+            highlightClassName="highlight"
+          />
+        </span>
+      )}
+    </DetailsCellWrapper>
   );
 
-  const secondaryNode = tooltip ? (
+  if (!fullContent) {
+    return cell;
+  }
+
+  return (
     <Tooltip
-      overlayStyle={{ maxWidth: "50vw" }}
+      overlayStyle={{ maxWidth: "35vw" }}
       title={
         <ResultTooltip>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={resultMarkdownComponents}
           >
-            {tooltip}
+            {fullContent}
           </ReactMarkdown>
         </ResultTooltip>
       }
     >
-      <span className={`secondary${secondaryMono ? " mono" : ""}`}>
-        <Highlighter
-          textToHighlight={secondary}
-          searchWords={[searchText]}
-          highlightClassName="highlight"
-        />
-      </span>
+      {cell}
     </Tooltip>
-  ) : (
-    <span className={`secondary${secondaryMono ? " mono" : ""}`}>
-      <Highlighter
-        textToHighlight={secondary}
-        searchWords={[searchText]}
-        highlightClassName="highlight"
-      />
-    </span>
-  );
-
-  return (
-    <DetailsCellWrapper>
-      <span className="primary">{primaryNode}</span>
-      {secondary && secondaryNode}
-    </DetailsCellWrapper>
   );
 };
 
-const renderActor = (log: IAppLog) => {
+const renderActorWithType = (log: IAppLog) => {
   const name = log.actorName || log.actorType;
-  if (!name) {
-    return (
-      <span style={{ color: "var(--color-text-secondary)" }}>
-        {EMPTY_STRING}
+  const tagColor = LOG_TYPE_TAG_COLOR[log.logType];
+  const tagLabel = LOG_TYPE_TAG_LABEL[log.logType] || log.logType;
+
+  return (
+    <ActorCellWrapper>
+      <div className="actor-row">
+        <span className="actor-name">{name || EMPTY_STRING}</span>
+      </div>
+
+      <Tag color={tagColor} bordered={false} className="log-type-tag">
+        {tagLabel}
+      </Tag>
+    </ActorCellWrapper>
+  );
+};
+
+const renderTimeCell = (log: IAppLog) => {
+  const duration = formatDuration(log.startedAt, log.finishedAt);
+  return (
+    <TimeCellWrapper>
+      <span className="time-created">
+        {formatTimeToDate(log.createAt || 0)}
       </span>
-    );
-  }
-  return <span>{name}</span>;
+
+      {duration && <span className="time-duration">took {duration}</span>}
+    </TimeCellWrapper>
+  );
 };
 
 const LOG_TYPE_OPTIONS = [
@@ -363,59 +337,29 @@ const ActivityLogPage = (props: any) => {
 
   const columns = [
     {
-      title: translate("createdAt"),
-      dataIndex: "createAt",
-      width: "12%",
-      render: (createAt: number) => (
-        <span
-          style={{
-            fontSize: "1.2rem",
-            color: "var(--color-text-secondary)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {formatTimeToDate(createAt)}
-        </span>
-      ),
-    },
-    {
-      title: translate("activityLog.type"),
-      dataIndex: "logType",
-      width: "8%",
-      render: (logType: AppLogType) => renderLogTypeBadge(logType),
-    },
-    {
       title: translate("activityLog.actor"),
       dataIndex: "actorName",
-      width: "15%",
-      ellipsis: true,
-      render: (_: any, record: IAppLog) => renderActor(record),
+      width: "20%",
+      render: (_: any, record: IAppLog) => renderActorWithType(record),
     },
     {
       title: translate("activityLog.details"),
       dataIndex: "message",
-      width: "45%",
+      width: "48%",
       render: (_: any, record: IAppLog) => renderDetails(record, searchText),
     },
     {
       title: translate("activityLog.status"),
       dataIndex: "status",
-      width: "10%",
+      width: "12%",
       align: "center" as const,
       render: (_: any, record: IAppLog) => renderLogStatus(record),
     },
     {
-      title: translate("activityLog.duration"),
-      dataIndex: "startedAt",
-      width: "10%",
-      align: "right" as const,
-      render: (_: any, record: IAppLog) => (
-        <span
-          style={{ fontSize: "1.2rem", color: "var(--color-text-secondary)" }}
-        >
-          {formatDuration(record.startedAt, record.finishedAt)}
-        </span>
-      ),
+      title: translate("createdAt"),
+      dataIndex: "createAt",
+      width: "20%",
+      render: (_: any, record: IAppLog) => renderTimeCell(record),
     },
   ];
 
@@ -457,7 +401,7 @@ const ActivityLogPage = (props: any) => {
             placement="left"
             disabled={selectedRowKeys?.length === 0}
           >
-            <span>
+            <span style={{ marginLeft: "auto" }}>
               <DeleteButton
                 text={translate("button.delete")}
                 loading={isBtnLoading}
@@ -485,10 +429,10 @@ const ActivityLogPage = (props: any) => {
             showTotal: onShowTotalData,
             locale: { items_per_page: `/ ${translate("page")}` },
           }}
-          scroll={{ x: 900, y: "calc(100vh - 20rem)" }}
+          scroll={{ x: 900, y: "75vh" }}
           loading={getDataLoading}
           onChange={onTableChange}
-          size="middle"
+          size="small"
         />
 
         <ModalConfigLog isModalOpen={isModalOpen} setModalOpen={setModalOpen} />
