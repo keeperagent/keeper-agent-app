@@ -409,6 +409,29 @@ class AgentTaskDB {
         ([date, counts]) => ({ date, ...counts }),
       );
 
+      // Hourly activity heatmap: [hour(0-23), weekday(Mon=0..Sun=6), count]
+      const hourlyMap: Record<string, number> = {};
+      for (let weekday = 0; weekday < 7; weekday++) {
+        for (let hour = 0; hour < 24; hour++) {
+          hourlyMap[`${weekday}-${hour}`] = 0;
+        }
+      }
+      for (const task of periodTasks as any[]) {
+        const taskDate = new Date(task.createAt);
+        const hour = taskDate.getHours();
+        const weekday = (taskDate.getDay() + 6) % 7; // Sun=0 -> Mon=0
+        const key = `${weekday}-${hour}`;
+        if (hourlyMap[key] !== undefined) {
+          hourlyMap[key] += 1;
+        }
+      }
+      const hourlyActivity: number[][] = [];
+      for (let weekday = 0; weekday < 7; weekday++) {
+        for (let hour = 0; hour < 24; hour++) {
+          hourlyActivity.push([hour, weekday, hourlyMap[`${weekday}-${hour}`]]);
+        }
+      }
+
       // Per-agent stats
       const agentMap: Record<
         number,
@@ -471,6 +494,7 @@ class AgentTaskDB {
           pendingNow,
           inProgressNow,
           dailyActivity,
+          hourlyActivity,
           perAgentStats,
         },
         null,

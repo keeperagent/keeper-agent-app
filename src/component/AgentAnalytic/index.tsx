@@ -249,13 +249,13 @@ const AgentAnalytic = ({
       },
       tooltip: {
         ...commonTooltip,
-        useHTML: true,
+        useHTML: false,
         formatter(this: any) {
           return (
-            `<b>${this.point.name}</b><br/>` +
-            `${translate("agentAnalytic.tooltip.done")}: <b>${this.point.x}</b><br/>` +
-            `${translate("agentAnalytic.tooltip.failureRate")}: <b>${this.point.y}%</b><br/>` +
-            `${translate("agentAnalytic.tooltip.avgDuration")}: <b>${formatDuration(this.point.z)}</b>`
+            `${String(this.point.name || "")}\n` +
+            `${translate("agentAnalytic.tooltip.done")}: ${this.point.x}\n` +
+            `${translate("agentAnalytic.tooltip.failureRate")}: ${this.point.y}%\n` +
+            `${translate("agentAnalytic.tooltip.avgDuration")}: ${formatDuration(this.point.z)}`
           );
         },
       },

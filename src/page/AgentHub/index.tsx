@@ -35,8 +35,8 @@ const AgentHubPage = (props: any) => {
             size="small"
             activeKey={activeTab}
             items={[
-              { key: TAB.AGENTS, label: "Agent" },
-              { key: TAB.ANALYTICS, label: "Analytic" },
+              { key: TAB.AGENTS, label: translate("agentHub.tab.agent") },
+              { key: TAB.ANALYTICS, label: translate("agentHub.tab.analytics") },
             ]}
           />
         </div>
