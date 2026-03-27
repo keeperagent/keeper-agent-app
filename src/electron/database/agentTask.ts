@@ -384,10 +384,16 @@ class AgentTaskDB {
       // Daily activity: bucket tasks by day
       const dayBuckets: Record<string, { done: number; failed: number }> = {};
       const msPerDay = 86400000;
-      const totalDays = Math.ceil((now - fromTimestamp) / msPerDay);
+      const startOfDay = new Date(fromTimestamp);
+      startOfDay.setHours(0, 0, 0, 0);
+      const startOfDayTimestamp = startOfDay.getTime();
+      const totalDays = Math.max(
+        1,
+        Math.ceil((now - startOfDayTimestamp) / msPerDay),
+      );
 
       for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
-        const date = new Date(fromTimestamp + dayIndex * msPerDay);
+        const date = new Date(startOfDayTimestamp + dayIndex * msPerDay);
         const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
         dayBuckets[dateKey] = { done: 0, failed: 0 };
       }

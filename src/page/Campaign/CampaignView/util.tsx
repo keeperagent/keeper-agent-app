@@ -17,7 +17,9 @@ export const renderListWorkflowTooltip = (
 
   if (listWorkflow?.length === 0) {
     return (
-      <IconHighlightWrapper className={`${classname} disable`}>
+      <IconHighlightWrapper
+        className={classname ? `${classname} disable` : "disable"}
+      >
         {icon}
       </IconHighlightWrapper>
     );
@@ -47,7 +49,11 @@ export const renderListWorkflowTooltip = (
 
   return (
     <Dropdown menu={{ items }} placement="bottomRight">
-      <IconHighlightWrapper className={classname}>{icon}</IconHighlightWrapper>
+      <IconHighlightWrapper
+        className={classname ? `${classname} disable` : "disable"}
+      >
+        {icon}
+      </IconHighlightWrapper>
     </Dropdown>
   );
 };
