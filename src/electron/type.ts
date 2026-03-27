@@ -125,17 +125,6 @@ export type IProxy = {
   updateAt?: number;
 };
 
-export type ILog = {
-  id?: number;
-  content?: string;
-  workflowId?: number;
-  workflow?: IWorkflow;
-  campaignId?: number;
-  campaign?: ICampaign;
-  createAt?: number;
-  updateAt?: number;
-};
-
 // Structured log payload for logEveryWhere: message + optional context (campaign, workflow, thread, type)
 export type IStructuredLogPayload = {
   message?: string;
@@ -2526,7 +2515,7 @@ export type ISchedule = {
   memoryFileKey?: string; // Custom filename key for the agent's isolated memory file (AGENT_<memoryFileKey>.md).Defaults to schedule ID
   lastStartedAt?: number;
   nextRunAt?: number; // computed from cronExpr, not stored in DB
-  recentLogs?: IScheduleLog[]; // last N logs, not stored in DB
+  recentLogs?: IAppLog[]; // last N logs, not stored in DB
 };
 
 export type IJob = {
@@ -2568,34 +2557,56 @@ export type IJob = {
   agentRegistryId?: number | null; // If set, this agent job runs using the named registry agent config
 
   // virtual — not stored in DB, merged at read time
-  lastLog?: IScheduleLog;
+  lastLog?: IAppLog;
 };
 
-export type IScheduleLog = {
-  // common
+export enum AppLogType {
+  WORKFLOW = "WORKFLOW",
+  SCHEDULE = "SCHEDULE",
+  TASK = "TASK",
+  MCP = "MCP",
+}
+
+export enum AppLogActorType {
+  USER = "user",
+  AGENT = "agent",
+  MCP = "mcp",
+}
+
+export enum AppLogTaskAction {
+  TASK_CREATED = "task_created",
+  TASK_CLAIMED = "task_claimed",
+  TASK_UPDATED = "task_updated",
+  TASK_COMPLETED = "task_completed",
+  TASK_CANCELLED = "task_cancelled",
+  TASK_FAILED = "task_failed",
+}
+
+export type IAppLog = {
   id?: number;
+  logType: AppLogType;
+  status?: string;
+  message?: string;
+  action?: string;
+  campaignId?: number;
+  campaign?: ICampaign;
+  workflowId?: number;
+  workflow?: IWorkflow;
   scheduleId?: number;
   schedule?: ISchedule;
-  type?: string;
-  createAt?: number;
-  updateAt?: number;
-
-  // workflow log
-  workflowId?: number | null;
-  workflow?: IWorkflow;
-  campaignId?: number | null;
-  campaign?: ICampaign;
-
-  // agent log
   jobId?: number;
-  status?: AgentScheduleStatus;
+  taskId?: number;
+  actorType?: string;
+  actorId?: number;
+  actorName?: string;
   result?: string;
   errorMessage?: string;
   retryCount?: number;
   nextRetryAt?: number;
   startedAt?: number;
   finishedAt?: number;
-  traceData?: string; // JSON-encoded trace steps captured by TraceCollector
+  createAt?: number;
+  updateAt?: number;
 };
 
 export type ISorter = {

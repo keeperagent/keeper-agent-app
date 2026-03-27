@@ -3,7 +3,6 @@ import _ from "lodash";
 import {
   ICampaign,
   ICampaignProfile,
-  ILog,
   IMcpServer,
   IAgentRegistry,
   IAgentTask,
@@ -15,7 +14,6 @@ import {
   ISchedule,
   IJob,
   IWorkflow,
-  IScheduleLog,
 } from "@/electron/type";
 import { encryptionService } from "./encrypt";
 
@@ -297,11 +295,6 @@ const formatAgentRegistry = (data: any): IAgentRegistry => {
   };
 };
 
-const formatLog = (data: Model<any, any>): ILog => {
-  const formatedData: ILog = formatDBResponse(data);
-  return formatedData;
-};
-
 const formatSchedule = (data: any): ISchedule => {
   let formatedData = formatDBResponse(data);
 
@@ -345,11 +338,6 @@ const formatJob = (data: any): IJob => {
   return job;
 };
 
-const formatScheduleLog = (data: any): IScheduleLog => {
-  const scheduleLog: IScheduleLog = formatDBResponse(data);
-  return scheduleLog;
-};
-
 const formatAgentTask = (raw: any): IAgentTask => {
   return {
     ...raw,
@@ -368,9 +356,7 @@ export {
   formatMcpServer,
   formatAgentRegistry,
   formatWorkflow,
-  formatLog,
   formatSchedule,
   formatJob,
-  formatScheduleLog,
   formatAgentTask,
 };

@@ -1,6 +1,12 @@
-import { AgentTaskStatus } from "@/electron/type";
+import {
+  AgentTaskStatus,
+  AppLogType,
+  AppLogTaskAction,
+  AppLogActorType,
+} from "@/electron/type";
 import { MESSAGE } from "@/electron/constant";
 import { agentTaskDB } from "@/electron/database/agentTask";
+import { appLogDB } from "@/electron/database/appLog";
 import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
 import { agentTaskExecutor } from "@/electron/service/agentTaskExecutor";
 import { sendToRenderer } from "@/electron/main";
@@ -44,6 +50,17 @@ export const agentTaskController = () => {
         retryCount: 0,
       });
       event.reply(MESSAGE.CREATE_AGENT_TASK_RES, { data: result });
+      if (result?.id) {
+        appLogDB.createAppLog({
+          logType: AppLogType.TASK,
+          taskId: result.id,
+          actorType: result.creatorType || AppLogActorType.USER,
+          action: AppLogTaskAction.TASK_CREATED,
+          status: AgentTaskStatus.INIT,
+          message: result.title,
+          startedAt: Date.now(),
+        });
+      }
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       agentTaskDispatcher.dispatch();
     },

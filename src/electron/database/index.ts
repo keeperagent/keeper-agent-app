@@ -20,9 +20,7 @@ import proxyIpFactory from "./model/proxyIp";
 import proxyIpGroupFactory from "./model/proxyIpGroup";
 import preferenceFactory from "./model/preference";
 import proxyFactory from "./model/proxy";
-import userLogFactory from "./model/userLog";
 import scheduleFactory from "./model/schedule";
-import scheduleLogFactory from "./model/scheduleLog";
 import jobFactory from "./model/job";
 import mcpServerFactory from "./model/mcpServer";
 import agentSkillFactory from "./model/agentSkill";
@@ -32,6 +30,7 @@ import nodeSecretFactory from "./model/nodeSecret";
 import agentRegistryFactory from "./model/agentRegistry";
 import mcpTokenFactory from "./model/mcpToken";
 import agentTaskFactory from "./model/agentTask";
+import appLogFactory from "./model/appLog";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
 
@@ -59,9 +58,7 @@ export const ProxyIpModel = proxyIpFactory(db);
 export const ProxyIpGroupModel = proxyIpGroupFactory(db);
 export const PreferenceModel = preferenceFactory(db);
 export const ProxyModel = proxyFactory(db);
-export const UserLogModel = userLogFactory(db);
 export const ScheduleModel = scheduleFactory(db);
-export const ScheduleLogModel = scheduleLogFactory(db);
 export const JobModel = jobFactory(db);
 export const McpServerModel = mcpServerFactory(db);
 export const AgentSkillModel = agentSkillFactory(db);
@@ -71,6 +68,7 @@ export const NodeSecretModel = nodeSecretFactory(db);
 export const AgentRegistryModel = agentRegistryFactory(db);
 export const McpTokenModel = mcpTokenFactory(db);
 export const AgentTaskModel = agentTaskFactory(db);
+export const AppLogModel = appLogFactory(db);
 
 // @CampaignModel -> @ProfileGroupModel
 CampaignModel.belongsTo(ProfileGroupModel, {
@@ -348,39 +346,22 @@ AgentTaskModel.belongsTo(AgentRegistryModel, {
   constraints: false,
 });
 
-// @UserLogModel
-// declare foreign key UserLogModel -> Workflow
-UserLogModel.belongsTo(WorkflowModel, {
-  foreignKey: { name: "workflowId", allowNull: true },
-  as: "workflow",
-  constraints: true,
-  onDelete: "CASCADE",
-});
-UserLogModel.belongsTo(CampaignModel, {
-  foreignKey: { name: "campaignId", allowNull: true },
-  as: "campaign",
-  constraints: true,
-  onDelete: "CASCADE",
-});
-
-// @ScheduleLogModel -> @ScheduleModel
-ScheduleLogModel.belongsTo(ScheduleModel, {
-  foreignKey: { name: "scheduleId", allowNull: false },
-  as: "schedule",
-  constraints: true,
-  onDelete: "CASCADE",
-});
-// @ScheduleLogModel -> @CampaignModel
-ScheduleLogModel.belongsTo(CampaignModel, {
+// @AppLogModel
+AppLogModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
   constraints: false,
   onDelete: "CASCADE",
 });
-// @ScheduleLogModel -> @WorkflowModel
-ScheduleLogModel.belongsTo(WorkflowModel, {
+AppLogModel.belongsTo(WorkflowModel, {
   foreignKey: { name: "workflowId", allowNull: true },
   as: "workflow",
+  constraints: false,
+  onDelete: "CASCADE",
+});
+AppLogModel.belongsTo(ScheduleModel, {
+  foreignKey: { name: "scheduleId", allowNull: true },
+  as: "schedule",
   constraints: false,
   onDelete: "CASCADE",
 });

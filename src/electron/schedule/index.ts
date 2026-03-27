@@ -4,11 +4,10 @@ import { preferenceDB } from "@/electron/database/preference";
 import { scheduleDB } from "@/electron/database/schedule";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { logEveryWhere, sleep } from "@/electron/service/util";
-import { scheduleLogDB } from "@/electron/database/scheduleLog";
-import { ScheduleRunner } from "./runner";
-import { IPreference, ISchedule } from "@/electron/type";
+import { appLogDB } from "@/electron/database/appLog";
+import { AppLogType, IPreference, ISchedule } from "@/electron/type";
 import { jobDB } from "@/electron/database/job";
-import { userLogDB } from "@/electron/database/userLog";
+import { ScheduleRunner } from "./runner";
 
 class ScheduleManager {
   private preference: IPreference | null;
@@ -74,7 +73,9 @@ class ScheduleManager {
       return;
     }
 
-    logEveryWhere({ message: `restart ${listSchedule.length} running schedule` });
+    logEveryWhere({
+      message: `restart ${listSchedule.length} running schedule`,
+    });
     for (const schedule of listSchedule) {
       // wait until all schedule triggered because app limit cocurrent workflow with @maxConcurrentJob
       while (true) {
@@ -88,7 +89,9 @@ class ScheduleManager {
   };
 
   private cronSchechuleRunMultipleTimesPerDay = async () => {
-    logEveryWhere({ message: "run cron for schechule which run multiple times per day" });
+    logEveryWhere({
+      message: "run cron for schechule which run multiple times per day",
+    });
     while (true) {
       if (!this.preference || this.preference?.isStopAllSchedule) {
         await sleep(60000);
@@ -106,7 +109,9 @@ class ScheduleManager {
   };
 
   private cronSchechuleRunOnceTimePerDay = async () => {
-    logEveryWhere({ message: "run cron for schechule which run once time per day" });
+    logEveryWhere({
+      message: "run cron for schechule which run once time per day",
+    });
     while (true) {
       if (!this.preference || this.preference?.isStopAllSchedule) {
         await sleep(60000);
@@ -208,7 +213,7 @@ class ScheduleManager {
       const currentDate = new Date().getTime();
       const minDay = dayjs(currentDate).subtract(maxLogAge, "day").toDate();
 
-      await scheduleLogDB.deleteScheduleLogCron(minDay.getTime());
+      await appLogDB.deleteAppLogCron(minDay.getTime(), AppLogType.SCHEDULE);
     });
   };
 
@@ -226,7 +231,7 @@ class ScheduleManager {
       const currentDate = new Date().getTime();
       const minDay = dayjs(currentDate).subtract(maxLogAge, "day").toDate();
 
-      await userLogDB.deleteUserLogCron(minDay.getTime());
+      await appLogDB.deleteAppLogCron(minDay.getTime(), AppLogType.WORKFLOW);
     });
   };
 }

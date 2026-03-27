@@ -24,10 +24,8 @@ import nodeEndpointReducer from "./nodeEndpoint";
 import nodeEndpointGroupReducer from "./nodeEndpointGroup";
 import folderReducer from "./folder";
 import browserReducer from "./browser";
-import userLogReducer from "./userLog";
 import scheduleReducer from "./schedule";
 import jobReducer from "./job";
-import scheduleLogReducer from "./scheduleLog";
 import systemLogReducer from "./systemLog";
 import searchReducer from "./search";
 import agentReducer from "./agent";
@@ -36,6 +34,7 @@ import agentSkillReducer from "./agentSkill";
 import agentSettingReducer from "./agentSetting";
 import agentRegistryReducer from "./agentRegistry";
 import agentTaskReducer from "./agentTask";
+import appLogReducer from "./appLog";
 
 const reducers = combineReducers({
   Auth: authReducer,
@@ -63,8 +62,6 @@ const reducers = combineReducers({
   Browser: browserReducer,
   Schedule: scheduleReducer,
   Job: jobReducer,
-  ScheduleLog: scheduleLogReducer,
-  UserLog: userLogReducer,
   SystemLog: systemLogReducer,
   Agent: agentReducer,
   McpServer: mcpServerReducer,
@@ -72,6 +69,7 @@ const reducers = combineReducers({
   AgentSetting: agentSettingReducer,
   AgentRegistry: agentRegistryReducer,
   AgentTask: agentTaskReducer,
+  AppLog: appLogReducer,
 });
 
 const persistedReducer = persistReducer(
@@ -92,7 +90,6 @@ const persistedReducer = persistReducer(
       "Workflow",
       "Campaign",
       "Schedule",
-      "ScheduleLog",
       "SystemLog",
       "Agent",
       "McpServer",
@@ -103,8 +100,8 @@ const persistedReducer = persistReducer(
       "NodeEndpointGroup",
       "ProxyIp",
       "ProxyIpGroup",
-      "UserLog",
       "AgentRegistry",
+      "AppLog",
     ],
     migrate: createMigrate(migration, { debug: true }),
     version: CURRENT_REDUX_PERSIST_VERSION,

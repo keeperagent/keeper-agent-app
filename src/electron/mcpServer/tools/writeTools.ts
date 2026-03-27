@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { containsSecret } from "@keeperagent/crypto-key-guard";
 import { IMcpToken } from "@/electron/type";
-import { showApprovalDialog } from "../approvalDialog";
+import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
 import { ToolContext } from "@/electron/appAgent/toolContext";
 import {
   createWalletGroupTool,
@@ -121,7 +121,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         createWalletGroupInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (createWalletGroupInstance.func as any)(args);
@@ -143,7 +143,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         generateWalletsInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (generateWalletsInstance.func as any)(args);
@@ -165,7 +165,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         createProfileGroupInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (createProfileGroupInstance.func as any)(args);
@@ -187,7 +187,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         createCampaignInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (createCampaignInstance.func as any)(args);
@@ -215,7 +215,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         createNodeProviderGroupInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (createNodeProviderGroupInstance.func as any)(args);
@@ -240,7 +240,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         stopWorkflowInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (stopWorkflowInstance.func as any)(args);
@@ -278,7 +278,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Run a workflow on a campaign",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = new ToolContext();
@@ -313,7 +313,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Execute JavaScript code in Node.js",
         `code: ${code}`,
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (executeJsInstance.func as any)(code);
@@ -339,7 +339,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Execute Python code",
         `code: ${code}`,
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (executePythonInstance.func as any)(code);
@@ -438,7 +438,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Create a new agent schedule",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = new ToolContext();
@@ -464,7 +464,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         updateScheduleInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (updateScheduleInstance.func as any)(args);
@@ -486,7 +486,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         deleteScheduleInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (deleteScheduleInstance.func as any)(args);
@@ -508,7 +508,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         pauseScheduleInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (pauseScheduleInstance.func as any)(args);
@@ -530,7 +530,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         resumeScheduleInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (resumeScheduleInstance.func as any)(args);
@@ -552,7 +552,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         runScheduleNowInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const result = await (runScheduleNowInstance.func as any)(args);
@@ -623,7 +623,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Swap tokens on Jupiter for campaign wallets",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({
@@ -702,7 +702,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Swap tokens on KyberSwap for campaign wallets",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({
@@ -770,7 +770,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Transfer SOL or SPL token between campaign wallets",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({
@@ -825,7 +825,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Launch a new token on Pump.fun",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({
@@ -880,7 +880,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Launch a new token on Bonk.fun",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({
@@ -942,7 +942,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Broadcast an EVM transaction from campaign wallets",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({
@@ -993,7 +993,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         "Broadcast a Solana transaction from campaign wallets",
         formatArgs(args),
       );
-      if (approval === "denied") {
+      if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
       const toolCtx = buildToolContext({

@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs-extra";
 import { MESSAGE } from "@/electron/constant";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
-import { scheduleLogDB } from "@/electron/database/scheduleLog";
+import { appLogDB } from "@/electron/database/appLog";
 import { getMemoryDir } from "@/electron/service/agentSkill";
 import { agentRegistryChatBridge } from "@/electron/chatGateway/agentRegistryBridge";
 import type {
@@ -129,7 +129,7 @@ export const agentRegistryController = () => {
     MESSAGE.GET_LIST_AGENT_REGISTRY_LOG_RES,
     async (event, payload) => {
       const { agentRegistryId, page, pageSize } = payload || {};
-      const [res] = await scheduleLogDB.getLogsByAgentRegistryId(
+      const [res] = await appLogDB.getListAppLogByAgentRegistryId(
         agentRegistryId,
         page,
         pageSize,

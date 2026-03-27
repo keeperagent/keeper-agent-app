@@ -12,9 +12,10 @@ import { connect } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   AgentScheduleStatus,
+  AppLogType,
   ICampaign,
   ISchedule,
-  IScheduleLog,
+  IAppLog,
   ScheduleType,
 } from "@/electron/type";
 import { formatTimeToDate } from "@/service/util";
@@ -28,11 +29,11 @@ import { DeleteButton } from "@/component/Button";
 import { SearchInput, TotalData, Status } from "@/component";
 import { SettingIcon } from "@/component/Icon";
 import { RootState } from "@/redux/store";
-import { actSetSorter, actSetPageSize } from "@/redux/scheduleLog";
+import { actSetAppLogPageSize } from "@/redux/appLog";
 import {
-  useDeleteScheduleLog,
+  useDeleteAppLog,
+  useGetListAppLog,
   useGetListSchedule,
-  useGetListScheduleLog,
   useTranslation,
 } from "@/hook";
 import {
@@ -40,7 +41,7 @@ import {
   EMPTY_STRING,
   TABLE_PAGE_OPTION,
 } from "@/config/constant";
-import { MESSAGE, SCHEDULE_LOG_TYPE, SORT_ORDER } from "@/electron/constant";
+import { MESSAGE, SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import {
   PageWrapper,
   NameWrapper,
@@ -101,21 +102,21 @@ const renderScheduleLogType = (
   const workflowLabel = translate("schedule.typeWorkflow");
   const agentLabel = translate("schedule.typeAgent");
 
-  if (logType === SCHEDULE_LOG_TYPE.JOB_START) {
+  if (logType === SCHEDULE_LOG_ACTION.JOB_START) {
     return {
       content: `${workflowLabel} - ${translate("scheduleLog.eventStart")}`,
       backgroundColor: "var(--background-success)",
       textColor: "var(--color-success)",
     };
   }
-  if (logType === SCHEDULE_LOG_TYPE.JOB_COMPLETED) {
+  if (logType === SCHEDULE_LOG_ACTION.JOB_COMPLETED) {
     return {
       content: `${workflowLabel} - ${translate("scheduleLog.eventCompleted")}`,
       backgroundColor: "var(--background-blue)",
       textColor: "var(--color-blue)",
     };
   }
-  if (logType === SCHEDULE_LOG_TYPE.JOB_TIMEOUT) {
+  if (logType === SCHEDULE_LOG_ACTION.JOB_TIMEOUT) {
     return {
       content: `${workflowLabel} - ${translate("scheduleLog.eventTimeout")}`,
       backgroundColor: "var(--background-error)",
@@ -203,8 +204,8 @@ const renderColumns = (
     title: translate("sidebar.schedule"),
     dataIndex: "schedule",
     width: "27%",
-    render: (schedule: ISchedule, record: IScheduleLog) => {
-      const typeStyled = renderScheduleLogType(record.type, translate);
+    render: (schedule: ISchedule, record: IAppLog) => {
+      const typeStyled = renderScheduleLogType(record.action, translate);
 
       return (
         <EventCellWrapper>
@@ -233,7 +234,7 @@ const renderColumns = (
     dataIndex: "status",
     width: "8%",
     align: "center",
-    render: (status: AgentScheduleStatus | undefined) => {
+    render: (status: string | undefined) => {
       const styled = renderAgentStatus(status, translate);
       if (!styled.bg) {
         return (
@@ -258,7 +259,7 @@ const renderColumns = (
     dataIndex: "result",
     width: "30%",
     ellipsis: true,
-    render: (result: string, record: IScheduleLog) => {
+    render: (result: string, record: IAppLog) => {
       if (result) {
         const normalized = normalizeAgentMessageContent(result);
         const preview = collapseResultToOneLine(normalized);
@@ -314,7 +315,7 @@ const renderColumns = (
     title: `${translate("sidebar.campaign")} / ${translate("sidebar.workflow")}`,
     dataIndex: "campaign",
     width: 200,
-    render: (campaign: ICampaign, record: IScheduleLog) => {
+    render: (campaign: ICampaign, record: IAppLog) => {
       const hasCampaign = Boolean(campaign?.id);
       const hasWorkflow = Boolean(
         record?.workflow?.id && record?.workflowId != null,
@@ -384,9 +385,8 @@ const renderColumns = (
 const ManageLog = (props: any) => {
   const {
     totalData,
-    listScheduleLog,
+    listAppLog,
     listSchedule,
-    sorter,
     pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
@@ -402,51 +402,14 @@ const ManageLog = (props: any) => {
   const location = useLocation();
   const { search } = location;
 
-  const LIST_SORT_OPTION = useMemo(
-    () => [
-      {
-        label: translate("createdAt"),
-        value: "createAt",
-      },
-      {
-        label: translate("sidebar.schedule"),
-        value: "scheduleName",
-      },
-      {
-        label: translate("sidebar.campaign"),
-        value: "campaignName",
-      },
-      {
-        label: translate("sidebar.workflow"),
-        value: "workflowName",
-      },
-    ],
-    [translate],
-  );
-
-  const LIST_SORT_ORDER = useMemo(
-    () => [
-      {
-        label: translate("ascending"),
-        value: SORT_ORDER.ASC,
-      },
-      {
-        label: translate("descending"),
-        value: SORT_ORDER.DESC,
-      },
-    ],
-    [translate],
-  );
-
-  const { getListScheduleLog, loading: getDataLoading } =
-    useGetListScheduleLog();
+  const { getListAppLog, loading: getDataLoading } = useGetListAppLog();
   const { getListSchedule, loading: isGetListScheduleLoading } =
     useGetListSchedule();
   const {
     isSuccess,
     loading: isDeleteLoading,
-    deleteScheduleLog,
-  } = useDeleteScheduleLog();
+    deleteAppLog,
+  } = useDeleteAppLog();
   const { scheduleId: scheduleIdQuery } = qs.parse(search, {
     ignoreQueryPrefix: true,
   });
@@ -458,11 +421,11 @@ const ManageLog = (props: any) => {
   }, [scheduleIdQuery]);
 
   const dataSource: any[] = useMemo(() => {
-    return listScheduleLog?.map((log: IScheduleLog, index: number) => ({
+    return listAppLog?.map((log: IAppLog, index: number) => ({
       ...log,
       index: (page - 1) * pageSize + index + 1,
     }));
-  }, [listScheduleLog, page, pageSize]);
+  }, [listAppLog, page, pageSize]);
 
   const onRowSelectionChange = (selectedKeys: any) => {
     onSetSelectedRowKeys(selectedKeys);
@@ -487,34 +450,34 @@ const ManageLog = (props: any) => {
   const onTableChange = (pagination?: PaginationProps) => {
     pagination?.current !== page && onSetPage(pagination?.current!);
     pagination?.pageSize !== pageSize &&
-      props.actSetPageSize(pagination?.pageSize!);
+      props.actSetAppLogPageSize(pagination?.pageSize!);
   };
 
   const onDeleteLog = () => {
     setBtnLoading(true);
-    deleteScheduleLog(selectedRowKeys);
+    deleteAppLog(selectedRowKeys);
   };
 
   useEffect(() => {
     clearTimeout(searchTimeOut);
     searchTimeOut = setTimeout(() => {
-      getListScheduleLog({
+      getListAppLog({
         page,
         pageSize,
         searchText,
-        sortField: sorter,
-        scheduleId: scheduleId || 0,
+        logType: AppLogType.SCHEDULE,
+        scheduleId: scheduleId || undefined,
       });
     }, 200);
 
     clearInterval(getDataInterval);
     getDataInterval = setInterval(() => {
-      getListScheduleLog({
+      getListAppLog({
         page,
         pageSize,
         searchText,
-        sortField: sorter,
-        scheduleId: scheduleId || 0,
+        logType: AppLogType.SCHEDULE,
+        scheduleId: scheduleId || undefined,
       });
     }, 60000);
 
@@ -522,7 +485,7 @@ const ManageLog = (props: any) => {
       clearTimeout(searchTimeOut);
       clearInterval(getDataInterval);
     };
-  }, [searchText, page, pageSize, sorter, scheduleId]);
+  }, [searchText, page, pageSize, scheduleId]);
 
   useEffect(() => {
     if (getDataLoading && shouldRefetch) {
@@ -532,15 +495,15 @@ const ManageLog = (props: any) => {
 
   useEffect(() => {
     if (shouldRefetch) {
-      getListScheduleLog({
+      getListAppLog({
         page,
         pageSize,
         searchText,
-        sortField: sorter,
-        scheduleId: scheduleId || 0,
+        logType: AppLogType.SCHEDULE,
+        scheduleId: scheduleId || undefined,
       });
     }
-  }, [page, pageSize, searchText, shouldRefetch, sorter, scheduleId]);
+  }, [page, pageSize, searchText, shouldRefetch, scheduleId]);
 
   useEffect(() => {
     if (!isDeleteLoading && isSuccess) {
@@ -552,20 +515,6 @@ const ManageLog = (props: any) => {
       }, 3000);
     }
   }, [isDeleteLoading, isSuccess]);
-
-  const onChangeSortField = (value: string) => {
-    props?.actSetSorter({
-      ...sorter,
-      field: value,
-    });
-  };
-
-  const onChangeSortOrder = (value: string) => {
-    props?.actSetSorter({
-      ...sorter,
-      order: value,
-    });
-  };
 
   const onViewWorkflow = (campaignId: number, workflowId: number) => {
     navigate(
@@ -634,32 +583,6 @@ const ManageLog = (props: any) => {
           ))}
         </Select>
 
-        <Select
-          className="custom-select"
-          placeholder={translate("sortBy")}
-          allowClear
-          size="large"
-          options={LIST_SORT_OPTION}
-          style={{ width: "14rem", marginLeft: "var(--margin-left)" }}
-          value={sorter?.field || null}
-          onChange={onChangeSortField}
-          loading={isGetListScheduleLoading}
-          optionLabelProp="label"
-        />
-
-        <Select
-          className="custom-select"
-          placeholder={translate("sortOrder")}
-          allowClear
-          size="large"
-          options={LIST_SORT_ORDER}
-          style={{ marginLeft: "var(--margin-left)", width: "14rem" }}
-          value={sorter?.order || null}
-          onChange={onChangeSortOrder}
-          loading={isGetListScheduleLoading}
-          optionLabelProp="label"
-        />
-
         <Tooltip title={translate("workflow.setting")}>
           <div
             className="setting"
@@ -697,7 +620,7 @@ const ManageLog = (props: any) => {
       <Table
         tableLayout="fixed"
         rowSelection={rowSelection}
-        rowKey={(data: IScheduleLog) => data?.id?.toString() || ""}
+        rowKey={(data: IAppLog) => data?.id?.toString() || ""}
         dataSource={dataSource}
         // @ts-ignore
         columns={renderColumns(
@@ -729,11 +652,10 @@ const ManageLog = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    listScheduleLog: state?.ScheduleLog?.listScheduleLog,
+    listAppLog: state?.AppLog?.listAppLog,
     listSchedule: state?.Schedule?.listSchedule,
-    totalData: state?.ScheduleLog?.totalData,
-    sorter: state?.ScheduleLog?.sorter,
-    pageSize: state?.ScheduleLog?.pageSize,
+    totalData: state?.AppLog?.totalData,
+    pageSize: state?.AppLog?.pageSize,
   }),
-  { actSetSorter, actSetPageSize },
+  { actSetAppLogPageSize },
 )(ManageLog);

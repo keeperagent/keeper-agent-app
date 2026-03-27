@@ -39,10 +39,10 @@ import {
 } from "@/hook";
 import {
   AgentScheduleStatus,
+  IAppLog,
   IJob,
   IRunningWorkflow,
   ISchedule,
-  IScheduleLog,
 } from "@/electron/type";
 import {
   SettingIcon,
@@ -311,7 +311,7 @@ const renderColumns = (
 
           {(record.recentLogs || []).length > 0 && (
             <div className="run-history">
-              {(record.recentLogs || []).map((log: IScheduleLog, i: number) => (
+              {(record.recentLogs || []).map((log: IAppLog, i: number) => (
                 <Tooltip
                   key={i}
                   title={`${log.status}${log.createAt ? ` · ${dayjs(log.createAt).fromNow()}` : ""}`}

@@ -1,10 +1,10 @@
 import _ from "lodash";
-import { IJob, ISchedule } from "@/electron/type";
+import { IJob, ISchedule, AppLogType } from "@/electron/type";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { jobDB } from "@/electron/database/job";
 import { sleep } from "@/electron/service/util";
-import { scheduleLogDB } from "@/electron/database/scheduleLog";
-import { SCHEDULE_LOG_TYPE } from "@/electron/constant";
+import { appLogDB } from "@/electron/database/appLog";
+import { SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import { CampaignProfileModel } from "@/electron/database";
 import { logEveryWhere } from "@/electron/service/util";
 import { scheduleDB } from "@/electron/database/schedule";
@@ -60,17 +60,18 @@ class ScheduleRunner {
     let isJobTimeout = await jobDB.checkJobTimeout(job);
     if (isJobTimeout) {
       logEveryWhere({
-        workflowId: job?.workflowId,
-        campaignId: job?.campaignId,
+        workflowId: job?.workflowId || undefined,
+        campaignId: job?.campaignId || undefined,
         campaignName: job?.campaign?.name,
         workflowName: job?.workflow?.name,
         message: `job timeout, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
       });
-      await scheduleLogDB.createScheduleLog({
-        campaignId: job?.campaignId!,
-        workflowId: job?.workflowId!,
+      await appLogDB.createAppLog({
+        logType: AppLogType.SCHEDULE,
+        campaignId: job?.campaignId || undefined,
+        workflowId: job?.workflowId || undefined,
         scheduleId: this.schedule?.id!,
-        type: SCHEDULE_LOG_TYPE.JOB_TIMEOUT,
+        action: SCHEDULE_LOG_ACTION.JOB_TIMEOUT,
       });
       return;
     }
@@ -90,11 +91,12 @@ class ScheduleRunner {
       this.schedule?.id!,
     );
 
-    await scheduleLogDB.createScheduleLog({
-      campaignId: job?.campaignId!,
-      workflowId: job?.workflowId!,
+    await appLogDB.createAppLog({
+      logType: AppLogType.SCHEDULE,
+      campaignId: job?.campaignId || undefined,
+      workflowId: job?.workflowId || undefined,
       scheduleId: this.schedule?.id!,
-      type: SCHEDULE_LOG_TYPE.JOB_START,
+      action: SCHEDULE_LOG_ACTION.JOB_START,
     });
     if (shouldResetRound) {
       await CampaignProfileModel.update(
@@ -106,8 +108,8 @@ class ScheduleRunner {
     }
 
     logEveryWhere({
-      workflowId: job?.workflowId,
-      campaignId: job?.campaignId,
+      workflowId: job?.workflowId || undefined,
+      campaignId: job?.campaignId || undefined,
       campaignName: job?.campaign?.name,
       workflowName: job?.workflow?.name,
       message: `job trigger, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
@@ -124,17 +126,18 @@ class ScheduleRunner {
           this.schedule?.id!,
         );
         logEveryWhere({
-          workflowId: job?.workflowId,
-          campaignId: job?.campaignId,
+          workflowId: job?.workflowId || undefined,
+          campaignId: job?.campaignId || undefined,
           campaignName: job?.campaign?.name,
           workflowName: job?.workflow?.name,
           message: `job timeout, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
         });
-        await scheduleLogDB.createScheduleLog({
-          campaignId: job?.campaignId!,
-          workflowId: job?.workflowId!,
+        await appLogDB.createAppLog({
+          logType: AppLogType.SCHEDULE,
+          campaignId: job?.campaignId || undefined,
+          workflowId: job?.workflowId || undefined,
           scheduleId: this.schedule?.id!,
-          type: SCHEDULE_LOG_TYPE.JOB_TIMEOUT,
+          action: SCHEDULE_LOG_ACTION.JOB_TIMEOUT,
         });
         return;
       }
@@ -146,15 +149,16 @@ class ScheduleRunner {
     clearInterval(checkTimeoutInterval);
 
     if (!isJobTimeout) {
-      await scheduleLogDB.createScheduleLog({
-        campaignId: job?.campaignId!,
-        workflowId: job?.workflowId!,
+      await appLogDB.createAppLog({
+        logType: AppLogType.SCHEDULE,
+        campaignId: job?.campaignId || undefined,
+        workflowId: job?.workflowId || undefined,
         scheduleId: this.schedule?.id!,
-        type: SCHEDULE_LOG_TYPE.JOB_COMPLETED,
+        action: SCHEDULE_LOG_ACTION.JOB_COMPLETED,
       });
       logEveryWhere({
-        workflowId: job?.workflowId,
-        campaignId: job?.campaignId,
+        workflowId: job?.workflowId || undefined,
+        campaignId: job?.campaignId || undefined,
         campaignName: job?.campaign?.name,
         workflowName: job?.workflow?.name,
         message: `job done, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,

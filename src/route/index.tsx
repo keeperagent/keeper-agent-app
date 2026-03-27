@@ -8,7 +8,8 @@ import { lightTheme, darkTheme } from "@/style/theme";
 import { OverideAntdStyle } from "@/style/overideAntd";
 import { RootState } from "@/redux/store";
 import { actSetIsFullscreen } from "@/redux/workflowRunner";
-import { useCreateUserLog, useTranslation } from "@/hook";
+import { useCreateAppLog, useTranslation } from "@/hook";
+import { AppLogType } from "@/electron/type";
 import { formatTimeToDate } from "@/service/util";
 import RequireAuth from "./RequireAuth";
 import { routesConfig } from "./config";
@@ -37,7 +38,7 @@ let translateFunc: any = null;
 const AppRoute = (props: any) => {
   const { isLightMode } = props;
   const { translate, locale } = useTranslation();
-  const { createUserLog } = useCreateUserLog();
+  const { createAppLog } = useCreateAppLog();
 
   useEffect(() => {
     props?.actSetIsFullscreen(false);
@@ -61,8 +62,9 @@ const AppRoute = (props: any) => {
       description: message,
       duration: 5 * 60, // 5 minutes
     });
-    createUserLog({
-      content: message,
+    createAppLog({
+      logType: AppLogType.WORKFLOW,
+      message,
     });
   };
 
@@ -74,8 +76,9 @@ const AppRoute = (props: any) => {
       description: message,
       duration: 5 * 60, // 5 minutes
     });
-    createUserLog({
-      content: message,
+    createAppLog({
+      logType: AppLogType.WORKFLOW,
+      message,
     });
   };
 

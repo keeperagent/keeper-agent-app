@@ -3,12 +3,12 @@ import type {
   IAgentSetting,
   IAgentSkill,
   IAgentTask,
+  AppLogType,
   ICampaign,
   ICampaignProfile,
   ICheckTokenPriceNodeConfig,
   IEVMSnipeContractNodeConfig,
   IFlowProfile,
-  ILog,
   IMcpServer,
   IMcpToken,
   INodeEndpoint,
@@ -336,11 +336,6 @@ export type IpcUpdateSchedulePayload = {
   data: ISchedule;
 };
 
-// ScheduleLog
-export type IpcGetListScheduleLogPayload = IpcSortedPagePayload & {
-  scheduleId?: number;
-};
-
 // Job
 export type IpcUpdateJobPayload = {
   id: number;
@@ -357,14 +352,11 @@ export type IpcCheckJobExistedPayload = {
   workflowId?: number;
 };
 
-// UserLog
-export type IpcGetListUserLogPayload = IpcPagePayload & {
-  campaignId?: number;
-  workflowId?: number;
-};
-
-export type IpcCreateUserLogPayload = {
-  data: ILog;
+// AppLog
+export type IpcGetListAppLogPayload = IpcPagePayload & {
+  logType?: AppLogType;
+  scheduleId?: number;
+  taskId?: number;
 };
 
 // Extension

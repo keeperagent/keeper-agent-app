@@ -1,10 +1,6 @@
 import { useRef, useState } from "react";
 import { MESSAGE } from "@/electron/constant";
-import {
-  IAgentRegistry,
-  IScheduleLog,
-  IGetListResponse,
-} from "@/electron/type";
+import { IAgentRegistry, IAppLog, IGetListResponse } from "@/electron/type";
 import {
   actSaveGetListAgentRegistry,
   actSaveCreateAgentRegistry,
@@ -152,7 +148,7 @@ const useSaveAgentRegistryMemory = () => {
 };
 
 const useGetListAgentRegistryLog = () => {
-  const [data, setData] = useState<IGetListResponse<IScheduleLog> | null>(null);
+  const [data, setData] = useState<IGetListResponse<IAppLog> | null>(null);
 
   const { execute, loading, isSuccess } =
     useIpcAction<IpcGetListAgentRegistryLogPayload>(

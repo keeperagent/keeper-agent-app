@@ -2,7 +2,7 @@ import { DataTypes, Sequelize } from "sequelize";
 
 export default (db: Sequelize) =>
   db.define(
-    "ScheduleLog",
+    "AppLog",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -10,12 +10,20 @@ export default (db: Sequelize) =>
         primaryKey: true,
         allowNull: false,
       },
-      scheduleId: {
-        type: DataTypes.INTEGER,
+      logType: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
-      jobId: {
-        type: DataTypes.INTEGER,
+      status: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      message: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      action: {
+        type: DataTypes.STRING,
         allowNull: true,
       },
       campaignId: {
@@ -26,11 +34,27 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      type: {
+      scheduleId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      jobId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      taskId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      actorType: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      status: {
+      actorId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      actorName: {
         type: DataTypes.STRING,
         allowNull: true,
       },
@@ -44,7 +68,7 @@ export default (db: Sequelize) =>
       },
       retryCount: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       nextRetryAt: {
@@ -59,8 +83,14 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      createAt: { type: DataTypes.INTEGER, allowNull: false },
-      updateAt: { type: DataTypes.INTEGER, allowNull: false },
+      createAt: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      updateAt: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
     },
     {
       timestamps: false,

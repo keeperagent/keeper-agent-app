@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { Tag, Tooltip } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { IScheduleLog, AgentScheduleStatus } from "@/electron/type";
+import { IAppLog, AgentScheduleStatus } from "@/electron/type";
 import { useTranslation } from "@/hook/useTranslation";
 import { formatTimeToDate } from "@/service/util";
 import {
@@ -20,7 +20,7 @@ const statusColorMap: Record<string, string> = {
 };
 
 type Props = {
-  log: IScheduleLog;
+  log: IAppLog;
   isExpanded: boolean;
   onToggle: (logId: number) => void;
 };

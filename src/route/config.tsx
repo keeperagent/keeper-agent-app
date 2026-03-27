@@ -16,7 +16,7 @@ const SettingPage = lazy(() => import("@/page/Setting"));
 const LoginPage = lazy(() => import("@/page/Login"));
 const LogoutPage = lazy(() => import("@/page/LogoutPage"));
 const NodeProviderPage = lazy(() => import("@/page/NodeProvider"));
-const LogPage = lazy(() => import("@/page/Log"));
+const ActivityLogPage = lazy(() => import("@/page/ActivityLog"));
 const SchedulePage = lazy(() => import("@/page/Schedule"));
 const MasterPasswordPage = lazy(() => import("@/page/MasterPassword"));
 
@@ -88,8 +88,8 @@ const routesConfig: IRoute[] = [
   },
   {
     isPrivateRoute: true,
-    path: "/dashboard/log",
-    element: <LogPage />,
+    path: "/dashboard/activity-log",
+    element: <ActivityLogPage />,
   },
   {
     isPrivateRoute: true,

@@ -1,6 +1,9 @@
 import { dialog, BrowserWindow } from "electron";
 
-export type ApprovalResult = "approved" | "denied";
+export enum ApprovalResult {
+  APPROVED = "approved",
+  DENIED = "denied",
+}
 
 /**
  * Show a native dialog asking the user to approve a write tool call from an external MCP client.
@@ -29,7 +32,9 @@ const showApprovalDialog = async (
     noLink: true,
   });
 
-  return result.response === 0 ? "approved" : "denied";
+  return result.response === 0
+    ? ApprovalResult.APPROVED
+    : ApprovalResult.DENIED;
 };
 
 export { showApprovalDialog };
