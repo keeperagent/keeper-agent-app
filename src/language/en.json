@@ -1305,7 +1305,7 @@
   "agent.chat": "Chat",
   "agent.history": "History",
   "agent.memory": "Memory",
-  "agent.noHistory": "No run history yet",
+  "agent.noHistory": "No history yet",
   "agent.clickToExpand": "Click to expand",
   "agent.memorySaved": "Memory saved",
   "agent.memoryFileLabel": "Agent memory file (Markdown)",

@@ -24,6 +24,7 @@ const ListAgent = (props: any) => {
     page,
     selectedAgentRegistry,
     actSaveSelectedAgentRegistry,
+    onChatRegistryOpenChange,
   } = props;
   const { translate } = useTranslation();
 
@@ -38,6 +39,10 @@ const ListAgent = (props: any) => {
   useEffect(() => {
     getListAgentRegistry({ page: 1, pageSize: PAGE_SIZE });
   }, []);
+
+  useEffect(() => {
+    onChatRegistryOpenChange?.(Boolean(chatRegistryId));
+  }, [chatRegistryId]);
 
   const onSearch = (value: string) => {
     setSearchText(value);

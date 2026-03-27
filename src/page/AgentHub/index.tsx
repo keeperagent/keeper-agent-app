@@ -16,6 +16,7 @@ const AgentHubPage = (props: any) => {
   const { actSetPageName } = props;
   const { translate } = useTranslation();
   const [activeTab, setActiveTab] = useState(TAB.AGENTS);
+  const [isChatRegistryOpen, setIsChatRegistryOpen] = useState(false);
 
   useEffect(() => {
     actSetPageName(translate("sidebar.agentHub"));
@@ -27,19 +28,23 @@ const AgentHubPage = (props: any) => {
 
   return (
     <Wrapper>
-      <div className="tab">
-        <Tabs
-          onChange={onChangeTab}
-          size="small"
-          activeKey={activeTab}
-          items={[
-            { key: TAB.AGENTS, label: "Agent" },
-            { key: TAB.ANALYTICS, label: "Analytic" },
-          ]}
-        />
-      </div>
+      {!isChatRegistryOpen && (
+        <div className="tab">
+          <Tabs
+            onChange={onChangeTab}
+            size="small"
+            activeKey={activeTab}
+            items={[
+              { key: TAB.AGENTS, label: "Agent" },
+              { key: TAB.ANALYTICS, label: "Analytic" },
+            ]}
+          />
+        </div>
+      )}
 
-      {activeTab === TAB.AGENTS && <ListAgent />}
+      {activeTab === TAB.AGENTS && (
+        <ListAgent onChatRegistryOpenChange={setIsChatRegistryOpen} />
+      )}
       {activeTab === TAB.ANALYTICS && (
         <AgentAnalytic showToolbar showStatStrip defaultPeriod={7} />
       )}
