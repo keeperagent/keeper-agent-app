@@ -1,7 +1,13 @@
 import { HumanMessage } from "@langchain/core/messages";
-import { AgentTaskStatus } from "@/electron/type";
+import {
+  AgentTaskStatus,
+  AppLogType,
+  AppLogTaskAction,
+  AppLogActorType,
+} from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { appLogDB } from "@/electron/database/appLog";
 import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
@@ -111,6 +117,19 @@ class AgentTaskExecutor {
           result: { text: resultText },
           completedAt: Date.now(),
         });
+        await appLogDB.createAppLog({
+          logType: AppLogType.TASK,
+          taskId,
+          actorType: AppLogActorType.AGENT,
+          actorId: agentId,
+          actorName: registry.name,
+          action: AppLogTaskAction.TASK_COMPLETED,
+          status: AgentTaskStatus.DONE,
+          message: task.title,
+          result: resultText,
+          startedAt: task.startedAt,
+          finishedAt: Date.now(),
+        });
       }
     } catch (err: any) {
       clearTimeout(timeoutId!);
@@ -118,6 +137,18 @@ class AgentTaskExecutor {
         await agentTaskDB.updateAgentTask(taskId, {
           status: AgentTaskStatus.CANCELLED,
           cancelledAt: Date.now(),
+        });
+        await appLogDB.createAppLog({
+          logType: AppLogType.TASK,
+          taskId,
+          actorType: AppLogActorType.AGENT,
+          actorId: agentId,
+          actorName: registry.name,
+          action: AppLogTaskAction.TASK_CANCELLED,
+          status: AgentTaskStatus.CANCELLED,
+          message: task.title,
+          startedAt: task.startedAt,
+          finishedAt: Date.now(),
         });
       } else {
         const retryCount = task.retryCount || 0;
@@ -131,12 +162,23 @@ class AgentTaskExecutor {
             retryCount: retryCount + 1,
           });
         } else {
-          await this.failTask(
+          const errorMessage = isTimedOut
+            ? `Task execution timed out after ${timeoutMinutes} minutes`
+            : err?.message;
+          await this.failTask(taskId, errorMessage);
+          await appLogDB.createAppLog({
+            logType: AppLogType.TASK,
             taskId,
-            isTimedOut
-              ? `Task execution timed out after ${timeoutMinutes} minutes`
-              : err?.message,
-          );
+            actorType: AppLogActorType.AGENT,
+            actorId: agentId,
+            actorName: registry.name,
+            action: AppLogTaskAction.TASK_FAILED,
+            status: AgentTaskStatus.FAILED,
+            message: task.title,
+            errorMessage,
+            startedAt: task.startedAt,
+            finishedAt: Date.now(),
+          });
         }
       }
     } finally {

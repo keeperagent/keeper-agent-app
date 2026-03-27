@@ -25,7 +25,7 @@ import {
   ICalculateNodeConfig,
   IUpdateProfileNodeConfig,
   ISaveLogNodeConfig,
-  ILog,
+  AppLogType,
   IExecuteCodeNodeConfig,
   IOnOffProfileNodeConfig,
   ICheckResourceNodeConfig,
@@ -48,7 +48,7 @@ import {
 } from "@/electron/constant";
 import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { walletDB } from "@/electron/database/wallet";
-import { userLogDB } from "@/electron/database/userLog";
+import { appLogDB } from "@/electron/database/appLog";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { resourceDB } from "@/electron/database/resource";
 import { nodeSecretDB } from "@/electron/database/nodeSecret";
@@ -616,23 +616,12 @@ export class OtherWorkflow {
         }
 
         const content = getActualValue(config?.content || "", listVariable);
-        let log: ILog = {
-          content,
-        };
-        if (flowProfile?.campaignConfig?.workflowId) {
-          log = {
-            ...log,
-            workflowId: flowProfile?.campaignConfig?.workflowId,
-          };
-        }
-        if (flowProfile?.campaignConfig?.campaignId) {
-          log = {
-            ...log,
-            campaignId: flowProfile?.campaignConfig?.campaignId,
-          };
-        }
-
-        const [, err1] = await userLogDB.createUserLog(log);
+        const [, err1] = await appLogDB.createAppLog({
+          logType: AppLogType.WORKFLOW,
+          message: content,
+          workflowId: flowProfile?.campaignConfig?.workflowId,
+          campaignId: flowProfile?.campaignConfig?.campaignId,
+        });
         if (err1) {
           throw err1;
         }

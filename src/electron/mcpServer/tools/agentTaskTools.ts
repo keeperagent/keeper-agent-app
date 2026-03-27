@@ -1,12 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { IMcpToken } from "@/electron/type";
+import {
+  AppLogType,
+  AppLogActorType,
+  IMcpToken,
+  AppLogTaskAction,
+} from "@/electron/type";
 import {
   listAgentTasksTool,
   getAgentTaskTool,
   createAgentTaskTool,
   updateAgentTaskTool,
 } from "@/electron/appAgent/baseTool/agentTask";
-import { showApprovalDialog } from "../approvalDialog";
+import { appLogDB } from "@/electron/database/appLog";
+import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
 
 const DENIED_RESPONSE = {
   content: [{ type: "text" as const, text: "Action denied by user." }],
@@ -66,7 +72,17 @@ export const registerAgentTaskWriteTools = (
         createInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      const approved = approval !== ApprovalResult.DENIED;
+      appLogDB.createAppLog({
+        logType: AppLogType.MCP,
+        actorType: AppLogActorType.MCP,
+        actorName: displayName,
+        action: AppLogTaskAction.TASK_CREATED,
+        status: approved ? ApprovalResult.APPROVED : ApprovalResult.DENIED,
+        message: formatArgs(args).substring(0, 500),
+        startedAt: Date.now(),
+      });
+      if (!approved) {
         return DENIED_RESPONSE;
       }
       const result = await (createInstance.func as any)(args);
@@ -88,7 +104,17 @@ export const registerAgentTaskWriteTools = (
         updateInstance.description,
         formatArgs(args),
       );
-      if (approval === "denied") {
+      const approved = approval !== ApprovalResult.DENIED;
+      appLogDB.createAppLog({
+        logType: AppLogType.MCP,
+        actorType: AppLogActorType.MCP,
+        actorName: displayName,
+        action: AppLogTaskAction.TASK_UPDATED,
+        status: approved ? ApprovalResult.APPROVED : ApprovalResult.DENIED,
+        message: formatArgs(args).substring(0, 500),
+        startedAt: Date.now(),
+      });
+      if (!approved) {
         return DENIED_RESPONSE;
       }
       const result = await (updateInstance.func as any)(args);

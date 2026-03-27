@@ -14,6 +14,7 @@ import { exportCampaignProfile } from "@/electron/service/campaignProfile";
 import { deleteFolder } from "@/electron/service/file";
 import { MESSAGE, PROXY_TYPE, PROFILE_TYPE } from "@/electron/constant";
 import {
+  AppLogType,
   ICampaign,
   ICampaignProfile,
   IJob,
@@ -22,7 +23,7 @@ import {
   IWorkflow,
 } from "@/electron/type";
 import { jobDB } from "@/electron/database/job";
-import { ScheduleLogModel } from "@/electron/database";
+import { AppLogModel } from "@/electron/database";
 import { onIpc } from "./helpers";
 import type {
   IpcCreateCampaignPayload,
@@ -285,8 +286,11 @@ export const campaignController = () => {
       const deleteJobErr = await jobDB.deleteJob({
         campaignId: { [Op.in]: listCampaignID },
       });
-      await ScheduleLogModel.destroy({
-        where: { campaignId: { [Op.in]: listCampaignID } },
+      await AppLogModel.destroy({
+        where: {
+          campaignId: { [Op.in]: listCampaignID },
+          logType: AppLogType.SCHEDULE,
+        },
       });
       if (deleteJobErr) {
         event.reply(MESSAGE.DELETE_CAMPAIGN_RES, {

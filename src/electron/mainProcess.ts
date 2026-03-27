@@ -25,10 +25,8 @@ import { windowController } from "./controller/window";
 import { fileController } from "./controller/file";
 import { browserController } from "./controller/browser";
 import { telegramController } from "./controller/telegram";
-import { userLogController } from "./controller/userLog";
 import { runScheduleController } from "./controller/schedule";
 import { runJobController } from "./controller/job";
-import { runScheduleLogController } from "./controller/scheduleLog";
 import { masterPasswordController } from "./controller/masterPassword";
 import { runSecretKeyController } from "./controller/secretKeyCache";
 import { telegramBotService } from "./chatGateway/adapters/telegram";
@@ -47,6 +45,7 @@ import { whatsappController } from "./controller/whatsapp";
 import { agentRegistryController } from "./controller/agentRegistry";
 import { mcpTokenController } from "./controller/mcpToken";
 import { agentTaskController } from "./controller/agentTask";
+import { appLogController } from "./controller/appLog";
 import { agentTaskDispatcher } from "./service/agentTaskDispatcher";
 import { keeperMcpServer } from "./mcpServer";
 
@@ -75,10 +74,8 @@ const runMainProcess = () => {
   windowController();
   fileController();
   browserController();
-  userLogController();
   runScheduleController();
   runJobController();
-  runScheduleLogController();
   masterPasswordController();
   runSecretKeyController();
   searchController();
@@ -93,6 +90,7 @@ const runMainProcess = () => {
   agentRegistryController();
   mcpTokenController();
   agentTaskController();
+  appLogController();
 
   scheduleManager.start();
   whatsappService.start();

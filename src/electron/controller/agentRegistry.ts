@@ -1,8 +1,11 @@
 import path from "path";
 import fs from "fs-extra";
 import { MESSAGE } from "@/electron/constant";
+import { Op } from "sequelize";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
-import { scheduleLogDB } from "@/electron/database/scheduleLog";
+import { appLogDB } from "@/electron/database/appLog";
+import { AppLogModel } from "@/electron/database";
+import { AppLogActorType } from "@/electron/type";
 import { getMemoryDir } from "@/electron/service/agentSkill";
 import { agentRegistryChatBridge } from "@/electron/chatGateway/agentRegistryBridge";
 import type {
@@ -75,9 +78,14 @@ export const agentRegistryController = () => {
     MESSAGE.DELETE_AGENT_REGISTRY,
     MESSAGE.DELETE_AGENT_REGISTRY_RES,
     async (event, payload) => {
-      const [res] = await agentRegistryDB.deleteAgentRegistry(
-        payload?.data || [],
-      );
+      const listId = payload?.data || [];
+      await AppLogModel.destroy({
+        where: {
+          actorType: AppLogActorType.AGENT,
+          actorId: { [Op.in]: listId },
+        },
+      });
+      const [res] = await agentRegistryDB.deleteAgentRegistry(listId);
       event.reply(MESSAGE.DELETE_AGENT_REGISTRY_RES, { data: res });
     },
   );
@@ -129,7 +137,7 @@ export const agentRegistryController = () => {
     MESSAGE.GET_LIST_AGENT_REGISTRY_LOG_RES,
     async (event, payload) => {
       const { agentRegistryId, page, pageSize } = payload || {};
-      const [res] = await scheduleLogDB.getLogsByAgentRegistryId(
+      const [res] = await appLogDB.getListAppLogByAgentRegistryId(
         agentRegistryId,
         page,
         pageSize,

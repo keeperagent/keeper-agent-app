@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { CSSProperties } from "react";
 import { connect } from "react-redux";
-import { Alert, Button, Input, Select } from "antd";
+import { Alert, Button, Select } from "antd";
 import {
   DndContext,
   DragEndEvent,
@@ -33,6 +33,7 @@ import {
 import { useGetListAgentRegistry } from "@/hook/agentRegistry";
 import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
+import { SearchInput } from "@/component";
 import { ModalAgentTask } from "./ModalAgentTask";
 import { TaskCard, TaskCardDragOverlay } from "./TaskCard";
 import { Wrapper, KanbanColumn, OptionWrapper } from "./style";
@@ -358,13 +359,11 @@ const AgentTaskPage = (props: any) => {
     <Wrapper>
       <div className="header">
         <div className="header-filters">
-          <Input
-            className="filter-search custom-input"
+          <SearchInput
             placeholder={translate("agentTask.filter.placeholder.search")}
             value={filterKeyword}
-            onChange={(event) => setFilterKeyword(event.target.value)}
-            allowClear
-            size="large"
+            onChange={setFilterKeyword}
+            style={{ width: "30rem" }}
           />
 
           <Select

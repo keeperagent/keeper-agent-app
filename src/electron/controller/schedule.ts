@@ -1,5 +1,7 @@
+import { Op } from "sequelize";
 import { MESSAGE } from "@/electron/constant";
 import { scheduleDB } from "@/electron/database/schedule";
+import { AppLogModel } from "@/electron/database";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
 import { onIpc } from "./helpers";
@@ -108,6 +110,9 @@ export const runScheduleController = () => {
         }
       }
 
+      await AppLogModel.destroy({
+        where: { scheduleId: { [Op.in]: data } },
+      });
       const err = await scheduleDB.deleteSchedule(data);
       event.reply(MESSAGE.DELETE_SCHEDULE_RES, {
         error: err?.message,

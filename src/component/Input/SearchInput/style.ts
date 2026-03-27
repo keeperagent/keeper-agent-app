@@ -7,8 +7,8 @@ const SearchInputWrapper = styled.div`
     --border-active: #3d6df9;
     --shadow-default: rgba(32, 32, 72, 0.12);
     --shadow-active: rgba(61, 109, 249, 0.25);
-    --placeholder-color: #c9c9d9;
-    --placeholder-color-hover: #babac9;
+    --placeholder-color: rgb(97, 97, 97);
+    --placeholder-color-hover: rgb(150, 150, 150);
     --close: #818190;
     --close-light: #babac9;
     --close-background: ${({ theme }) => theme.clearBtnColorHover};
@@ -38,7 +38,7 @@ const SearchInputWrapper = styled.div`
       theme?.colorBgTransparent} !important;
     transition: box-shadow 0.2s;
     border: 1px solid
-      ${({ theme }: { theme: ITheme }) => theme?.colorBorderSecondary};
+      ${({ theme }: { theme: ITheme }) => theme?.colorBorderDarkMode};
   }
 
   .input.clearing,
@@ -58,7 +58,6 @@ const SearchInputWrapper = styled.div`
   }
 
   .input .text input {
-    -webkit-appearance: none;
     line-height: 24px;
     background: none;
     border: none;

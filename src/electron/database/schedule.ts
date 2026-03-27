@@ -23,7 +23,7 @@ import {
 import { logEveryWhere } from "@/electron/service/util";
 import { formatSchedule } from "@/electron/service/formatData";
 import { jobDB } from "./job";
-import { scheduleLogDB } from "./scheduleLog";
+import { appLogDB } from "./appLog";
 
 class ScheduleDB {
   private enrichSchedules = async (
@@ -38,7 +38,7 @@ class ScheduleDB {
       }
     }
     if (allJobIds.length > 0) {
-      const latestLogsMap = await scheduleLogDB.getLatestLogsForJobs(allJobIds);
+      const latestLogsMap = await appLogDB.getLatestLogsForJobs(allJobIds);
       for (const schedule of listSchedule) {
         schedule.listJob = (schedule?.listJob || []).map((job: IJob) => ({
           ...job,
@@ -131,7 +131,7 @@ class ScheduleDB {
         .map((schedule: ISchedule) => schedule.id!)
         .filter(Boolean);
       const recentLogsMap =
-        await scheduleLogDB.getRecentLogsForSchedules(scheduleIds);
+        await appLogDB.getRecentLogsForSchedules(scheduleIds);
       for (const schedule of listSchedule) {
         schedule.recentLogs = recentLogsMap.get(schedule.id!) || [];
       }

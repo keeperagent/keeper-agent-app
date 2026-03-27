@@ -155,9 +155,9 @@ const SidebarContent = ({
       />
 
       <MenuItem
-        label={translate("sidebar.log")}
+        label={translate("sidebar.activityLog")}
         icon={<LookupIcon />}
-        url="/dashboard/log"
+        url="/dashboard/activity-log"
       />
 
       <MenuItem

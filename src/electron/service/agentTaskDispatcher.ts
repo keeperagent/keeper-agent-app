@@ -3,6 +3,9 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
   AgentTaskStatus,
+  AppLogType,
+  AppLogTaskAction,
+  AppLogActorType,
   IAgentTask,
   IAgentRegistry,
   IAgentSkill,
@@ -12,6 +15,7 @@ import {
 } from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { appLogDB } from "@/electron/database/appLog";
 import { agentSkillDB } from "@/electron/database/agentSkill";
 import { mcpServerDB } from "@/electron/database/mcpServer";
 import { preferenceDB } from "@/electron/database/preference";
@@ -127,6 +131,16 @@ class TaskDispatcher {
           agentTaskExecutor.execute(task.id, task.assignedAgentId, () =>
             this.dispatch(),
           );
+          appLogDB.createAppLog({
+            logType: AppLogType.TASK,
+            taskId: task.id,
+            actorType: AppLogActorType.AGENT,
+            actorId: task.assignedAgentId,
+            action: AppLogTaskAction.TASK_CLAIMED,
+            status: AgentTaskStatus.IN_PROGRESS,
+            message: task.title,
+            startedAt: Date.now(),
+          });
           sendToRenderer(MESSAGE.AGENT_TASK_ASSIGNED, {
             taskId: task.id,
             agentId: task.assignedAgentId,
@@ -216,6 +230,17 @@ class TaskDispatcher {
       agentTaskExecutor.execute(task.id!, chosenAgent.id, () =>
         this.dispatch(),
       );
+      appLogDB.createAppLog({
+        logType: AppLogType.TASK,
+        taskId: task.id,
+        actorType: AppLogActorType.AGENT,
+        actorId: chosenAgent.id,
+        actorName: chosenAgent.name,
+        action: AppLogTaskAction.TASK_CLAIMED,
+        status: AgentTaskStatus.IN_PROGRESS,
+        message: task.title,
+        startedAt: Date.now(),
+      });
       sendToRenderer(MESSAGE.AGENT_TASK_ASSIGNED, {
         taskId: task.id,
         agentId: chosenAgent.id,

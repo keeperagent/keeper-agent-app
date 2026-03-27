@@ -31,10 +31,6 @@ export const Wrapper = styled.div`
     align-items: center;
     gap: var(--margin-right);
 
-    .filter-search {
-      width: 30rem;
-    }
-
     .filter-select {
       width: 20rem;
     }

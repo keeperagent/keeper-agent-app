@@ -10,7 +10,7 @@ import { ToolContext } from "@/electron/appAgent/toolContext";
 import { encryptionService } from "@/electron/service/encrypt";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { scheduleDB } from "@/electron/database/schedule";
-import { scheduleLogDB } from "@/electron/database/scheduleLog";
+import { appLogDB } from "@/electron/database/appLog";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
 import { preferenceDB } from "@/electron/database/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
@@ -21,7 +21,7 @@ import { workflowManager } from "@/electron/simulator/workflow";
 import type {
   ISchedule,
   IJob,
-  IScheduleLog,
+  IAppLog,
   IWorkflowVariable,
 } from "@/electron/type";
 import {
@@ -30,6 +30,7 @@ import {
   JobType,
   JobConditionType,
   AgentScheduleStatus,
+  AppLogType,
 } from "@/electron/type";
 
 const MAX_CONCURRENT_RUNS = 2;
@@ -42,7 +43,7 @@ class AgentTaskScheduler {
 
   init = async (): Promise<void> => {
     try {
-      await scheduleLogDB.resetRunningLogs();
+      await appLogDB.resetRunningScheduleLogs();
       const [schedules] = await scheduleDB.getActiveAgentSchedules();
       if (!schedules) {
         return;
@@ -151,10 +152,11 @@ class AgentTaskScheduler {
     }
 
     if (this.runningScheduleIds.size >= MAX_CONCURRENT_RUNS) {
-      await scheduleLogDB.createScheduleLog({
+      await appLogDB.createAppLog({
+        logType: AppLogType.SCHEDULE,
         scheduleId,
         status: AgentScheduleStatus.SKIPPED,
-        type: ScheduleType.AGENT,
+        action: ScheduleType.AGENT,
         errorMessage: `Skipped: concurrency limit (${MAX_CONCURRENT_RUNS}) reached`,
         startedAt: Date.now(),
         finishedAt: Date.now(),
@@ -181,7 +183,7 @@ class AgentTaskScheduler {
     this.runningScheduleIds.add(scheduleId);
     await scheduleDB.setLastStartedAt(scheduleId, Date.now());
     try {
-      let prevLog: IScheduleLog | null = null;
+      let prevLog: IAppLog | null = null;
 
       for (const job of jobs) {
         logEveryWhere({
@@ -216,12 +218,13 @@ class AgentTaskScheduler {
   private executeWorkflowJob = async (
     schedule: ISchedule,
     job: IJob,
-  ): Promise<IScheduleLog> => {
+  ): Promise<IAppLog> => {
     if (!job.workflowId || !job.campaignId) {
-      const [log] = await scheduleLogDB.createScheduleLog({
+      const [log] = await appLogDB.createAppLog({
+        logType: AppLogType.SCHEDULE,
         scheduleId: schedule.id!,
         jobId: job.id,
-        type: JobType.WORKFLOW,
+        action: JobType.WORKFLOW,
         status: AgentScheduleStatus.ERROR,
         errorMessage: "Missing workflowId or campaignId",
         startedAt: Date.now(),
@@ -230,10 +233,11 @@ class AgentTaskScheduler {
       return log!;
     }
 
-    const [logEntry] = await scheduleLogDB.createScheduleLog({
+    const [logEntry] = await appLogDB.createAppLog({
+      logType: AppLogType.SCHEDULE,
       scheduleId: schedule.id!,
       jobId: job.id,
-      type: JobType.WORKFLOW,
+      action: JobType.WORKFLOW,
       status: AgentScheduleStatus.RUNNING,
       startedAt: Date.now(),
     });
@@ -265,16 +269,14 @@ class AgentTaskScheduler {
         await sleep(1000);
       }
 
-      const [updated] = await scheduleLogDB.updateScheduleLog({
-        id: logEntry!.id!,
+      const [updated] = await appLogDB.updateAppLog(logEntry?.id!, {
         status: AgentScheduleStatus.SUCCESS,
         result: "Workflow completed",
         finishedAt: Date.now(),
       });
       return updated!;
     } catch (err: any) {
-      const [failed] = await scheduleLogDB.updateScheduleLog({
-        id: logEntry!.id!,
+      const [failed] = await appLogDB.updateAppLog(logEntry?.id!, {
         status: AgentScheduleStatus.ERROR,
         errorMessage: err?.message,
         finishedAt: Date.now(),
@@ -287,14 +289,15 @@ class AgentTaskScheduler {
   private executeAgentJob = async (
     schedule: ISchedule,
     job: IJob,
-    prevLog: IScheduleLog | null,
-  ): Promise<IScheduleLog> => {
+    prevLog: IAppLog | null,
+  ): Promise<IAppLog> => {
     const shouldSkip = await this.evaluateCondition(job, prevLog);
     if (shouldSkip) {
-      const [log] = await scheduleLogDB.createScheduleLog({
+      const [log] = await appLogDB.createAppLog({
+        logType: AppLogType.SCHEDULE,
         scheduleId: schedule.id!,
         jobId: job.id,
-        type: JobType.AGENT,
+        action: JobType.AGENT,
         status: AgentScheduleStatus.SKIPPED,
         errorMessage: "Condition evaluated to skip",
         startedAt: Date.now(),
@@ -303,10 +306,11 @@ class AgentTaskScheduler {
       return log!;
     }
 
-    const [logEntry] = await scheduleLogDB.createScheduleLog({
+    const [logEntry] = await appLogDB.createAppLog({
+      logType: AppLogType.SCHEDULE,
       scheduleId: schedule.id!,
       jobId: job.id,
-      type: JobType.AGENT,
+      action: JobType.AGENT,
       status: AgentScheduleStatus.RUNNING,
       retryCount: 0,
       startedAt: Date.now(),
@@ -318,14 +322,13 @@ class AgentTaskScheduler {
   private runWithRetry = async (
     schedule: ISchedule,
     job: IJob,
-    logEntry: IScheduleLog,
-    prevLog: IScheduleLog | null,
+    logEntry: IAppLog,
+    prevLog: IAppLog | null,
     attempt: number,
-  ): Promise<IScheduleLog> => {
+  ): Promise<IAppLog> => {
     try {
       const result = await this.runAgentJob(schedule, job, prevLog);
-      const [updated] = await scheduleLogDB.updateScheduleLog({
-        id: logEntry.id!,
+      const [updated] = await appLogDB.updateAppLog(logEntry.id!, {
         status: AgentScheduleStatus.SUCCESS,
         result,
         retryCount: attempt,
@@ -337,8 +340,7 @@ class AgentTaskScheduler {
 
       if (attempt < maxRetries) {
         const delayMs = (job.retryDelayMinutes || 5) * 60_000;
-        const [updated] = await scheduleLogDB.updateScheduleLog({
-          id: logEntry.id!,
+        const [updated] = await appLogDB.updateAppLog(logEntry.id!, {
           status: AgentScheduleStatus.RETRYING,
           errorMessage: err?.message,
           retryCount: attempt + 1,
@@ -347,8 +349,7 @@ class AgentTaskScheduler {
         return updated!;
       }
 
-      const [failed] = await scheduleLogDB.updateScheduleLog({
-        id: logEntry.id!,
+      const [failed] = await appLogDB.updateAppLog(logEntry.id!, {
         status: AgentScheduleStatus.ERROR,
         errorMessage: err?.message,
         retryCount: attempt,
@@ -362,7 +363,7 @@ class AgentTaskScheduler {
   private runAgentJob = async (
     schedule: ISchedule,
     job: IJob,
-    prevLog: IScheduleLog | null,
+    prevLog: IAppLog | null,
   ): Promise<string> => {
     const memoryFile = schedule.memoryFileKey
       ? `AGENT_${schedule.memoryFileKey}.md`
@@ -470,7 +471,7 @@ class AgentTaskScheduler {
 
   private evaluateCondition = async (
     job: IJob,
-    prevLog: IScheduleLog | null,
+    prevLog: IAppLog | null,
   ): Promise<boolean> => {
     const conditionType = job.conditionType || JobConditionType.NONE;
 
@@ -567,7 +568,7 @@ class AgentTaskScheduler {
   };
 
   private processRetries = async (): Promise<void> => {
-    const retryingLogs = await scheduleLogDB.getRetryingLogs(Date.now());
+    const retryingLogs = await appLogDB.getRetryingScheduleLogs(Date.now());
     if (!retryingLogs || retryingLogs.length === 0) {
       return;
     }
@@ -593,7 +594,7 @@ class AgentTaskScheduler {
   private getPrevJobLog = async (
     scheduleId: number,
     currentJobId: number,
-  ): Promise<IScheduleLog | null> => {
+  ): Promise<IAppLog | null> => {
     try {
       const [schedule] = await scheduleDB.getOneSchedule(scheduleId);
       if (!schedule) {
@@ -607,7 +608,7 @@ class AgentTaskScheduler {
         return null;
       }
       const prevJobId = sortedJobs[currentIdx - 1].id!;
-      return scheduleLogDB.getLatestJobLog(scheduleId, prevJobId);
+      return appLogDB.getLatestScheduleJobLog(scheduleId, prevJobId);
     } catch {
       return null;
     }

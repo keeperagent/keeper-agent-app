@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pagination, Spin, Empty } from "antd";
-import { IScheduleLog } from "@/electron/type";
+import { IAppLog } from "@/electron/type";
 import { useGetListAgentRegistryLog } from "@/hook/agentRegistry";
 import { useTranslation } from "@/hook/useTranslation";
 import { HistoryWrapper } from "./style";
@@ -69,7 +69,7 @@ const HistoryTab = ({ agentRegistryId }: Props) => {
           </div>
         )}
 
-        {logs.map((log: IScheduleLog) => (
+        {logs.map((log: IAppLog) => (
           <HistoryItem
             key={log.id}
             log={log}

@@ -28,35 +28,25 @@ const ModalConfigLog = (props: IProps) => {
     }
 
     form.setFieldsValue({
-      maxHistoryLogAge: preference?.maxHistoryLogAge || 30,
+      maxLogAge: preference?.maxLogAge || 15,
     });
   }, [isModalOpen, preference, form]);
 
   const onSubmitForm = async () => {
     try {
-      const { maxHistoryLogAge } = await form.validateFields([
-        "maxHistoryLogAge",
-      ]);
+      const { maxLogAge } = await form.validateFields(["maxLogAge"]);
       setBtnLoading(true);
-      const updatedData = {
-        ...preference,
-        maxHistoryLogAge,
-      };
-      await updatePreference(updatedData);
+      await updatePreference({ ...preference, maxLogAge });
       setBtnLoading(false);
       setModalOpen(false);
     } catch {}
   };
 
-  const onCloseModal = () => {
-    setModalOpen(false);
-  };
-
   return (
     <Modal
       open={isModalOpen}
-      title={translate("schedule.configDeleteLog")}
-      onCancel={onCloseModal}
+      title={translate("activityLog.configDeleteLog")}
+      onCancel={() => setModalOpen(false)}
       okText={translate("button.update")}
       cancelText={translate("cancel")}
       width="45rem"
@@ -65,8 +55,8 @@ const ModalConfigLog = (props: IProps) => {
     >
       <Form layout="vertical" form={form} style={{ marginTop: "2rem" }}>
         <Form.Item
-          label={`${translate("schedule.maxLogDate")}:`}
-          name="maxHistoryLogAge"
+          label={`${translate("activityLog.maxLogAge")}:`}
+          name="maxLogAge"
         >
           <InputNumber
             className="custom-input-number"
@@ -86,5 +76,5 @@ export default connect(
   (state: RootState) => ({
     preference: state?.Preference?.preference,
   }),
-  {}
+  {},
 )(ModalConfigLog);

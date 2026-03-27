@@ -27,6 +27,14 @@ export const windowController = () => {
     MESSAGE.OPEN_EXTERNAL_LINK,
     async (event, payload: IpcOpenExternalLinkPayload) => {
       const { url } = payload;
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          return;
+        }
+      } catch {
+        return;
+      }
       shell.openExternal(url);
     },
   );
