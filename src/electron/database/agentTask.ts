@@ -288,6 +288,35 @@ class AgentTaskDB {
     }
   }
 
+  async unassignTasksByAgentIds(
+    agentIds: number[],
+  ): Promise<[number, Error | null]> {
+    try {
+      const now = Date.now();
+      const [count] = await AgentTaskModel.update(
+        {
+          assignedAgentId: null,
+          status: AgentTaskStatus.INIT,
+          claimedAt: null,
+          startedAt: null,
+          updateAt: now,
+        } as any,
+        {
+          where: {
+            assignedAgentId: { [Op.in]: agentIds },
+            status: [AgentTaskStatus.INIT, AgentTaskStatus.IN_PROGRESS],
+          },
+        },
+      );
+      return [count, null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `unassignTasksByAgentIds() error: ${err?.message}`,
+      });
+      return [0, err];
+    }
+  }
+
   async deleteAgentTask(
     listId: number[],
   ): Promise<[number | null, Error | null]> {
