@@ -1,8 +1,54 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useState, useEffect, Fragment } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
+import { MESSAGE } from "@/electron/constant";
 import { useTranslation } from "@/hook/useTranslation";
 import { Wrapper } from "./style";
+
+const isHttpUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const markdownComponents = {
+  a: ({ href, children }: { href?: string; children?: ReactNode }) => (
+    <a
+      href={href}
+      onClick={(event) => {
+        event.preventDefault();
+        if (href && isHttpUrl(href)) {
+          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
+        }
+      }}
+    >
+      {children}
+    </a>
+  ),
+};
+
+const renderResultContent = (result: any): ReactNode => {
+  if (
+    result !== null &&
+    typeof result === "object" &&
+    typeof result.value === "string"
+  ) {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={markdownComponents}
+      >
+        {result.value}
+      </ReactMarkdown>
+    );
+  }
+  return <pre>{JSON.stringify(result, null, 2)}</pre>;
+};
 
 interface TaskResultProps {
   task: IAgentTask;
@@ -46,7 +92,7 @@ export const TaskResult = ({ task }: TaskResultProps) => {
 
           {isResultOpen && (
             <div className="result-body">
-              <pre>{JSON.stringify(task.result, null, 2)}</pre>
+              {renderResultContent(task.result)}
             </div>
           )}
         </Wrapper>

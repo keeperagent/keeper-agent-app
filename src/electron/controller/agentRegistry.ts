@@ -3,9 +3,11 @@ import fs from "fs-extra";
 import { MESSAGE } from "@/electron/constant";
 import { Op } from "sequelize";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentTaskDB } from "@/electron/database/agentTask";
 import { appLogDB } from "@/electron/database/appLog";
 import { AppLogModel } from "@/electron/database";
 import { AppLogActorType } from "@/electron/type";
+import { sendToRenderer } from "@/electron/main";
 import { getMemoryDir } from "@/electron/service/agentSkill";
 import { agentRegistryChatBridge } from "@/electron/chatGateway/agentRegistryBridge";
 import type {
@@ -85,7 +87,12 @@ export const agentRegistryController = () => {
           actorId: { [Op.in]: listId },
         },
       });
+      const [unassignedCount] =
+        await agentTaskDB.unassignTasksByAgentIds(listId);
       const [res] = await agentRegistryDB.deleteAgentRegistry(listId);
+      if (unassignedCount > 0) {
+        sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
+      }
       event.reply(MESSAGE.DELETE_AGENT_REGISTRY_RES, { data: res });
     },
   );
