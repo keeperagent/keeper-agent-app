@@ -90,7 +90,7 @@ const ProfileGroupChart = (props: IProps) => {
                   color: "black",
                   textOutline: "none",
                   fontWeight: "normal",
-                  fontSize: "8px",
+                  fontSize: "11px",
                 },
               },
             },

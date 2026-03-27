@@ -8,8 +8,8 @@ import {
   useGetFolderStatistic,
   useGetFolderPath,
 } from "@/hook";
-import { IProfileGroup, IStatistic } from "@/electron/type";
-import { ProfileGroupChart } from "@/component";
+import { IStatistic } from "@/electron/type";
+import AgentAnalytic from "@/component/AgentAnalytic";
 import { actSetPageName } from "@/redux/layout";
 import { COLORS, FOLDER_TYPE } from "@/config/constant";
 import { IFolderPath, IFolderState } from "@/redux/folder";
@@ -25,7 +25,6 @@ type IProps = {
   actSetPageName: (payload: string) => void;
   folderState: IFolderState;
   folderPath: IFolderPath;
-  listProfileGroup: IProfileGroup[];
 };
 
 const HomePage = (props: IProps) => {
@@ -34,14 +33,22 @@ const HomePage = (props: IProps) => {
 
   const { getStatistic } = useGetStatistic();
   const { getFolderPath } = useGetFolderPath();
-  const { getFolderStatistic: getProfileFolderStatistic, loading: profilerFolderLoading } =
-    useGetFolderStatistic("profile");
-  const { getFolderStatistic: getExtensionFolderStatistic, loading: extensionFolderLoading } =
-    useGetFolderStatistic("extension");
-  const { getFolderStatistic: getSkillFolderStatistic, loading: skillFolderLoading } =
-    useGetFolderStatistic("skill");
-  const { getFolderStatistic: getBrowserFolderStatistic, loading: browserFolderLoading } =
-    useGetFolderStatistic("browser");
+  const {
+    getFolderStatistic: getProfileFolderStatistic,
+    loading: profilerFolderLoading,
+  } = useGetFolderStatistic("profile");
+  const {
+    getFolderStatistic: getExtensionFolderStatistic,
+    loading: extensionFolderLoading,
+  } = useGetFolderStatistic("extension");
+  const {
+    getFolderStatistic: getSkillFolderStatistic,
+    loading: skillFolderLoading,
+  } = useGetFolderStatistic("skill");
+  const {
+    getFolderStatistic: getBrowserFolderStatistic,
+    loading: browserFolderLoading,
+  } = useGetFolderStatistic("browser");
 
   useEffect(() => {
     getStatistic();
@@ -68,36 +75,41 @@ const HomePage = (props: IProps) => {
 
       <div className="data-statistic">
         <StatisticItem
-          firstLabel={`${translate("home.numberCampaign")}:`}
-          firstValue={statistic?.totalCampaign || 0}
-          secondLabel={`${translate("home.numberWorkflow")}:`}
-          secondValue={statistic?.totalWorkflow || 0}
+          label={translate("home.numberCampaign")}
+          value={statistic?.totalCampaign || 0}
         />
-
         <StatisticItem
-          firstLabel={`${translate("home.numberProfileGroup")}:`}
-          firstValue={statistic?.totalProfileGroup || 0}
-          secondLabel={`${translate("home.numberProfile")}:`}
-          secondValue={statistic?.totalProfile || 0}
+          label={translate("home.numberWorkflow")}
+          value={statistic?.totalWorkflow || 0}
         />
-
         <StatisticItem
-          firstLabel={`${translate("home.numberWalletGroup")}:`}
-          firstValue={statistic?.totalWalletGroup || 0}
-          secondLabel={`${translate("home.numberWallet")}:`}
-          secondValue={statistic?.totalWallet || 0}
+          label={translate("home.numberProfileGroup")}
+          value={statistic?.totalProfileGroup || 0}
         />
-
         <StatisticItem
-          firstLabel={`${translate("home.numberMcpServer")}:`}
-          firstValue={statistic?.totalMcpServer || 0}
-          secondLabel={`${translate("home.numberAgentSkill")}:`}
-          secondValue={statistic?.totalAgentSkill || 0}
+          label={translate("home.numberProfile")}
+          value={statistic?.totalProfile || 0}
+        />
+        <StatisticItem
+          label={translate("home.numberWalletGroup")}
+          value={statistic?.totalWalletGroup || 0}
+        />
+        <StatisticItem
+          label={translate("home.numberWallet")}
+          value={statistic?.totalWallet || 0}
+        />
+        <StatisticItem
+          label={translate("home.numberMcpServer")}
+          value={statistic?.totalMcpServer || 0}
+        />
+        <StatisticItem
+          label={translate("home.numberAgentSkill")}
+          value={statistic?.totalAgentSkill || 0}
         />
       </div>
 
       <div className="chart">
-        <ProfileGroupChart />
+        <AgentAnalytic defaultPeriod={90} />
       </div>
 
       <div className="file-statistic">
@@ -181,7 +193,6 @@ export default connect(
     statistic: state?.Preference?.statistic,
     folderState: state?.Folder,
     folderPath: state?.Folder?.folderPath,
-    listProfileGroup: state?.ProfileGroup?.listProfileGroup,
   }),
-  { actSetPageName }
+  { actSetPageName },
 )(HomePage);

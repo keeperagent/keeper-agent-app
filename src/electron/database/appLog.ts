@@ -12,6 +12,7 @@ import {
   CampaignModel,
   WorkflowModel,
   ScheduleModel,
+  JobModel,
 } from "./index";
 
 class AppLogDB {
@@ -168,19 +169,19 @@ class AppLogDB {
     pageSize: number,
   ): Promise<[IGetListResponse<IAppLog> | null, Error | null]> {
     try {
-      const schedules: any[] = await ScheduleModel.findAll({
+      const jobs: any[] = await JobModel.findAll({
         where: { agentRegistryId } as any,
         attributes: ["id"],
         raw: true,
       });
-      const scheduleIds = schedules.map((schedule) => schedule.id);
-      if (!scheduleIds.length) {
+      const jobIds = jobs.map((job) => job.id);
+      if (!jobIds.length) {
         return [{ data: [], totalData: 0, page, pageSize, totalPage: 0 }, null];
       }
 
       const where: any = {
         logType: AppLogType.SCHEDULE,
-        scheduleId: { [Op.in]: scheduleIds },
+        jobId: { [Op.in]: jobIds },
       };
       const [totalData, listData]: any = await Promise.all([
         AppLogModel.count({ where }),

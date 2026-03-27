@@ -2,13 +2,10 @@ import styled from "styled-components";
 
 export const ChatRegistryPage = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  inset: 0;
 `;
 
 export const Wrapper = styled.div`
@@ -18,14 +15,20 @@ export const Wrapper = styled.div`
   flex-direction: column;
   justify-content: flex-start;
   font-size: 1.6rem;
-  gap: 1.6rem;
   overflow-y: auto;
+
+  .tab {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+  }
 
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    margin-bottom: var(--margin-bottom);
 
     .header-search {
       width: 32rem;

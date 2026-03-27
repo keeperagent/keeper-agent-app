@@ -1,10 +1,5 @@
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import { ITheme } from "@/style/theme";
-
-const pulseRing = keyframes`
-  0%   { transform: scale(1); opacity: 0.5; }
-  100% { transform: scale(2.6); opacity: 0; }
-`;
 
 export const Wrapper = styled.div`
   position: absolute;
@@ -41,39 +36,6 @@ export const Wrapper = styled.div`
     align-items: center;
     gap: 1.2rem;
     flex-shrink: 0;
-
-    .realtime-indicator {
-      margin-right: 2rem;
-    }
-  }
-
-  .realtime-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-  }
-
-  .realtime-dot {
-    position: relative;
-    width: 0.8rem;
-    height: 0.8rem;
-    border-radius: 50%;
-    background: #22c55e;
-    flex-shrink: 0;
-
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: #22c55e;
-      animation: ${pulseRing} 2s ease-out infinite;
-    }
-  }
-
-  .realtime-text {
-    font-size: 1.2rem;
-    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
   }
 
   .board {
@@ -103,7 +65,6 @@ export const Wrapper = styled.div`
     }
   }
 `;
-
 
 export const OptionWrapper = styled.div`
   &:hover {
@@ -194,9 +155,6 @@ export const KanbanColumn = styled.div<{ isDragOver?: boolean }>`
     padding: 0.2rem 0.8rem;
     font-size: 1.1rem;
     font-weight: 700;
-    min-width: 2.4rem;
-    text-align: center;
-    flex-shrink: 0;
   }
 
   .column-empty {

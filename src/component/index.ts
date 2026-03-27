@@ -11,7 +11,6 @@ export { default as Workflow } from "./Workflow";
 export { default as Status } from "./Status";
 export { default as DataUpdateAt } from "./DataUpdateAt";
 export { default as Code } from "./Code";
-export { default as ProfileGroupChart } from "./ProfileGroupChart";
 export { default as HoverLink } from "./HoverLink";
 export { default as ListExtension } from "./ListExtension";
 export { default as ModalCampaign } from "./ModalCampaign";

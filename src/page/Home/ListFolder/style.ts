@@ -17,16 +17,15 @@ const Wrapper = styled.div`
     margin-bottom: var(--margin-bottom);
 
     .color {
-      width: 1.3rem;
-      height: 1.3rem;
-      margin-right: 0.7rem;
-      border-radius: 2px;
+      display: none;
     }
 
     .title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .folder-statistic {

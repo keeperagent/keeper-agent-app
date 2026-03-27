@@ -16,6 +16,7 @@ import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
   IpcDeletePayload,
+  IpcGetAgentAnalyticsPayload,
 } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
 
@@ -93,6 +94,16 @@ export const agentTaskController = () => {
       event.reply(MESSAGE.DELETE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       agentTaskDispatcher.dispatch();
+    },
+  );
+
+  onIpc<IpcGetAgentAnalyticsPayload>(
+    MESSAGE.GET_AGENT_ANALYTICS,
+    MESSAGE.GET_AGENT_ANALYTICS_RES,
+    async (event, payload) => {
+      const { fromTimestamp } = payload;
+      const [result] = await agentTaskDB.getAgentAnalytics(fromTimestamp);
+      event.reply(MESSAGE.GET_AGENT_ANALYTICS_RES, { data: result });
     },
   );
 };

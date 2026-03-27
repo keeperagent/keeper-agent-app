@@ -2,31 +2,18 @@ import AnimatedNumbers from "react-animated-numbers";
 import { Wrapper } from "./style";
 
 type IProps = {
-  firstLabel: string;
-  firstValue: number;
-  secondLabel: string;
-  secondValue: number;
+  label: string;
+  value: number;
   style?: React.CSSProperties;
 };
 
-const StatisticItem = (props: IProps) => {
-  const { firstLabel, firstValue, secondLabel, secondValue, style } = props;
-
+const StatisticItem = ({ label, value, style }: IProps) => {
   return (
     <Wrapper style={style}>
-      <div className="statistic">
-        <div className="label">{firstLabel}</div>
-        <div className="value">
-          <AnimatedNumbers animateToNumber={firstValue} />
-        </div>
+      <div className="value">
+        <AnimatedNumbers animateToNumber={value} />
       </div>
-
-      <div className="statistic">
-        <div className="label">{secondLabel}</div>
-        <div className="value">
-          <AnimatedNumbers animateToNumber={secondValue} />
-        </div>
-      </div>
+      <div className="label">{label}</div>
     </Wrapper>
   );
 };

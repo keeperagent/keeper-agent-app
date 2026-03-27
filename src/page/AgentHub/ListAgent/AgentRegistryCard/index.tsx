@@ -61,6 +61,7 @@ const AgentRegistryCard = (props: Props) => {
             alt={chainConfig.chainName}
           />
         )}
+
         <span className="item-name">{registry.name}</span>
         <Status
           content={
@@ -102,6 +103,7 @@ const AgentRegistryCard = (props: Props) => {
                   : translate("agent.allTools")}
               </span>
             </div>
+
             <div className="item-stat">
               <span className="item-label">{translate("agent.skill")}</span>
               <span className="item-value">
@@ -110,6 +112,7 @@ const AgentRegistryCard = (props: Props) => {
                   : translate("agent.allSkills")}
               </span>
             </div>
+
             <div className="item-stat">
               <span className="item-label">
                 {translate("sidebar.campaign")}

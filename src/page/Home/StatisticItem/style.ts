@@ -2,32 +2,27 @@ import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
-  padding: 1.5rem 2rem;
-  border-radius: var(--border-radius);
-  flex-basis: 48%;
-  background-color: ${({ theme }: { theme: ITheme }) =>
-    theme?.colorBgStatistic};
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.6rem 1rem;
+  gap: 0.6rem;
 
-  .statistic {
-    display: flex;
-    flex-direction: column;
+  .value {
+    font-weight: 700;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    font-size: 2.6rem;
+    line-height: 1;
+  }
 
-    &:not(:last-of-type) {
-      margin-bottom: var(--margin-bottom);
-    }
-
-    .label {
-      font-size: 1.3rem;
-      font-weight: 500;
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
-    }
-
-    .value {
-      font-weight: 700;
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
-      font-size: 1.9rem;
-      margin-top: 0.5rem;
-    }
+  .label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 `;
 

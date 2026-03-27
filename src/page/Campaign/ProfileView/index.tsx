@@ -121,7 +121,7 @@ import {
   StatisticWrapper,
 } from "./style";
 import ModalCalculate from "./ModalCalculate";
-import { renderListWorkflowTooltip } from "../CampaignView";
+import { renderListWorkflowTooltip } from "../CampaignView/util";
 import ModalExportProfile from "./ModalExportProfile";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
