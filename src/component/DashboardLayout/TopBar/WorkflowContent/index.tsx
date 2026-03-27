@@ -43,7 +43,7 @@ import { actSaveCampaignProfileStatus, IStatus } from "@/redux/campaignProfile";
 import dayjs from "dayjs";
 import { Wrapper, OptionWrapper } from "./style";
 
-export const renderListWorkflowTooltip = (
+const renderListWorkflowTooltip = (
   campaign: ICampaign | null,
   selectedWorkflow: IWorkflow | null,
   onViewWorkflow: (campaign: ICampaign | null, workflowId: number) => void,

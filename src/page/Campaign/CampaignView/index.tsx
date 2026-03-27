@@ -6,7 +6,6 @@ import {
   PaginationProps,
   Table,
   Tooltip,
-  Dropdown,
   Select,
   Segmented,
   Popconfirm,
@@ -76,6 +75,7 @@ import {
   LinkHoverWrapper,
 } from "./style";
 import ModalDeleteProfile from "../ModalDeleteProfile";
+import { renderListWorkflowTooltip } from "./util";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -84,53 +84,6 @@ let searchTimeOut: any = null;
 const TABLE_VIEW_MODE = {
   EXPAND_ROW: "EXPAND_ROW",
   COLLAPSE_ROW: "COLLAPSE_ROW",
-};
-
-export const renderListWorkflowTooltip = (
-  campaign: ICampaign,
-  onViewWorkflow: (campaign: ICampaign, workflowId: number) => void,
-  listRunningWorkflow: IRunningWorkflow[],
-  icon: JSX.Element,
-  translate: any,
-  classname?: string,
-) => {
-  const { listWorkflow = [] } = campaign || {};
-
-  if (listWorkflow?.length === 0) {
-    return (
-      <IconHighlightWrapper className={`${classname} disable`}>
-        {icon}
-      </IconHighlightWrapper>
-    );
-  }
-
-  const items = listWorkflow?.map((workflow: IWorkflow, index: number) => ({
-    key: workflow?.id!,
-    label: (
-      <OptionWrapper onClick={() => onViewWorkflow(campaign, workflow?.id!)}>
-        <div className="name">
-          {index + 1}. {workflow?.name}
-          {_.find(listRunningWorkflow, {
-            campaignId: campaign?.id,
-            workflowId: workflow?.id,
-          }) && (
-            <Tooltip title={translate("running")}>
-              <Badge status="success" style={{ marginLeft: "1rem" }} />
-            </Tooltip>
-          )}
-        </div>
-        <div className="description">
-          {trimText(workflow?.note || "", 60) || EMPTY_STRING}
-        </div>
-      </OptionWrapper>
-    ),
-  }));
-
-  return (
-    <Dropdown menu={{ items }} placement="bottomRight">
-      <IconHighlightWrapper className={classname}>{icon}</IconHighlightWrapper>
-    </Dropdown>
-  );
 };
 
 const renderColumns = (
