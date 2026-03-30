@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { ITheme } from "@/style/theme";
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -18,9 +17,7 @@ const PageWrapper = styled.div`
 `;
 
 const ChartWrapper = styled.div`
-  rect {
-    fill: ${({ theme }: { theme: ITheme }) => theme.colorBgSecondary};
-  }
+  padding: var(--padding);
 `;
 
 export { PageWrapper, ChartWrapper };

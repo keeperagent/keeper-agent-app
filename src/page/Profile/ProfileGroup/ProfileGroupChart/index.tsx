@@ -1,149 +1,95 @@
-import { useMemo, useState, useEffect } from "react";
-import { Spin, Empty } from "antd";
+import { useMemo, useEffect } from "react";
 import { connect } from "react-redux";
-import _ from "lodash";
-import Highcharts from "highcharts";
-import HighChartMore from "highcharts/highcharts-more";
-import HighchartsReact from "highcharts-react-official";
 import { RootState } from "@/redux/store";
-import { COLORS } from "@/config/constant";
 import { useGetListProfileGroup, useTranslation } from "@/hook";
 import { IProfileGroup, IResourceGroup } from "@/electron/type";
+import BubblePackChart, { BubbleDataNode } from "@/component/BubblePackChart";
 import { Wrapper } from "./style";
-
-HighChartMore(Highcharts);
 
 type IProps = {
   listProfileGroup: IProfileGroup[];
   isLightMode: boolean;
-  showEmptyIcon?: boolean;
 };
 
-const ProfileGroupChart = (props: IProps) => {
-  const { listProfileGroup, isLightMode, showEmptyIcon } = props;
-  const [isDisplayChart, setDisplayChart] = useState(false); // wait to component didmount
+const buildTreeData = (
+  listProfileGroup: IProfileGroup[],
+  recordLabel: string,
+): BubbleDataNode => ({
+  name: "root",
+  nodeType: "root",
+  children: listProfileGroup.map((profileGroup: IProfileGroup) => {
+    const children: BubbleDataNode[] = [];
 
-  const { translate } = useTranslation();
-  const { getListProfileGroup, loading } = useGetListProfileGroup();
-
-  useEffect(() => {
-    setDisplayChart(true);
-    getListProfileGroup({ page: 0, pageSize: 10000 });
-
-    return () => {
-      setDisplayChart(false);
-    };
-  }, []);
-
-  const chartOptions = useMemo(() => {
-    let listCount: number[] = [];
-    listProfileGroup.forEach((profileGroup: IProfileGroup) => {
-      listCount.push(profileGroup?.walletGroup?.totalWallet || 0);
-      listCount = [
-        ...listCount,
-        ..._.map(
-          profileGroup?.listResourceGroup,
-          (resourceGroup: IResourceGroup) => resourceGroup?.totalResource || 0,
-        ),
-      ];
-    });
-
-    let zMax = 100;
-    const maxTotal = _.max(listCount) || 0;
-    if (maxTotal !== 0) {
-      zMax = listCount?.length === 1 ? maxTotal * 4 : maxTotal * 1.1;
+    if (profileGroup.walletGroup) {
+      const totalWallet = profileGroup.walletGroup.totalWallet || 0;
+      children.push({
+        name: profileGroup.walletGroup.name || "",
+        value: Math.max(totalWallet, 1),
+        nodeType: "walletGroup",
+        tooltipLabel: `${totalWallet} ${recordLabel}`,
+      });
     }
 
-    return !isDisplayChart
-      ? {}
-      : {
-          chart: {
-            type: "packedbubble",
-            height: "400px",
-          },
-          title: {
-            text: translate("profileGroup.chartTitle"),
-            align: "left",
-            style: {
-              fontSize: "1.3rem",
-              color: isLightMode ? "rgb(56, 60, 64)" : "rgb(255, 255, 255)",
-            },
-          },
-          legend: { enabled: true },
-          plotOptions: {
-            packedbubble: {
-              minSize: "25%",
-              maxSize: "80%",
-              zMin: 0,
-              zMax,
-              layoutAlgorithm: {
-                gravitationalConstant: 0.05,
-                splitSeries: true,
-                seriesInteraction: true,
-                dragBetweenSeries: true,
-                parentNodeLimit: true,
-              },
-              dataLabels: {
-                enabled: true,
-                format: "{point.name}",
-                style: {
-                  color: "black",
-                  textOutline: "none",
-                  fontWeight: "normal",
-                  fontSize: "11px",
-                },
-              },
-            },
-          },
-          series: listProfileGroup?.map((profileGroup: IProfileGroup) => ({
-            name: profileGroup?.name,
-            color: "#B983FF",
-            tooltip: {
-              useHTML: true,
-              pointFormat: `<b>{point.name}:</b> <b>{point.value}</b> ${translate(
-                "profile.record",
-              )}`,
-            },
-            data: [
-              {
-                name: profileGroup?.walletGroup?.name,
-                value: profileGroup?.walletGroup?.totalWallet,
-                color: COLORS[5],
-              },
-              ...(profileGroup?.listResourceGroup || [])?.map(
-                (resourceGroup: IResourceGroup) =>
-                  ({
-                    name: resourceGroup?.name,
-                    value: resourceGroup?.totalResource,
-                    color: COLORS[6],
-                  }) as any,
-              ),
-            ],
-          })),
-          exporting: {},
-          // hide hightchart.com text
-          credits: {
-            enabled: false,
-          },
-        };
-  }, [isDisplayChart, listProfileGroup, translate, isLightMode]);
+    (profileGroup.listResourceGroup || []).forEach(
+      (resourceGroup: IResourceGroup) => {
+        const totalResource = (resourceGroup as any).totalResource || 0;
+        children.push({
+          name: resourceGroup.name || "",
+          value: Math.max(totalResource, 1),
+          nodeType: "resourceGroup",
+          tooltipLabel: `${totalResource} ${recordLabel}`,
+        });
+      },
+    );
 
-  if (listProfileGroup?.length === 0) {
-    return showEmptyIcon ? (
-      <Wrapper>
-        <div className="empty">
-          <Empty />
-        </div>
-      </Wrapper>
-    ) : null;
+    if (children.length === 0) {
+      children.push({ name: "", value: 1, nodeType: "walletGroup" });
+    }
+
+    // No child smaller than 10% of the largest sibling
+    const maxChildValue = Math.max(
+      ...children.map((child) => child.value || 1),
+    );
+    const minChildValue = Math.max(maxChildValue * 0.1, 1);
+    children.forEach((child) => {
+      child.value = Math.max(child.value || 1, minChildValue);
+    });
+
+    return {
+      name: profileGroup.name || "",
+      nodeType: "profileGroup" as const,
+      tooltipLabel: `${profileGroup.totalProfile || 0} profiles`,
+      children,
+    };
+  }),
+});
+
+const ProfileGroupChart = (props: IProps) => {
+  const { listProfileGroup } = props;
+  const { translate } = useTranslation();
+  const { getListProfileGroup } = useGetListProfileGroup();
+
+  useEffect(() => {
+    getListProfileGroup({ page: 0, pageSize: 10000 });
+  }, []);
+
+  const treeData = useMemo(
+    () => buildTreeData(listProfileGroup, translate("profile.record")),
+    [listProfileGroup, translate],
+  );
+
+  if (!listProfileGroup?.length) {
+    return null;
   }
 
   return (
-    <Spin spinning={loading}>
-      <Wrapper>
-        <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-      </Wrapper>
-    </Spin>
+    <Wrapper>
+      <BubblePackChart
+        treeData={treeData}
+        maxSize={listProfileGroup?.length > 10 ? 600 : 450}
+        minHeight={400}
+      />
+    </Wrapper>
   );
 };
 

@@ -10,7 +10,7 @@ import {
   useTranslation,
 } from "@/hook";
 import { IResourceGroup, IWalletGroup } from "@/electron/type";
-import { COLORS, EMPTY_STRING } from "@/config/constant";
+import { EMPTY_STRING } from "@/config/constant";
 import ProfileConfigChart from "../../../ProfileConfigChart";
 import { FormWrapper, OptionWrapper } from "./style";
 
@@ -204,12 +204,7 @@ const ConfigForm = (props: IFormProps) => {
 
       <div className="list-item">
         {listSelectedWalletGroup?.map((group: IWalletGroup, index: number) => (
-          <Tag
-            key={index}
-            onClose={onRemoveWalletGroup}
-            closable
-            color={COLORS[5]}
-          >
+          <Tag key={index} onClose={onRemoveWalletGroup} closable color="green">
             {group?.name}
           </Tag>
         ))}
@@ -220,7 +215,7 @@ const ConfigForm = (props: IFormProps) => {
               key={index}
               onClose={() => onRemoveResourceGroup(group?.id!)}
               closable
-              color={COLORS[6]}
+              color="gold"
             >
               {group?.name}
             </Tag>
