@@ -55,7 +55,6 @@ import {
   MixIcon,
   DownArrowIcon,
   UpArrowIcon,
-  SettingIcon,
   ExpandLineIcon,
   CollapseLineIcon,
 } from "@/component/Icon";
@@ -175,10 +174,6 @@ const renderColumns = (
           "",
         )}
 
-        <SettingIcon
-          className="setting-icon"
-          onClick={() => onEditCampaign(record, 1)}
-        />
         <EditIcon onClick={() => onEditCampaign(record, 0)} />
       </div>
     ),
@@ -316,10 +311,10 @@ const ManageCampaign = (props: any) => {
       props.actSetPageSize(pagination?.pageSize!);
   };
 
-  const onEditCampaign = (campaign: ICampaign, step: number) => {
+  const onEditCampaign = (campaign: ICampaign) => {
     props?.actSaveSelectedCampaign(campaign);
     props?.actSetModalCampaignOpen(true);
-    props?.actSetCurrentModalStep(step);
+    props?.actSetCurrentModalStep(0);
   };
 
   const oCreateCampaign = () => {

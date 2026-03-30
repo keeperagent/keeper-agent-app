@@ -225,6 +225,28 @@ const OverideAntdStyle = createGlobalStyle`
       }
     }
   }
+
+  /* Danger Button: red outline → red fill sweep */
+  .ant-btn-dangerous {
+    color: #ff4d4f !important;
+    border-color: #ff4d4f !important;
+    box-shadow: 3px 3px 0px 0px rgba(255, 77, 79, 0.25) !important;
+
+    &::before {
+      background: #ff4d4f;
+    }
+
+    &:hover {
+      color: #fff !important;
+      border-color: #ff4d4f !important;
+      box-shadow: 0px 0px 0px 0px rgba(255, 77, 79, 0.25) !important;
+    }
+
+    &:active {
+      color: #ff4d4f !important;
+      box-shadow: 2px 2px 0px 0px rgba(255, 77, 79, 0.25) !important;
+    }
+  }
 `;
 
 export { OverideAntdStyle };

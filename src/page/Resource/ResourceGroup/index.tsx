@@ -16,7 +16,6 @@ import { DeleteButton } from "@/component/Button";
 import { SearchInput } from "@/component/Input";
 import {
   EditIcon,
-  SettingIcon,
   EyeOpenIcon,
   DownArrowIcon,
   UpArrowIcon,
@@ -53,7 +52,7 @@ const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 let searchTimeOut: any = null;
 
 const renderColumns = (
-  onEditResourceGroup: (group: IResourceGroup, step: number) => void,
+  onEditResourceGroup: (group: IResourceGroup) => void,
   onViewGroup: (groupID: number) => void,
   searchText: string,
   translate: any,
@@ -153,11 +152,7 @@ const renderColumns = (
           </div>
         </Tooltip>
 
-        <SettingIcon
-          className="setting-icon"
-          onClick={() => onEditResourceGroup(record, 1)}
-        />
-        <EditIcon onClick={() => onEditResourceGroup(record, 0)} />
+        <EditIcon onClick={() => onEditResourceGroup(record)} />
       </div>
     ),
   },
@@ -263,11 +258,12 @@ const ResourceGroup = (props: any) => {
     onSetSelectedRowKeys(selectedKeys);
   };
 
-  const onEditResourceGroup = (group: IResourceGroup, step: number) => {
+  const onEditResourceGroup = (group: IResourceGroup) => {
     props?.actSaveSelectedResourceGroup(group);
     setModalOpen(true);
-    setCurrentStep(step);
+    setCurrentStep(0);
   };
+
   const onCreateResourceGroup = () => {
     setModalOpen(true);
   };

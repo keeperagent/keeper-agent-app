@@ -67,6 +67,12 @@ const IconHighlightWrapper = styled.span`
     cursor: not-allowed;
     background-color: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
 
+    &:hover {
+      svg {
+        fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+      }
+    }
+
     & svg {
       cursor: not-allowed;
     }

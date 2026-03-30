@@ -18,7 +18,6 @@ import { DeleteButton } from "@/component/Button";
 import { SearchInput } from "@/component/Input";
 import {
   EditIcon,
-  SettingIcon,
   BubbleIcon,
   ListIcon,
   EyeOpenIcon,
@@ -63,7 +62,7 @@ const GROUP_VIEW_MODE = {
 };
 
 const renderColumns = (
-  onEditProfileGroup: (group: IProfileGroup, step: number) => void,
+  onEditProfileGroup: (group: IProfileGroup) => void,
   onViewGroup: (groupID: number) => void,
   searchText: string,
   translate: any,
@@ -156,17 +155,12 @@ const renderColumns = (
     render: (text: any, record: IProfileGroup) => (
       <div className="list-icon">
         <Tooltip title={translate("view")}>
-          <div className="icon" onClick={() => onViewGroup(record?.id!)}>
+          <span className="icon" onClick={() => onViewGroup(record?.id!)}>
             <EyeOpenIcon />
-          </div>
+          </span>
         </Tooltip>
 
-        <SettingIcon
-          className="setting-icon"
-          onClick={() => onEditProfileGroup(record, 1)}
-        />
-
-        <EditIcon onClick={() => onEditProfileGroup(record, 0)} />
+        <EditIcon onClick={() => onEditProfileGroup(record)} />
       </div>
     ),
   },
@@ -258,10 +252,10 @@ const ProfileGroup = (props: any) => {
     }, 200);
   }, [searchText, page, pageSize, sortField]);
 
-  const onEditProfileGroup = (group: IProfileGroup, step: number) => {
+  const onEditProfileGroup = (group: IProfileGroup) => {
     props?.actSaveSelectedProfileGroup(group);
     setModalOpen(true);
-    setCurrentStep(step);
+    setCurrentStep(0);
   };
 
   // delete group
