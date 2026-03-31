@@ -1,4 +1,4 @@
-import { Page, Browser } from "puppeteer-core";
+import { Page, BrowserContext } from "playwright-core";
 import {
   IFlowProfile,
   IImportRabbyWalletNodeConfig,
@@ -29,7 +29,7 @@ export class RabbyWallet {
     config: IImportRabbyWalletNodeConfig,
     listVariable: IWorkflowVariable[],
     flowProfile: IFlowProfile,
-    browser: Browser | null,
+    browser: BrowserContext | null,
   ): Promise<IFlowProfile | null> => {
     if (processSkipSetting(config, listVariable)) {
       return flowProfile;
@@ -47,30 +47,21 @@ export class RabbyWallet {
       );
 
       // click "Import Seed Phrase"
-      const importSeedPhrase = await tempPage?.waitForSelector(
-        "::-p-xpath(//div[contains(text(), 'Import Seed Phrase')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      importSeedPhrase?.click();
+      await tempPage
+        ?.locator("xpath=//div[contains(text(), 'Import Seed Phrase')]")
+        .click({ timeout: 5000 });
 
       await sleep(100);
-      const inputPassword = await tempPage?.waitForSelector("#password");
-      await inputPassword?.type(password);
+      await tempPage?.locator("#password").fill(password);
 
       await sleep(100);
-      const inputConfirmPassword =
-        await tempPage?.waitForSelector("#confirmPassword");
-      await inputConfirmPassword?.type(password);
+      await tempPage?.locator("#confirmPassword").fill(password);
 
       await sleep(100);
       // click "Next" button
-      const nextButton = await tempPage?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Next')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      nextButton?.click();
+      await tempPage
+        ?.locator("xpath=//span[contains(text(), 'Next')]")
+        .click({ timeout: 5000 });
 
       // select page to type "Seed Phrase"
       let listPage = await browser?.pages();
@@ -95,7 +86,7 @@ export class RabbyWallet {
           break;
         }
 
-        listPage = await browser?.pages();
+        listPage = browser?.pages();
         await sleep(1000);
         continue;
       }
@@ -108,34 +99,25 @@ export class RabbyWallet {
       const listWord = seedPhrase?.split(" ");
 
       for (let i = 0; i < listWord?.length; i++) {
-        const input = await inputSeedPhrasePage?.waitForSelector(
-          `.is-mnemonics-input:nth-child(${i + 1}) > input`,
-        );
-        await input?.type(listWord[i], { delay: 150 });
+        await inputSeedPhrasePage
+          ?.locator(`.is-mnemonics-input:nth-child(${i + 1}) > input`)
+          .pressSequentially(listWord[i], { delay: 150 });
       }
 
       await sleep(100);
       // click Confirm button
-      const confirmButton = await inputSeedPhrasePage?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Confirm')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      confirmButton?.click();
+      await inputSeedPhrasePage
+        ?.locator("xpath=//span[contains(text(), 'Confirm')]")
+        .click({ timeout: 5000 });
 
       await sleep(500);
       // click select first address wallet add to rabby
-      const selectAddressButton =
-        await inputSeedPhrasePage?.waitForSelector(`.AddToRabby`);
-      selectAddressButton?.click();
+      await inputSeedPhrasePage?.locator(`.AddToRabby`).click();
 
       await sleep(300);
-      const doneButton = await inputSeedPhrasePage?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Done')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      doneButton?.click();
+      await inputSeedPhrasePage
+        ?.locator("xpath=//span[contains(text(), 'Done')]")
+        .click({ timeout: 5000 });
 
       // go to dashboard to view recently added wallet
       await inputSeedPhrasePage?.goto(
@@ -157,47 +139,34 @@ export class RabbyWallet {
       await sleep(200);
 
       // click "Import Private Key"
-      const importPrivateKeyButton = await page?.waitForSelector(
-        "::-p-xpath(//div[contains(text(), 'Import Private Key')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      importPrivateKeyButton?.click();
+      await page
+        ?.locator("xpath=//div[contains(text(), 'Import Private Key')]")
+        .click({ timeout: 5000 });
 
       // type password
-      const inputPassword = await page?.waitForSelector("#password");
-      await inputPassword?.type(password);
+      await page?.locator("#password").fill(password);
 
       // type confirm pasword
       await sleep(100);
-      const inputConfirmPassword =
-        await page?.waitForSelector("#confirmPassword");
-      await inputConfirmPassword?.type(password);
+      await page?.locator("#confirmPassword").fill(password);
 
       // click "Next" button
       await sleep(100);
-      const nextButton = await page?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Next')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      nextButton?.click();
+      await page
+        ?.locator("xpath=//span[contains(text(), 'Next')]")
+        .click({ timeout: 5000 });
 
       const privateKey = getActualValue(config?.privateKey || "", listVariable);
       // type "Private Key"
-      const privateKeyInput = await page?.waitForSelector("#key", {
-        timeout: DEFAULT_TIMEOUT,
-      });
-      await privateKeyInput?.type(privateKey);
+      await page
+        ?.locator("#key")
+        .pressSequentially(privateKey, { delay: 50, timeout: DEFAULT_TIMEOUT });
 
       // click "Confirm" button
       await sleep(100);
-      const confirmButton = await page?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Confirm')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      confirmButton?.click();
+      await page
+        ?.locator("xpath=//span[contains(text(), 'Confirm')]")
+        .click({ timeout: 5000 });
       await sleep(100);
 
       // go to dashboard to view recently added wallet
@@ -226,22 +195,17 @@ export class RabbyWallet {
     );
 
     // type password
-    const passwordInput = await page?.waitForSelector("#password", {
-      timeout: DEFAULT_TIMEOUT,
-    });
-
     await sleep(100);
     const password = getActualValue(config?.password || "", listVariable);
-    await passwordInput?.type(password);
+    await page
+      ?.locator("#password")
+      .pressSequentially(password, { delay: 50, timeout: DEFAULT_TIMEOUT });
 
     // click "Unlock" button
     await sleep(100);
-    const unlockButton = await page?.waitForSelector(
-      "::-p-xpath(//span[contains(text(), 'Unlock')])",
-      { timeout: 5000 },
-    );
-    // @ts-ignore
-    unlockButton?.click();
+    await page
+      ?.locator("xpath=//span[contains(text(), 'Unlock')]")
+      .click({ timeout: 5000 });
 
     return flowProfile;
   };
@@ -260,12 +224,9 @@ export class RabbyWallet {
       await waitTextAppear("Connect", page); // wait until button appear
 
       try {
-        const element = await page?.waitForSelector(
-          "::-p-xpath(//span[contains(text(), 'Ignore all')])",
-          { timeout: 5000 },
-        );
-        // @ts-ignore
-        await element?.click();
+        await page
+          ?.locator("xpath=//span[contains(text(), 'Ignore all')]")
+          .click({ timeout: 5000 });
         await sleep(300);
       } catch {}
     }
@@ -326,85 +287,64 @@ export class RabbyWallet {
       }
 
       try {
-        const xPath =
-          "::-p-xpath(//span[contains(text(), 'Advanced Settings')])";
-        const element = await page?.waitForSelector(xPath, { timeout: 5000 });
-        // @ts-ignore
-        await element?.click();
+        const xPath = "xpath=//span[contains(text(), 'Advanced Settings')]";
+        await page?.locator(xPath).click({ timeout: 5000 });
         await sleep(1500);
 
-        const inputElement = await page?.waitForSelector(".gas-modal input", {
-          timeout: 3000,
-        });
-        await inputElement?.click({ clickCount: 3 });
+        await page?.locator(".gas-modal input").waitFor({ timeout: 3000 });
+        await page?.locator(".gas-modal input").selectText();
         await page?.keyboard?.press("Backspace");
-        await inputElement?.type(gasLimit?.toString(), { delay: 100 });
+        await page
+          ?.locator(".gas-modal input")
+          .pressSequentially(gasLimit?.toString(), { delay: 100 });
 
-        const confirmButton = await page?.waitForSelector(
-          "::-p-xpath(//span[contains(text(), 'Confirm')])",
-          { timeout: 3000 },
-        );
-        // @ts-ignore
-        await confirmButton?.click();
+        await page
+          ?.locator("xpath=//span[contains(text(), 'Confirm')]")
+          .click({ timeout: 3000 });
         await sleep(300);
-      } catch {
-        // just ignore error
-      }
+      } catch {}
     }
 
     if (isCustomGasPrice) {
       // select gas mode
-      const gasModeElement = await page?.waitForSelector(
-        ".ant-dropdown-trigger",
-        {
-          timeout: 3000,
-        },
-      );
-      await gasModeElement?.click();
+      await page?.locator(".ant-dropdown-trigger").click({ timeout: 3000 });
       await sleep(300);
       if (gasOption === RABBY_GAS_MODE.NORMAL) {
-        const normalButton = await page?.waitForSelector(
-          "::-p-xpath(//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Normal'])",
-          { timeout: 3000 },
-        );
-        // @ts-ignore
-        await normalButton?.click();
+        await page
+          ?.locator(
+            "xpath=//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Normal']",
+          )
+          .click({ timeout: 3000 });
       } else if (gasOption === RABBY_GAS_MODE.FAST) {
-        const fastButton = await page?.waitForSelector(
-          "::-p-xpath(//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Fast'])",
-          { timeout: 3000 },
-        );
-        // @ts-ignore
-        await fastButton?.click();
+        await page
+          ?.locator(
+            "xpath=//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Fast']",
+          )
+          .click({ timeout: 3000 });
       } else if (gasOption === RABBY_GAS_MODE.INSTANT) {
-        const instantButton = await page?.waitForSelector(
-          "::-p-xpath(//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Instant'])",
-          { timeout: 3000 },
-        );
-        // @ts-ignore
-        await instantButton?.click();
+        await page
+          ?.locator(
+            "xpath=//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Instant']",
+          )
+          .click({ timeout: 3000 });
       } else if (gasOption === RABBY_GAS_MODE.CUSTOM && gasPrice > 0) {
-        const customButton = await page?.waitForSelector(
-          "::-p-xpath(//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Custom'])",
-          { timeout: 3000 },
-        );
-        // @ts-ignore
-        await customButton?.click();
+        await page
+          ?.locator(
+            "xpath=//li[contains(@class, 'ant-dropdown-menu-item')]//div[text()='Custom']",
+          )
+          .click({ timeout: 3000 });
         await sleep(1000);
 
-        const inputElement = await page?.waitForSelector(".gas-modal input", {
-          timeout: 3000,
-        });
-        await inputElement?.click({ clickCount: 3 });
+        await page?.locator(".gas-modal input").waitFor({ timeout: 3000 });
+        await page?.locator(".gas-modal input").selectText();
         await page?.keyboard?.press("Backspace");
-        await inputElement?.type(gasPrice?.toString(), { delay: 100 });
+        await page
+          ?.locator(".gas-modal input")
+          .pressSequentially(gasPrice?.toString(), { delay: 100 });
 
-        const confirmButton = await page?.waitForSelector(
-          "::-p-xpath(//span[contains(text(), 'Confirm')])",
-          { timeout: 3000 },
-        );
-        // @ts-ignore
-        await confirmButton?.click();
+        await page
+          ?.locator("xpath=//span[contains(text(), 'Confirm')]")
+          .click({ timeout: 3000 });
         await sleep(300);
       }
     }
@@ -415,12 +355,9 @@ export class RabbyWallet {
         isCompleteRender = true;
       }
       try {
-        const element = await page?.waitForSelector(
-          "::-p-xpath(//span[contains(text(), 'Ignore all')])",
-          { timeout: 5000 },
-        );
-        // @ts-ignore
-        await element?.click();
+        await page
+          ?.locator("xpath=//span[contains(text(), 'Ignore all')]")
+          .click({ timeout: 5000 });
         await sleep(300);
       } catch {}
     }
@@ -445,72 +382,50 @@ export class RabbyWallet {
     );
 
     await sleep(300);
-    const addNetworkButton = await page?.waitForSelector(
-      "::-p-xpath(//span[contains(text(), 'Add Custom Network')])",
-      { timeout: 3000 },
-    );
-    // @ts-ignore
-    await addNetworkButton?.click();
+    await page
+      ?.locator("xpath=//span[contains(text(), 'Add Custom Network')]")
+      .click({ timeout: 3000 });
 
     if (config?.mode === RABBY_ADD_NETWORK_TYPE.MANUALY) {
       await sleep(100);
-      const inputChainId = await page?.waitForSelector("#id");
-      await inputChainId?.type(config?.chainId || "");
+      await page?.locator("#id").fill(config?.chainId || "");
 
       await sleep(100);
-      const inputNetworkName = await page?.waitForSelector("#name");
-      await inputNetworkName?.type(config?.networkName || "");
+      await page?.locator("#name").fill(config?.networkName || "");
 
       await sleep(100);
-      const inputRpcUrl = await page?.waitForSelector("#rpcUrl");
-      await inputRpcUrl?.type(config?.rpcUrl || "");
+      await page?.locator("#rpcUrl").fill(config?.rpcUrl || "");
 
       await sleep(100);
-      const inputNativeToken =
-        await page?.waitForSelector("#nativeTokenSymbol");
-      await inputNativeToken?.type(config?.symbol || "");
+      await page?.locator("#nativeTokenSymbol").fill(config?.symbol || "");
 
       await sleep(100);
-      const inputBlockExplorer = await page?.waitForSelector("#scanLink");
-      await inputBlockExplorer?.type(config?.blockExplorer || "");
+      await page?.locator("#scanLink").fill(config?.blockExplorer || "");
 
       await sleep(100);
-      const confirmButton = await page?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Confirm')])",
-        { timeout: 3000 },
-      );
-      // @ts-ignore
-      await confirmButton?.click();
+      await page
+        ?.locator("xpath=//span[contains(text(), 'Confirm')]")
+        .click({ timeout: 3000 });
     } else if (config?.mode === RABBY_ADD_NETWORK_TYPE.FROM_CHAINLIST) {
       await sleep(100);
-      const chainListButton = await page?.waitForSelector(
-        "::-p-xpath(//div[contains(text(), 'Quick add from Chainlist')])",
-        { timeout: 3000 },
-      );
-      // @ts-ignore
-      await chainListButton?.click();
+      await page
+        ?.locator("xpath=//div[contains(text(), 'Quick add from Chainlist')]")
+        .click({ timeout: 3000 });
 
       await sleep(100);
-      const inputChainId = await page?.waitForSelector(
-        "input[placeholder='Search custom network name or ID']",
-      );
-      await inputChainId?.type(config?.chainId || "");
+      await page
+        ?.locator("input[placeholder='Search custom network name or ID']")
+        .fill(config?.chainId || "");
 
       await sleep(100);
-      const chainButton = await page?.waitForSelector(
-        `::-p-xpath(//span[contains(text(), ${config?.chainId || ""})])`,
-        { timeout: 3000 },
-      );
-      // @ts-ignore
-      await chainButton?.click();
+      await page
+        ?.locator(`xpath=//span[contains(text(), ${config?.chainId || ""})]`)
+        .click({ timeout: 3000 });
 
       await sleep(100);
-      const confirmButton = await page?.waitForSelector(
-        "::-p-xpath(//span[contains(text(), 'Confirm')])",
-        { timeout: 3000 },
-      );
-      // @ts-ignore
-      await confirmButton?.click();
+      await page
+        ?.locator("xpath=//span[contains(text(), 'Confirm')]")
+        .click({ timeout: 3000 });
     }
 
     return flowProfile;

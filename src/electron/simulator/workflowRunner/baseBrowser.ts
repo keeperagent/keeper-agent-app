@@ -1,6 +1,4 @@
-import puppeteerCore, { Browser } from "puppeteer-core";
-import { addExtra } from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { chromium, BrowserContext } from "playwright-core";
 import fs from "fs-extra";
 import _ from "lodash";
 import { IProxyProvider, IProxyInfo } from "@/electron/proxy";
@@ -24,9 +22,6 @@ import {
 } from "@/electron/simulator/util";
 import { TEMP_PROFILENAME } from "@/electron/simulator/constant";
 import { StopSignal } from "@/electron/simulator/stopSignal";
-
-const puppeteer = addExtra(puppeteerCore as any);
-puppeteer.use(StealthPlugin());
 
 export class BaseBrowser {
   private decodoProxyProvider: IProxyProvider;
@@ -118,7 +113,7 @@ export class BaseBrowser {
         args.push(`--start-maximized`);
       }
 
-      // wait until able to get a proxys
+      // wait until able to get a proxy
       let proxy: IProxyInfo | null = null;
       const { isUseProxy, proxyIp, proxyType, proxyService } = profileProxy;
       if (isUseProxy) {
@@ -171,7 +166,9 @@ export class BaseBrowser {
           return [null, Error(UNABLE_TO_GET_PROXY)];
         }
 
-        logEveryWhere({ message: `Creating browser with proxy ${proxy?.ip}:${proxy?.port}` });
+        logEveryWhere({
+          message: `Creating browser with proxy ${proxy?.ip}:${proxy?.port}`,
+        });
         const protocol =
           _.find(LIST_NETWORK_PROTOCOL, {
             value: proxy?.protocol,
@@ -196,7 +193,9 @@ export class BaseBrowser {
         return [null, err1];
       }
 
-      const browser: Browser = await puppeteer.launch({
+      const contextOptions: Parameters<
+        typeof chromium.launchPersistentContext
+      >[1] = {
         executablePath: preference?.customChromePath
           ? preference?.customChromePath
           : chromiumExecutablePath,
@@ -209,9 +208,25 @@ export class BaseBrowser {
         ],
         args,
         timeout: 30000,
-        defaultViewport: null,
-        userDataDir: profileFolderPath,
-      });
+        viewport: null,
+      };
+
+      if (userAgent) {
+        contextOptions.userAgent = userAgent;
+      }
+
+      if (proxy?.username && proxy?.password) {
+        contextOptions.proxy = {
+          server: `${_.find(LIST_NETWORK_PROTOCOL, { value: proxy?.protocol })?.prefix || ""}${proxy?.ip}:${proxy?.port}`,
+          username: proxy.username,
+          password: proxy.password,
+        };
+      }
+
+      const browser: BrowserContext = await chromium.launchPersistentContext(
+        profileFolderPath,
+        contextOptions,
+      );
 
       // close browser again if browser not closed completely
       if (this.stopSignal.shouldStop(profileKey)) {
@@ -220,7 +235,7 @@ export class BaseBrowser {
         return [null, Error(`Browser already closed`)];
       }
 
-      const pages = await browser.pages();
+      const pages = browser.pages();
       for (let i = 0; i < pages.length; i++) {
         const pageUrl = pages[i]?.url();
         if (pageUrl == "about:blank") {
@@ -231,28 +246,17 @@ export class BaseBrowser {
 
       const newPage = await browser.newPage();
 
-      // Authenticate with proxy gateway if credentials are provided
-      if (proxy?.username && proxy?.password) {
-        await newPage.authenticate({
-          username: proxy.username,
-          password: proxy.password,
-        });
-      }
-
       // https://stackoverflow.com/questions/56335066/changing-window-navigator-within-puppeteer-to-bypass-antibot-system
-      await newPage?.evaluateOnNewDocument(() => {
+      await newPage?.addInitScript(() => {
         // @ts-ignore
         delete navigator.__proto__.webdriver;
       });
 
       if (!isFullScreen && windowWidth && windowHeight) {
-        await newPage?.setViewport({
+        await newPage?.setViewportSize({
           width: windowWidth,
           height: windowHeight,
         });
-      }
-      if (userAgent) {
-        await newPage?.setUserAgent(userAgent);
       }
 
       if (defaultOpenUrl) {
@@ -260,11 +264,12 @@ export class BaseBrowser {
       }
 
       // Get browser process ID for killing disconnected browsers
-      const browserProcess = browser.process();
+      // @ts-ignore - process() exists at runtime but is not in Playwright's public types
+      const browserProcess = browser.browser()?.process();
       const browserProcessId = browserProcess?.pid || null;
 
       simulator = {
-        browser,
+        browser: browser,
         listPage: [newPage],
         browserProcessId,
         currentPageIndex: 0, // assign first tab is current page

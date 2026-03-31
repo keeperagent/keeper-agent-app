@@ -2,14 +2,19 @@ import axios from "axios";
 import path from "path";
 import fs from "fs-extra";
 import JSZip from "jszip";
-import puppeteer, { Page } from "puppeteer-core";
+import { chromium, Page } from "playwright-core";
 import { IpcMainEvent, app } from "electron";
-import { FILE_TYPE, TEMP_FOLDER, RESPONSE_CODE, MESSAGE } from "@/electron/constant";
+import {
+  FILE_TYPE,
+  TEMP_FOLDER,
+  RESPONSE_CODE,
+  MESSAGE,
+} from "@/electron/constant";
 import { extensionDB } from "@/electron/database/extension";
 import { preferenceDB } from "@/electron/database/preference";
+import { getBaseProfilePath, getProfilePath } from "@/electron/simulator/util";
 import { browserDownloader } from "./browserDownloader";
 import { logEveryWhere, removeLastTrailingSlash, sleep } from "./util";
-import { getBaseProfilePath } from "@/electron/simulator/util";
 
 const tempFolder = removeLastTrailingSlash(
   path.join(app.getPath("userData"), TEMP_FOLDER),
@@ -78,7 +83,6 @@ const toArrayBuffer = (buffer: any) => {
 
   return arrayBuffer;
 };
-
 
 const saveCrxtoZIP = async (
   crxUrl: string,
@@ -198,10 +202,11 @@ const getExtensionIdBrowser = async (
     preference?.browserRevision,
   )?.executablePath;
 
-  const browser = await puppeteer.launch({
+  const tmpDir = getProfilePath("temp_extension_profile");
+  const browser = await chromium.launchPersistentContext(tmpDir, {
     executablePath,
     headless: false,
-    defaultViewport: null,
+    viewport: null,
     args: [
       `--load-extension=${extensionPath}`,
       `--disable-extensions-except=${extensionPath}`,
@@ -294,10 +299,10 @@ const createBaseProfileExtension = async (listExtensionPath: string) => {
     `--load-extension=${listExtensionPath}`,
     `--disable-extensions-except=${listExtensionPath}`,
   ];
-  const browser = await puppeteer.launch({
+  const browser = await chromium.launchPersistentContext(getBaseProfilePath(), {
     executablePath,
     headless: false,
-    defaultViewport: null,
+    viewport: null,
     ignoreDefaultArgs: [
       "--enable-automation",
       "--enable-blink-features=IdleDetection",
@@ -305,7 +310,6 @@ const createBaseProfileExtension = async (listExtensionPath: string) => {
       "--disable-extensions",
     ],
     args,
-    userDataDir: getBaseProfilePath(),
   });
 
   const page = await browser.newPage();

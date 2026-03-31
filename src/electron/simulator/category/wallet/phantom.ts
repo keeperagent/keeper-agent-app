@@ -1,4 +1,4 @@
-import { Page, Browser } from "puppeteer-core";
+import { Page, BrowserContext } from "playwright-core";
 import {
   IConnectPhantomWalletNodeConfig,
   IFlowProfile,
@@ -20,7 +20,7 @@ export class PhantomWallet {
     config: IImportPhantomWalletNodeConfig,
     listVariable: IWorkflowVariable[],
     flowProfile: IFlowProfile,
-    browser: Browser | null,
+    browser: BrowserContext | null,
   ): Promise<IFlowProfile | null> => {
     if (processSkipSetting(config, listVariable)) {
       return flowProfile;
@@ -34,121 +34,89 @@ export class PhantomWallet {
     );
 
     await sleep(300);
-    const haveWalletButton = await tempPage?.waitForSelector(
-      "::-p-xpath(//button[contains(text(), 'I already have a wallet')])",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    await haveWalletButton?.click();
+    await tempPage
+      ?.locator("xpath=//button[contains(text(), 'I already have a wallet')]")
+      .click({ timeout: DEFAULT_TIMEOUT });
 
     await sleep(300);
-    const secretPhaseOption = await tempPage?.waitForSelector(
-      "::-p-xpath(//div[contains(text(), 'Import Recovery Phrase')])",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    await secretPhaseOption?.click();
+    await tempPage
+      ?.locator("xpath=//div[contains(text(), 'Import Recovery Phrase')]")
+      .click({ timeout: DEFAULT_TIMEOUT });
 
     await sleep(300);
     const seedPhrase = getActualValue(config?.seedPhrase || "", listVariable);
     const password = getActualValue(config?.password || "", listVariable);
     const listWord = seedPhrase?.split(" ");
     for (let i = 0; i < listWord?.length; i++) {
-      const input = await tempPage?.waitForSelector(
-        `input[data-testid='secret-recovery-phrase-word-input-${i}']`,
-        { timeout: DEFAULT_TIMEOUT },
-      );
-      await input?.type(listWord[i]);
+      await tempPage
+        ?.locator(`input[data-testid='secret-recovery-phrase-word-input-${i}']`)
+        .fill(listWord[i]);
     }
 
     await sleep(300);
-    const confirmButton = await tempPage?.waitForSelector(
-      "::-p-xpath(//button[contains(text(), 'Import Wallet')])",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    confirmButton?.click();
+    await tempPage
+      ?.locator("xpath=//button[contains(text(), 'Import Wallet')]")
+      .click({ timeout: DEFAULT_TIMEOUT });
 
     await sleep(500);
-    const continueButton = await tempPage?.waitForSelector(
-      "::-p-xpath(//button[contains(text(), 'Continue')])",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    continueButton?.click();
+    await tempPage
+      ?.locator("xpath=//button[contains(text(), 'Continue')]")
+      .click({ timeout: DEFAULT_TIMEOUT });
 
     // create password
     await sleep(300);
-    const inputPassword = await tempPage?.waitForSelector(
-      "input[name='password']",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    await inputPassword?.type(password);
+    await tempPage?.locator("input[name='password']").fill(password);
 
     await sleep(300);
-    const inputConfirmPassword = await tempPage?.waitForSelector(
-      "input[name='confirmPassword']",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    await inputConfirmPassword?.type(password);
+    await tempPage?.locator("input[name='confirmPassword']").fill(password);
 
     await sleep(300);
-    const checkbox = await tempPage?.waitForSelector(
-      `input[data-testid='onboarding-form-terms-of-service-checkbox']`,
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    await checkbox?.click();
+    await tempPage
+      ?.locator(
+        `input[data-testid='onboarding-form-terms-of-service-checkbox']`,
+      )
+      .click({ timeout: DEFAULT_TIMEOUT });
 
     await sleep(300);
-    const continueButton2 = await tempPage?.waitForSelector(
-      "::-p-xpath(//button[contains(text(), 'Continue')])",
-      { timeout: DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    continueButton2?.click();
+    await tempPage
+      ?.locator("xpath=//button[contains(text(), 'Continue')]")
+      .click({ timeout: DEFAULT_TIMEOUT });
 
     try {
       await sleep(300);
-      const continueButton3 = await tempPage?.waitForSelector(
-        "::-p-xpath(//button[contains(text(), 'Continue')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      continueButton3?.click();
+      await tempPage
+        ?.locator("xpath=//button[contains(text(), 'Continue')]")
+        .click({ timeout: 5000 });
     } catch {}
 
     try {
       await sleep(300);
-      const getStartedButton = await tempPage?.waitForSelector(
-        "::-p-xpath(//button[contains(text(), 'Get Started')])",
-        { timeout: 5000 },
-      );
-      // @ts-ignore
-      getStartedButton?.click();
+      await tempPage
+        ?.locator("xpath=//button[contains(text(), 'Get Started')]")
+        .click({ timeout: 5000 });
     } catch {}
 
     // clean up, close side panel if it exists
     await sleep(3000);
     try {
-      const targets = browser?.targets() || [];
-      for (const target of targets) {
-        const targetUrl = target.url();
+      const cdpSession = await browser?.newCDPSession(page);
+      const targets = await cdpSession?.send("Target.getTargets");
+      const { targetInfos = [] } = targets || {};
+      for (const targetInfo of targetInfos || []) {
+        const targetUrl = targetInfo?.url || "";
         if (
           targetUrl?.includes("chrome-extension://") &&
           targetUrl?.includes("popup.html") &&
           targetUrl?.includes(config?.extensionID!)
         ) {
           try {
-            const cdpSession = await target.createCDPSession();
-            // @ts-ignore
-            const targetId = target._targetId;
-            if (targetId) {
-              await cdpSession.send("Target.closeTarget", { targetId });
-            }
+            await cdpSession?.send("Target.closeTarget", {
+              targetId: targetInfo.targetId,
+            });
           } catch {}
         }
       }
+      await cdpSession?.detach();
     } catch {}
 
     return flowProfile;
@@ -170,25 +138,17 @@ export class PhantomWallet {
 
     // type password
     await sleep(500);
-    const passwordInput = await page?.waitForSelector(
-      "input[name='password']",
-      {
-        timeout: 5000,
-      },
-    );
-
     const password = getActualValue(config?.password || "", listVariable);
     await sleep(100);
-    await passwordInput?.type(password);
+    await page
+      ?.locator("input[name='password']")
+      .pressSequentially(password, { delay: 50, timeout: 5000 });
 
     // click "Unlock" button
     await sleep(300);
-    const unlockButton = await page?.waitForSelector(
-      "::-p-xpath(//button[contains(text(), 'Unlock')])",
-      { timeout: 5000 },
-    );
-    // @ts-ignore
-    unlockButton?.click();
+    await page
+      ?.locator("xpath=//button[contains(text(), 'Unlock')]")
+      .click({ timeout: 5000 });
     await sleep(300);
 
     return flowProfile;

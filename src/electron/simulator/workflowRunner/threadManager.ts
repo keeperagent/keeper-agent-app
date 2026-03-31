@@ -1,5 +1,5 @@
 import fs from "fs-extra";
-import { Browser, Page } from "puppeteer-core";
+import { BrowserContext, Page } from "playwright-core";
 import UserAgent from "user-agents";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -243,7 +243,7 @@ export class ThreadManager {
   };
 
   private safeCloseBrowser = async (
-    browser: Browser | null,
+    browser: BrowserContext | null,
     browserProcessId: number | null | undefined,
     threadID: string,
   ): Promise<void> => {
@@ -252,7 +252,7 @@ export class ThreadManager {
     }
 
     try {
-      if (browser?.isConnected()) {
+      if (browser?.browser()?.isConnected()) {
         await browser?.close();
       } else {
         if (browserProcessId) {
@@ -387,7 +387,7 @@ export class ThreadManager {
       config: T,
       listVariable: IWorkflowVariable[],
       flowProfile: IFlowProfile,
-      browser: Browser | null,
+      browser: BrowserContext | null,
     ) => Promise<IFlowProfile | null>;
     timeout?: number;
     taskName: string;

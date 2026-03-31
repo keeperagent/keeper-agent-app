@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Page } from "puppeteer-core";
+import { Page } from "playwright-core";
 import {
   IApproveRevokeEVMNodeConfig,
   ICheckMarketcapNodeConfig,

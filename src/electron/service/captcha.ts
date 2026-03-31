@@ -1,5 +1,5 @@
 import qs from "qs";
-import { Page } from "puppeteer-core";
+import { Page } from "playwright-core";
 import axios from "axios";
 import { preferenceDB } from "@/electron/database/preference";
 import { logEveryWhere, sleep } from "./util";
@@ -28,7 +28,7 @@ const solveCaptcha = async (
   page: Page,
   method: string,
   twoCaptchaAPIKey: string,
-  timeout: number
+  timeout: number,
 ): Promise<Error | null> => {
   try {
     let captchaKey = null;
@@ -49,7 +49,7 @@ const solveCaptcha = async (
     }
 
     const res = await api.get(
-      `/in.php?key=${twoCaptchaAPIKey}&method=${method}&${requestKeyFormat}=${captchaKey}&pageurl=${page?.url()}&json=1`
+      `/in.php?key=${twoCaptchaAPIKey}&method=${method}&${requestKeyFormat}=${captchaKey}&pageurl=${page?.url()}&json=1`,
     );
     const captchaID = res?.data?.request;
     logEveryWhere({ message: `Captcha ID: ${captchaID}` });
@@ -60,7 +60,7 @@ const solveCaptcha = async (
     const [token, err] = await getCaptchaToken(
       captchaID,
       twoCaptchaAPIKey,
-      timeout
+      timeout,
     );
     if (err !== null) {
       return err;
@@ -82,7 +82,7 @@ const solveCaptcha = async (
     } else if (method === CAPTCHA_METHOD.HCAPTCHA) {
       await page.evaluate((token) => {
         let element = document.querySelector(
-          "textarea[name='g-recaptcha-response']"
+          "textarea[name='g-recaptcha-response']",
         );
         if (element) {
           element.innerHTML = token;
@@ -90,7 +90,7 @@ const solveCaptcha = async (
 
         if (!element) {
           element = document.querySelector(
-            "textarea[name='h-recaptcha-response']"
+            "textarea[name='h-recaptcha-response']",
           );
           if (element) {
             element.innerHTML = token;
@@ -98,12 +98,11 @@ const solveCaptcha = async (
         }
       }, token);
       await sleep(1000);
-      const checkout = await page.waitForSelector("#checkbox");
-      await checkout?.click();
+      await page.locator("#checkbox").click();
     } else if (method === CAPTCHA_METHOD.CLOUDFARE_TURNSTILE) {
       await page.evaluate((token) => {
         let element = document.querySelector(
-          "input[name='cf-turnstile-response']"
+          "input[name='cf-turnstile-response']",
         );
         element?.setAttribute("value", token);
 
@@ -125,19 +124,19 @@ const solveCaptcha = async (
 };
 
 const getReCaptchaV2Key = async (
-  page: Page
+  page: Page,
 ): Promise<[string | null, Error | null]> => {
   try {
     const captchaFrame = await page.waitForSelector(
       "iframe[title='reCAPTCHA']",
-      { timeout: 7000 }
+      { timeout: 7000 },
     );
-    const captchaSrc = await captchaFrame?.getProperty("src");
+    const captchaSrc = await captchaFrame?.getAttribute("src");
     if (!captchaSrc) {
       return [null, Error("@captchaSrc not found")];
     }
 
-    const { k } = qs.parse(captchaSrc?.toString());
+    const { k } = qs.parse(captchaSrc);
     if (!k) {
       return [null, Error("@k not found")];
     }
@@ -150,18 +149,18 @@ const getReCaptchaV2Key = async (
 };
 
 const getHCaptchaV2Key = async (
-  page: Page
+  page: Page,
 ): Promise<[string | null, Error | null]> => {
   try {
     const captchaFrame = await page.waitForSelector("iframe[src*='sitekey']", {
       timeout: 7000,
     });
-    const captchaSrc = await captchaFrame?.getProperty("src");
+    const captchaSrc = await captchaFrame?.getAttribute("src");
     if (!captchaSrc) {
       return [null, Error("@captchaSrc not found")];
     }
 
-    const { sitekey } = qs.parse(captchaSrc?.toString());
+    const { sitekey } = qs.parse(captchaSrc);
     if (!sitekey) {
       return [null, Error("@k not found")];
     }
@@ -174,12 +173,12 @@ const getHCaptchaV2Key = async (
 };
 
 const getCloudfareCaptchaKey = async (
-  page: Page
+  page: Page,
 ): Promise<[string | null, Error | null]> => {
   try {
-    const captchaKey = await page?.$eval("div.cf-turnstile", (element) =>
-      element.getAttribute("data-sitekey")
-    );
+    const captchaKey = await page
+      ?.locator("div.cf-turnstile")
+      .getAttribute("data-sitekey");
     if (!captchaKey) {
       return [null, Error("src of iframe not found")];
     }
@@ -194,7 +193,7 @@ const getCloudfareCaptchaKey = async (
 const getCaptchaToken = async (
   captchaID: number,
   twoCaptchaAPIKey: string,
-  timeout: number
+  timeout: number,
 ): Promise<[string | null, Error | null]> => {
   try {
     const startTime = new Date().getTime();
@@ -212,7 +211,7 @@ const getCaptchaToken = async (
       }
 
       const res = await api.get(
-        `/res.php?key=${twoCaptchaAPIKey}&action=get&id=${captchaID}&&json=1`
+        `/res.php?key=${twoCaptchaAPIKey}&action=get&id=${captchaID}&&json=1`,
       );
       if (step !== 0) {
         logEveryWhere({
