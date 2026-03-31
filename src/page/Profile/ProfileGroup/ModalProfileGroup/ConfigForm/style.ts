@@ -31,6 +31,7 @@ const FormWrapper = styled.div`
   .list-item {
     margin: var(--margin-bottom) 0;
     display: flex;
+    flex-wrap: wrap;
     gap: var(--margin-right);
   }
 

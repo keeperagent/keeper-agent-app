@@ -78,15 +78,20 @@ const AgentAnalytic = ({
 
   const theme = useMemo(() => buildTheme(isLightMode), [isLightMode]);
 
+  const stats = {
+    totalDone: analytics?.totalDone || 0,
+    totalFailed: analytics?.totalFailed || 0,
+    avgDurationMs: analytics?.avgDurationMs || 0,
+    pendingNow: analytics?.pendingNow || 0,
+    inProgressNow: analytics?.inProgressNow || 0,
+  };
+
   const successRate = useMemo(() => {
-    if (!analytics) {
-      return 0;
-    }
-    const total = analytics.totalDone + analytics.totalFailed;
+    const total = stats.totalDone + stats.totalFailed;
     if (total === 0) {
       return 0;
     }
-    return Math.round((analytics.totalDone / total) * 100);
+    return Math.round((stats.totalDone / total) * 100);
   }, [analytics]);
 
   const activityChartOptions = useMemo(() => {
@@ -253,9 +258,9 @@ const AgentAnalytic = ({
         borderColor: theme.tooltipBorder,
         textStyle: { color: theme.text, fontSize: 12 },
         formatter: (params: any) => {
-          const [x, y, z] = params.analytics.value;
+          const [x, y, z] = params.value;
           return (
-            `<strong>${trimText(params.analytics.name || "", 15)}</strong><br/>` +
+            `<strong>${trimText(params.name || "", 15)}</strong><br/>` +
             `${translate("agentAnalytic.tooltip.done")}: ${x}<br/>` +
             `${translate("agentAnalytic.tooltip.failureRate")}: ${y}%<br/>` +
             `${translate("agentAnalytic.tooltip.avgDuration")}: ${formatDuration(z)}`
@@ -291,7 +296,7 @@ const AgentAnalytic = ({
           label: {
             show: bubbleData.length <= 25,
             position: "right",
-            formatter: (params: any) => trimText(params.analytics.name, 15),
+            formatter: (params: any) => trimText(params.name, 15),
             color: subtleColor,
             fontSize: 11,
           },
@@ -410,7 +415,7 @@ const AgentAnalytic = ({
           <StatStrip>
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#52c41a" }}>
-                <AnimatedNumbers animateToNumber={analytics.totalDone} />
+                <AnimatedNumbers animateToNumber={stats.totalDone} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.done")}
@@ -419,7 +424,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#ff4d4f" }}>
-                <AnimatedNumbers animateToNumber={analytics.totalFailed} />
+                <AnimatedNumbers animateToNumber={stats.totalFailed} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.failed")}
@@ -440,7 +445,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#722ed1" }}>
-                {formatDuration(analytics.avgDurationMs)}
+                {formatDuration(stats.avgDurationMs)}
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.avgDuration")}
@@ -449,7 +454,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#faad14" }}>
-                <AnimatedNumbers animateToNumber={analytics.pendingNow} />
+                <AnimatedNumbers animateToNumber={stats.pendingNow} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.pending")}
@@ -458,7 +463,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#13c2c2" }}>
-                <AnimatedNumbers animateToNumber={analytics.inProgressNow} />
+                <AnimatedNumbers animateToNumber={stats.inProgressNow} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.inProgress")}

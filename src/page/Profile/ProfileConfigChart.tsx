@@ -15,9 +15,9 @@ const ProfileConfigChart = (props: IChartProps) => {
     const children: BubbleDataNode[] = [];
 
     listWalletGroup.forEach((walletGroup: IWalletGroup) => {
-      const totalWallet = walletGroup.totalWallet || 0;
+      const totalWallet = walletGroup?.totalWallet || 0;
       children.push({
-        name: walletGroup.name || "",
+        name: walletGroup?.name || "",
         value: Math.max(totalWallet, 1),
         nodeType: "walletGroup",
         tooltipLabel: `${totalWallet} items`,
@@ -25,9 +25,9 @@ const ProfileConfigChart = (props: IChartProps) => {
     });
 
     listResourceGroup.forEach((resourceGroup: IResourceGroup) => {
-      const totalResource = (resourceGroup as any).totalResource || 0;
+      const totalResource = resourceGroup?.totalResource || 0;
       children.push({
-        name: resourceGroup.name || "",
+        name: resourceGroup?.name || "",
         value: Math.max(totalResource, 1),
         nodeType: "resourceGroup",
         tooltipLabel: `${totalResource} items`,
