@@ -2,23 +2,17 @@ import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   margin-right: -4rem;
   margin-left: -2rem;
-
-  & > div {
-    width: 100%;
-    z-index: 1;
-  }
 
   .total {
     display: flex;
     font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: -1rem;
-    z-index: 2;
-    position: absolute;
-    margin-left: 1rem;
+    padding-left: 1rem;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
 
     .label {

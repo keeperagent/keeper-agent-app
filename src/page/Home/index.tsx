@@ -113,7 +113,7 @@ const HomePage = (props: IProps) => {
       </div>
 
       <div className="file-statistic">
-        <Row gutter={12} align="middle" style={{ overflow: "hidden" }}>
+        <Row gutter={12} align="top" style={{ overflow: "hidden" }}>
           <Col span={12}>
             <DatabaseInfo />
           </Col>

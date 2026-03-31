@@ -1,18 +1,14 @@
 import { useMemo } from "react";
 import { connect } from "react-redux";
 import _ from "lodash";
-import Highcharts from "highcharts";
+import ReactECharts from "echarts-for-react";
 import AnimatedNumbers from "react-animated-numbers";
-import HighChartMore from "highcharts/highcharts-more";
-import HighchartsReact from "highcharts-react-official";
 import { RootState } from "@/redux/store";
 import { COLORS } from "@/config/constant";
 import { useTranslation } from "@/hook";
 import { formatByte } from "@/service/util";
 import { IFile } from "@/electron/type";
 import { Wrapper } from "./style";
-
-HighChartMore(Highcharts);
 
 type IProps = {
   totalProfileSize: number;
@@ -45,88 +41,53 @@ const FolderSizeStatistic = (props: IProps) => {
         database?.size || 0,
       ]) || 0;
 
+    const allSeries = [
+      { name: "Database", data: [database?.size || 0], color: COLORS[0] },
+      {
+        name: "Extension folder",
+        data: [totalExtensionSize],
+        color: COLORS[6],
+      },
+      { name: "Browser folder", data: [totalBrowserSize], color: COLORS[8] },
+      { name: "Profile folder", data: [totalProfileSize], color: COLORS[7] },
+      { name: "Agent skill folder", data: [totalSkillSize], color: COLORS[4] },
+    ].filter((item) => item.data[0] > 0);
+
     return {
-      chart: {
-        type: "bar",
-        height: "90px",
-      },
-      title: {
-        text: "",
-      },
-      yAxis: {
-        visible: false,
-        max: maxSize,
-      },
-      xAxis: {
-        categories: ["Storage"],
-        visible: false,
-      },
-      legend: { enabled: false },
+      backgroundColor: "transparent",
+      grid: { top: 0, right: 0, bottom: 0, left: 0 },
+      xAxis: { type: "value", show: false, max: maxSize },
+      yAxis: { type: "category", data: ["Storage"], show: false },
+      legend: { show: false },
       tooltip: {
-        useHTML: true,
-        // @ts-ignore
-        formatter: function () {
-          // @ts-ignore
-          const size = formatByte(Number(this?.y));
-
-          // @ts-ignore
-          const name = this?.series?.name;
-
-          return `
-          <div>
-            <div>${name}:</div>
-            <strong>${size}</strong>
-          </div>
-         `;
+        trigger: "item",
+        appendToBody: true,
+        formatter: (params: any) => {
+          const size = formatByte(Number(params.value));
+          return `<div><div>${params.seriesName}:</div><strong>${size}</strong></div>`;
         },
       },
-      plotOptions: {
-        series: {
-          stacking: "normal",
-          dataLabels: {
-            enabled: true,
-            // @ts-ignore
-            formatter: function () {
-              // @ts-ignore
-              return formatByte(Number(this?.y));
-            },
+      series: allSeries.map((item) => ({
+        name: item.name,
+        type: "bar",
+        stack: "total",
+        data: item.data,
+        label: {
+          show: true,
+          position: "inside",
+          formatter: (params: any) => {
+            if (Number(params.value) / maxSize < 0.08) {
+              return "";
+            }
+            return formatByte(Number(params.value));
           },
+          color: "#fff",
+          fontSize: 11,
+          textShadowColor: "rgba(0,0,0,0.4)",
+          textShadowBlur: 3,
         },
-        bar: {
-          borderWidth: 0,
-        },
-      },
-      series: [
-        {
-          name: "Database",
-          data: [database?.size || 0],
-          color: COLORS[0],
-        },
-        {
-          name: "Extension folder",
-          data: [totalExtensionSize],
-          color: COLORS[6],
-        },
-        {
-          name: "Browser folder",
-          data: [totalBrowserSize],
-          color: COLORS[8],
-        },
-        {
-          name: "Profile folder",
-          data: [totalProfileSize],
-          color: COLORS[7],
-        },
-        {
-          name: "Agent skill folder",
-          data: [totalSkillSize],
-          color: COLORS[4],
-        },
-      ]?.filter((item: any) => item?.data?.[0] > 0),
-      // hide hightchart.com text
-      credits: {
-        enabled: false,
-      },
+        itemStyle: { color: item.color, borderWidth: 0 },
+      })),
     };
   }, [
     totalProfileSize,
@@ -165,7 +126,11 @@ const FolderSizeStatistic = (props: IProps) => {
           <span className="unit">{totalSize?.[1]}</span>
         </div>
       </div>
-      <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+
+      <ReactECharts
+        option={chartOptions}
+        style={{ height: "30px", width: "100%" }}
+      />
     </Wrapper>
   );
 };

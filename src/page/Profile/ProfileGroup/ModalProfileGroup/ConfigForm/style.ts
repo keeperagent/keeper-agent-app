@@ -29,8 +29,10 @@ const FormWrapper = styled.div`
   }
 
   .list-item {
-    margin-top: var(--margin-top);
-    margin-bottom: var(--margin-bottom);
+    margin: var(--margin-bottom) 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--margin-right);
   }
 
   .chart {

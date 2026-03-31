@@ -210,7 +210,7 @@
   "agentAnalytic.chart.agentPeakHours": "Agent peak hours",
   "agentAnalytic.empty.noAgentData": "No agent data",
   "agentHub.tab.agent": "Agent",
-  "agentHub.tab.analytics": "Analytics",
+  "agentHub.tab.analytics": "Analytic",
   "home.missingDefaultBrowserVersion": "There is no default browser version yet, please contact admin for support",
   "home.numberCampaign": "Campaign",
   "home.numberWorkflow": "Workflow",

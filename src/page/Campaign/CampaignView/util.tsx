@@ -40,6 +40,7 @@ export const renderListWorkflowTooltip = (
             </Tooltip>
           )}
         </div>
+
         <div className="description">
           {trimText(workflow?.note || "", 60) || EMPTY_STRING}
         </div>
@@ -49,9 +50,7 @@ export const renderListWorkflowTooltip = (
 
   return (
     <Dropdown menu={{ items }} placement="bottomRight">
-      <IconHighlightWrapper
-        className={classname ? `${classname} disable` : "disable"}
-      >
+      <IconHighlightWrapper className={classname || ""}>
         {icon}
       </IconHighlightWrapper>
     </Dropdown>
