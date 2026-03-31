@@ -18,7 +18,7 @@ const ProfileConfigChart = (props: IChartProps) => {
       const totalWallet = walletGroup?.totalWallet || 0;
       children.push({
         name: walletGroup?.name || "",
-        value: Math.max(totalWallet, 1),
+        value: totalWallet,
         nodeType: "walletGroup",
         tooltipLabel: `${totalWallet} items`,
       });
@@ -28,15 +28,11 @@ const ProfileConfigChart = (props: IChartProps) => {
       const totalResource = resourceGroup?.totalResource || 0;
       children.push({
         name: resourceGroup?.name || "",
-        value: Math.max(totalResource, 1),
+        value: totalResource,
         nodeType: "resourceGroup",
         tooltipLabel: `${totalResource} items`,
       });
     });
-
-    if (children.length === 0) {
-      children.push({ name: "", value: 1, nodeType: "walletGroup" });
-    }
 
     // No child smaller than 10% of the largest sibling
     const maxChildValue = Math.max(
@@ -49,6 +45,10 @@ const ProfileConfigChart = (props: IChartProps) => {
 
     return { name: "root", nodeType: "root", children };
   }, [listWalletGroup, listResourceGroup]);
+
+  if (!treeData.children?.length) {
+    return null;
+  }
 
   return (
     <ChartWrapper>
