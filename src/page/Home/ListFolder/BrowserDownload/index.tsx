@@ -146,7 +146,7 @@ const BrowserDownload = (props: IProps) => {
               ref={ref1}
               loading={loading}
             >
-              Download
+              {translate("browser.download")}
             </Button>
           </div>
         )}

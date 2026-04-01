@@ -57,8 +57,12 @@ const downloadCrxStream = async (
     signal: currentDownloadAbortController.signal,
     headers: { "User-Agent": `Mozilla/5.0 Chrome/${browserVersion}` },
   });
-  const totalSize =
-    response.headers["Content-Length"] || response.headers["content-length"];
+  const totalSize = parseInt(
+    response.headers["Content-Length"] ||
+      response.headers["content-length"] ||
+      "0",
+    10,
+  );
   let downloadedSize = 0;
   let crxBuffer = new Uint8Array(0);
 
@@ -70,7 +74,10 @@ const downloadCrxStream = async (
     crxBuffer = newBuffer;
 
     downloadedSize += chunkArray.length;
-    const percentage = ((downloadedSize / totalSize) * 100).toFixed(0);
+    const percentage =
+      totalSize > 0
+        ? Number(((downloadedSize / totalSize) * 100).toFixed(0))
+        : undefined;
 
     event.reply(MESSAGE.IMPORT_EXTENSION_RES, {
       code: RESPONSE_CODE.NORMAL_MESSAGE,
@@ -80,10 +87,13 @@ const downloadCrxStream = async (
     });
   });
 
-  await new Promise((resolve) => {
+  await new Promise((resolve, reject) => {
     response.data.on("end", () => resolve(true));
+    response.data.on("error", (err: Error) => reject(err));
+    response.data.on("aborted", () => reject(new Error("Stream aborted")));
   });
 
+  currentDownloadAbortController = null;
   return crxBuffer.buffer;
 };
 
@@ -109,6 +119,10 @@ const getCrxBuffer = async (
       const buffer = await downloadCrxStream(crxUrl, event);
       return [buffer, null];
     } catch (err: any) {
+      currentDownloadAbortController = null;
+      if (axios.isCancel(err) || err?.name === "CanceledError") {
+        return [null, new Error("Download cancelled")];
+      }
       lastError = err;
       logEveryWhere({
         message: `getCrxBuffer() attempt ${attempt}/${MAX_RETRIES} failed: ${err?.message}`,

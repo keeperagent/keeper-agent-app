@@ -1080,6 +1080,7 @@
   "browser.notExist": "This version of Chromium does not exist",
   "browser.checking": "Checking",
   "browser.customChromePath": "Custom Chrome path",
+  "browser.download": "Download",
   "schedule.create": "Create schedule",
   "schedule.update": "Update schedule",
   "schedule.namePlaceholder": "Enter schedule name",
