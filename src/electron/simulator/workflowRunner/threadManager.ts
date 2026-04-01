@@ -1,8 +1,8 @@
 import fs from "fs-extra";
-import { BrowserContext, Page } from "playwright-core";
-import UserAgent from "user-agents";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { BrowserContext, Page } from "playwright-core";
+import UserAgent from "user-agents";
 import { BaseBrowser } from "./baseBrowser";
 import {
   ISimulator,
@@ -212,29 +212,19 @@ export class ThreadManager {
     }
   };
 
-  // Kill browser process by PID (works even when disconnected like after computer sleep)
   private killBrowserProcess = async (
-    processId: number | null | undefined,
+    processId: number,
     threadID: string,
   ): Promise<void> => {
-    if (!processId) {
-      return;
-    }
-
     try {
       const execAsync = promisify(exec);
       const platform = process.platform;
-
       let killCommand: string;
       if (platform === "win32") {
         killCommand = `taskkill /F /PID ${processId}`;
-      } else if (platform === "darwin" || platform === "linux") {
-        killCommand = `kill -9 ${processId}`;
       } else {
-        logEveryWhere({ message: `Unsupported platform: ${platform}` });
-        return;
+        killCommand = `kill -9 ${processId}`;
       }
-
       await execAsync(killCommand);
       logEveryWhere({
         message: `Browser process ${processId} killed for thread ${threadID}`,
@@ -244,7 +234,7 @@ export class ThreadManager {
 
   private safeCloseBrowser = async (
     browser: BrowserContext | null,
-    browserProcessId: number | null | undefined,
+    browserProcessId: number | null,
     threadID: string,
   ): Promise<void> => {
     if (!browser && !browserProcessId) {
@@ -252,13 +242,7 @@ export class ThreadManager {
     }
 
     try {
-      if (browser?.browser()?.isConnected()) {
-        await browser?.close();
-      } else {
-        if (browserProcessId) {
-          await this.killBrowserProcess(browserProcessId, threadID);
-        }
-      }
+      await browser?.close();
     } catch {
       if (browserProcessId) {
         await this.killBrowserProcess(browserProcessId, threadID);
@@ -285,14 +269,13 @@ export class ThreadManager {
         this.stopSignal.saveStopSignal(profileKey);
       }
 
-      // Handle browser cleanup - including disconnected browsers (e.g., after sleep)
       if (simulator?.browser || simulator?.browserProcessId) {
         await this.safeCloseBrowser(
           simulator.browser,
           simulator.browserProcessId,
           threadID,
         );
-        simulator.browser = null; // Clean up reference after closing
+        simulator.browser = null;
         simulator.browserProcessId = null;
       }
 

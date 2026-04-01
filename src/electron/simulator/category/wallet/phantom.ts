@@ -35,7 +35,7 @@ export class PhantomWallet {
 
     await sleep(300);
     await tempPage
-      ?.locator("xpath=//button[contains(text(), 'I already have a wallet')]")
+      ?.locator("xpath=//button[contains(text(), 'I Already Have a Wallet')]")
       .click({ timeout: DEFAULT_TIMEOUT });
 
     await sleep(300);

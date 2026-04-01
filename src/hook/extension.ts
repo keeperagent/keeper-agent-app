@@ -99,6 +99,9 @@ const useImportExtension = () => {
         }
       },
     );
+    return () => {
+      window?.electron?.removeAllListeners(MESSAGE.IMPORT_EXTENSION_RES);
+    };
   }, []);
 
   const importExtension = (listFile: IFile[] | { link: string }[]) => {
@@ -107,6 +110,13 @@ const useImportExtension = () => {
     setIsSuccess(null);
     setIsUploaded(false);
     window?.electron?.send(MESSAGE.IMPORT_EXTENSION, { listFile });
+  };
+
+  const cancelImportExtension = () => {
+    window?.electron?.send(MESSAGE.CANCEL_IMPORT_EXTENSION, {});
+    setLoading(false);
+    setDownloadedPercentage(0);
+    setIsSuccess(null);
   };
 
   useEffect(() => {
@@ -135,6 +145,7 @@ const useImportExtension = () => {
 
   return {
     importExtension,
+    cancelImportExtension,
     getExtensionId,
     loading,
     isSuccess,

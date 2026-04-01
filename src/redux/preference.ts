@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { IPreference, IStatistic } from "@/electron/type";
-import { IConfiguration } from "@/types/interface";
 import { RootState } from "./store";
 
 interface IPreferenceState {
@@ -12,7 +11,6 @@ interface IPreferenceState {
   showUploadResourceHelpAlert: boolean;
   showUploadWorkflowHelpAlert: boolean;
   showPreferenceHelpAlert: boolean;
-  configuration: IConfiguration;
 }
 
 const initialState: IPreferenceState = {
@@ -24,11 +22,6 @@ const initialState: IPreferenceState = {
   showUploadResourceHelpAlert: true,
   showUploadWorkflowHelpAlert: true,
   showPreferenceHelpAlert: true,
-  configuration: {
-    defaultBrowserVersionWindow: "",
-    defaultBrowserVersionMacOSArm: "",
-    defaultBrowserVersionMacOSIntel: "",
-  },
 };
 
 export const preferenceSlice = createSlice({
@@ -92,12 +85,6 @@ export const preferenceSlice = createSlice({
     ) => {
       state.showPreferenceHelpAlert = action.payload;
     },
-    actSaveConfiguration: (
-      state: IPreferenceState,
-      action: PayloadAction<IConfiguration>
-    ) => {
-      state.configuration = action.payload;
-    },
   },
 });
 
@@ -111,7 +98,6 @@ export const {
   actSetShouldShowUploadWorkflowHelpAlert,
   actSetShouldShowUploadResourceHelpAlert,
   actSetShowPreferenceHelpAlert,
-  actSaveConfiguration,
 } = preferenceSlice.actions;
 export const preferenceSelector = (state: RootState) => state.Preference;
 export default preferenceSlice.reducer;

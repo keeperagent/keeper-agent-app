@@ -37,5 +37,5 @@ export default (db: Sequelize) =>
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
-    { timestamps: false }
+    { timestamps: false },
   );

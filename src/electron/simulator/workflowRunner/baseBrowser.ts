@@ -15,8 +15,8 @@ import {
 import {
   ISimulator,
   calculateWindowPositions,
-  getDeviceSize,
   getBaseProfilePath,
+  getDeviceSize,
   getProfilePath,
   sleep,
 } from "@/electron/simulator/util";
@@ -178,13 +178,22 @@ export class BaseBrowser {
       }
 
       const [preference, err] = await preferenceDB.getOnePreference();
-      if (err || !preference || !preference?.browserRevision) {
+      if (err || !preference) {
         return [null, err];
       }
 
-      const chromiumExecutablePath = browserDownloader.revisionInfo(
-        preference?.browserRevision,
-      )?.executablePath;
+      const chromiumExecutablePath =
+        preference?.customChromePath ||
+        browserDownloader.getChromiumExecutablePath();
+
+      if (!chromiumExecutablePath) {
+        return [
+          null,
+          Error(
+            "No browser found. Please download Chromium from the Browser tab first.",
+          ),
+        ];
+      }
 
       const profileFolderPath = getProfilePath(profileName);
       const [err1, isCreateNewFolder] =
@@ -196,16 +205,9 @@ export class BaseBrowser {
       const contextOptions: Parameters<
         typeof chromium.launchPersistentContext
       >[1] = {
-        executablePath: preference?.customChromePath
-          ? preference?.customChromePath
-          : chromiumExecutablePath,
+        executablePath: chromiumExecutablePath,
         headless: false,
-        ignoreDefaultArgs: [
-          "--enable-automation",
-          "--enable-blink-features=IdleDetection",
-          "--enable-blink-features=AutomationControlled",
-          "--disable-extensions",
-        ],
+        ignoreDefaultArgs: ["--enable-automation", "--disable-extensions"],
         args,
         timeout: 30000,
         viewport: null,
@@ -235,21 +237,27 @@ export class BaseBrowser {
         return [null, Error(`Browser already closed`)];
       }
 
+      const newPage = await browser.newPage();
       const pages = browser.pages();
       for (let i = 0; i < pages.length; i++) {
         const pageUrl = pages[i]?.url();
-        if (pageUrl == "about:blank") {
+        if (pageUrl == "about:blank" && pages[i] !== newPage) {
           await pages[i]?.close();
         }
       }
       await sleep(300);
 
-      const newPage = await browser.newPage();
-
-      // https://stackoverflow.com/questions/56335066/changing-window-navigator-within-puppeteer-to-bypass-antibot-system
       await newPage?.addInitScript(() => {
+        // Remove webdriver flag
+        // https://stackoverflow.com/questions/56335066/changing-window-navigator-within-puppeteer-to-bypass-antibot-system
         // @ts-ignore
         delete navigator.__proto__.webdriver;
+
+        // Inject window.chrome — Chromium doesn't have this but sites check for it
+        Object.defineProperty(window, "chrome", {
+          value: { runtime: {} },
+          writable: false,
+        });
       });
 
       if (!isFullScreen && windowWidth && windowHeight) {
@@ -263,10 +271,15 @@ export class BaseBrowser {
         await newPage?.goto(defaultOpenUrl);
       }
 
-      // Get browser process ID for killing disconnected browsers
-      // @ts-ignore - process() exists at runtime but is not in Playwright's public types
-      const browserProcess = browser.browser()?.process();
-      const browserProcessId = browserProcess?.pid || null;
+      let browserProcessId: number | null = null;
+      try {
+        // @ts-ignore
+        browserProcessId =
+          (browser as any)._connection?.toImpl?.(browser)?._browser?.options
+            ?.browserProcess?.process?.pid || null;
+      } catch {
+        browserProcessId = null;
+      }
 
       simulator = {
         browser: browser,

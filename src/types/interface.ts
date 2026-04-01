@@ -39,23 +39,13 @@ export type IWorkflowData = {
   edges: Edge[];
 };
 
-export type IConfiguration = {
-  defaultBrowserVersionWindow: string;
-  defaultBrowserVersionMacOSArm: string;
-  defaultBrowserVersionMacOSIntel: string;
-};
-
 export type IUser = {
   _id?: string;
   username?: string;
   password?: string;
   email?: string;
-  roles?: string[];
-  isVerify?: boolean;
   tierStatus?: ITierStatus;
   refreshToken?: string;
-  receiveWalletAddress?: string;
-  discountPercent?: number;
   createdAt?: string;
   updatedAt?: string;
 };

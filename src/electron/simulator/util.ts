@@ -15,7 +15,7 @@ export interface ISimulator {
   listPage: Page[];
   currentPageIndex: number | null;
   isCreateNewFolder: boolean; // is profile is created with new folder
-  browserProcessId?: number | null; // Store browser process ID for killing disconnected browsers
+  browserProcessId: number | null;
 }
 
 export const getProfilePath = (profileName: string) =>

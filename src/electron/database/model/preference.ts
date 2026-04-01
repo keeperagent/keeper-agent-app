@@ -41,10 +41,6 @@ export default (db: Sequelize) =>
         type: DataTypes.STRING,
         defaultValue: null,
       },
-      browserRevision: {
-        type: DataTypes.STRING,
-        defaultValue: null,
-      },
       hideMinimap: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

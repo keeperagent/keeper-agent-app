@@ -1,156 +1,235 @@
 import fs from "fs-extra";
 import path from "path";
-import {
-  Browser,
-  BrowserPlatform,
-  install,
-  canDownload,
-  InstallOptions,
-  detectBrowserPlatform,
-  getInstalledBrowsers,
-  computeExecutablePath,
-} from "@puppeteer/browsers";
+import https from "https";
+import http from "http";
 import { app } from "electron";
-import { BROWSER_FOLDER } from "@/electron/constant";
+import { BROWSER_FOLDER, TEMP_FOLDER } from "@/electron/constant";
 import { logEveryWhere } from "./util";
 
-// Reference:
-// https://github.com/puppeteer/puppeteer/blob/11d94525c821ab1bb6e059f3b998a8660f597348/utils/ChromiumDownloader.js
-// https://github.com/puppeteer/puppeteer/blob/11d94525c821ab1bb6e059f3b998a8660f597348/install.js
+const DOWNLOAD_FOLDER = path.join(app.getPath("userData"), BROWSER_FOLDER);
+const TEMP_FOLDER_PATH = path.join(app.getPath("userData"), TEMP_FOLDER);
 
-// List Chrome revision:
-// https://chromiumdash.appspot.com/releases?platform=Mac
-// https://download-chromium.appspot.com/
-// https://chromiumdash.appspot.com/fetch_releases?platform=Mac&channel=Stable&num=1
-// https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json
-// https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
-// https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Mac
+type IPlatformInfo = {
+  platformId: string;
+  executableRelativePath: string;
+};
 
-const DOWNLOAD_FOLDER = path.join(
-  path.join(app.getPath("userData")),
-  BROWSER_FOLDER,
-);
+const getPlatformInfo = (): IPlatformInfo | null => {
+  const { platform, arch } = process;
 
-type IRevision = {
-  platform: string;
-  revision: string;
+  if (platform === "darwin" && arch === "arm64") {
+    return {
+      platformId: "mac-arm64",
+      executableRelativePath: "chrome-mac/Chromium.app/Contents/MacOS/Chromium",
+    };
+  }
+
+  if (platform === "darwin" && arch === "x64") {
+    return {
+      platformId: "mac",
+      executableRelativePath: "chrome-mac/Chromium.app/Contents/MacOS/Chromium",
+    };
+  }
+
+  if (platform === "win32") {
+    return {
+      platformId: "win64",
+      executableRelativePath: "chrome-win/chrome.exe",
+    };
+  }
+
+  return null;
+};
+
+const getChromiumInfo = () => {
+  const browsersJsonPath = path.join(
+    path.dirname(require.resolve("playwright-core")),
+    "browsers.json",
+  );
+  const browsersJson = JSON.parse(fs.readFileSync(browsersJsonPath, "utf-8"));
+  const chromium = browsersJson.browsers.find(
+    (browser: any) => browser.name === "chromium",
+  );
+  return chromium as { revision: string; browserVersion: string };
+};
+
+const getZipExtract = () => {
+  const { extract } = require("playwright-core/lib/zipBundle");
+  return extract;
 };
 
 class BrowserDownloader {
-  private platform: BrowserPlatform | undefined;
-
-  constructor() {
-    this.platform = detectBrowserPlatform();
-  }
-
-  async installedBrowser() {
-    const listBrowser = await getInstalledBrowsers({
-      cacheDir: DOWNLOAD_FOLDER,
-    });
-    return listBrowser;
-  }
-
-  async downloadRevision(revision: string, callback?: any): Promise<boolean> {
-    const platform = detectBrowserPlatform();
-    if (!platform) {
-      return true;
+  private getExecutablePath(): string | null {
+    const platformInfo = getPlatformInfo();
+    if (!platformInfo) {
+      return null;
     }
-    const folderPath = getFolderPath(platform, revision);
+    const { revision } = getChromiumInfo();
+    return path.join(
+      DOWNLOAD_FOLDER,
+      `chromium-${revision}`,
+      platformInfo.executableRelativePath,
+    );
+  }
 
-    // Determine if this is a Chrome version (from Chrome for Testing) or Chromium revision
-    // Chrome versions are like "131.0.6778.85", Chromium revisions are numeric like "1311234"
-    const isChromeVersion = revision.includes(".");
-    const browser = isChromeVersion ? Browser.CHROME : Browser.CHROMIUM;
+  private getBrowserDir(): string | null {
+    const { revision } = getChromiumInfo();
+    return path.join(DOWNLOAD_FOLDER, `chromium-${revision}`);
+  }
 
-    const options: InstallOptions = {
-      platform,
-      browser,
-      buildId: revision,
-      cacheDir: folderPath, // if @revision is already installed, it will skip instalation step
-      downloadProgressCallback: (
-        downloadedBytes: number,
-        totalBytes: number,
-      ) => {
+  private getDownloadURL(): string | null {
+    const platformInfo = getPlatformInfo();
+    if (!platformInfo) {
+      return null;
+    }
+    const { revision } = getChromiumInfo();
+    const { platformId } = platformInfo;
+    return `https://cdn.playwright.dev/builds/chromium/${revision}/chromium-${platformId}.zip`;
+  }
+
+  isChromiumInstalled(): boolean {
+    const executablePath = this.getExecutablePath();
+    return !!executablePath && fs.existsSync(executablePath);
+  }
+
+  getChromiumExecutablePath(): string | undefined {
+    const executablePath = this.getExecutablePath();
+    return executablePath && fs.existsSync(executablePath)
+      ? executablePath
+      : undefined;
+  }
+
+  async downloadChromium(
+    callback?: (done: number, total: number) => void,
+  ): Promise<boolean> {
+    try {
+      logEveryWhere({ message: "downloadChromium(): start" });
+      const downloadURL = this.getDownloadURL();
+      const browserDir = this.getBrowserDir();
+
+      if (!downloadURL || !browserDir) {
         logEveryWhere({
-          message: `downloadBrowser() progress: ${Number((downloadedBytes / totalBytes) * 100).toFixed(1)}%`,
+          message: "downloadChromium(): unsupported platform",
         });
-        if (callback) {
-          callback(downloadedBytes, totalBytes);
+        return false;
+      }
+
+      logEveryWhere({
+        message: `downloadChromium(): url=${downloadURL}, dir=${browserDir}`,
+      });
+
+      if (this.isChromiumInstalled()) {
+        return true;
+      }
+
+      const zipPath = path.join(TEMP_FOLDER_PATH, "chromium.zip");
+      if (fs.existsSync(zipPath)) {
+        await fs.remove(zipPath);
+      }
+
+      try {
+        await this.downloadFile(downloadURL, zipPath, callback);
+
+        if (fs.existsSync(browserDir)) {
+          await fs.remove(browserDir);
         }
-      },
-    };
 
-    const isAvailable = await canDownload(options);
-    if (isAvailable) {
-      await install({ ...options, unpack: true });
-      return true;
-    }
+        logEveryWhere({ message: "downloadChromium(): extracting..." });
+        const extract = getZipExtract();
+        await extract(zipPath, { dir: browserDir });
 
-    return false;
-  }
+        const executablePath = this.getExecutablePath();
+        if (executablePath && fs.existsSync(executablePath)) {
+          await fs.chmod(executablePath, 0o755);
+        }
 
-  downloadedRevisions(): IRevision[] {
-    if (!fs.existsSync(DOWNLOAD_FOLDER)) {
-      return [];
-    }
-
-    const fileNames = fs.readdirSync(DOWNLOAD_FOLDER);
-    const listRevision: any[] = fileNames
-      .map((fileName) => parseFolderPath(fileName))
-      .filter((revision: IRevision | null) => revision !== null);
-    return listRevision;
-  }
-
-  removeRevision(revision: string) {
-    if (!this.platform) {
-      return;
-    }
-
-    const folderPath = getFolderPath(this.platform, revision);
-    const isExist = fs.pathExistsSync(folderPath);
-    if (isExist) {
-      fs.rmSync(folderPath, { recursive: true, maxRetries: 3 });
+        logEveryWhere({ message: "downloadChromium(): done" });
+        return true;
+      } finally {
+        if (fs.existsSync(zipPath)) {
+          await fs.remove(zipPath);
+        }
+      }
+    } catch (error: any) {
+      logEveryWhere({
+        message: `downloadChromium() error: ${error?.message}`,
+      });
+      return false;
     }
   }
 
-  revisionInfo(revision: string) {
-    if (!this.platform) {
-      return;
-    }
+  private downloadFile(
+    url: string,
+    destPath: string,
+    callback?: (done: number, total: number) => void,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const makeRequest = (requestUrl: string) => {
+        const client = requestUrl.startsWith("https") ? https : http;
+        client
+          .get(requestUrl, (response) => {
+            if (
+              response.statusCode === 301 ||
+              response.statusCode === 302 ||
+              response.statusCode === 307 ||
+              response.statusCode === 308
+            ) {
+              const location = response.headers.location;
+              if (!location) {
+                reject(new Error("Redirect with no location header"));
+                return;
+              }
+              makeRequest(location);
+              return;
+            }
 
-    const folderPath = getFolderPath(this.platform, revision);
-    // Determine browser type based on revision format
-    const isChromeVersion = revision.includes(".");
-    const browser = isChromeVersion ? Browser.CHROME : Browser.CHROMIUM;
+            if (response.statusCode !== 200) {
+              reject(new Error(`Download failed: HTTP ${response.statusCode}`));
+              return;
+            }
 
-    const executablePath = computeExecutablePath({
-      cacheDir: folderPath,
-      browser,
-      platform: this.platform,
-      buildId: revision,
+            const totalBytes = parseInt(
+              response.headers["content-length"] || "0",
+              10,
+            );
+            let downloadedBytes = 0;
+            let lastReportedPercent = -1;
+
+            const fileStream = fs.createWriteStream(destPath);
+            response.pipe(fileStream);
+
+            response.on("data", (chunk: Buffer) => {
+              downloadedBytes += chunk.length;
+              if (callback && totalBytes > 0) {
+                const percent = Math.floor(
+                  (downloadedBytes / totalBytes) * 100,
+                );
+                if (percent > lastReportedPercent) {
+                  lastReportedPercent = percent;
+                  logEveryWhere({
+                    message: `downloadChromium() progress: ${percent}%`,
+                  });
+                  callback(downloadedBytes, totalBytes);
+                }
+              }
+            });
+
+            fileStream.on("finish", () => {
+              fileStream.close();
+              resolve();
+            });
+            fileStream.on("error", reject);
+            response.on("error", reject);
+          })
+          .on("error", reject);
+      };
+
+      makeRequest(url);
     });
-
-    return {
-      executablePath,
-      folderPath,
-      downloaded: fs.existsSync(folderPath),
-    };
   }
-}
-
-function getFolderPath(platform: string, revision: string) {
-  return path.join(DOWNLOAD_FOLDER, platform + "-" + revision);
-}
-
-function parseFolderPath(folderPath: string): IRevision | null {
-  const name = path.basename(folderPath);
-  const splits = name.split("-");
-
-  if (splits.length !== 2) {
-    return null;
-  }
-  const [platform, revision] = splits;
-  return { platform, revision };
 }
 
 export const browserDownloader = new BrowserDownloader();
+
+export const getChromiumBrowserVersion = (): string =>
+  getChromiumInfo().browserVersion;

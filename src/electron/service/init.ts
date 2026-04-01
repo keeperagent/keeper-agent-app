@@ -6,13 +6,13 @@ import crypto from "crypto";
 import { uid } from "uid/secure";
 import {
   TEMP_FOLDER,
-  EXTENSION_FOLDER,
   PROFILE_FOLDER,
   BROWSER_FOLDER,
   BASE_PROFILE_FOLDER,
   KA_SKILL_FOLDER,
   KA_WORKSPACE_FOLDER,
   KA_MEMORY_FOLDER,
+  EXTENSION_FOLDER,
 } from "@/electron/constant";
 import { preferenceDB } from "@/electron/database/preference";
 import { logEveryWhere, removeLastTrailingSlash } from "./util";
@@ -32,10 +32,14 @@ const createFolderIfNotExist = () => {
     path.join(app.getPath("userData"), EXTENSION_FOLDER),
   );
   if (!fs.existsSync(extensionFolder)) {
-    logEveryWhere({ message: `Creating EXTENSION_FOLDER at ${extensionFolder}` });
+    logEveryWhere({
+      message: `Creating EXTENSION_FOLDER at ${extensionFolder}`,
+    });
     fs.mkdirSync(extensionFolder);
   } else {
-    logEveryWhere({ message: `EXTENSION_FOLDER already exists at ${extensionFolder}` });
+    logEveryWhere({
+      message: `EXTENSION_FOLDER already exists at ${extensionFolder}`,
+    });
   }
 
   const profileFolder = removeLastTrailingSlash(
@@ -45,7 +49,9 @@ const createFolderIfNotExist = () => {
     logEveryWhere({ message: `Creating PROFILE_FOLDER at ${profileFolder}` });
     fs.mkdirSync(profileFolder);
   } else {
-    logEveryWhere({ message: `PROFILE_FOLDER already exists at ${profileFolder}` });
+    logEveryWhere({
+      message: `PROFILE_FOLDER already exists at ${profileFolder}`,
+    });
   }
 
   const browserFolder = removeLastTrailingSlash(
@@ -55,17 +61,23 @@ const createFolderIfNotExist = () => {
     logEveryWhere({ message: `Creating BROWSER_FOLDER at ${browserFolder}` });
     fs.mkdirSync(browserFolder);
   } else {
-    logEveryWhere({ message: `BROWSER_FOLDER already exists at ${browserFolder}` });
+    logEveryWhere({
+      message: `BROWSER_FOLDER already exists at ${browserFolder}`,
+    });
   }
 
   const baseProfileFolder = removeLastTrailingSlash(
     path.join(app.getPath("userData"), PROFILE_FOLDER, BASE_PROFILE_FOLDER),
   );
   if (!fs.existsSync(baseProfileFolder)) {
-    logEveryWhere({ message: `Creating BASE_PROFILE_FOLDER at ${baseProfileFolder}` });
+    logEveryWhere({
+      message: `Creating BASE_PROFILE_FOLDER at ${baseProfileFolder}`,
+    });
     fs.mkdirSync(baseProfileFolder);
   } else {
-    logEveryWhere({ message: `BASE_PROFILE_FOLDER already exists at ${baseProfileFolder}` });
+    logEveryWhere({
+      message: `BASE_PROFILE_FOLDER already exists at ${baseProfileFolder}`,
+    });
   }
 
   const skillFolder = removeLastTrailingSlash(
@@ -75,17 +87,23 @@ const createFolderIfNotExist = () => {
     logEveryWhere({ message: `Creating KA_SKILL_FOLDER at ${skillFolder}` });
     fs.mkdirSync(skillFolder, { recursive: true });
   } else {
-    logEveryWhere({ message: `KA_SKILL_FOLDER already exists at ${skillFolder}` });
+    logEveryWhere({
+      message: `KA_SKILL_FOLDER already exists at ${skillFolder}`,
+    });
   }
 
   const workspaceFolder = removeLastTrailingSlash(
     path.join(app.getPath("userData"), KA_WORKSPACE_FOLDER),
   );
   if (!fs.existsSync(workspaceFolder)) {
-    logEveryWhere({ message: `Creating KA_WORKSPACE_FOLDER at ${workspaceFolder}` });
+    logEveryWhere({
+      message: `Creating KA_WORKSPACE_FOLDER at ${workspaceFolder}`,
+    });
     fs.mkdirSync(workspaceFolder, { recursive: true });
   } else {
-    logEveryWhere({ message: `KA_WORKSPACE_FOLDER already exists at ${workspaceFolder}` });
+    logEveryWhere({
+      message: `KA_WORKSPACE_FOLDER already exists at ${workspaceFolder}`,
+    });
   }
 
   const memoryFolder = removeLastTrailingSlash(
@@ -95,7 +113,9 @@ const createFolderIfNotExist = () => {
     logEveryWhere({ message: `Creating KA_MEMORY_FOLDER at ${memoryFolder}` });
     fs.mkdirSync(memoryFolder, { recursive: true });
   } else {
-    logEveryWhere({ message: `KA_MEMORY_FOLDER already exists at ${memoryFolder}` });
+    logEveryWhere({
+      message: `KA_MEMORY_FOLDER already exists at ${memoryFolder}`,
+    });
   }
 };
 
