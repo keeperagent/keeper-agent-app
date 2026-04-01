@@ -13,6 +13,43 @@ const useDownloadBrowser = () => {
 
   useEffect(() => {
     window?.electron?.on(
+      MESSAGE.CHECK_BROWSER_INSTALLED_RES,
+      (_event: any, payload: any) => {
+        if (payload?.isAvailable) {
+          setRevisionExist(true);
+          dispatch(
+            actSaveDownloadStatus({
+              downloadedBytes: 0,
+              totalBytes: 0,
+              isDone: true,
+              isProcessing: false,
+              isAvailable: true,
+            }),
+          );
+        } else {
+          setRevisionExist(false);
+          dispatch(
+            actSaveDownloadStatus({
+              downloadedBytes: 0,
+              totalBytes: 0,
+              isDone: false,
+              isProcessing: false,
+              isAvailable: false,
+            }),
+          );
+        }
+      },
+    );
+
+    window?.electron?.send(MESSAGE.CHECK_BROWSER_INSTALLED, {});
+
+    return () => {
+      window?.electron?.removeAllListeners(MESSAGE.CHECK_BROWSER_INSTALLED_RES);
+    };
+  }, []);
+
+  useEffect(() => {
+    window?.electron?.on(
       MESSAGE.DOWNLOAD_BROWSER_RES,
       (event: any, payload: any) => {
         const { data = {}, isDone, code, isAvailable } = payload;
@@ -58,12 +95,10 @@ const useDownloadBrowser = () => {
     };
   }, [locale]);
 
-  const downloadBrowser = (revision: string) => {
+  const downloadBrowser = () => {
     setRevisionExist(false);
     setLoading(true);
-    window?.electron?.send(MESSAGE.DOWNLOAD_BROWSER, {
-      revision,
-    });
+    window?.electron?.send(MESSAGE.DOWNLOAD_BROWSER, {});
   };
 
   return {

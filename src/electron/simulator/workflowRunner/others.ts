@@ -1,4 +1,4 @@
-import { Page } from "puppeteer-core";
+import { Page } from "playwright-core";
 import { executeInSandbox } from "@/electron/simulator/sandbox";
 import _ from "lodash";
 import {

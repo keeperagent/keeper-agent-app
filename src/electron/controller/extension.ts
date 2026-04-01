@@ -12,6 +12,7 @@ import {
 import { IExtension } from "@/electron/type";
 import { extensionDB } from "@/electron/database/extension";
 import {
+  cancelCurrentDownload,
   createBaseProfileExtension,
   generateNewFolderName,
   getExtensionIdBrowser,
@@ -61,6 +62,14 @@ export const extensionController = () => {
     },
   );
 
+  onIpc(
+    MESSAGE.CANCEL_IMPORT_EXTENSION,
+    MESSAGE.CANCEL_IMPORT_EXTENSION,
+    async () => {
+      cancelCurrentDownload();
+    },
+  );
+
   onIpc<IpcImportExtensionPayload>(
     MESSAGE.IMPORT_EXTENSION,
     MESSAGE.IMPORT_EXTENSION_RES,
@@ -77,12 +86,10 @@ export const extensionController = () => {
       const listRes = await Promise.all(listResAwait);
 
       const isSuccess = !listRes?.includes("");
-      if (isSuccess) {
-        event.reply(MESSAGE.IMPORT_EXTENSION_RES, {
-          isSuccess,
-          isDone: true,
-        });
-      }
+      event.reply(MESSAGE.IMPORT_EXTENSION_RES, {
+        isSuccess,
+        isDone: true,
+      });
     },
   );
 
@@ -421,7 +428,8 @@ onIpc(
     let listExtensionPath = "";
     if (allExtension?.data && !err) {
       listExtensionPath = allExtension?.data
-        ?.map((extension: IExtension) => extension?.storedAtPath)
+        ?.map((extension: IExtension) => extension?.storedAtPath || "")
+        ?.filter((extPath?: string) => Boolean(extPath))
         .join(",");
     }
 

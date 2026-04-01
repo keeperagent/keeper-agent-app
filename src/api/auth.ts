@@ -7,15 +7,10 @@ export const UserFragment = gql`
   fragment UserField on User {
     _id
     email
-    roles
-    isVerify
     username
     tierStatus {
       ...TierStatusField
     }
-    receiveWalletAddress
-    discountPercent
-    totalMarketplaceItem
     createdAt
     updatedAt
   }

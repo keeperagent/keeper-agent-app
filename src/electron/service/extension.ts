@@ -1,86 +1,151 @@
-import axios from "axios";
 import path from "path";
 import fs from "fs-extra";
+import axios from "axios";
 import JSZip from "jszip";
-import puppeteer, { Page } from "puppeteer-core";
+import type { BrowserContext, Page } from "playwright-core";
 import { IpcMainEvent, app } from "electron";
-import { FILE_TYPE, TEMP_FOLDER, RESPONSE_CODE, MESSAGE } from "@/electron/constant";
+import {
+  FILE_TYPE,
+  TEMP_FOLDER,
+  RESPONSE_CODE,
+  MESSAGE,
+} from "@/electron/constant";
 import { extensionDB } from "@/electron/database/extension";
 import { preferenceDB } from "@/electron/database/preference";
-import { browserDownloader } from "./browserDownloader";
+import { chromium } from "@/electron/service/stealthBrowser";
+import { getBaseProfilePath, getProfilePath } from "@/electron/simulator/util";
+import {
+  browserDownloader,
+  getChromiumBrowserVersion,
+} from "./browserDownloader";
 import { logEveryWhere, removeLastTrailingSlash, sleep } from "./util";
-import { getBaseProfilePath } from "@/electron/simulator/util";
 
 const tempFolder = removeLastTrailingSlash(
   path.join(app.getPath("userData"), TEMP_FOLDER),
 );
+
+let currentDownloadAbortController: AbortController | null = null;
+
+const cancelCurrentDownload = () => {
+  currentDownloadAbortController?.abort();
+  currentDownloadAbortController = null;
+};
+
+const getCrxPlatformParams = (): string => {
+  const { platform, arch } = process;
+  if (platform === "darwin") {
+    const cpuArch = arch === "arm64" ? "arm64" : "x64";
+    const osArch = arch === "arm64" ? "arm64" : "x86_64";
+    const naclArch = arch === "arm64" ? "arm" : "x86-64";
+    return `os=mac&arch=${cpuArch}&os_arch=${osArch}&nacl_arch=${naclArch}`;
+  }
+  if (platform === "win32") {
+    return `os=win&arch=x64&os_arch=x86_64&nacl_arch=x86-64`;
+  }
+  return `os=linux&arch=x64&os_arch=x86_64&nacl_arch=x86-64`;
+};
+
+const downloadCrxStream = async (
+  crxUrl: string,
+  event: IpcMainEvent,
+): Promise<ArrayBuffer> => {
+  currentDownloadAbortController = new AbortController();
+  const browserVersion = getChromiumBrowserVersion();
+  const response = await axios.get(crxUrl, {
+    responseType: "stream",
+    timeout: 60000,
+    signal: currentDownloadAbortController.signal,
+    headers: { "User-Agent": `Mozilla/5.0 Chrome/${browserVersion}` },
+  });
+  const totalSize = parseInt(
+    response.headers["Content-Length"] ||
+      response.headers["content-length"] ||
+      "0",
+    10,
+  );
+  let downloadedSize = 0;
+  let crxBuffer = new Uint8Array(0);
+
+  response.data.on("data", (chunk: Buffer) => {
+    const chunkArray = new Uint8Array(chunk);
+    const newBuffer = new Uint8Array(crxBuffer.length + chunkArray.length);
+    newBuffer.set(crxBuffer);
+    newBuffer.set(chunkArray, crxBuffer.length);
+    crxBuffer = newBuffer;
+
+    downloadedSize += chunkArray.length;
+    const percentage =
+      totalSize > 0
+        ? Number(((downloadedSize / totalSize) * 100).toFixed(0))
+        : undefined;
+
+    event.reply(MESSAGE.IMPORT_EXTENSION_RES, {
+      code: RESPONSE_CODE.NORMAL_MESSAGE,
+      isSuccess: false,
+      isDone: false,
+      percentage,
+    });
+  });
+
+  await new Promise((resolve, reject) => {
+    response.data.on("end", () => resolve(true));
+    response.data.on("error", (err: Error) => reject(err));
+    response.data.on("aborted", () => reject(new Error("Stream aborted")));
+  });
+
+  currentDownloadAbortController = null;
+  return crxBuffer.buffer;
+};
 
 const getCrxBuffer = async (
   crxUrl: string,
   isStoreLink: boolean,
   event: IpcMainEvent,
 ): Promise<[ArrayBuffer | null, Error | null]> => {
-  try {
-    // input link extension on store
-    if (isStoreLink) {
-      const response = await axios.get(crxUrl, {
-        responseType: "stream",
-        timeout: 60000,
-      });
-      const totalSize =
-        response.headers["Content-Length"] ||
-        response.headers["content-length"];
-      let downloadedSize = 0;
-      let crxBuffer = new Uint8Array(0);
-
-      response.data.on("data", (chunk: Buffer) => {
-        const chunkArray = new Uint8Array(chunk);
-        const newBuffer = new Uint8Array(crxBuffer.length + chunkArray.length);
-        newBuffer.set(crxBuffer);
-        newBuffer.set(chunkArray, crxBuffer.length);
-        crxBuffer = newBuffer;
-
-        downloadedSize += chunkArray.length;
-        const percentage = ((downloadedSize / totalSize) * 100).toFixed(0);
-
-        event.reply(MESSAGE.IMPORT_EXTENSION_RES, {
-          code: RESPONSE_CODE.NORMAL_MESSAGE,
-          isSuccess: false,
-          isDone: false,
-          percentage,
-        });
-      });
-
-      await new Promise((resolve) => {
-        response.data.on("end", () => {
-          resolve(true);
-        });
-      });
-
-      return [crxBuffer.buffer, null];
+  if (!isStoreLink) {
+    try {
+      return [toArrayBuffer(fs.readFileSync(crxUrl)), null];
+    } catch (err: any) {
+      logEveryWhere({ message: `getCrxBuffer() error: ${err?.message}` });
+      return [null, err];
     }
-
-    const crxBuffer = toArrayBuffer(fs.readFileSync(crxUrl));
-    return [crxBuffer, null];
-  } catch (err: any) {
-    logEveryWhere({ message: `getCrxBuffer() error: ${err?.message}` });
-    return [null, err];
   }
+
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const buffer = await downloadCrxStream(crxUrl, event);
+      return [buffer, null];
+    } catch (err: any) {
+      currentDownloadAbortController = null;
+      if (axios.isCancel(err) || err?.name === "CanceledError") {
+        return [null, new Error("Download cancelled")];
+      }
+      lastError = err;
+      logEveryWhere({
+        message: `getCrxBuffer() attempt ${attempt}/${MAX_RETRIES} failed: ${err?.message}`,
+      });
+      if (attempt < MAX_RETRIES) {
+        await sleep(2000 * attempt);
+      }
+    }
+  }
+
+  return [null, lastError];
 };
 
-const toArrayBuffer = (buffer: any) => {
+const toArrayBuffer = (buffer: Buffer): ArrayBuffer => {
   const arrayBuffer = new ArrayBuffer(buffer.length);
   const view = new Uint8Array(arrayBuffer);
-
   for (let i = 0; i < buffer.length; i++) {
     view[i] = buffer[i];
   }
-
   return arrayBuffer;
 };
 
-
-const saveCrxtoZIP = async (
+const saveCrxToZip = async (
   crxUrl: string,
   isStoreLink: boolean,
   zipFilePath: string,
@@ -102,7 +167,7 @@ const saveCrxtoZIP = async (
 
     return null;
   } catch (err: any) {
-    console.error("Error downloading CRX file:", err);
+    logEveryWhere({ message: `saveCrxToZip() error: ${err?.message}` });
     return err;
   }
 };
@@ -124,50 +189,45 @@ const unZipCrxOrDownloadFromStore = async (
   const isStoreLink = storeLinkOrFilePath.includes(
     "https://chromewebstore.google.com/",
   );
+
   if (!isStoreLink && !storeLinkOrFilePath?.includes(FILE_TYPE.CRX)) {
     return [null, Error("file is not .crx")];
   }
 
   let fileName = "crxFile";
   let crxFilePath = storeLinkOrFilePath;
+
   if (isStoreLink) {
     const [extensionID, err] = getExtensionId(storeLinkOrFilePath);
     if (extensionID === null) {
       return [null, err];
     }
-
     fileName = extensionID;
-    crxFilePath = `https://clients2.google.com/service/update2/crx?response=redirect&os=linux&arch=x64&os_arch=x86_64&nacl_arch=x86-64&prod=chromium&prodchannel=unknown&prodversion=91.0.4442.4&lang=en-US&acceptformat=crx2,crx3&x=id%3D${extensionID}%26installsource%3Dondemand%26uc`;
+    const platformParams = getCrxPlatformParams();
+    const browserVersion = getChromiumBrowserVersion();
+    crxFilePath = `https://clients2.google.com/service/update2/crx?response=redirect&${platformParams}&prodversion=${browserVersion}&acceptformat=crx3&x=id%3D${extensionID}%26installsource%3Dondemand%26uc`;
   }
 
-  const zipFilePath = isStoreLink
-    ? path.join(tempFolder, `${fileName}.zip`)
-    : storeLinkOrFilePath;
-
-  const error = await saveCrxtoZIP(
-    crxFilePath,
-    isStoreLink,
-    zipFilePath,
-    event,
-  );
-  return [zipFilePath, error];
+  fs.ensureDirSync(tempFolder);
+  const zipFilePath = path.join(tempFolder, `${fileName}.zip`);
+  const err = await saveCrxToZip(crxFilePath, isStoreLink, zipFilePath, event);
+  return [zipFilePath, err];
 };
 
-const turnOnDevMode = async (page: Page) => {
-  try {
-    await page?.evaluate(() => {
-      const button = document
+const turnOnDevMode = async (page: Page): Promise<void> => {
+  await page
+    .evaluate(() => {
+      const toggle = document
         ?.querySelector("extensions-manager")
         ?.shadowRoot?.querySelector("extensions-toolbar")
-        ?.shadowRoot?.querySelector("cr-toolbar")
-        ?.querySelector("cr-toggle#devMode")
-        ?.shadowRoot?.querySelector("#bar");
+        ?.shadowRoot?.querySelector("cr-toggle#devMode");
       // @ts-ignore
-      button?.click();
-    });
-  } catch (err: any) {
-    logEveryWhere({ message: `turnOnDevMode() error: ${err?.message}` });
-  }
+      if (toggle && !toggle?.checked) {
+        // @ts-ignore
+        toggle.click();
+      }
+    })
+    .catch(() => {});
 };
 
 const reloadExtension = async (page: Page) => {
@@ -186,77 +246,52 @@ const reloadExtension = async (page: Page) => {
   }
 };
 
+// get extension id after install and save to database
 const getExtensionIdBrowser = async (
   extensionPath: string,
 ): Promise<[string | null, Error | null]> => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err || !preference || !preference?.browserRevision) {
-    return [null, Error("preference not found")];
+  const [preference] = await preferenceDB.getOnePreference();
+  const executablePath =
+    preference?.customChromePath ||
+    browserDownloader.getChromiumExecutablePath();
+
+  if (!executablePath) {
+    return [null, Error("No browser executable found")];
   }
 
-  const executablePath = browserDownloader.revisionInfo(
-    preference?.browserRevision,
-  )?.executablePath;
+  const tmpDir = getProfilePath("temp_extension_profile");
+  if (fs.existsSync(tmpDir)) {
+    fs.removeSync(tmpDir);
+  }
 
-  const browser = await puppeteer.launch({
+  const browser = await chromium.launchPersistentContext(tmpDir, {
     executablePath,
     headless: false,
-    defaultViewport: null,
-    args: [
-      `--load-extension=${extensionPath}`,
-      `--disable-extensions-except=${extensionPath}`,
-      "--disable-extensions",
-    ],
+    viewport: null,
+    ignoreDefaultArgs: ["--enable-automation", "--disable-extensions"],
+    args: [`--load-extension=${extensionPath}`, "--no-first-run"],
   });
 
   const page = await browser.newPage();
-  await page?.goto("chrome://extensions/");
+  await page.goto("chrome://extensions/");
 
-  const getExtensionId = async () => {
-    const extensionId = await page.$eval(
-      "extensions-manager",
-
-      (extensionsManager) => {
-        const extensionsList = extensionsManager?.shadowRoot?.querySelector(
-          "extensions-item-list",
-        );
-        const extensionItem =
-          extensionsList?.shadowRoot?.querySelectorAll("extensions-item");
-
-        let id = "";
-        extensionItem?.forEach((item: any) => {
-          id = item?.id || "";
-        });
-
-        return id;
-      },
-    );
-
-    return extensionId;
-  };
-
+  // Enable developer mode so extension IDs are visible
   await turnOnDevMode(page);
-  const extensionId = await getExtensionId();
-  await sleep(1500);
-  await browser?.close();
-  return [extensionId, null];
-};
 
-const updateExtenionOnDB = async (
-  extensionPath: string,
-  id?: number,
-): Promise<Error | null> => {
-  const [extensionId, err] = await getExtensionIdBrowser(extensionPath);
-  if (err || !extensionId) {
-    return err;
-  }
-
-  await extensionDB.updateExtension({
-    id,
-    extensionId,
+  await sleep(1000);
+  const extensionId = await page.$eval("extensions-manager", (manager) => {
+    const list = manager?.shadowRoot?.querySelector("extensions-item-list");
+    const items = list?.shadowRoot?.querySelectorAll("extensions-item");
+    let foundId = "";
+    items?.forEach((item: any) => {
+      foundId = item?.id || "";
+    });
+    return foundId;
   });
 
-  return null;
+  await sleep(500);
+  await browser.close();
+  return [extensionId || null, null];
 };
 
 const generateNewFolderName = (
@@ -274,15 +309,76 @@ const generateNewFolderName = (
   return newName;
 };
 
-const createBaseProfileExtension = async (listExtensionPath: string) => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err || !preference || !preference?.browserRevision) {
-    return [null, Error("preference not found")];
+// Update the extension DB record with the browser-assigned extension ID
+const updateExtenionOnDB = async (
+  extensionPath: string,
+  id?: number,
+): Promise<Error | null> => {
+  const [extensionId, err] = await getExtensionIdBrowser(extensionPath);
+  if (err || !extensionId) {
+    return err;
   }
 
-  const executablePath = browserDownloader.revisionInfo(
-    preference?.browserRevision,
-  )?.executablePath;
+  await extensionDB.updateExtension({ id, extensionId });
+  return null;
+};
+
+// Resolves when no new page has been opened (or finished loading) for idleMs.
+// Caps at maxMs so we never hang forever no matter how many extensions are installed.
+const waitForExtensionsToSettle = (
+  browser: BrowserContext,
+  idleMs = 10000,
+  maxMs = 60000,
+): Promise<void> => {
+  return new Promise((resolve) => {
+    let resolved = false;
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    let maxTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const finish = () => {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+      }
+      if (maxTimer) {
+        clearTimeout(maxTimer);
+      }
+      browser.off("page", onNewPage);
+      resolve();
+    };
+
+    const resetIdleTimer = () => {
+      if (resolved) {
+        return;
+      }
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+      }
+      idleTimer = setTimeout(finish, idleMs);
+    };
+
+    const onNewPage = (newPage: Page) => {
+      resetIdleTimer();
+      newPage.on("load", resetIdleTimer);
+    };
+
+    browser.on("page", onNewPage);
+    maxTimer = setTimeout(finish, maxMs);
+    resetIdleTimer();
+  });
+};
+
+// create base profile contains all extensions
+const createBaseProfileExtension = async (
+  listExtensionPath: string,
+): Promise<void> => {
+  const [preference] = await preferenceDB.getOnePreference();
+  const executablePath =
+    preference?.customChromePath ||
+    browserDownloader.getChromiumExecutablePath();
 
   const args = [
     "--disable-prompt-on-repost",
@@ -294,36 +390,36 @@ const createBaseProfileExtension = async (listExtensionPath: string) => {
     `--load-extension=${listExtensionPath}`,
     `--disable-extensions-except=${listExtensionPath}`,
   ];
-  const browser = await puppeteer.launch({
+
+  const browser = await chromium.launchPersistentContext(getBaseProfilePath(), {
     executablePath,
     headless: false,
-    defaultViewport: null,
-    ignoreDefaultArgs: [
-      "--enable-automation",
-      "--enable-blink-features=IdleDetection",
-      "--enable-blink-features=AutomationControlled",
-      "--disable-extensions",
-    ],
+    viewport: null,
+    ignoreDefaultArgs: ["--enable-automation", "--disable-extensions"],
     args,
-    userDataDir: getBaseProfilePath(),
   });
 
   const page = await browser.newPage();
-  await page?.goto("chrome://extensions/");
+  await page.goto("chrome://extensions/");
 
   await turnOnDevMode(page);
   await sleep(1500);
 
   await reloadExtension(page);
-  await sleep(1500);
 
-  await browser?.close();
+  // Wait until all extensions have finished opening their welcome pages and
+  // writing their "already set up" storage flags. We detect completion by
+  // watching for new pages: the idle timer resets each time a page is created
+  // or finishes loading, and resolves after 5s of silence (max 60s).
+  await waitForExtensionsToSettle(browser);
+  await browser.close();
 };
 
 export {
   unZipCrxOrDownloadFromStore,
   getExtensionIdBrowser,
-  updateExtenionOnDB,
   generateNewFolderName,
+  updateExtenionOnDB,
   createBaseProfileExtension,
+  cancelCurrentDownload,
 };

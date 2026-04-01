@@ -1,4 +1,4 @@
-import { Page } from "puppeteer-core";
+import { Page } from "playwright-core";
 import {
   IFlowProfile,
   IFollowTwitterNodeConfig,
@@ -41,42 +41,33 @@ export class Twitter {
     const passwordTwitter = getActualValue(password, listVariable);
 
     // enter user name
-    const input = await page?.waitForSelector(
-      "input[autocomplete='username']",
-      {
+    await page
+      ?.locator("input[autocomplete='username']")
+      .pressSequentially(usernameTwitter, {
+        delay: 50,
         timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
-      },
-    );
-    await input?.type(usernameTwitter, { delay: 50 });
+      });
     await sleep(1000);
 
     // Button "Next"
-    const nextBtn = await page?.waitForSelector(
-      "::-p-xpath(//span[contains(text(), 'Next')])",
-      {
-        timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
-      },
-    );
-    // @ts-ignore
-    await nextBtn?.click();
+    await page
+      ?.locator("xpath=//span[contains(text(), 'Next')]")
+      .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
 
     await sleep(2000);
     // enter password
-    const inputPwd = await page?.waitForSelector("input[name='password']", {
-      timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
-    });
-    await inputPwd?.type(passwordTwitter, { delay: 50 });
+    await page
+      ?.locator("input[name='password']")
+      .pressSequentially(passwordTwitter, {
+        delay: 50,
+        timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
+      });
     await sleep(1000);
 
     // Button "Log in"
-    const loginBtn = await page?.waitForSelector(
-      "::-p-xpath(//span[contains(text(), 'Log in')])",
-      {
-        timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
-      },
-    );
-    // @ts-ignore
-    await loginBtn?.click();
+    await page
+      ?.locator("xpath=//span[contains(text(), 'Log in')]")
+      .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     await sleep(1000);
 
     return flowProfile;
@@ -99,10 +90,9 @@ export class Twitter {
     const { action } = config;
     const shouldClickFollow = action === FOLLOW_TWITTER_ACTION.FOLLOW;
 
-    const followButton = await page?.waitForSelector(
-      "div[data-testid='placementTracking']",
-      { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-    );
+    await page
+      ?.locator("div[data-testid='placementTracking']")
+      .waitFor({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     const isFollowing = await page.evaluate(() => {
       const followButton = document.querySelector(
         "div[data-testid='placementTracking']",
@@ -116,19 +106,16 @@ export class Twitter {
 
     // click to Follow
     if (shouldClickFollow && !isFollowing) {
-      await followButton?.click();
+      await page?.locator("div[data-testid='placementTracking']").click();
     }
 
     // click to UnFollow
     if (!shouldClickFollow && isFollowing) {
-      await followButton?.click();
+      await page?.locator("div[data-testid='placementTracking']").click();
       await sleep(500);
-      const unFollowButton = await page?.waitForSelector(
-        "::-p-xpath(//span[text()='Unfollow'])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await unFollowButton?.click();
+      await page
+        ?.locator("xpath=//span[text()='Unfollow']")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
       await sleep(500);
       await page.reload();
     }
@@ -153,35 +140,29 @@ export class Twitter {
     const { action } = config;
     const shouldClickLike = action === LIKE_TWITTER_ACTION.LIKE;
 
-    const firstLikeButton = await page?.waitForSelector(
-      "::-p-xpath((//div[@data-testid='like' or @data-testid='unlike'])[1])",
-      { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-    );
+    await page
+      ?.locator(
+        "xpath=(//div[@data-testid='like' or @data-testid='unlike'])[1]",
+      )
+      .waitFor({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     let dataTestId: string | null = ""; // use to check if this tweet is already liked or not
-    if (firstLikeButton) {
-      dataTestId = await firstLikeButton.evaluate((element) =>
-        // @ts-ignore
-        element?.getAttribute("data-testid"),
-      );
-    }
+    dataTestId = await page
+      ?.locator(
+        "xpath=(//div[@data-testid='like' or @data-testid='unlike'])[1]",
+      )
+      .getAttribute("data-testid");
 
     await sleep(500);
     if (shouldClickLike && dataTestId === "like") {
-      const likeButton = await page?.waitForSelector(
-        "::-p-xpath(//article//div[@data-testid='like'][1])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await likeButton?.click();
+      await page
+        ?.locator("xpath=//article//div[@data-testid='like'][1]")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     }
 
     if (!shouldClickLike && dataTestId === "unlike") {
-      const unLikeButton = await page?.waitForSelector(
-        "::-p-xpath(//article//div[@data-testid='unlike'][1])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await unLikeButton?.click();
+      await page
+        ?.locator("xpath=//article//div[@data-testid='unlike'][1]")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     }
 
     await sleep(500);
@@ -204,54 +185,42 @@ export class Twitter {
     });
     const { action } = config;
 
-    const firstRetweetButton = await page?.waitForSelector(
-      "::-p-xpath((//div[@data-testid='retweet' or @data-testid='unretweet'])[1])",
-      { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-    );
+    await page
+      ?.locator(
+        "xpath=(//div[@data-testid='retweet' or @data-testid='unretweet'])[1]",
+      )
+      .waitFor({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     let dataTestId: string | null = ""; // use to check if this tweet is already re-tweet or not
-    if (firstRetweetButton) {
-      dataTestId = await firstRetweetButton.evaluate((element) =>
-        // @ts-ignore
-        element?.getAttribute("data-testid"),
-      );
-    }
+    dataTestId = await page
+      ?.locator(
+        "xpath=(//div[@data-testid='retweet' or @data-testid='unretweet'])[1]",
+      )
+      .getAttribute("data-testid");
 
     await sleep(500);
     if (action === RETEET_TWITTER_ACTION.RETWEET && dataTestId === "retweet") {
-      const likeButton = await page?.waitForSelector(
-        "::-p-xpath(//article//div[@data-testid='retweet'][1])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await likeButton?.click();
+      await page
+        ?.locator("xpath=//article//div[@data-testid='retweet'][1]")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
 
       await sleep(500);
-      const confirmButton = await page?.waitForSelector(
-        "::-p-xpath(//div[@data-testid='retweetConfirm'])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await confirmButton?.click();
+      await page
+        ?.locator("xpath=//div[@data-testid='retweetConfirm']")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     }
 
     if (
       action === RETEET_TWITTER_ACTION.UNDO_RETWEET &&
       dataTestId === "unretweet"
     ) {
-      const unLikeButton = await page?.waitForSelector(
-        "::-p-xpath(//article//div[@data-testid='unretweet'][1])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await unLikeButton?.click();
+      await page
+        ?.locator("xpath=//article//div[@data-testid='unretweet'][1]")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
 
       await sleep(500);
-      const confirmButton = await page?.waitForSelector(
-        "::-p-xpath(//div[@data-testid='unretweetConfirm'])",
-        { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-      );
-      // @ts-ignore
-      await confirmButton?.click();
+      await page
+        ?.locator("xpath=//div[@data-testid='unretweetConfirm']")
+        .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     }
 
     await sleep(500);
@@ -275,24 +244,19 @@ export class Twitter {
     });
 
     await sleep(500);
-    const input = await page?.waitForSelector(
-      "label[data-testid='tweetTextarea_0_label']",
-      {
-        timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
-      },
-    );
-    await input?.click();
+    await page
+      ?.locator("label[data-testid='tweetTextarea_0_label']")
+      .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
 
     await sleep(300);
-    await page?.type("br[data-text='true']", comment, { delay: 10 });
+    await page
+      ?.locator("br[data-text='true']")
+      .pressSequentially(comment, { delay: 10 });
     await sleep(300);
 
-    const replyButton = await page?.waitForSelector(
-      "::-p-xpath(//span[contains(text(), 'Reply')])",
-      { timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT },
-    );
-    // @ts-ignore
-    await replyButton?.click();
+    await page
+      ?.locator("xpath=//span[contains(text(), 'Reply')]")
+      .click({ timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT });
     await sleep(500);
 
     return flowProfile;

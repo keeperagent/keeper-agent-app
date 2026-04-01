@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Input, Form, Alert, message, Progress } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -28,6 +28,7 @@ const ModalImportWallet = (props: any) => {
 
   const {
     importExtension,
+    cancelImportExtension,
     loading: loadingImportExtension,
     mapErrorWithFile,
     isSuccess,
@@ -38,8 +39,7 @@ const ModalImportWallet = (props: any) => {
     error,
   } = useImportExtension();
 
-  const { isLoadingCreateBase, createBaseProfileExtension } =
-    useCreateBaseProfileExtension();
+  const { createBaseProfileExtension } = useCreateBaseProfileExtension();
 
   useEffect(() => {
     setListFile([]);
@@ -73,6 +73,9 @@ const ModalImportWallet = (props: any) => {
   }, [isGetExtensionId, loadingImportExtension, isGetExtensionIdSuccess]);
 
   const onCloseModal = () => {
+    if (loadingImportExtension) {
+      cancelImportExtension();
+    }
     setModalOpen(false);
   };
 
@@ -89,25 +92,24 @@ const ModalImportWallet = (props: any) => {
     }
   };
 
-  const loading = useMemo(() => {
-    return loadingImportExtension || isLoadingCreateBase;
-  }, [loadingImportExtension, isLoadingCreateBase]);
-
   return (
     <Modal
       open={isModalOpen}
       title="Import extension"
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
-        loading && mode === IMPORT_MODE.FROM_LINK
+        loadingImportExtension && mode === IMPORT_MODE.FROM_LINK
           ? translate("extension.downloading")
           : "Import"
       }
       cancelText={translate("cancel")}
       width="45rem"
       onOk={onSubmitForm}
-      confirmLoading={loading}
+      okButtonProps={{
+        disabled: loadingImportExtension,
+        loading: loadingImportExtension,
+      }}
     >
       <ModalWrapper>
         <div className="mode">
@@ -189,7 +191,7 @@ const ModalImportWallet = (props: any) => {
               className="help"
             />
 
-            {loading && downloadedPercentage > 0 && (
+            {loadingImportExtension && downloadedPercentage > 0 && (
               <Progress
                 percent={downloadedPercentage}
                 strokeColor="var(--color-success)"

@@ -1,4 +1,4 @@
-import { Page } from "puppeteer-core";
+import { Page } from "playwright-core";
 import { TelegramClient } from "telegram";
 import {
   ISendTelegramNodeConfig,

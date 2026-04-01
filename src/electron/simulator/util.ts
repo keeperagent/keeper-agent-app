@@ -1,4 +1,4 @@
-import { Page, Browser } from "puppeteer-core";
+import { Page, BrowserContext } from "playwright-core";
 import { executeInSandbox } from "@/electron/simulator/sandbox";
 import { app, screen } from "electron";
 import _ from "lodash";
@@ -11,11 +11,11 @@ import {
 import { IWorkflowVariable, INodeConfig, ISkipSetting } from "@/electron/type";
 
 export interface ISimulator {
-  browser: Browser | null;
+  browser: BrowserContext | null;
   listPage: Page[];
   currentPageIndex: number | null;
   isCreateNewFolder: boolean; // is profile is created with new folder
-  browserProcessId?: number | null; // Store browser process ID for killing disconnected browsers
+  browserProcessId: number | null;
 }
 
 export const getProfilePath = (profileName: string) =>
@@ -192,7 +192,13 @@ export const waitAndClickText = async (
     }
 
     const isFound = await page?.evaluate(
-      (text, elementTag) => {
+      ({
+        text,
+        elementTag,
+      }: {
+        text: string;
+        elementTag: string | undefined;
+      }) => {
         const buttons = Array.from(
           document.querySelectorAll(elementTag || "button"),
         );
@@ -206,8 +212,7 @@ export const waitAndClickText = async (
 
         return false;
       },
-      text,
-      elementTag,
+      { text, elementTag },
     );
 
     if (!isFound) {

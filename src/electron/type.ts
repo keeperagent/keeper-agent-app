@@ -505,10 +505,9 @@ export type IExtension = {
   extensionId?: string;
   name?: string;
   description?: string;
+  version?: string;
   storedAtPath?: string;
   iconPath?: string;
-  version?: string;
-  typeName?: string;
 };
 
 export type IWorkflowVariable = {
@@ -2401,7 +2400,6 @@ export type IPreference = {
   hideMinimap?: boolean;
   key?: string;
   deviceId?: string;
-  browserRevision?: string;
   isRevisionDownloaded?: boolean;
   isStopAllSchedule?: boolean;
   dayResetJobStatus?: number;

@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Page } from "puppeteer-core";
+import { Page } from "playwright-core";
 import {
   ICetusSwapInput,
   IFlowProfile,

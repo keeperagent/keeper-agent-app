@@ -1,4 +1,4 @@
-import { Browser, Page } from "puppeteer-core";
+import { BrowserContext, Page } from "playwright-core";
 import {
   updateVariable,
   processSkipSetting,
@@ -91,33 +91,28 @@ export class BrowserInteraction {
           listVariable,
         );
 
-        const element = await page?.waitForSelector(cssSelector, {
-          timeout,
-        });
-
         if (config?.shouldClearInput) {
-          await element?.click({ clickCount: 3 });
-          await page.keyboard.press("Backspace");
+          await page?.locator(cssSelector).waitFor({ timeout });
+          await page?.locator(cssSelector).selectText();
+          await page?.keyboard.press("Backspace");
         }
-        await element?.type(content, { delay: config?.speed * 1000 });
+        await page
+          ?.locator(cssSelector)
+          .pressSequentially(content, { delay: config?.speed * 1000, timeout });
       } else if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
         const xPathSelector = getActualValue(
           config?.xPathSelector || "",
           listVariable,
         );
-        const element = await page?.waitForSelector(
-          `::-p-xpath(${xPathSelector})`,
-          {
-            timeout,
-          },
-        );
 
         if (config?.shouldClearInput) {
-          // @ts-ignore
-          await element?.click({ clickCount: 3 });
-          await page.keyboard.press("Backspace");
+          await page?.locator(`xpath=${xPathSelector}`).waitFor({ timeout });
+          await page?.locator(`xpath=${xPathSelector}`).selectText();
+          await page?.keyboard.press("Backspace");
         }
-        await element?.type(content, { delay: config?.speed * 1000 });
+        await page
+          ?.locator(`xpath=${xPathSelector}`)
+          .pressSequentially(content, { delay: config?.speed * 1000, timeout });
       }
 
       return flowProfile;
@@ -154,7 +149,7 @@ export class BrowserInteraction {
 
         if (config?.listShadowRoot) {
           await page?.evaluate(
-            (config, cssSelector) => {
+            ({ config, cssSelector }) => {
               const listShadowRoot = config?.listShadowRoot || [];
               let shadowRootElement;
 
@@ -175,35 +170,18 @@ export class BrowserInteraction {
                 element?.click();
               }
             },
-            config,
-            cssSelector,
+            { config, cssSelector },
           );
         } else {
           // can't waiting element inside shadowRoot
-          await page?.waitForSelector(cssSelector, {
-            timeout,
-          });
-
-          await page?.evaluate((cssSelector) => {
-            const element = document.querySelector(cssSelector);
-
-            // @ts-ignore
-            element?.click();
-          }, cssSelector);
+          await page?.locator(cssSelector).click({ timeout });
         }
       } else if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
         const xPathSelector = getActualValue(
           config?.xPathSelector || "",
           listVariable,
         );
-        const element = await page?.waitForSelector(
-          `::-p-xpath(${xPathSelector})`,
-          {
-            timeout,
-          },
-        );
-        // @ts-ignore
-        await element?.click();
+        await page?.locator(`xpath=${xPathSelector}`).click({ timeout });
       }
 
       return flowProfile;
@@ -317,7 +295,7 @@ export class BrowserInteraction {
       config: ICloseTabNodeConfig,
       listVariable: IWorkflowVariable[],
       flowProfile: IFlowProfile,
-      browser: Browser | null,
+      browser: BrowserContext | null,
     ): Promise<IFlowProfile> => {
       if (processSkipSetting(config, listVariable)) {
         return flowProfile;
@@ -467,11 +445,10 @@ export class BrowserInteraction {
         const yAxis = isScrollUp ? config?.yAxis : config?.yAxis * -1;
 
         await page?.evaluate(
-          (xAxis, yAxis) => {
+          ({ xAxis, yAxis }: { xAxis: number; yAxis: number }) => {
             window.scrollBy(xAxis, yAxis);
           },
-          0,
-          yAxis,
+          { xAxis: 0, yAxis },
         );
 
         // scroll by selector mode
@@ -481,29 +458,17 @@ export class BrowserInteraction {
             config?.cssSelector || "",
             listVariable,
           );
-          await page?.waitForSelector(cssSelector, {
+          await page?.locator(cssSelector).scrollIntoViewIfNeeded({
             timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
           });
-
-          await page.evaluate((cssSelector) => {
-            const element = document.querySelector(cssSelector);
-            if (element) {
-              element.scrollIntoView({ behavior: "smooth" });
-            }
-          }, cssSelector);
         } else if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
           const xPathSelector = getActualValue(
             config?.xPathSelector || "",
             listVariable,
           );
-          const element = await page?.waitForSelector(
-            `::-p-xpath(${xPathSelector})`,
-            {
-              timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
-            },
-          );
-          // @ts-ignore
-          await element.scrollIntoView({ behavior: "smooth" });
+          await page?.locator(`xpath=${xPathSelector}`).scrollIntoViewIfNeeded({
+            timeout: config?.timeout! * 1000 || DEFAULT_TIMEOUT,
+          });
         }
       }
 
@@ -541,18 +506,14 @@ export class BrowserInteraction {
             config?.cssSelector || "",
             listVariable,
           );
-          await page.waitForSelector(cssSelector, {
-            timeout,
-          });
+          await page?.locator(cssSelector).waitFor({ timeout });
           isElementExist = true;
         } else if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
           const xPathSelector = getActualValue(
             config?.xPathSelector || "",
             listVariable,
           );
-          await page?.waitForSelector(`::-p-xpath(${xPathSelector})`, {
-            timeout,
-          });
+          await page?.locator(`xpath=${xPathSelector}`).waitFor({ timeout });
           isElementExist = true;
         }
       } catch {}
@@ -598,25 +559,15 @@ export class BrowserInteraction {
           config?.cssSelector || "",
           listVariable,
         );
-        await page?.waitForSelector(cssSelector, {
-          timeout,
-        });
-        text = await page?.evaluate((cssSelector) => {
-          const element = document.querySelector(cssSelector);
-          return element?.textContent;
-        }, cssSelector);
+        text = await page?.locator(cssSelector).textContent({ timeout });
       } else if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
         const xPathSelector = getActualValue(
           config?.xPathSelector || "",
           listVariable,
         );
-        const element = await page?.waitForSelector(
-          `::-p-xpath(${xPathSelector})`,
-          {
-            timeout,
-          },
-        );
-        text = await element?.evaluate((el) => el.textContent);
+        text = await page
+          ?.locator(`xpath=${xPathSelector}`)
+          .textContent({ timeout });
       }
 
       const newListVariable = updateVariable(listVariable, {
@@ -659,33 +610,16 @@ export class BrowserInteraction {
         throw new Error("Upload file: file path is empty");
       }
 
-      let [fileChooser] = await (async () => {
-        if (config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR) {
-          const xPathSelector = getActualValue(
-            config?.xPathSelector || "",
-            listVariable,
-          );
-          const element = await page.waitForSelector(
-            `::-p-xpath(${xPathSelector})`,
-            { timeout },
-          );
-          return Promise.all([
-            page.waitForFileChooser({ timeout }),
-            element?.click(),
-          ]);
-        } else {
-          const cssSelector = getActualValue(
-            config?.cssSelector || "",
-            listVariable,
-          );
-          const element = await page.waitForSelector(cssSelector, { timeout });
-          return Promise.all([
-            page.waitForFileChooser({ timeout }),
-            element?.click(),
-          ]);
-        }
-      })();
-      await fileChooser.accept([filePath]);
+      const selector =
+        config?.selectorType === SELECTOR_TYPE.XPATH_SELECTOR
+          ? `xpath=${getActualValue(config?.xPathSelector || "", listVariable)}`
+          : getActualValue(config?.cssSelector || "", listVariable);
+
+      const [fileChooser] = await Promise.all([
+        page.waitForEvent("filechooser", { timeout }),
+        page.locator(selector).click({ timeout }),
+      ]);
+      await fileChooser.setFiles([filePath]);
 
       return flowProfile;
     };
@@ -733,19 +667,25 @@ export const registerBrowserHandlers = (
   handlers: Map<string, NodeHandler>,
   args: WorkflowRunnerArgs,
 ) => {
-  const s = new BrowserInteraction(args);
-  handlers.set(WORKFLOW_TYPE.OPEN_URL, s.openURL);
-  handlers.set(WORKFLOW_TYPE.TYPE_TEXT, s.typeText);
-  handlers.set(WORKFLOW_TYPE.CLICK, s.click);
-  handlers.set(WORKFLOW_TYPE.CRAWL_TEXT, s.crawlText);
-  handlers.set(WORKFLOW_TYPE.SOLVE_CAPTCHA, s.solveCaptcha);
-  handlers.set(WORKFLOW_TYPE.RELOAD_PAGE, s.reloadPage);
-  handlers.set(WORKFLOW_TYPE.GO_BACK, s.goBackPage);
-  handlers.set(WORKFLOW_TYPE.CLOSE_TAB, s.closeTab);
-  handlers.set(WORKFLOW_TYPE.SELECT_TAB, s.selectTab);
-  handlers.set(WORKFLOW_TYPE.NEW_TAB, s.openNewTab);
-  handlers.set(WORKFLOW_TYPE.SCROLL, s.scroll);
-  handlers.set(WORKFLOW_TYPE.CHECK_ELEMENT_EXIST, s.checkElementExist);
-  handlers.set(WORKFLOW_TYPE.CLICK_EXTENSION, s.clickExtension);
-  handlers.set(WORKFLOW_TYPE.UPLOAD_FILE, s.uploadFile);
+  const browserInteraction = new BrowserInteraction(args);
+  handlers.set(WORKFLOW_TYPE.OPEN_URL, browserInteraction.openURL);
+  handlers.set(WORKFLOW_TYPE.TYPE_TEXT, browserInteraction.typeText);
+  handlers.set(WORKFLOW_TYPE.CLICK, browserInteraction.click);
+  handlers.set(WORKFLOW_TYPE.CRAWL_TEXT, browserInteraction.crawlText);
+  handlers.set(WORKFLOW_TYPE.SOLVE_CAPTCHA, browserInteraction.solveCaptcha);
+  handlers.set(WORKFLOW_TYPE.RELOAD_PAGE, browserInteraction.reloadPage);
+  handlers.set(WORKFLOW_TYPE.GO_BACK, browserInteraction.goBackPage);
+  handlers.set(WORKFLOW_TYPE.CLOSE_TAB, browserInteraction.closeTab);
+  handlers.set(WORKFLOW_TYPE.SELECT_TAB, browserInteraction.selectTab);
+  handlers.set(WORKFLOW_TYPE.NEW_TAB, browserInteraction.openNewTab);
+  handlers.set(WORKFLOW_TYPE.SCROLL, browserInteraction.scroll);
+  handlers.set(
+    WORKFLOW_TYPE.CHECK_ELEMENT_EXIST,
+    browserInteraction.checkElementExist,
+  );
+  handlers.set(
+    WORKFLOW_TYPE.CLICK_EXTENSION,
+    browserInteraction.clickExtension,
+  );
+  handlers.set(WORKFLOW_TYPE.UPLOAD_FILE, browserInteraction.uploadFile);
 };

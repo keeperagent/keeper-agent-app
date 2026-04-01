@@ -28,15 +28,8 @@ export const perferenceController = () => {
     async (event, _payload) => {
       const [res] = await preferenceDB.getOnePreference();
 
-      let downloaded: any = false;
-      if (res?.browserRevision) {
-        downloaded = browserDownloader?.revisionInfo(
-          res?.browserRevision,
-        )?.downloaded;
-      }
-
       event.reply(MESSAGE.GET_ONE_PREFERENCE_RES, {
-        data: { ...res, isRevisionDownloaded: Boolean(downloaded) },
+        data: { ...res, isRevisionDownloaded: browserDownloader.isChromiumInstalled() },
       });
     },
   );
@@ -56,15 +49,8 @@ export const perferenceController = () => {
         return;
       }
 
-      let downloaded: any = false;
-      if (res?.browserRevision) {
-        downloaded = browserDownloader?.revisionInfo(
-          res?.browserRevision,
-        )?.downloaded;
-      }
-
       event.reply(MESSAGE.UPDATE_PREFERENCE_RES, {
-        data: { ...res, isRevisionDownloaded: Boolean(downloaded) },
+        data: { ...res, isRevisionDownloaded: browserDownloader.isChromiumInstalled() },
         requestId,
       });
 
