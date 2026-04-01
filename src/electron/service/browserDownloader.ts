@@ -1,7 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import https from "https";
-import http from "http";
+import axios from "axios";
 import { app } from "electron";
 import { BROWSER_FOLDER, TEMP_FOLDER } from "@/electron/constant";
 import { logEveryWhere } from "./util";
@@ -158,73 +157,44 @@ class BrowserDownloader {
     }
   }
 
-  private downloadFile(
+  private async downloadFile(
     url: string,
     destPath: string,
     callback?: (done: number, total: number) => void,
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const makeRequest = (requestUrl: string) => {
-        const client = requestUrl.startsWith("https") ? https : http;
-        client
-          .get(requestUrl, (response) => {
-            if (
-              response.statusCode === 301 ||
-              response.statusCode === 302 ||
-              response.statusCode === 307 ||
-              response.statusCode === 308
-            ) {
-              const location = response.headers.location;
-              if (!location) {
-                reject(new Error("Redirect with no location header"));
-                return;
-              }
-              makeRequest(location);
-              return;
-            }
+    const response = await axios.get(url, {
+      responseType: "stream",
+      maxRedirects: 5,
+    });
 
-            if (response.statusCode !== 200) {
-              reject(new Error(`Download failed: HTTP ${response.statusCode}`));
-              return;
-            }
+    const totalBytes = parseInt(response.headers["content-length"] || "0", 10);
+    let downloadedBytes = 0;
+    let lastReportedPercent = -1;
 
-            const totalBytes = parseInt(
-              response.headers["content-length"] || "0",
-              10,
-            );
-            let downloadedBytes = 0;
-            let lastReportedPercent = -1;
+    const fileStream = fs.createWriteStream(destPath);
+    response.data.pipe(fileStream);
 
-            const fileStream = fs.createWriteStream(destPath);
-            response.pipe(fileStream);
+    response.data.on("data", (chunk: Buffer) => {
+      downloadedBytes += chunk.length;
+      if (callback && totalBytes > 0) {
+        const percent = Math.floor((downloadedBytes / totalBytes) * 100);
+        if (percent > lastReportedPercent) {
+          lastReportedPercent = percent;
+          logEveryWhere({
+            message: `downloadChromium() progress: ${percent}%`,
+          });
+          callback(downloadedBytes, totalBytes);
+        }
+      }
+    });
 
-            response.on("data", (chunk: Buffer) => {
-              downloadedBytes += chunk.length;
-              if (callback && totalBytes > 0) {
-                const percent = Math.floor(
-                  (downloadedBytes / totalBytes) * 100,
-                );
-                if (percent > lastReportedPercent) {
-                  lastReportedPercent = percent;
-                  logEveryWhere({
-                    message: `downloadChromium() progress: ${percent}%`,
-                  });
-                  callback(downloadedBytes, totalBytes);
-                }
-              }
-            });
-
-            fileStream.on("finish", () => {
-              fileStream.close();
-              resolve();
-            });
-            fileStream.on("error", reject);
-            response.on("error", reject);
-          })
-          .on("error", reject);
-      };
-
-      makeRequest(url);
+    await new Promise<void>((resolve, reject) => {
+      fileStream.on("finish", () => {
+        fileStream.close();
+        resolve();
+      });
+      fileStream.on("error", reject);
+      response.data.on("error", reject);
     });
   }
 }
