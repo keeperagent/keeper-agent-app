@@ -3,7 +3,6 @@ import fs from "fs-extra";
 import axios from "axios";
 import JSZip from "jszip";
 import type { BrowserContext, Page } from "playwright-core";
-import { chromium } from "playwright-core";
 import { IpcMainEvent, app } from "electron";
 import {
   FILE_TYPE,
@@ -13,6 +12,7 @@ import {
 } from "@/electron/constant";
 import { extensionDB } from "@/electron/database/extension";
 import { preferenceDB } from "@/electron/database/preference";
+import { chromium } from "@/electron/service/stealthBrowser";
 import { getBaseProfilePath, getProfilePath } from "@/electron/simulator/util";
 import {
   browserDownloader,

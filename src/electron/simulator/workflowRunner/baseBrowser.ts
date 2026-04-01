@@ -1,4 +1,4 @@
-import { chromium, BrowserContext } from "playwright-core";
+import { BrowserContext } from "playwright-core";
 import fs from "fs-extra";
 import _ from "lodash";
 import { IProxyProvider, IProxyInfo } from "@/electron/proxy";
@@ -22,6 +22,7 @@ import {
 } from "@/electron/simulator/util";
 import { TEMP_PROFILENAME } from "@/electron/simulator/constant";
 import { StopSignal } from "@/electron/simulator/stopSignal";
+import { chromium } from "@/electron/service/stealthBrowser";
 
 export class BaseBrowser {
   private decodoProxyProvider: IProxyProvider;
@@ -246,19 +247,6 @@ export class BaseBrowser {
         }
       }
       await sleep(300);
-
-      await newPage?.addInitScript(() => {
-        // Remove webdriver flag
-        // https://stackoverflow.com/questions/56335066/changing-window-navigator-within-puppeteer-to-bypass-antibot-system
-        // @ts-ignore
-        delete navigator.__proto__.webdriver;
-
-        // Inject window.chrome — Chromium doesn't have this but sites check for it
-        Object.defineProperty(window, "chrome", {
-          value: { runtime: {} },
-          writable: false,
-        });
-      });
 
       if (!isFullScreen && windowWidth && windowHeight) {
         await newPage?.setViewportSize({
