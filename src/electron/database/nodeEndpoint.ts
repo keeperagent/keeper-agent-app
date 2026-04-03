@@ -58,7 +58,9 @@ class NodeEndpointDB {
 
       return [{ data: listData, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListNodeEndpoint() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListNodeEndpoint() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -75,7 +77,9 @@ class NodeEndpointDB {
 
       return [listData, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListNodeEndpointByGroupId() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListNodeEndpointByGroupId() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -126,8 +130,8 @@ class NodeEndpointDB {
   ): Promise<Error | null> {
     try {
       await NodeEndpointModel.bulkCreate(
-        listNodeEndpoint?.map((proxyIp: INodeEndpoint) => ({
-          ...proxyIp,
+        listNodeEndpoint?.map((nodeEndpoint: INodeEndpoint) => ({
+          ...nodeEndpoint,
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
         })),
@@ -136,7 +140,9 @@ class NodeEndpointDB {
 
       return null;
     } catch (err: any) {
-      logEveryWhere({ message: `createBulkNodeEndpoint() error: ${err?.message}` });
+      logEveryWhere({
+        message: `createBulkNodeEndpoint() error: ${err?.message}`,
+      });
       return err;
     }
   }
@@ -184,7 +190,9 @@ class NodeEndpointDB {
 
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `countTotalNodeEndpoint() error: ${err?.message}` });
+      logEveryWhere({
+        message: `countTotalNodeEndpoint() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }

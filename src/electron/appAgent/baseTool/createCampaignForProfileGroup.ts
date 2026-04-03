@@ -9,7 +9,7 @@ export const createCampaignForProfileGroupTool = () =>
   new DynamicStructuredTool({
     name: "create_campaign_for_profile_group",
     description:
-      "Create a campaign associated with a profile group. Provide campaign name and profileGroupId or profileGroupName. Optional fields include note, numberOfThread, numberOfRound, color, isUseBrowser, isUseProxy, and maxProfilePerProxy.",
+      "Create a campaign associated with a profile group. Provide campaign name and profileGroupId or profileGroupName. Optional fields include note, numberOfThread, numberOfRound, color, isUseBrowser, and isUseProxy.",
     schema: z
       .object({
         name: z.string().min(1, "name is required"),
@@ -20,7 +20,6 @@ export const createCampaignForProfileGroupTool = () =>
         color: z.string().optional(),
         isUseBrowser: z.boolean().optional(),
         isUseProxy: z.boolean().optional(),
-        maxProfilePerProxy: z.number().int().min(1).max(1000).optional(),
       })
       .refine((value) => Boolean(value.profileGroupName), {
         message: "profileGroupName is required",
@@ -34,7 +33,6 @@ export const createCampaignForProfileGroupTool = () =>
       color,
       isUseBrowser,
       isUseProxy,
-      maxProfilePerProxy,
     }) => {
       const profileGroup = await resolveProfileGroup({
         profileGroupName,
@@ -49,7 +47,6 @@ export const createCampaignForProfileGroupTool = () =>
         color: color?.trim() || "",
         isUseBrowser: typeof isUseBrowser === "boolean" ? isUseBrowser : false,
         isUseProxy: typeof isUseProxy === "boolean" ? isUseProxy : false,
-        maxProfilePerProxy: maxProfilePerProxy || 2,
       } as ICampaign);
       if (err) {
         throw err;

@@ -4,12 +4,16 @@ import { connect } from "react-redux";
 import { isIP } from "is-ip";
 import { RootState } from "@/redux/store";
 import {
-  actSaveSelectedProxyIp,
-  actSaveCreateProxyIp,
-  actSaveUpdateProxyIp,
-} from "@/redux/proxyIp";
-import { useUpdateProxyIp, useCreateProxyIp, useTranslation } from "@/hook";
-import { IProxyIp } from "@/electron/type";
+  actSaveSelectedStaticProxy,
+  actSaveCreateStaticProxy,
+  actSaveUpdateStaticProxy,
+} from "@/redux/staticProxy";
+import {
+  useUpdateStaticProxy,
+  useCreateStaticProxy,
+  useTranslation,
+} from "@/hook";
+import { IStaticProxy } from "@/electron/type";
 import { LIST_NETWORK_PROTOCOL } from "@/electron/constant";
 import { getListIPAndPort, IProtocol } from "./common";
 
@@ -20,8 +24,8 @@ const ModalProxyIp = (props: any) => {
   const {
     isModalOpen,
     setModalOpen,
-    selectedProxyIp,
-    selectedProxyIpGroup,
+    selectedStaticProxy,
+    selectedStaticProxyGroup,
     setShouldRefetch,
   } = props;
   const [isBtnLoading, setBtnLoading] = useState(false);
@@ -29,15 +33,15 @@ const ModalProxyIp = (props: any) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
-    updateProxyIp,
+    updateStaticProxy,
     loading: isUpdateLoading,
     isSuccess: isUpdateSuccess,
-  } = useUpdateProxyIp();
+  } = useUpdateStaticProxy();
   const {
-    createProxyIp,
+    createStaticProxy,
     loading: isCreateLoading,
     isSuccess: isCreateSuccess,
-  } = useCreateProxyIp();
+  } = useCreateStaticProxy();
 
   useEffect(() => {
     if (isModalOpen) {
@@ -46,19 +50,21 @@ const ModalProxyIp = (props: any) => {
       }, 100);
     }
     form.setFieldsValue({
-      ip: selectedProxyIp?.ip || "",
-      port: selectedProxyIp?.port || "",
-      protocol: selectedProxyIp?.protocol || null,
+      ip: selectedStaticProxy?.ip || "",
+      port: selectedStaticProxy?.port || "",
+      protocol: selectedStaticProxy?.protocol || null,
+      username: selectedStaticProxy?.username || "",
+      password: selectedStaticProxy?.password || "",
       listIPPort: "",
     });
-  }, [isModalOpen, form, selectedProxyIp]);
+  }, [isModalOpen, form, selectedStaticProxy]);
 
   const onCloseModal = () => {
     setModalOpen(false);
     setBtnLoading(false);
 
     setTimeout(() => {
-      props?.actSaveSelectedProxyIp(null);
+      props?.actSaveSelectedStaticProxy(null);
     }, 300);
   };
 
@@ -79,31 +85,36 @@ const ModalProxyIp = (props: any) => {
 
   const onSubmitForm = async () => {
     try {
-      const { protocol, listIPPort, port, ip } = await form.validateFields([
-        "protocol",
-        "listIPPort",
-        "port",
-        "ip",
-      ]);
+      const { protocol, listIPPort, port, ip, username, password } =
+        await form.validateFields([
+          "protocol",
+          "listIPPort",
+          "port",
+          "ip",
+          "username",
+          "password",
+        ]);
       setBtnLoading(true);
 
-      if (selectedProxyIp) {
-        updateProxyIp({
+      if (selectedStaticProxy) {
+        updateStaticProxy({
           protocol,
           port,
           ip,
-          id: selectedProxyIp?.id,
+          username: username || null,
+          password: password || null,
+          id: selectedStaticProxy?.id,
         });
         return;
       }
 
       let listIP = getListIPAndPort(listIPPort);
-      listIP = listIP?.map((item: IProxyIp) => ({
+      listIP = listIP?.map((item: IStaticProxy) => ({
         ...item,
         protocol,
-        groupId: selectedProxyIpGroup?.id,
+        groupId: selectedStaticProxyGroup?.id,
       }));
-      createProxyIp(listIP);
+      createStaticProxy(listIP);
     } catch {}
   };
 
@@ -111,14 +122,14 @@ const ModalProxyIp = (props: any) => {
     <Modal
       open={isModalOpen}
       title={
-        !selectedProxyIp
-          ? translate("proxyIp.create")
-          : translate("proxyIp.update")
+        !selectedStaticProxy
+          ? translate("staticProxy.create")
+          : translate("staticProxy.update")
       }
       onCancel={onCloseModal}
       maskClosable={false}
       okText={
-        !selectedProxyIp
+        !selectedStaticProxy
           ? translate("button.createNew")
           : translate("button.update")
       }
@@ -150,7 +161,7 @@ const ModalProxyIp = (props: any) => {
           />
         </Form.Item>
 
-        {selectedProxyIp ? (
+        {selectedStaticProxy ? (
           <Fragment>
             <Form.Item
               label="IP:"
@@ -186,6 +197,22 @@ const ModalProxyIp = (props: any) => {
                 style={{ width: "100%" }}
               />
             </Form.Item>
+
+            <Form.Item label={translate("proxy.username")} name="username">
+              <Input
+                placeholder={translate("proxy.usernamePlaceholder")}
+                className="custom-input"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item label={translate("proxy.password")} name="password">
+              <Input.Password
+                placeholder={translate("proxy.passwordPlaceholder")}
+                className="custom-input"
+                size="large"
+              />
+            </Form.Item>
           </Fragment>
         ) : (
           <Form.Item
@@ -208,13 +235,13 @@ const ModalProxyIp = (props: any) => {
 
                     if (!isIP(item?.ip || "")) {
                       return Promise.reject(
-                        Error(translate("proxy.invalid.IP"))
+                        Error(translate("proxy.invalid.ip")),
                       );
                     }
 
                     if (isNaN(Number(item?.port))) {
                       return Promise.reject(
-                        Error(translate("proxy.invalid.Port"))
+                        Error(translate("proxy.invalid.port")),
                       );
                     }
                   }
@@ -241,12 +268,12 @@ const ModalProxyIp = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    selectedProxyIp: state?.ProxyIp?.selectedProxyIp,
-    selectedProxyIpGroup: state?.ProxyIpGroup?.selectedProxyIpGroup,
+    selectedStaticProxy: state?.StaticProxy?.selectedStaticProxy,
+    selectedStaticProxyGroup: state?.StaticProxyGroup?.selectedStaticProxyGroup,
   }),
   {
-    actSaveSelectedProxyIp,
-    actSaveCreateProxyIp,
-    actSaveUpdateProxyIp,
-  }
+    actSaveSelectedStaticProxy,
+    actSaveCreateStaticProxy,
+    actSaveUpdateStaticProxy,
+  },
 )(ModalProxyIp);

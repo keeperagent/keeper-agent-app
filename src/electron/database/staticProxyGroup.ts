@@ -1,24 +1,24 @@
 import { Op } from "sequelize";
 import _ from "lodash";
-import { proxyIpDB } from "./proxyIp";
-import { ProxyIpGroupModel } from "./index";
-import { IProxyIpGroup, IGetListResponse } from "@/electron/type";
+import { staticProxyDB } from "./staticProxy";
+import { StaticProxyGroupModel } from "./index";
+import { IStaticProxyGroup, IGetListResponse } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 
-class ProxyIpGroupDB {
+class StaticProxyGroupDB {
   async totalData(): Promise<[number | null, Error | null]> {
     try {
-      return [await ProxyIpGroupModel.count(), null];
+      return [await StaticProxyGroupModel.count(), null];
     } catch (err: any) {
       return [null, err];
     }
   }
 
-  async getListProxyIpGroup(
+  async getListStaticProxyGroup(
     page: number,
     pageSize: number,
     searchText?: string,
-  ): Promise<[IGetListResponse<IProxyIpGroup> | null, Error | null]> {
+  ): Promise<[IGetListResponse<IStaticProxyGroup> | null, Error | null]> {
     try {
       const condition = {
         [Op.and]: searchText
@@ -30,8 +30,8 @@ class ProxyIpGroupDB {
             }
           : {},
       };
-      const totalDataAwait = ProxyIpGroupModel.count({ where: condition });
-      const listDataAwait = ProxyIpGroupModel.findAll({
+      const totalDataAwait = StaticProxyGroupModel.count({ where: condition });
+      const listDataAwait = StaticProxyGroupModel.findAll({
         order: [["updateAt", "DESC"]],
         limit: pageSize,
         offset: (page - 1) * pageSize,
@@ -46,8 +46,9 @@ class ProxyIpGroupDB {
       ]);
 
       const listGroupId: number[] =
-        listData?.map((group: IProxyIpGroup) => group?.id) || [];
-      const [listCount] = await proxyIpDB.countTotalProxyIp(listGroupId);
+        listData?.map((group: IStaticProxyGroup) => group?.id) || [];
+      const [listCount] =
+        await staticProxyDB.countTotalStaticProxy(listGroupId);
       listData = listData?.map((data: any) => {
         const countItem = _.find(listCount, {
           groupId: data?.id,
@@ -58,16 +59,18 @@ class ProxyIpGroupDB {
       const totalPage = Math.ceil(totalData / Number(pageSize));
       return [{ data: listData, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListProxyIpGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListStaticProxyGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 
-  async getOneProxyIpGroup(
+  async getOneStaticProxyGroup(
     id: number,
-  ): Promise<[IProxyIpGroup | null, Error | null]> {
+  ): Promise<[IStaticProxyGroup | null, Error | null]> {
     try {
-      const data = await ProxyIpGroupModel.findOne({
+      const data = await StaticProxyGroupModel.findOne({
         where: { id },
         raw: false,
       });
@@ -76,16 +79,18 @@ class ProxyIpGroupDB {
       }
       return [data?.toJSON(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `getOneProxyIpGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getOneStaticProxyGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 
-  async createProxyIpGroup(
-    group: IProxyIpGroup,
-  ): Promise<[IProxyIpGroup | null, Error | null]> {
+  async createStaticProxyGroup(
+    group: IStaticProxyGroup,
+  ): Promise<[IStaticProxyGroup | null, Error | null]> {
     try {
-      const data = await ProxyIpGroupModel.create(
+      const data = await StaticProxyGroupModel.create(
         {
           ...group,
           createAt: new Date().getTime(),
@@ -95,41 +100,49 @@ class ProxyIpGroupDB {
       );
       return [data?.toJSON(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `createProxyIpGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `createStaticProxyGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 
-  async updateProxyIpGroup(
-    group: IProxyIpGroup,
-  ): Promise<[IProxyIpGroup | null, Error | null]> {
+  async updateStaticProxyGroup(
+    group: IStaticProxyGroup,
+  ): Promise<[IStaticProxyGroup | null, Error | null]> {
     try {
-      await ProxyIpGroupModel.update(
+      await StaticProxyGroupModel.update(
         _.omit({ ...group, updateAt: new Date().getTime() }, ["id"]),
         {
           where: { id: group?.id },
         },
       );
 
-      return this.getOneProxyIpGroup(group?.id!);
+      return this.getOneStaticProxyGroup(group?.id!);
     } catch (err: any) {
-      logEveryWhere({ message: `updateProxyIpGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `updateStaticProxyGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 
-  async deleteProxyIpGroup(
+  async deleteStaticProxyGroup(
     listID: number[],
   ): Promise<[number | null, Error | null]> {
     try {
-      const data = await ProxyIpGroupModel.destroy({ where: { id: listID } });
+      const data = await StaticProxyGroupModel.destroy({
+        where: { id: listID },
+      });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteProxyIpGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteStaticProxyGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
 }
 
-const proxyIpGroupDB = new ProxyIpGroupDB();
-export { proxyIpGroupDB };
+const staticProxyGroupDB = new StaticProxyGroupDB();
+export { staticProxyGroupDB };

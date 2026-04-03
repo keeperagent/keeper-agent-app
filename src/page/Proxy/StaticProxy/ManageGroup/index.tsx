@@ -10,24 +10,23 @@ import { SearchInput } from "@/component/Input";
 import { EditIcon, EyeOpenIcon } from "@/component/Icon";
 import { TotalData } from "@/component";
 import {
-  useGetListProxyIpGroup,
-  useDeleteProxyIpGroup,
+  useGetListStaticProxyGroup,
+  useDeleteStaticProxyGroup,
   useTranslation,
 } from "@/hook";
-import { actSaveSelectedProxyIpGroup } from "@/redux/proxyIpGroup";
-import { actSetPageSize } from "@/redux/proxyIpGroup";
-import { IProxyIpGroup } from "@/electron/type";
+import { actSaveSelectedStaticProxyGroup } from "@/redux/staticProxyGroup";
+import { actSetPageSize } from "@/redux/staticProxyGroup";
+import { IStaticProxyGroup } from "@/electron/type";
 import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import ModalProxyIpGroup from "./ModalProxyIpGroup";
 import { PageWrapper, LinkHoverWrapper } from "./style";
-import { VIEW_MODE } from "../../index";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
 let searchTimeOut: any = null;
 
 const renderColumns = (
-  onEditProxyIpGroup: (group: IProxyIpGroup) => void,
+  onEditStaticProxyGroup: (group: IStaticProxyGroup) => void,
   onViewGroup: (groupID: number) => void,
   searchText: string,
   translate: any,
@@ -41,7 +40,7 @@ const renderColumns = (
     title: translate("groupName"),
     dataIndex: "name",
     width: "50%",
-    render: (value: string, record: IProxyIpGroup) => (
+    render: (value: string, record: IStaticProxyGroup) => (
       <LinkHoverWrapper onClick={() => onViewGroup(record?.id!)}>
         <div className="name">
           <Highlighter
@@ -62,7 +61,7 @@ const renderColumns = (
     ),
   },
   {
-    title: translate("proxyIp.totalIp"),
+    title: translate("staticProxy.totalIp"),
     dataIndex: "totalProxyIp",
     width: "15%",
     render: (value: number) => value || 0,
@@ -75,7 +74,7 @@ const renderColumns = (
   },
   {
     title: "",
-    render: (text: any, record: IProxyIpGroup) => (
+    render: (text: any, record: IStaticProxyGroup) => (
       <div className="list-icon">
         <Tooltip title={translate("view")}>
           <div className="icon" onClick={() => onViewGroup(record?.id!)}>
@@ -83,17 +82,17 @@ const renderColumns = (
           </div>
         </Tooltip>
 
-        <EditIcon onClick={() => onEditProxyIpGroup(record)} />
+        <EditIcon onClick={() => onEditStaticProxyGroup(record)} />
       </div>
     ),
   },
 ];
 
-const ProxyIpGroup = (props: any) => {
+const StaticProxyGroupList = (props: any) => {
   const { translate } = useTranslation();
   const {
     totalData,
-    listProxyIpGroup,
+    listStaticProxyGroup,
     pageSize = TABLE_PAGE_OPTION[0],
   } = props;
 
@@ -104,34 +103,34 @@ const ProxyIpGroup = (props: any) => {
   const [selectedRowKeys, onSetSelectedRowKeys] = useState([]);
   const navigate = useNavigate();
 
-  const { getListProxyIpGroup, loading: getDataLoading } =
-    useGetListProxyIpGroup();
+  const { getListStaticProxyGroup, loading: getDataLoading } =
+    useGetListStaticProxyGroup();
   const {
     isSuccess,
     loading: deleteLoading,
-    deleteProxyIpGroup,
-  } = useDeleteProxyIpGroup();
+    deleteStaticProxyGroup,
+  } = useDeleteStaticProxyGroup();
 
   useEffect(() => {
-    props?.actSaveSelectedProxyIpGroup(null);
+    props?.actSaveSelectedStaticProxyGroup(null);
   }, []);
 
   useEffect(() => {
     clearTimeout(searchTimeOut);
     searchTimeOut = setTimeout(() => {
-      getListProxyIpGroup({ page, pageSize, searchText });
+      getListStaticProxyGroup({ page, pageSize, searchText });
     }, 200);
   }, [searchText, page, pageSize]);
 
-  const onEditProxyIpGroup = (group: IProxyIpGroup) => {
-    props?.actSaveSelectedProxyIpGroup(group);
+  const onEditStaticProxyGroup = (group: IStaticProxyGroup) => {
+    props?.actSaveSelectedStaticProxyGroup(group);
     setModalOpen(true);
   };
 
   // delete group
-  const onDeleteProxyIpGroup = () => {
+  const onDeleteStaticProxyGroup = () => {
     setBtnLoading(true);
-    deleteProxyIpGroup(selectedRowKeys);
+    deleteStaticProxyGroup(selectedRowKeys);
   };
 
   useEffect(() => {
@@ -139,7 +138,7 @@ const ProxyIpGroup = (props: any) => {
       onSetSelectedRowKeys([]);
       setTimeout(() => {
         setBtnLoading(false);
-        getListProxyIpGroup({ page, pageSize, searchText });
+        getListStaticProxyGroup({ page, pageSize, searchText });
       }, 1700);
 
       setTimeout(() => {
@@ -158,7 +157,7 @@ const ProxyIpGroup = (props: any) => {
     onSetSelectedRowKeys(selectedKeys);
   };
 
-  const onOpenModalProxyIpGroup = () => {
+  const onOpenModalStaticProxyGroup = () => {
     setModalOpen(true);
   };
 
@@ -179,11 +178,11 @@ const ProxyIpGroup = (props: any) => {
   };
 
   const onViewGroup = (groupID: number) => {
-    navigate(`/dashboard/proxy?group=${groupID}&mode=${VIEW_MODE.LIST_IP}`);
+    navigate(`/dashboard/proxy?group=${groupID}`);
   };
 
-  const dataSource: any[] = listProxyIpGroup?.map(
-    (group: IProxyIpGroup, index: number) => ({
+  const dataSource: any[] = listStaticProxyGroup?.map(
+    (group: IStaticProxyGroup, index: number) => ({
       ...group,
       index: (page - 1) * pageSize + index + 1,
     }),
@@ -202,7 +201,7 @@ const ProxyIpGroup = (props: any) => {
         <Button
           type="primary"
           style={{ marginRight: "var(--margin-right)" }}
-          onClick={onOpenModalProxyIpGroup}
+          onClick={onOpenModalStaticProxyGroup}
         >
           {translate("button.createNew")}
         </Button>
@@ -218,7 +217,7 @@ const ProxyIpGroup = (props: any) => {
               {translate("confirmDelete")}
             </span>
           }
-          onConfirm={onDeleteProxyIpGroup}
+          onConfirm={onDeleteStaticProxyGroup}
           placement="left"
           disabled={selectedRowKeys?.length === 0}
         >
@@ -236,7 +235,7 @@ const ProxyIpGroup = (props: any) => {
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
         columns={renderColumns(
-          onEditProxyIpGroup,
+          onEditStaticProxyGroup,
           onViewGroup,
           searchText,
           translate,
@@ -267,9 +266,9 @@ const ProxyIpGroup = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    listProxyIpGroup: state?.ProxyIpGroup?.listProxyIpGroup,
-    totalData: state?.ProxyIpGroup?.totalData,
-    pageSize: state?.ProxyIpGroup?.pageSize,
+    listStaticProxyGroup: state?.StaticProxyGroup?.listStaticProxyGroup,
+    totalData: state?.StaticProxyGroup?.totalData,
+    pageSize: state?.StaticProxyGroup?.pageSize,
   }),
-  { actSaveSelectedProxyIpGroup, actSetPageSize },
-)(ProxyIpGroup);
+  { actSaveSelectedStaticProxyGroup, actSetPageSize },
+)(StaticProxyGroupList);

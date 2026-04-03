@@ -115,16 +115,6 @@ export type IProfile = {
   group?: IProfileGroup;
 };
 
-export type IProxy = {
-  id?: number;
-  apiKey?: string;
-  description?: string;
-  type?: string; // name of proxy third party service
-  isApiKeyAlive?: boolean;
-  createAt?: number;
-  updateAt?: number;
-};
-
 // Structured log payload for logEveryWhere: message + optional context (campaign, workflow, thread, type)
 export type IStructuredLogPayload = {
   message?: string;
@@ -362,11 +352,8 @@ export type ICampaign = {
   sleepBetweenRound?: number;
   isSaveProfile?: boolean;
   isUseProxy?: boolean;
-  maxProfilePerProxy?: number;
-  proxyType?: string;
-  proxyService?: string;
-  proxyIpGroupId?: number;
-  proxyIpGroup?: IProxyIpGroup;
+  proxyGroupId?: number;
+  proxyGroup?: IStaticProxyGroup;
   reloadDuration?: number;
   defaultOpenUrl?: string;
   isUseRandomUserAgent?: boolean;
@@ -461,8 +448,8 @@ export type ICampaignProfile = {
   group?: IProfileGroup;
   campaignId?: number;
   campaign?: ICampaign;
-  proxyIp?: IProxyIp;
-  proxyIpId?: number;
+  proxy?: IStaticProxy;
+  proxyId?: number;
   round?: number;
   isRunning?: boolean;
   profileFolder?: string; // each profile have its own chrome-profile folder
@@ -516,7 +503,7 @@ export type IWorkflowVariable = {
   value?: any;
 };
 
-export type IProxyIpGroup = {
+export type IStaticProxyGroup = {
   id?: number;
   name?: string;
   note?: string;
@@ -525,13 +512,15 @@ export type IProxyIpGroup = {
   updateAt?: number;
 };
 
-export type IProxyIp = {
+export type IStaticProxy = {
   id?: number;
   groupId?: number;
   ip?: string;
   port?: number;
   note?: string;
   protocol?: string; // http, https
+  username?: string;
+  password?: string;
   createAt?: number;
   updateAt?: number;
 };
@@ -558,9 +547,6 @@ export type INodeEndpoint = {
 // Workflow
 export type CampaignConfig = {
   isUseProxy?: boolean;
-  maxProfilePerProxy?: number;
-  proxyType?: string;
-  proxyService?: string;
   isUseRandomUserAgent?: boolean;
   userAgentCategory?: string;
   windowWidth?: number;
@@ -2471,19 +2457,9 @@ export type IFile = {
   size: number;
 };
 
-export type IProxyService = {
-  type: string;
-  name: string;
-  background: string;
-  color: string;
-  website?: string;
-};
-
 export type IProfileProxy = {
   isUseProxy?: boolean;
-  proxyType?: string;
-  proxyIp?: IProxyIp;
-  proxyService?: string;
+  proxy?: IStaticProxy;
 };
 
 export type ISchedule = {
@@ -2649,7 +2625,7 @@ export type IGlobalSearchResult = {
   walletGroups: IWalletGroup[];
   resourceGroups: IResourceGroup[];
   profileGroups: IProfileGroup[];
-  proxyIpGroups: IProxyIpGroup[];
+  staticProxyGroups: IStaticProxyGroup[];
   nodeEndpointGroups: INodeEndpointGroup[];
 };
 

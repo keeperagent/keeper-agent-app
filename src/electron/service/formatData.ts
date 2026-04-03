@@ -106,7 +106,7 @@ const formatCampaign = (data: Model<any, any>): ICampaign => {
       (campaignProfile: ICampaignProfile) => campaignProfile?.id!,
     ),
     profileGroup: formatProfileGroup(formatedData?.profileGroup),
-    proxyIpGroup: formatDBResponse(formatedData?.proxyIpGroup),
+    proxyGroup: formatDBResponse(formatedData?.proxyGroup),
     listColumnForCalculate: campaign?.listColumnForCalculate
       ? JSON.parse(campaign?.listColumnForCalculate?.toString())
       : [],

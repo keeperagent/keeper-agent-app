@@ -1,15 +1,12 @@
 import { BrowserContext } from "playwright-core";
 import fs from "fs-extra";
 import _ from "lodash";
-import { IProxyProvider, IProxyInfo } from "@/electron/proxy";
 import { preferenceDB } from "@/electron/database/preference";
 import { logEveryWhere } from "@/electron/service/util";
 import { IProfileProxy } from "@/electron/type";
 import { browserDownloader } from "@/electron/service/browserDownloader";
 import {
   LIST_NETWORK_PROTOCOL,
-  PROXY_SERVICE_TYPE,
-  PROXY_TYPE,
   UNABLE_TO_GET_PROXY,
 } from "@/electron/constant";
 import {
@@ -25,21 +22,13 @@ import { StopSignal } from "@/electron/simulator/stopSignal";
 import { chromium } from "@/electron/service/stealthBrowser";
 
 export class BaseBrowser {
-  private decodoProxyProvider: IProxyProvider;
-  private brightDataProxyProvider: IProxyProvider;
   private windowPosition: {
     [threadID: string]: { x: number; y: number };
   };
   private lastWindowPositionKey: string; // to trigger recaculate window position
   private stopSignal: StopSignal;
 
-  constructor(
-    decodoProxyProvider: IProxyProvider,
-    brightDataProxyProvider: IProxyProvider,
-    stopSignal: StopSignal,
-  ) {
-    this.decodoProxyProvider = decodoProxyProvider;
-    this.brightDataProxyProvider = brightDataProxyProvider;
+  constructor(stopSignal: StopSignal) {
     this.windowPosition = {};
     this.lastWindowPositionKey = "";
     this.stopSignal = stopSignal;
@@ -55,10 +44,7 @@ export class BaseBrowser {
     windowHeight,
     isFullScreen,
     totalScreen,
-    maxProfilePerProxy,
     defaultOpenUrl,
-    campaignId,
-    workflowId,
   }: {
     profileName: string;
     profileKey: string;
@@ -69,10 +55,7 @@ export class BaseBrowser {
     windowHeight?: number;
     isFullScreen?: boolean;
     totalScreen?: number;
-    maxProfilePerProxy?: number;
     defaultOpenUrl?: string;
-    campaignId?: number;
-    workflowId?: number;
   }): Promise<[ISimulator | null, Error | null]> {
     let simulator: ISimulator | null = null;
     try {
@@ -114,68 +97,27 @@ export class BaseBrowser {
         args.push(`--start-maximized`);
       }
 
-      // wait until able to get a proxy
-      let proxy: IProxyInfo | null = null;
-      const { isUseProxy, proxyIp, proxyType, proxyService } = profileProxy;
+      const { isUseProxy, proxy } = profileProxy;
       if (isUseProxy) {
-        if (proxyType === PROXY_TYPE.STATIC_PROXY) {
-          const protocol =
-            _.find(LIST_NETWORK_PROTOCOL, {
-              value: proxyIp?.protocol,
-            })?.prefix || "";
-          const ip = proxyIp?.ip;
-          const port = proxyIp?.port;
-          if (protocol && ip && port) {
-            proxy = {
-              protocol,
-              ip,
-              port,
-            };
-          }
-        } else if (proxyType === PROXY_TYPE.ROTATE_PROXY) {
-          const provider =
-            proxyService === PROXY_SERVICE_TYPE.DECODO
-              ? this.decodoProxyProvider
-              : proxyService === PROXY_SERVICE_TYPE.BRIGHTDATA
-                ? this.brightDataProxyProvider
-                : null;
-          if (provider) {
-            const res = await provider.getAProxy(
-              profileKey,
-              maxProfilePerProxy || 1,
-              campaignId || 0,
-              workflowId || 0,
-            );
-            if (res?.error) {
-              return [null, Error(res?.error)];
-            }
+        const protocol =
+          _.find(LIST_NETWORK_PROTOCOL, {
+            value: proxy?.protocol,
+          })?.prefix || "";
+        const ip = proxy?.ip;
+        const port = proxy?.port;
 
-            if (res?.proxy) {
-              proxy = res?.proxy;
-            }
-          } else {
-            throw Error(`proxy service ${proxyService} not implemented`);
-          }
+        if (!ip || !port) {
+          return [null, Error(UNABLE_TO_GET_PROXY)];
         }
+
+        args.push(`--proxy-server=${protocol}${ip}:${port}`);
+        logEveryWhere({ message: `Creating browser with proxy ${ip}:${port}` });
 
         // skip if user Stop workflow or Close browser
         if (this.stopSignal.shouldStop(profileKey)) {
           this.stopSignal.removeStopSignal(profileKey);
           return [null, Error(`Browser closed`)];
         }
-        if (!proxy?.ip || !proxy?.port) {
-          return [null, Error(UNABLE_TO_GET_PROXY)];
-        }
-
-        logEveryWhere({
-          message: `Creating browser with proxy ${proxy?.ip}:${proxy?.port}`,
-        });
-        const protocol =
-          _.find(LIST_NETWORK_PROTOCOL, {
-            value: proxy?.protocol,
-          })?.prefix || "";
-        const proxyString = `${protocol}${proxy?.ip}:${proxy?.port}`;
-        args.push(`--proxy-server=${proxyString}`);
       }
 
       const [preference, err] = await preferenceDB.getOnePreference();
@@ -218,9 +160,13 @@ export class BaseBrowser {
         contextOptions.userAgent = userAgent;
       }
 
-      if (proxy?.username && proxy?.password) {
+      if (isUseProxy && proxy?.username && proxy?.password) {
+        const protocol =
+          _.find(LIST_NETWORK_PROTOCOL, {
+            value: proxy?.protocol,
+          })?.prefix || "";
         contextOptions.proxy = {
-          server: `${_.find(LIST_NETWORK_PROTOCOL, { value: proxy?.protocol })?.prefix || ""}${proxy?.ip}:${proxy?.port}`,
+          server: `${protocol}${proxy.ip}:${proxy.port}`,
           username: proxy.username,
           password: proxy.password,
         };

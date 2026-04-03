@@ -1,9 +1,10 @@
 import { useLocation } from "react-router-dom";
+
 import qs from "qs";
 import ManageGroup from "./ManageGroup";
 import ManageIP from "./ManageIP";
 
-const ProxyIP = () => {
+const StaticProxy = () => {
   const location = useLocation();
   const { search } = location;
   const { group } = qs.parse(search, {
@@ -17,4 +18,4 @@ const ProxyIP = () => {
   return <ManageGroup />;
 };
 
-export default ProxyIP;
+export default StaticProxy;

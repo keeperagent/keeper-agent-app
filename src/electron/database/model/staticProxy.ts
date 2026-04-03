@@ -2,7 +2,7 @@ import { DataTypes, Sequelize } from "sequelize";
 
 export default (db: Sequelize) =>
   db.define(
-    "ProxyIp",
+    "StaticProxy",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -13,10 +13,13 @@ export default (db: Sequelize) =>
       ip: { type: DataTypes.STRING, allowNull: false },
       port: { type: DataTypes.NUMBER, allowNull: false },
       protocol: { type: DataTypes.STRING, allowNull: false },
+      username: { type: DataTypes.STRING, allowNull: true },
+      password: { type: DataTypes.STRING, allowNull: true },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
     {
+      tableName: "StaticProxies",
       timestamps: false,
       indexes: [
         {
@@ -24,5 +27,5 @@ export default (db: Sequelize) =>
           fields: ["ip", "port", "protocol", "groupId"],
         },
       ],
-    }
+    },
   );

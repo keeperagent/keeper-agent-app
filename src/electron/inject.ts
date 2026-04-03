@@ -1,13 +1,8 @@
-import { IProxyProvider } from "./proxy";
 import { BaseBrowser } from "./simulator/workflowRunner/baseBrowser";
 import { Executor } from "./simulator/workflow/executor";
 import { Telegram } from "./simulator/category/social/telegram";
 import { RandomOnOff } from "./simulator/category/randomOnOff";
 import { StopSignal } from "./simulator/stopSignal";
-import { ProxyProvider } from "./proxy/proxyProvider";
-import { DecodoProxyClient } from "./proxy/decodoProxyClient";
-import { BrightDataProxyClient } from "./proxy/brightDataProxyClient";
-import { PROXY_SERVICE_TYPE } from "./constant";
 import { EVMProvider } from "./simulator/category/onchain/evm";
 import { AptosProvider } from "./simulator/category/onchain/aptos";
 import { SuiProvider } from "./simulator/category/onchain/sui";
@@ -36,62 +31,14 @@ const getStopSignal = (): StopSignal => {
   return stopSignal;
 };
 
-let decodoProxyProvider: IProxyProvider | null = null;
-const getDecodoProxyProvider = (): IProxyProvider => {
-  if (decodoProxyProvider) {
-    return decodoProxyProvider;
-  }
-  const decodoClient = new DecodoProxyClient();
-  const stopSignal = getStopSignal();
-  decodoProxyProvider = new ProxyProvider(
-    decodoClient,
-    "Decodo",
-    PROXY_SERVICE_TYPE.DECODO,
-    stopSignal,
-  );
-  return decodoProxyProvider;
-};
-
-let brightDataProxyProvider: IProxyProvider | null = null;
-const getBrightDataProxyProvider = (): IProxyProvider => {
-  if (brightDataProxyProvider) {
-    return brightDataProxyProvider;
-  }
-  const brightDataClient = new BrightDataProxyClient();
-  const stopSignal = getStopSignal();
-  brightDataProxyProvider = new ProxyProvider(
-    brightDataClient,
-    "Bright Data",
-    PROXY_SERVICE_TYPE.BRIGHTDATA,
-    stopSignal,
-  );
-  return brightDataProxyProvider;
-};
-
-const getProxyProvider = (serviceType: string): IProxyProvider => {
-  if (serviceType === PROXY_SERVICE_TYPE.DECODO) {
-    return getDecodoProxyProvider();
-  }
-  if (serviceType === PROXY_SERVICE_TYPE.BRIGHTDATA) {
-    return getBrightDataProxyProvider();
-  }
-  throw new Error(`Unknown proxy service type: ${serviceType}`);
-};
-
 let baseBrowser: BaseBrowser | null = null;
 const getBaseBrowser = (): BaseBrowser => {
   if (baseBrowser !== null) {
     return baseBrowser;
   }
 
-  const decodoProxyProvider = getDecodoProxyProvider();
-  const brightDataProxyProvider = getBrightDataProxyProvider();
   const stopSignal = getStopSignal();
-  baseBrowser = new BaseBrowser(
-    decodoProxyProvider,
-    brightDataProxyProvider,
-    stopSignal,
-  );
+  baseBrowser = new BaseBrowser(stopSignal);
 
   return baseBrowser;
 };
@@ -127,14 +74,11 @@ const getTelegramSniperManager = (): TelegramSniperManager => {
 };
 
 const getNewThreadManager = (): ThreadManager => {
-  const decodoProxyProvider = getDecodoProxyProvider();
-  const brightDataProxyProvider = getBrightDataProxyProvider();
   const stopSignal = getStopSignal();
   const baseBrowser = getBaseBrowser();
+
   const threadManager = new ThreadManager({
     baseBrowser,
-    decodoProxyProvider,
-    brightDataProxyProvider,
     stopSignal,
     evmContractSnipperManager: getContractSniperManager(),
     solanaVanityAddressManager: getSolanaVanityAddressManager(),
@@ -248,8 +192,6 @@ const getSolanaVanityAddressManager = (): SolanaVanityAddressManager => {
 
 export {
   getNewExecutor,
-  getDecodoProxyProvider,
-  getProxyProvider,
   getBaseBrowser,
   getTelegram,
   getNewThreadManager,
