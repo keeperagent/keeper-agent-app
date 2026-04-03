@@ -16,9 +16,8 @@ import type {
   IPreference,
   IProfile,
   IProfileGroup,
-  IProxy,
-  IProxyIp,
-  IProxyIpGroup,
+  IStaticProxy,
+  IStaticProxyGroup,
   IResource,
   IResourceGroup,
   ISchedule,
@@ -269,35 +268,24 @@ export type IpcImportResourceGroupPayload = {
   filePath: string;
 };
 
-// Proxy
-export type IpcGetListProxyPayload = IpcPagePayload & {
-  type?: string;
-};
-export type IpcCreateProxyPayload = {
-  data: IProxy;
-};
-export type IpcUpdateProxyPayload = {
-  data: IProxy;
-};
-
-// ProxyIp
-export type IpcGetListProxyIpPayload = IpcPagePayload & {
+// StaticProxy
+export type IpcGetListStaticProxyPayload = IpcPagePayload & {
   groupId?: number;
 };
-export type IpcCreateProxyIpPayload = {
-  data: IProxyIp[];
+export type IpcCreateStaticProxyPayload = {
+  data: IStaticProxy[];
 };
-export type IpcUpdateProxyIpPayload = {
-  data: IProxyIp;
+export type IpcUpdateStaticProxyPayload = {
+  data: IStaticProxy;
 };
 
-// ProxyIpGroup
-export type IpcGetListProxyIpGroupPayload = IpcPagePayload;
-export type IpcCreateProxyIpGroupPayload = {
-  data: IProxyIpGroup;
+// StaticProxyGroup
+export type IpcGetListStaticProxyGroupPayload = IpcPagePayload;
+export type IpcCreateStaticProxyGroupPayload = {
+  data: IStaticProxyGroup;
 };
-export type IpcUpdateProxyIpGroupPayload = {
-  data: IProxyIpGroup;
+export type IpcUpdateStaticProxyGroupPayload = {
+  data: IStaticProxyGroup;
 };
 
 // NodeEndpoint

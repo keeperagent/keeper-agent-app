@@ -5,7 +5,7 @@ import {
   ResourceGroupModel,
   WorkflowModel,
   CampaignModel,
-  ProxyIpGroupModel,
+  StaticProxyGroupModel,
   CampaignProfileModel,
 } from "./index";
 import { campaignProfileDB } from "./campaignProfile";
@@ -60,8 +60,8 @@ class CampaignDB {
             required: false,
           },
           {
-            model: ProxyIpGroupModel,
-            as: "proxyIpGroup",
+            model: StaticProxyGroupModel,
+            as: "proxyGroup",
             required: false,
           },
           { model: WorkflowModel, required: false },

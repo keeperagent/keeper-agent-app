@@ -5,9 +5,8 @@ import { runWorkflowRunnerController } from "./controller/workflowRunner";
 import { runWorkflowController } from "./controller/workflow";
 import { runResourceGroupController } from "./controller/resourceGroup";
 import { resourceController } from "./controller/resource";
-import { proxyIpController } from "./controller/proxyIp";
-import { proxyIpGroupController } from "./controller/proxyIpGroup";
-import { proxyController } from "./controller/proxy";
+import { staticProxyController } from "./controller/staticProxy";
+import { staticProxyGroupController } from "./controller/staticProxyGroup";
 import { profileGroupController } from "./controller/profileGroup";
 import { profileController } from "./controller/profile";
 import {
@@ -58,8 +57,7 @@ const runMainProcess = () => {
   runWorkflowController();
   runResourceGroupController();
   resourceController();
-  proxyIpController();
-  proxyController();
+  staticProxyController();
   profileGroupController();
   profileController();
   perferenceController();
@@ -70,7 +68,7 @@ const runMainProcess = () => {
   databaseController();
   campaignProfileController();
   campaignController();
-  proxyIpGroupController();
+  staticProxyGroupController();
   windowController();
   fileController();
   browserController();

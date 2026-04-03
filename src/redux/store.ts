@@ -12,14 +12,13 @@ import resourceReducer from "./resource";
 import profileReducer from "./profile";
 import profileGroupReducer from "./profileGroup";
 import extensionReducer from "./extension";
-import proxyReducer from "./proxy";
 import workflowRunnerReducer from "./workflowRunner";
 import workflowReducer from "./workflow";
 import campaignReducer from "./campaign";
 import campaignProfileReducer from "./campaignProfile";
 import preferenceReducer from "./preference";
-import proxyIpGroupReducer from "./proxyIpGroup";
-import proxyIpReducer from "./proxyIp";
+import staticProxyGroupReducer from "./staticProxyGroup";
+import staticProxyReducer from "./staticProxy";
 import nodeEndpointReducer from "./nodeEndpoint";
 import nodeEndpointGroupReducer from "./nodeEndpointGroup";
 import folderReducer from "./folder";
@@ -48,14 +47,13 @@ const reducers = combineReducers({
   Profile: profileReducer,
   ProfileGroup: profileGroupReducer,
   Extension: extensionReducer,
-  Proxy: proxyReducer,
   WorkflowRunner: workflowRunnerReducer,
   Workflow: workflowReducer,
   Campaign: campaignReducer,
   CampaignProfile: campaignProfileReducer,
   Preference: preferenceReducer,
-  ProxyIpGroup: proxyIpGroupReducer,
-  ProxyIp: proxyIpReducer,
+  StaticProxyGroup: staticProxyGroupReducer,
+  StaticProxy: staticProxyReducer,
   NodeEndpoint: nodeEndpointReducer,
   NodeEndpointGroup: nodeEndpointGroupReducer,
   Folder: folderReducer,
@@ -98,8 +96,8 @@ const persistedReducer = persistReducer(
       "CampaignProfile",
       "NodeEndpoint",
       "NodeEndpointGroup",
-      "ProxyIp",
-      "ProxyIpGroup",
+      "StaticProxy",
+      "StaticProxyGroup",
       "AgentRegistry",
       "AppLog",
     ],

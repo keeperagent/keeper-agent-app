@@ -16,8 +16,8 @@ import nodeEndpointGroupFactory from "./model/nodeEndpointGroup";
 import profileFactory from "./model/profile";
 import extensionFactory from "./model/extension";
 import resourceGroupFactory from "./model/resourceGroup";
-import proxyIpFactory from "./model/proxyIp";
-import proxyIpGroupFactory from "./model/proxyIpGroup";
+import staticProxyFactory from "./model/staticProxy";
+import staticProxyGroupFactory from "./model/staticProxyGroup";
 import preferenceFactory from "./model/preference";
 import proxyFactory from "./model/proxy";
 import scheduleFactory from "./model/schedule";
@@ -54,8 +54,8 @@ export const NodeEndpointGroupModel = nodeEndpointGroupFactory(db);
 export const ProfileModel = profileFactory(db);
 export const ExtensionModel = extensionFactory(db);
 export const ResourceGroupModel = resourceGroupFactory(db);
-export const ProxyIpModel = proxyIpFactory(db);
-export const ProxyIpGroupModel = proxyIpGroupFactory(db);
+export const StaticProxyModel = staticProxyFactory(db);
+export const StaticProxyGroupModel = staticProxyGroupFactory(db);
 export const PreferenceModel = preferenceFactory(db);
 export const ProxyModel = proxyFactory(db);
 export const ScheduleModel = scheduleFactory(db);
@@ -78,10 +78,10 @@ CampaignModel.belongsTo(ProfileGroupModel, {
   onDelete: "CASCADE",
 });
 
-// @CampaignModel -> @ProxyIpGroupModel
-CampaignModel.belongsTo(ProxyIpGroupModel, {
-  foreignKey: { name: "proxyIpGroupId", allowNull: true },
-  as: "proxyIpGroup",
+// @CampaignModel -> @StaticProxyGroupModel
+CampaignModel.belongsTo(StaticProxyGroupModel, {
+  foreignKey: { name: "proxyGroupId", allowNull: true },
+  as: "proxyGroup",
   constraints: true,
   onDelete: "CASCADE",
 });
@@ -163,9 +163,9 @@ CampaignProfileModel.belongsTo(WalletModel, {
   onDelete: "CASCADE",
 });
 
-CampaignProfileModel.belongsTo(ProxyIpModel, {
-  foreignKey: { name: "proxyIpId", allowNull: true },
-  as: "proxyIp",
+CampaignProfileModel.belongsTo(StaticProxyModel, {
+  foreignKey: { name: "proxyId", allowNull: true },
+  as: "proxy",
   constraints: true,
   onDelete: "CASCADE",
 });
@@ -258,9 +258,9 @@ ResourceGroupModel.belongsToMany(ProfileGroupModel, {
   onDelete: "CASCADE",
 });
 
-// @ProxyIpModel
-// declare foreign key Profile -> ProfileGroup
-ProxyIpModel.belongsTo(ProxyIpGroupModel, {
+// @StaticProxyModel
+// declare foreign key StaticProxy -> StaticProxyGroup
+StaticProxyModel.belongsTo(StaticProxyGroupModel, {
   foreignKey: { name: "groupId", allowNull: false },
   as: "group",
   constraints: true,

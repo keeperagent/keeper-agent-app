@@ -59,12 +59,6 @@ export {
   useCreateBaseProfileExtension,
 } from "./extension";
 export {
-  useGetListProxy,
-  useDeleteProxy,
-  useUpdateProxy,
-  useCreateProxy,
-} from "./proxy";
-export {
   useGetListCampaign,
   useGetOneCampaign,
   useDeleteCampaign,
@@ -96,18 +90,18 @@ export {
 export { useGetStatistic } from "./statistic";
 export { useApollo } from "./apolloClient";
 export {
-  useGetListProxyIpGroup,
-  useGetOneProxyIpGroup,
-  useDeleteProxyIpGroup,
-  useUpdateProxyIpGroup,
-  useCreateProxyIpGroup,
-} from "./proxyIpGroup";
+  useGetListStaticProxyGroup,
+  useGetOneStaticProxyGroup,
+  useDeleteStaticProxyGroup,
+  useUpdateStaticProxyGroup,
+  useCreateStaticProxyGroup,
+} from "./staticProxyGroup";
 export {
-  useGetListProxyIp,
-  useDeleteProxyIp,
-  useUpdateProxyIp,
-  useCreateProxyIp,
-} from "./proxyIp";
+  useGetListStaticProxy,
+  useDeleteStaticProxy,
+  useUpdateStaticProxy,
+  useCreateStaticProxy,
+} from "./staticProxy";
 export {
   useGetListNodeEndpointGroup,
   useGetOneNodeEndpointGroup,

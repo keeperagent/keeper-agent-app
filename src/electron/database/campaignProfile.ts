@@ -10,7 +10,7 @@ import { formatCampaignProfile } from "@/electron/service/formatData";
 import {
   CampaignModel,
   CampaignProfileModel,
-  ProxyIpModel,
+  StaticProxyModel,
   ResourceGroupModel,
   ResourceModel,
   WalletGroupModel,
@@ -47,7 +47,7 @@ class CampaignProfileDB {
         include: [
           { model: ResourceModel, required: false },
           { model: WalletModel, as: "wallet", required: false },
-          { model: ProxyIpModel, as: "proxyIp", required: false },
+          { model: StaticProxyModel, as: "proxy", required: false },
         ],
         raw: false,
       });
@@ -166,7 +166,7 @@ class CampaignProfileDB {
         include: [
           { model: WalletModel, as: "wallet", required: false },
           { model: WalletGroupModel, as: "walletGroup", required: false },
-          { model: ProxyIpModel, as: "proxyIp", required: false },
+          { model: StaticProxyModel, as: "proxy", required: false },
           {
             model: ResourceModel,
             required: false,

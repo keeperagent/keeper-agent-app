@@ -1,36 +1,32 @@
-import { useRef, useEffect, Fragment } from "react";
+import { useRef, useEffect } from "react";
 import { Form, Checkbox, InputNumber, Select } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { TagOption } from "@/component";
-import { useTranslation, useGetListProxyIpGroup } from "@/hook";
-import { IProxyIpGroup, IProxyService } from "@/electron/type";
-import { EMPTY_STRING, LIST_PROXY_SERVICE } from "@/config/constant";
-import { PROXY_TYPE } from "@/electron/constant";
+import { useTranslation, useGetListStaticProxyGroup } from "@/hook";
+import { IStaticProxyGroup } from "@/electron/type";
+import { EMPTY_STRING } from "@/config/constant";
 import { USER_AGENT_CATEGORY } from "@/electron/constant";
 import { Wrapper, OptionWrapper } from "./style";
 
-let searchProxyIpGroupTimeOut: any = null;
+let searchStaticProxyGroupTimeOut: any = null;
 const { Option } = Select;
 
 const ConfigForm = (props: any) => {
   const {
     isModalOpen,
-    listProxyIpGroup,
+    listStaticProxyGroup,
     setIsUseProxy,
     isUseProxy,
-    setProxyType,
-    proxyType,
     setIsUseRandomUserAgent,
     isUseRandomUserAgent,
   } = props;
   const { translate } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
-  const { getListProxyIpGroup, loading: proxyIpGroupLoading } =
-    useGetListProxyIpGroup();
+  const { getListStaticProxyGroup, loading: staticProxyGroupLoading } =
+    useGetListStaticProxyGroup();
 
   useEffect(() => {
-    getListProxyIpGroup({ page: 1, pageSize: 1000 });
+    getListStaticProxyGroup({ page: 1, pageSize: 1000 });
   }, []);
 
   useEffect(() => {
@@ -49,12 +45,12 @@ const ConfigForm = (props: any) => {
     setIsUseRandomUserAgent(event?.target?.checked);
   };
 
-  const onSearchProxyIpGroup = (text: string) => {
-    if (searchProxyIpGroupTimeOut) {
-      clearTimeout(searchProxyIpGroupTimeOut);
+  const onSearchStaticProxyGroup = (text: string) => {
+    if (searchStaticProxyGroupTimeOut) {
+      clearTimeout(searchStaticProxyGroupTimeOut);
     }
-    searchProxyIpGroupTimeOut = setTimeout(() => {
-      getListProxyIpGroup({ page: 1, pageSize: 1000, searchText: text });
+    searchStaticProxyGroupTimeOut = setTimeout(() => {
+      getListStaticProxyGroup({ page: 1, pageSize: 1000, searchText: text });
     }, 200);
   };
 
@@ -126,86 +122,9 @@ const ConfigForm = (props: any) => {
       </Form.Item>
 
       {isUseProxy && (
-        <div className="mode">
-          <TagOption
-            content={translate("proxy.rotateProxy")}
-            checked={proxyType === PROXY_TYPE.ROTATE_PROXY}
-            onClick={() => setProxyType(PROXY_TYPE.ROTATE_PROXY)}
-            style={{ fontSize: "1.1rem" }}
-          />
-
-          <TagOption
-            content={translate("proxy.staticProxy")}
-            checked={proxyType === PROXY_TYPE.STATIC_PROXY}
-            onClick={() => setProxyType(PROXY_TYPE.STATIC_PROXY)}
-            style={{ fontSize: "1.1rem" }}
-          />
-        </div>
-      )}
-
-      {isUseProxy && proxyType === PROXY_TYPE.ROTATE_PROXY && (
-        <Fragment>
-          <Form.Item
-            label={`${translate("workflow.rotateProxyService")}:`}
-            name="proxyService"
-            rules={[
-              {
-                required: true,
-                message: translate("form.requiredField"),
-              },
-            ]}
-          >
-            <Select
-              placeholder={translate("workflow.rotateProxyServicePlaceholder")}
-              size="large"
-              className="custom-select"
-            >
-              {LIST_PROXY_SERVICE?.map((proxyService: IProxyService) => (
-                <Option key={proxyService?.type}>
-                  <span style={{ display: "flex", alignItems: "center" }}>
-                    <div
-                      className="color"
-                      style={{
-                        width: "2rem",
-                        height: "2rem",
-                        borderRadius: "0.5rem",
-                        backgroundColor: proxyService.background,
-                        marginRight: "1rem",
-                      }}
-                    />
-                    {proxyService?.name}
-                  </span>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label={`${translate("campaign.maxProfilePerProxy")}:`}
-            name="maxProfilePerProxy"
-            rules={[
-              {
-                required: true,
-                message: translate("form.requiredField"),
-              },
-            ]}
-            tooltip={translate("campaign.maxProfilePerProxyHelper")}
-          >
-            <InputNumber
-              placeholder={translate("campaign.maxProfilePerProxyPlaceholder")}
-              className="custom-input-number"
-              size="large"
-              style={{ width: "100%" }}
-              min={1}
-            />
-          </Form.Item>
-        </Fragment>
-      )}
-
-      {isUseProxy && proxyType === PROXY_TYPE.STATIC_PROXY && (
         <Form.Item
           label={`${translate("workflow.staticProxyGroup")}:`}
-          name="proxyIpGroupId"
+          name="proxyGroupId"
           rules={[
             {
               required: true,
@@ -218,12 +137,12 @@ const ConfigForm = (props: any) => {
             size="large"
             className="custom-select"
             showSearch
-            onSearch={onSearchProxyIpGroup}
+            onSearch={onSearchStaticProxyGroup}
             filterOption={false}
-            loading={proxyIpGroupLoading}
+            loading={staticProxyGroupLoading}
             optionLabelProp="label"
           >
-            {listProxyIpGroup?.map((group: IProxyIpGroup) => (
+            {listStaticProxyGroup?.map((group: IStaticProxyGroup) => (
               <Option key={group?.id} value={group?.id} label={group?.name}>
                 <OptionWrapper>
                   <div className="name">{group?.name || EMPTY_STRING}</div>
@@ -283,7 +202,7 @@ const ConfigForm = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    listProxyIpGroup: state?.ProxyIpGroup?.listProxyIpGroup,
+    listStaticProxyGroup: state?.StaticProxyGroup?.listStaticProxyGroup,
   }),
   {},
 )(ConfigForm);

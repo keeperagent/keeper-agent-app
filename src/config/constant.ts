@@ -1,5 +1,4 @@
-import { PROXY_SERVICE_TYPE, WORKFLOW_TYPE } from "@/electron/constant";
-import { IProxyService } from "@/electron/type";
+import { WORKFLOW_TYPE } from "@/electron/constant";
 
 export const RESPONSE_CODE = {
   SUCCESS: 200,
@@ -174,23 +173,6 @@ export const FOLDER_TYPE = {
   TEMP: "TEMP",
   SKILL: "SKILL",
 };
-
-export const LIST_PROXY_SERVICE: IProxyService[] = [
-  {
-    type: PROXY_SERVICE_TYPE.DECODO,
-    name: "Decodo",
-    background: "var(--background-success)",
-    color: "var(--color-success)",
-    website: "https://decodo.com",
-  },
-  {
-    type: PROXY_SERVICE_TYPE.BRIGHTDATA,
-    name: "Bright Data",
-    background: "var(--background-success)",
-    color: "var(--color-success)",
-    website: "https://brightdata.com/",
-  },
-];
 
 export const DEFAULT_SLEEP_TIME = 3;
 export const SAMPLE_XPATH = "//button[contains(text(), 'Connect Wallet')]";

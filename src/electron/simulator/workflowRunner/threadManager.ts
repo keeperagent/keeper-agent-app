@@ -29,7 +29,6 @@ import {
   WORKFLOW_TYPE,
   TELEGRAM_SNIPER_MODE,
 } from "@/electron/constant";
-import { IProxyProvider } from "@/electron/proxy";
 import { StopSignal } from "@/electron/simulator/stopSignal";
 import { logEveryWhere } from "@/electron/service/util";
 import { workflowDB } from "@/electron/database/workflow";
@@ -59,8 +58,6 @@ export type Thread = {
 export class ThreadManager {
   private baseBrowser: BaseBrowser;
   private mapThread: { [threadID: string]: Thread };
-  private decodoProxyProvider: IProxyProvider;
-  private brightDataProxyProvider: IProxyProvider;
   private stopSignal: StopSignal;
   private evmContractSnipperManager: EVMContractSnipperManager;
   private solanaVanityAddressManager: SolanaVanityAddressManager;
@@ -68,16 +65,12 @@ export class ThreadManager {
 
   constructor({
     baseBrowser,
-    decodoProxyProvider,
-    brightDataProxyProvider,
     stopSignal,
     evmContractSnipperManager,
     solanaVanityAddressManager,
     telegramSniperManager,
   }: {
     baseBrowser: BaseBrowser;
-    decodoProxyProvider: IProxyProvider;
-    brightDataProxyProvider: IProxyProvider;
     stopSignal: StopSignal;
     evmContractSnipperManager: EVMContractSnipperManager;
     solanaVanityAddressManager: SolanaVanityAddressManager;
@@ -85,8 +78,6 @@ export class ThreadManager {
   }) {
     this.baseBrowser = baseBrowser;
     this.mapThread = {};
-    this.decodoProxyProvider = decodoProxyProvider;
-    this.brightDataProxyProvider = brightDataProxyProvider;
     this.stopSignal = stopSignal;
     this.evmContractSnipperManager = evmContractSnipperManager;
     this.solanaVanityAddressManager = solanaVanityAddressManager;
@@ -174,9 +165,7 @@ export class ThreadManager {
 
         const profileProxy: IProfileProxy = {
           isUseProxy: Boolean(campaignConfig?.isUseProxy),
-          proxyIp: profile?.proxyIp,
-          proxyType: campaignConfig?.proxyType,
-          proxyService: campaignConfig?.proxyService,
+          proxy: profile?.proxy,
         };
 
         const [newSimulator, err] = await this.baseBrowser.createBrowser({
@@ -189,10 +178,7 @@ export class ThreadManager {
           windowHeight: campaignConfig?.windowHeight,
           isFullScreen: campaignConfig?.isFullScreen,
           totalScreen: campaignConfig?.totalScreen,
-          maxProfilePerProxy: campaignConfig?.maxProfilePerProxy,
           defaultOpenUrl: campaignConfig?.defaultOpenUrl,
-          campaignId: campaignConfig?.campaignId,
-          workflowId: campaignConfig?.workflowId,
         });
         if (newSimulator === null || err) {
           return [flowProfile, err];
@@ -279,9 +265,6 @@ export class ThreadManager {
         simulator.browserProcessId = null;
       }
 
-      this.decodoProxyProvider.markProxyIsUnUsed(profileKey);
-      this.brightDataProxyProvider.markProxyIsUnUsed(profileKey);
-
       if (shouldRemoveFolder) {
         const tempProfilePath = getProfilePath(profileName);
         const isExist = fs.pathExistsSync(tempProfilePath);
@@ -311,9 +294,6 @@ export class ThreadManager {
       const listThreadID: any[] = Object.keys(this.mapThread);
       // clean up when Workflow completed
       if (isStopAllThread) {
-        this.decodoProxyProvider.stopProxyProvider();
-        this.brightDataProxyProvider.stopProxyProvider();
-
         const telegram = getTelegram();
         await telegram.stopAllTelegramClient();
         await this.stopContractSniper(campaignId, workflowId);

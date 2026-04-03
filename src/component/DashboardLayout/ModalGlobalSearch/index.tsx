@@ -13,7 +13,7 @@ import {
   IWorkflow,
   ICampaign,
   ISchedule,
-  IProxyIpGroup,
+  IStaticProxyGroup,
   INodeEndpointGroup,
   IWalletGroup,
   IResourceGroup,
@@ -83,7 +83,7 @@ const ModalGlobalSearch = (props: IProps) => {
             result?.walletGroups?.length === 0 &&
             result?.resourceGroups?.length === 0 &&
             result?.profileGroups?.length === 0 &&
-            result?.proxyIpGroups?.length === 0 &&
+            result?.staticProxyGroups?.length === 0 &&
             result?.nodeEndpointGroups?.length === 0 && (
               <div className="empty">
                 <Empty />
@@ -205,21 +205,23 @@ const ModalGlobalSearch = (props: IProps) => {
               </Fragment>
             )}
 
-            {result?.proxyIpGroups?.length! > 0 && (
+            {result?.staticProxyGroups?.length! > 0 && (
               <Fragment>
                 <div className="title">{translate("proxy.staticProxy")}</div>
                 <div className="result-list">
-                  {result?.proxyIpGroups?.map((proxyIpGroup: IProxyIpGroup) => (
-                    <SearchResult
-                      key={`proxyIpGroup-${proxyIpGroup?.id || ""}`}
-                      name={proxyIpGroup?.name || EMPTY_STRING}
-                      description={proxyIpGroup?.note || EMPTY_STRING}
-                      updateAt={proxyIpGroup?.updateAt || 0}
-                      totalData={proxyIpGroup?.totalProxyIp || 0}
-                      link={`/dashboard/proxy?group=${proxyIpGroup?.id}&mode=LIST_IP`}
-                      totalLabel={translate("proxyIp.totalIp")}
-                    />
-                  ))}
+                  {result?.staticProxyGroups?.map(
+                    (staticProxyGroup: IStaticProxyGroup) => (
+                      <SearchResult
+                        key={`staticProxyGroup-${staticProxyGroup?.id || ""}`}
+                        name={staticProxyGroup?.name || EMPTY_STRING}
+                        description={staticProxyGroup?.note || EMPTY_STRING}
+                        updateAt={staticProxyGroup?.updateAt || 0}
+                        totalData={staticProxyGroup?.totalProxyIp || 0}
+                        link={`/dashboard/proxy?group=${staticProxyGroup?.id}&mode=LIST_IP`}
+                        totalLabel={translate("staticProxy.totalIp")}
+                      />
+                    ),
+                  )}
                 </div>
               </Fragment>
             )}

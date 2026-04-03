@@ -56,7 +56,7 @@ import {
   ICampaign,
   ICampaignProfile,
   IFlowProfile,
-  IProxyIp,
+  IStaticProxy,
   ColumnConfig,
   IRunningWorkflow,
   ICampaignProfileColumn,
@@ -64,7 +64,6 @@ import {
 } from "@/electron/type";
 import {
   LIST_NETWORK_PROTOCOL,
-  PROXY_TYPE,
   PORTFOLIO_APP_NAME,
   MESSAGE,
   SORT_ORDER,
@@ -268,9 +267,9 @@ const renderColumns = (
     isIncludeStaticProxy
       ? {
           title: "Proxy",
-          dataIndex: "proxyIp",
+          dataIndex: "proxy",
           width: "25rem",
-          render: (value: IProxyIp) => {
+          render: (value: IStaticProxy) => {
             const protocol =
               _.find(LIST_NETWORK_PROTOCOL, { value: value?.protocol })
                 ?.prefix || "";
@@ -602,10 +601,7 @@ const ManageCampaignProfile = (props: IProps) => {
       isSaveProfile: true,
       campaignConfig: {
         isUseProxy: selectedCampaign?.isUseProxy,
-        proxyService: selectedCampaign?.proxyService,
-        proxyType: selectedCampaign?.proxyType,
         defaultOpenUrl: selectedCampaign?.defaultOpenUrl,
-        maxProfilePerProxy: selectedCampaign?.maxProfilePerProxy,
         windowWidth: selectedCampaign?.windowWidth,
         windowHeight: selectedCampaign?.windowHeight,
         isFullScreen: selectedCampaign?.isFullScreen,
@@ -1172,8 +1168,7 @@ const ManageCampaignProfile = (props: IProps) => {
           listResourceColumn,
           listAdditionalColumn,
           isIncludeWallet,
-          Boolean(selectedCampaign?.isUseProxy) &&
-            selectedCampaign?.proxyType === PROXY_TYPE.STATIC_PROXY,
+          Boolean(selectedCampaign?.isUseProxy),
           searchText,
           onOpenCampaignProfileInBrowser,
           onCloseCampaignProfileInBrowser,

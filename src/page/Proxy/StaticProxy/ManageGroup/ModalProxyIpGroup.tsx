@@ -3,13 +3,13 @@ import { Modal, Form, Input } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
-  actSaveSelectedProxyIpGroup,
-  actSaveCreateProxyIpGroup,
-  actSaveUpdateProxyIpGroup,
-} from "@/redux/proxyIpGroup";
+  actSaveSelectedStaticProxyGroup,
+  actSaveCreateStaticProxyGroup,
+  actSaveUpdateStaticProxyGroup,
+} from "@/redux/staticProxyGroup";
 import {
-  useUpdateProxyIpGroup,
-  useCreateProxyIpGroup,
+  useUpdateStaticProxyGroup,
+  useCreateStaticProxyGroup,
   useTranslation,
 } from "@/hook";
 
@@ -17,21 +17,21 @@ const { TextArea } = Input;
 
 const ModalProxyIpGroup = (props: any) => {
   const { translate } = useTranslation();
-  const { isModalOpen, setModalOpen, selectedProxyIpGroup } = props;
+  const { isModalOpen, setModalOpen, selectedStaticProxyGroup } = props;
   const [isBtnLoading, setBtnLoading] = useState(false);
   const [form] = Form.useForm();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
-    updateProxyIpGroup,
+    updateStaticProxyGroup,
     loading: isUpdateLoading,
     isSuccess: isUpdateSuccess,
-  } = useUpdateProxyIpGroup();
+  } = useUpdateStaticProxyGroup();
   const {
-    createProxyIpGroup,
+    createStaticProxyGroup,
     loading: isCreateLoading,
     isSuccess: isCreateSuccess,
-  } = useCreateProxyIpGroup();
+  } = useCreateStaticProxyGroup();
 
   useEffect(() => {
     if (isModalOpen) {
@@ -40,17 +40,17 @@ const ModalProxyIpGroup = (props: any) => {
       }, 100);
     }
     form.setFieldsValue({
-      name: selectedProxyIpGroup?.name || "",
-      note: selectedProxyIpGroup?.note || "",
+      name: selectedStaticProxyGroup?.name || "",
+      note: selectedStaticProxyGroup?.note || "",
     });
-  }, [isModalOpen, form, selectedProxyIpGroup]);
+  }, [isModalOpen, form, selectedStaticProxyGroup]);
 
   const onCloseModal = () => {
     setModalOpen(false);
     setBtnLoading(false);
 
     setTimeout(() => {
-      props?.actSaveSelectedProxyIpGroup(null);
+      props?.actSaveSelectedStaticProxyGroup(null);
     }, 300);
   };
 
@@ -73,14 +73,14 @@ const ModalProxyIpGroup = (props: any) => {
       const { name, note } = await form.validateFields(["name", "note"]);
       setBtnLoading(true);
 
-      if (selectedProxyIpGroup) {
-        updateProxyIpGroup({
+      if (selectedStaticProxyGroup) {
+        updateStaticProxyGroup({
           name,
           note,
-          id: selectedProxyIpGroup?.id,
+          id: selectedStaticProxyGroup?.id,
         });
       } else {
-        createProxyIpGroup({ name, note });
+        createStaticProxyGroup({ name, note });
       }
     } catch {}
   };
@@ -89,14 +89,14 @@ const ModalProxyIpGroup = (props: any) => {
     <Modal
       open={isModalOpen}
       title={
-        !selectedProxyIpGroup
-          ? translate("proxyIp.createGroup")
-          : translate("proxyIp.updateGroup")
+        !selectedStaticProxyGroup
+          ? translate("staticProxy.createGroup")
+          : translate("staticProxy.updateGroup")
       }
       onCancel={onCloseModal}
       maskClosable={false}
       okText={
-        !selectedProxyIpGroup
+        !selectedStaticProxyGroup
           ? translate("button.createNew")
           : translate("button.update")
       }
@@ -139,11 +139,11 @@ const ModalProxyIpGroup = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    selectedProxyIpGroup: state?.ProxyIpGroup?.selectedProxyIpGroup,
+    selectedStaticProxyGroup: state?.StaticProxyGroup?.selectedStaticProxyGroup,
   }),
   {
-    actSaveSelectedProxyIpGroup,
-    actSaveCreateProxyIpGroup,
-    actSaveUpdateProxyIpGroup,
-  }
+    actSaveSelectedStaticProxyGroup,
+    actSaveCreateStaticProxyGroup,
+    actSaveUpdateStaticProxyGroup,
+  },
 )(ModalProxyIpGroup);

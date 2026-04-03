@@ -1,9 +1,8 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { message, notification } from "antd";
+import { message } from "antd";
 import { uid } from "uid/secure";
 import {
-  ERROR_EXCEED_PROFILE_PER_PROXY,
   MESSAGE,
   RESPONSE_CODE,
   UNABLE_TO_GET_PROXY,
@@ -116,21 +115,13 @@ const useUpdateListCampaignProfile = () => {
 
 const useOpenCampaignProfileInBrowser = () => {
   const [openCampaignProfileId, setCampaignProfileId] = useState<any>(null);
-  const maxProfilePerProxy = useRef(0);
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.OPEN_CAMPAIGN_PROFILE_IN_BROWSER,
     MESSAGE.OPEN_CAMPAIGN_PROFILE_IN_BROWSER_RES,
     {
       onSuccess: ({ code, error }: any) => {
         if (code === RESPONSE_CODE.ERROR) {
-          if (error === ERROR_EXCEED_PROFILE_PER_PROXY) {
-            notification.error({
-              message: "IP address is already in use",
-              description: `Only a maximum of ${maxProfilePerProxy.current} Profile${
-                maxProfilePerProxy.current > 1 ? "s" : ""
-              } are allowed per IP address`,
-            });
-          } else if (error !== UNABLE_TO_GET_PROXY) {
+          if (error !== UNABLE_TO_GET_PROXY) {
             message.error(error);
           }
         }
@@ -139,8 +130,6 @@ const useOpenCampaignProfileInBrowser = () => {
   );
   const openCampaignProfileInBrowser = (flowProfile: IFlowProfile) => {
     setCampaignProfileId(flowProfile?.profile?.id);
-    maxProfilePerProxy.current =
-      flowProfile?.campaignConfig?.maxProfilePerProxy || 0;
     execute({ flowProfile });
   };
   return {

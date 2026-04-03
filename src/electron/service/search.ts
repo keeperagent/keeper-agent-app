@@ -2,7 +2,7 @@ import { scheduleDB } from "@/electron/database/schedule";
 import { campaignDB } from "@/electron/database/campaign";
 import { IGlobalSearchResult } from "@/electron/type";
 import { nodeEndpointGroupDB } from "@/electron/database/nodeEndpointGroup";
-import { proxyIpGroupDB } from "@/electron/database/proxyIpGroup";
+import { staticProxyGroupDB } from "@/electron/database/staticProxyGroup";
 import { profileGroupDB } from "@/electron/database/profileGroup";
 import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { walletGroupDB } from "@/electron/database/walletGroup";
@@ -11,7 +11,7 @@ import { workflowDB } from "@/electron/database/workflow";
 const perPage = 6;
 
 export const globalSearch = async (
-  searchText: string
+  searchText: string,
 ): Promise<[IGlobalSearchResult | null, Error | null]> => {
   try {
     const [listCampaign] =
@@ -27,13 +27,17 @@ export const globalSearch = async (
       [];
     const [listProfileGroup] =
       (await profileGroupDB.getListProfileGroup(1, perPage, searchText)) || [];
-    const [listProxyIpGroup] =
-      (await proxyIpGroupDB.getListProxyIpGroup(1, perPage, searchText)) || [];
+    const [listStaticProxyGroup] =
+      (await staticProxyGroupDB.getListStaticProxyGroup(
+        1,
+        perPage,
+        searchText,
+      )) || [];
     const [listNodeEndpointGroup] =
       (await nodeEndpointGroupDB.getListNodeEndpointGroup(
         1,
         perPage,
-        searchText
+        searchText,
       )) || [];
 
     return [
@@ -44,7 +48,7 @@ export const globalSearch = async (
         walletGroups: listWalletGroup?.data || [],
         resourceGroups: listResourceGroup?.data || [],
         profileGroups: listProfileGroup?.data || [],
-        proxyIpGroups: listProxyIpGroup?.data || [],
+        staticProxyGroups: listStaticProxyGroup?.data || [],
         nodeEndpointGroups: listNodeEndpointGroup?.data || [],
       },
       null,

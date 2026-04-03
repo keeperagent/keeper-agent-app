@@ -2,7 +2,7 @@ import { DataTypes, Sequelize } from "sequelize";
 
 export default (db: Sequelize) =>
   db.define(
-    "ProxyIpGroup",
+    "StaticProxyGroup",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -22,6 +22,7 @@ export default (db: Sequelize) =>
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },
     {
+      tableName: "StaticProxyGroups",
       timestamps: false,
     },
   );

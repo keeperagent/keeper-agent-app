@@ -34,14 +34,7 @@ export default (db: Sequelize) =>
         allowNull: false,
         defaultValue: 0,
       },
-      maxProfilePerProxy: {
-        type: DataTypes.INTEGER,
-        defaultValue: 2,
-        allowNull: true,
-      },
-      proxyService: { type: DataTypes.STRING, allowNull: true },
-      proxyType: { type: DataTypes.STRING, allowNull: true },
-      profileType: { type: DataTypes.STRING, allowNull: true },
+profileType: { type: DataTypes.STRING, allowNull: true },
       isUseRandomUserAgent: {
         type: DataTypes.BOOLEAN,
         allowNull: true,

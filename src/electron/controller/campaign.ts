@@ -4,7 +4,7 @@ import { uid } from "uid/secure";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { campaignDB } from "@/electron/database/campaign";
 import { profileDB } from "@/electron/database/profile";
-import { proxyIpDB } from "@/electron/database/proxyIp";
+import { staticProxyDB } from "@/electron/database/staticProxy";
 import { sleep } from "@/electron/service/util";
 import {
   exportCampaignConfig,
@@ -12,14 +12,14 @@ import {
 } from "@/electron/service/campaign";
 import { exportCampaignProfile } from "@/electron/service/campaignProfile";
 import { deleteFolder } from "@/electron/service/file";
-import { MESSAGE, PROXY_TYPE, PROFILE_TYPE } from "@/electron/constant";
+import { MESSAGE, PROFILE_TYPE } from "@/electron/constant";
 import {
   AppLogType,
   ICampaign,
   ICampaignProfile,
   IJob,
   IProfile,
-  IProxyIp,
+  IStaticProxy,
   IWorkflow,
 } from "@/electron/type";
 import { jobDB } from "@/electron/database/job";
@@ -109,19 +109,15 @@ export const campaignController = () => {
           error: err?.message,
         });
       }
-      const { isUseProxy, proxyType, proxyIpGroupId, profileGroupId } =
-        campaign || {};
+      const { isUseProxy, proxyGroupId, profileGroupId } = campaign || {};
 
-      let listProxyIp: IProxyIp[] = [];
-      if (
-        isUseProxy &&
-        proxyType === PROXY_TYPE.STATIC_PROXY &&
-        proxyIpGroupId
-      ) {
-        [listProxyIp] = await proxyIpDB.getListProxyIpInGroup(proxyIpGroupId);
+      let listStaticProxy: IStaticProxy[] = [];
+      if (isUseProxy && proxyGroupId) {
+        [listStaticProxy] =
+          await staticProxyDB.getListStaticProxyInGroup(proxyGroupId);
       }
 
-      await initCampaignProfile(profileGroupId!, listProxyIp, campaignId);
+      await initCampaignProfile(profileGroupId!, listStaticProxy, campaignId);
       event.reply(MESSAGE.SYNC_CAMPAIGN_PROFILE_RES, {});
     },
   );
@@ -150,20 +146,16 @@ export const campaignController = () => {
     async (event, payload) => {
       const campaign = payload?.data as ICampaign;
       let [res] = await campaignDB.createCampaign(campaign);
-      const { proxyIpGroupId, isUseProxy, proxyType, profileGroupId } =
-        campaign;
+      const { proxyGroupId, isUseProxy, profileGroupId } = campaign;
 
-      let listProxyIp: IProxyIp[] = [];
-      if (
-        isUseProxy &&
-        proxyType === PROXY_TYPE.STATIC_PROXY &&
-        proxyIpGroupId
-      ) {
-        [listProxyIp] = await proxyIpDB.getListProxyIpInGroup(proxyIpGroupId);
+      let listStaticProxy: IStaticProxy[] = [];
+      if (isUseProxy && proxyGroupId) {
+        [listStaticProxy] =
+          await staticProxyDB.getListStaticProxyInGroup(proxyGroupId);
       }
 
       // create CampaignProfile
-      await initCampaignProfile(profileGroupId!, listProxyIp, res?.id!);
+      await initCampaignProfile(profileGroupId!, listStaticProxy, res?.id!);
       [res] = await campaignDB.getOneCampaign(res?.id!);
 
       event.reply(MESSAGE.CREATE_CAMPAIGN_RES, {
@@ -346,12 +338,12 @@ export const campaignController = () => {
 
 const initCampaignProfile = async (
   profileGroupId: number,
-  listProxyIp: IProxyIp[],
+  listStaticProxy: IStaticProxy[],
   campaignId: number,
 ) => {
   const batchSize = 1000;
   const page = 1;
-  let currentProxyIpIndex = 0;
+  let currentStaticProxyIndex = 0;
   const [res1] = await profileDB.getListProfile(
     page,
     batchSize,
@@ -396,18 +388,18 @@ const initCampaignProfile = async (
           isActive: true,
         };
 
-        if (listProxyIp.length > 0) {
-          const proxyIpId = listProxyIp[currentProxyIpIndex]?.id;
-          if (proxyIpId !== undefined) {
+        if (listStaticProxy.length > 0) {
+          const proxyId = listStaticProxy[currentStaticProxyIndex]?.id;
+          if (proxyId !== undefined) {
             campaignProfile = {
               ...campaignProfile,
-              proxyIpId,
+              proxyId,
             };
           }
 
-          currentProxyIpIndex += 1;
-          if (currentProxyIpIndex === listProxyIp.length) {
-            currentProxyIpIndex = 0; // reset
+          currentStaticProxyIndex += 1;
+          if (currentStaticProxyIndex === listStaticProxy.length) {
+            currentStaticProxyIndex = 0; // reset
           }
         }
 

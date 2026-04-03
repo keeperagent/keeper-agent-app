@@ -13,7 +13,7 @@ import {
   useTranslation,
   useGetCampaignProfileStatus,
 } from "@/hook";
-import { PROFILE_TYPE, PROXY_TYPE, SORT_ORDER } from "@/electron/constant";
+import { PROFILE_TYPE, SORT_ORDER } from "@/electron/constant";
 import { ICampaign, IWorkflow } from "@/electron/type";
 import ConfigForm from "./ConfigForm";
 import InfoForm from "./InfoForm";
@@ -47,7 +47,6 @@ const ModalCampaign = (props: IProps) => {
   } = props;
   const [isBtnLoading, setBtnLoading] = useState(false);
   const [isUseProxy, setIsUseProxy] = useState(false);
-  const [proxyType, setProxyType] = useState(PROXY_TYPE.ROTATE_PROXY);
   const [isUseRandomUserAgent, setIsUseRandomUserAgent] = useState(false);
   const [profileType, setProfileType] = useState(PROFILE_TYPE.ALL_PROFILE);
   const [isFullScreen, setFullScreen] = useState(true);
@@ -79,14 +78,12 @@ const ModalCampaign = (props: IProps) => {
           ? true
           : selectedCampaign?.isSaveProfile,
       isUseProxy: selectedCampaign?.isUseProxy,
-      proxyService: selectedCampaign?.proxyService,
-      proxyIpGroupId: selectedCampaign?.proxyIpGroupId,
+      proxyGroupId: selectedCampaign?.proxyGroupId,
       userAgentCategory: selectedCampaign?.userAgentCategory,
       isUseRandomUserAgent: selectedCampaign?.isUseRandomUserAgent,
       windowWidth: selectedCampaign?.windowWidth || defaultScreenSize?.width,
       windowHeight: selectedCampaign?.windowHeight || defaultScreenSize?.height,
       listCampaignProfileId: selectedCampaign?.listCampaignProfileId || [],
-      maxProfilePerProxy: selectedCampaign?.maxProfilePerProxy,
       note: selectedCampaign?.note || "",
     });
 
@@ -96,7 +93,6 @@ const ModalCampaign = (props: IProps) => {
         ? true
         : Boolean(selectedCampaign?.isFullScreen),
     );
-    setProxyType(selectedCampaign?.proxyType || PROXY_TYPE.ROTATE_PROXY);
     setProfileType(selectedCampaign?.profileType || PROFILE_TYPE.ALL_PROFILE);
     setIsUseRandomUserAgent(Boolean(selectedCampaign?.isUseRandomUserAgent));
   }, [isModalOpen, form, selectedCampaign]);
@@ -160,13 +156,11 @@ const ModalCampaign = (props: IProps) => {
         numberOfRound,
         sleepBetweenRound,
         isUseProxy,
-        proxyService,
-        proxyIpGroupId,
+        proxyGroupId,
         userAgentCategory,
         windowWidth,
         windowHeight,
         listCampaignProfileId,
-        maxProfilePerProxy,
       } = await form.validateFields([
         "name",
         "listWorkflowId",
@@ -177,13 +171,11 @@ const ModalCampaign = (props: IProps) => {
         "sleepBetweenRound",
         "isSaveProfile",
         "isUseProxy",
-        "proxyService",
-        "proxyIpGroupId",
+        "proxyGroupId",
         "userAgentCategory",
         "windowWidth",
         "windowHeight",
         "listCampaignProfileId",
-        "maxProfilePerProxy",
       ]);
       setBtnLoading(true);
 
@@ -197,9 +189,7 @@ const ModalCampaign = (props: IProps) => {
         sleepBetweenRound,
         isSaveProfile,
         isUseProxy,
-        proxyService,
-        proxyIpGroupId,
-        proxyType,
+        proxyGroupId,
         isUseRandomUserAgent,
         userAgentCategory,
         windowWidth,
@@ -207,7 +197,6 @@ const ModalCampaign = (props: IProps) => {
         isFullScreen,
         profileType,
         listCampaignProfileId,
-        maxProfilePerProxy,
         sortField: "round",
         sortOrder: SORT_ORDER.ASC,
       };
@@ -290,8 +279,6 @@ const ModalCampaign = (props: IProps) => {
               isModalOpen={isModalOpen}
               isUseProxy={isUseProxy}
               setIsUseProxy={setIsUseProxy}
-              setProxyType={setProxyType}
-              proxyType={proxyType}
               setIsUseRandomUserAgent={setIsUseRandomUserAgent}
               isUseRandomUserAgent={isUseRandomUserAgent}
             />
