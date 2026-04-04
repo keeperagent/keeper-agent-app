@@ -6,6 +6,7 @@
 
 import { randomUUID } from "crypto";
 import {
+  AIMessage,
   HumanMessage,
   SystemMessage,
   type ContentBlock,
@@ -50,7 +51,9 @@ export type AgentSession = {
   platformId: ChatPlatform;
   platformChatId: string;
   isCompacting: boolean;
-  /** Set when the agent's last response asked the user for their encryptKey. */
+  //  Summary text from the last compaction, injected into the new thread on first run
+  pendingSummary: string | null;
+  // Set when the agent's last response asked the user for their encryptKey
   expectingEncryptKey: boolean;
 };
 
@@ -302,20 +305,26 @@ class AgentChatBridge {
 
   private maybeRunSummarization = async (
     session: AgentSession,
-  ): Promise<boolean> => {
-    if (session.isCompacting) return false;
+  ): Promise<string | null> => {
+    if (session.isCompacting) return null;
     try {
-      if (session.contextTokens <= COMPACTION_THRESHOLD) return false;
+      if (session.contextTokens <= COMPACTION_THRESHOLD) {
+        return null;
+      }
       session.isCompacting = true;
 
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
       );
-      if (messages.length < 10) return false;
+      if (messages.length < 10) {
+        return null;
+      }
 
       const lastId = messages[messages.length - 1]?.id;
-      if (!lastId) return false;
+      if (!lastId) {
+        return null;
+      }
 
       const conversationText = messages
         .map(
@@ -349,12 +358,12 @@ class AgentChatBridge {
       logEveryWhere({
         message: "[AgentChatBridge] Background summarisation completed",
       });
-      return true;
+      return summaryText;
     } catch (err: any) {
       logEveryWhere({
         message: `[AgentChatBridge] Summarisation error: ${err?.message}`,
       });
-      return false;
+      return null;
     } finally {
       session.isCompacting = false;
     }
@@ -393,8 +402,8 @@ class AgentChatBridge {
   // recreate agent after summary
   private postRunCompaction = (sessionKey: string, session: AgentSession) => {
     this.maybeRunSummarization(session)
-      .then((compacted) => {
-        if (!compacted) {
+      .then((summaryText) => {
+        if (!summaryText) {
           return;
         }
         const currentSession = this.sessions.get(sessionKey);
@@ -408,6 +417,7 @@ class AgentChatBridge {
         currentSession.threadId = randomUUID();
         currentSession.checkpointer = new MemorySaver();
         currentSession.contextTokens = 0;
+        currentSession.pendingSummary = summaryText;
         this.initAgentInBackground(sessionKey, currentSession);
         logEveryWhere({
           message: "[AgentChatBridge] Agent recreated after compaction",
@@ -430,6 +440,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       isCompacting: false,
+      pendingSummary: null,
       expectingEncryptKey: false,
     };
     this.sessions.set(sessionKey, session);
@@ -484,6 +495,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       isCompacting: false,
+      pendingSummary: null,
       expectingEncryptKey: false,
     };
     this.sessions.set(sessionKey, session);
@@ -580,8 +592,25 @@ class AgentChatBridge {
         redactedInput,
         options?.attachedFiles,
       );
+
+      // Inject the compaction summary as the first exchange in the new thread so the agent has session context even after the checkpointer was reset
+      const initialMessages: (HumanMessage | AIMessage)[] = [];
+      if (session.pendingSummary) {
+        initialMessages.push(
+          new HumanMessage(
+            `This conversation continues from a previous session that was compacted. ` +
+              `Summary of the prior context:\n\n${session.pendingSummary}`,
+          ),
+          new AIMessage(
+            "Understood. I have the context from the previous conversation and will continue from where we left off.",
+          ),
+        );
+        session.pendingSummary = null;
+      }
+      initialMessages.push(humanMessage);
+
       const eventStream = (agent as any).streamEvents(
-        { messages: [humanMessage] },
+        { messages: initialMessages },
         {
           configurable: { thread_id: session.threadId },
           version: "v2",
@@ -861,6 +890,7 @@ class AgentChatBridge {
         platformId: adapter.platformId,
         platformChatId: message.chatId,
         isCompacting: false,
+        pendingSummary: null,
         expectingEncryptKey: false,
       };
       this.sessions.set(sessionKey, session);
