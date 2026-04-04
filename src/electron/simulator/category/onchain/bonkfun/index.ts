@@ -1,4 +1,5 @@
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { AxiosProxyConfig } from "axios";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import {
   BONKFUN_LAUNCH_CURRENCY,
@@ -20,7 +21,8 @@ export class Bonkfun {
   createToken = async (
     privateKey: string,
     listNodeEndpoint: string[],
-    config: ILaunchTokenBonkfunNodeConfig
+    config: ILaunchTokenBonkfunNodeConfig,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, string | null, Error | null]> => {
     if (!config?.tokenName) {
       return [null, null, new Error("Token name is required")];
@@ -43,7 +45,7 @@ export class Bonkfun {
     }
 
     const isPairWithUsd1 = Boolean(
-      config?.launchCurrency === BONKFUN_LAUNCH_CURRENCY.USD1
+      config?.launchCurrency === BONKFUN_LAUNCH_CURRENCY.USD1,
     );
 
     const [fileBlob, errFileBlob] = await getImageBlob(config?.imageUrl);
@@ -66,7 +68,7 @@ export class Bonkfun {
     if (config?.buyAmountSol) {
       buyAmount = BigInt(
         Number(config?.buyAmountSol) *
-          (isPairWithUsd1 ? Math.pow(10, 6) : LAMPORTS_PER_SOL)
+          (isPairWithUsd1 ? Math.pow(10, 6) : LAMPORTS_PER_SOL),
       );
     }
     const [txHash, tokenAddress, error] = await client.createToken(
@@ -79,7 +81,8 @@ export class Bonkfun {
       {
         unitLimit: config?.unitLimit ? Number(config?.unitLimit) : 0,
         unitPrice: config?.unitPrice ? Number(config?.unitPrice) : 0,
-      }
+      },
+      proxy,
     );
 
     logEveryWhere({

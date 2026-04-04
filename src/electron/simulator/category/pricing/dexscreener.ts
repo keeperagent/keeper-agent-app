@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosProxyConfig } from "axios";
 import { CUSTOM_CHAIN_ID } from "@/electron/constant";
 import { TimeoutCache } from "@/electron/service/timeoutCache";
 import { logEveryWhere } from "@/electron/service/util";
@@ -98,7 +98,8 @@ export class Dexsceener {
   async getTokenPrice(
     tokenAddress: string,
     chainId: number,
-    timeout: number
+    timeout: number,
+    proxy?: AxiosProxyConfig,
   ): Promise<[number | null, Error | null]> {
     try {
       const cacheKey = `price_dexscreener_${chainId}_${tokenAddress}`;
@@ -110,6 +111,7 @@ export class Dexsceener {
       const url = `${this.endpoint}/latest/dex/tokens/${tokenAddress}`;
       const response = await axios.get(url, {
         timeout,
+        proxy,
       });
       const listPool = (response?.data?.pairs as DexScreenPool[]) || [];
 
@@ -119,7 +121,7 @@ export class Dexsceener {
 
       // Sort the pools based on liquidity
       filteredListPool.sort(
-        (a, b) => (a?.liquidity?.usd || 0) - (b?.liquidity?.usd || 0)
+        (a, b) => (a?.liquidity?.usd || 0) - (b?.liquidity?.usd || 0),
       );
 
       let tokenPrice = 0;
@@ -141,7 +143,9 @@ export class Dexsceener {
       this.timeoutCache.set(cacheKey, { price: tokenPrice, marketcap: null });
       return [tokenPrice, null];
     } catch (err: any) {
-      logEveryWhere({ message: `Dexscreener getTokenPrice() error: ${err?.message}` });
+      logEveryWhere({
+        message: `Dexscreener getTokenPrice() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -156,19 +160,21 @@ export class Dexsceener {
     const stdDev = Math.sqrt(
       data.reduce(
         (sum, pool) => sum + Math.pow(parseFloat(pool.priceUsd) - mean, 2),
-        0
-      ) / data.length
+        0,
+      ) / data.length,
     );
 
     return data.filter(
-      (pool) => Math.abs(parseFloat(pool.priceUsd) - mean) <= threshold * stdDev
+      (pool) =>
+        Math.abs(parseFloat(pool.priceUsd) - mean) <= threshold * stdDev,
     );
   }
 
   getMarketcap = async (
     tokenAddress: string,
     chainId: number,
-    timeout: number
+    timeout: number,
+    proxy?: AxiosProxyConfig,
   ): Promise<[IPriceAndMarketcap | null, Error | null]> => {
     try {
       const cacheKey = `marketcap_dexscreener_${chainId}_${tokenAddress}`;
@@ -180,6 +186,7 @@ export class Dexsceener {
       const url = `${this.endpoint}/latest/dex/tokens/${tokenAddress}`;
       const response = await axios.get(url, {
         timeout,
+        proxy,
       });
       const listPool = (response?.data?.pairs as DexScreenPool[]) || [];
 
@@ -189,7 +196,7 @@ export class Dexsceener {
 
       // Sort the pools based on liquidity
       filteredListPool.sort(
-        (a, b) => (a?.liquidity?.usd || 0) - (b?.liquidity?.usd || 0)
+        (a, b) => (a?.liquidity?.usd || 0) - (b?.liquidity?.usd || 0),
       );
 
       let marketcap = 0;
@@ -218,7 +225,9 @@ export class Dexsceener {
       this.timeoutCache.set(cacheKey, { marketcap, price: tokenPrice });
       return [price, null];
     } catch (err: any) {
-      logEveryWhere({ message: `Dexscreener getMarketcap() error: ${err?.message}` });
+      logEveryWhere({
+        message: `Dexscreener getMarketcap() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };

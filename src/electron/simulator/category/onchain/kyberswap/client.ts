@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import axios from "axios";
+import axios, { AxiosProxyConfig } from "axios";
 import Big from "big.js";
 import { ISwapKyberswapInput } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
@@ -28,6 +28,7 @@ export class KyberSwapClient {
 
   getSwapRoute = async (
     input: ISwapKyberswapInput,
+    proxy?: AxiosProxyConfig,
   ): Promise<[any, number | null, Error | null]> => {
     const targetPath = `${KYBER_BASE_URL}/${input.chainKey}/api/v1/routes`;
 
@@ -74,6 +75,7 @@ export class KyberSwapClient {
         params,
         timeout: 10000,
         headers: { "x-client-id": "KeeperAgent" },
+        proxy,
       });
 
       const routeSummary = data?.data?.routeSummary;
@@ -115,6 +117,7 @@ export class KyberSwapClient {
     input: ISwapKyberswapInput,
     routeSummary: any,
     wallet: ethers.Wallet,
+    proxy?: AxiosProxyConfig,
   ): Promise<[ISwapTxData | null, Error | null]> => {
     try {
       const targetPath = `${KYBER_BASE_URL}/${input.chainKey}/api/v1/route/build`;
@@ -131,6 +134,7 @@ export class KyberSwapClient {
       const { data } = await axios.post(targetPath, requestBody, {
         timeout: 10000,
         headers: { "x-client-id": "KeeperAgent" },
+        proxy,
       });
       const resData = data?.data;
       const txData: ISwapTxData = {

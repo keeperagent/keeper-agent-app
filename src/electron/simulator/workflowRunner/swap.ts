@@ -17,6 +17,7 @@ import {
   updateVariable,
   processSkipSetting,
   getActualValue,
+  buildAxiosProxy,
 } from "@/electron/simulator/util";
 import { ThreadManager } from "./threadManager";
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
@@ -242,15 +243,21 @@ export class SwapWorkflow {
         gasLimit: ethers.BigNumber.from(gasLimit || "0"),
       };
 
+      const proxy = buildAxiosProxy(
+        flowProfile.profile?.proxy,
+        Boolean(flowProfile.campaignConfig?.isUseProxy),
+      );
+      const logInfo = {
+        campaignId: flowProfile.campaignConfig?.campaignId || 0,
+        workflowId: flowProfile.campaignConfig?.workflowId || 0,
+      };
       if (Number(numberOfTrasaction) === 1) {
         [txHash, err] = await swapOnKyberswap.swapNormal(
           swapInput,
           privateKey,
           timeout,
-          {
-            campaignId: flowProfile.campaignConfig?.campaignId || 0,
-            workflowId: flowProfile.campaignConfig?.workflowId || 0,
-          },
+          logInfo,
+          proxy,
         );
       } else {
         err = await swapOnKyberswap.swapLikeBuyBot(
@@ -258,10 +265,8 @@ export class SwapWorkflow {
           privateKey,
           Number(numberOfTrasaction),
           timeout,
-          {
-            campaignId: flowProfile.campaignConfig?.campaignId || 0,
-            workflowId: flowProfile.campaignConfig?.workflowId || 0,
-          },
+          logInfo,
+          proxy,
         );
       }
       if (err) {
@@ -343,20 +348,28 @@ export class SwapWorkflow {
         amount,
       };
 
+      const jupiterProxy = buildAxiosProxy(
+        flowProfile.profile?.proxy,
+        Boolean(flowProfile.campaignConfig?.isUseProxy),
+      );
+      const jupiterLogInfo = {
+        campaignId: flowProfile.campaignConfig?.campaignId || 0,
+        workflowId: flowProfile.campaignConfig?.workflowId || 0,
+      };
       if (Number(numberOfTrasaction) === 1) {
-        [txHash, err] = await swapOnJupiter.swapNormal(swapInput, privateKey, {
-          campaignId: flowProfile.campaignConfig?.campaignId || 0,
-          workflowId: flowProfile.campaignConfig?.workflowId || 0,
-        });
+        [txHash, err] = await swapOnJupiter.swapNormal(
+          swapInput,
+          privateKey,
+          jupiterLogInfo,
+          jupiterProxy,
+        );
       } else {
         err = await swapOnJupiter.swapLikeBuyBot(
           swapInput,
           privateKey,
           Number(numberOfTrasaction),
-          {
-            campaignId: flowProfile.campaignConfig?.campaignId || 0,
-            workflowId: flowProfile.campaignConfig?.workflowId || 0,
-          },
+          jupiterLogInfo,
+          jupiterProxy,
         );
       }
       if (err) {

@@ -56,11 +56,12 @@ import { encryptWallet } from "@/electron/service/wallet";
 import { decryptResource, encryptResource } from "@/electron/service/resource";
 import { logEveryWhere } from "@/electron/service/util";
 import { RandomOnOff } from "@/electron/simulator/category/randomOnOff";
+import { HttpRequest } from "@/electron/simulator/category/httpRequest";
+import { buildAxiosProxy } from "@/electron/simulator/util";
+import { getResourceColumn } from "@/service/tableView";
 import { ThreadManager } from "./threadManager";
 import type { NodeHandler } from "./index";
 import { WorkflowRunnerArgs } from "./index";
-import { HttpRequest } from "@/electron/simulator/category/httpRequest";
-import { getResourceColumn } from "@/service/tableView";
 
 export class OtherWorkflow {
   threadManager: ThreadManager;
@@ -681,6 +682,10 @@ export class OtherWorkflow {
             key: param.key,
             value: getActualValue(param?.value, listVariable),
           })) || [];
+        const proxy = buildAxiosProxy(
+          flowProfile.profile?.proxy,
+          Boolean(flowProfile.campaignConfig?.isUseProxy),
+        );
         const httpRequestInstance = new HttpRequest();
         let [result] = await httpRequestInstance.callAPI(
           config?.method!,
@@ -689,6 +694,7 @@ export class OtherWorkflow {
           headers,
           params,
           timeout,
+          proxy,
         );
 
         let newListVariable = updateVariable(listVariable, {

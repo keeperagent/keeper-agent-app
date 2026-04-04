@@ -211,6 +211,12 @@ export const campaignController = () => {
       const chunkSize = 100;
       let totalDeletedFolder = 0;
       await sleep(2000);
+      if (totalProfile === 0) {
+        event.reply(MESSAGE.DELETE_PROFILE_FOLDER_PROGRESS_RES, { data: 100 });
+        event.reply(MESSAGE.DELETE_CAMPAIGN_PROFILE_PROGRESS_RES, {
+          data: 100,
+        });
+      }
       for (let i = 0; i < listCampaignID?.length; i++) {
         const [listProfileId] =
           await campaignProfileDB.getListCampaignProfileIdByCampaign(
@@ -341,6 +347,9 @@ const initCampaignProfile = async (
   listStaticProxy: IStaticProxy[],
   campaignId: number,
 ) => {
+  if (!profileGroupId) {
+    return;
+  }
   const batchSize = 1000;
   const page = 1;
   let currentStaticProxyIndex = 0;

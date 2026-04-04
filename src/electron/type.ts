@@ -2386,7 +2386,7 @@ export type IPreference = {
   hideMinimap?: boolean;
   key?: string;
   deviceId?: string;
-  isRevisionDownloaded?: boolean;
+  isChromeDownloaded?: boolean;
   isStopAllSchedule?: boolean;
   dayResetJobStatus?: number;
   maxLogAge?: number;

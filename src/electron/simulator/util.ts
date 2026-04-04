@@ -2,13 +2,19 @@ import { Page, BrowserContext } from "playwright-core";
 import { executeInSandbox } from "@/electron/simulator/sandbox";
 import { app, screen } from "electron";
 import _ from "lodash";
+import { AxiosProxyConfig } from "axios";
 import { DEFAULT_EXTENSION_TIMEOUT, TEMP_PROFILENAME } from "./constant";
 import {
   BASE_PROFILE_FOLDER,
   PROFILE_FOLDER,
   COMPARISION_EXPRESSION,
 } from "@/electron/constant";
-import { IWorkflowVariable, INodeConfig, ISkipSetting } from "@/electron/type";
+import {
+  IStaticProxy,
+  IWorkflowVariable,
+  INodeConfig,
+  ISkipSetting,
+} from "@/electron/type";
 
 export interface ISimulator {
   browser: BrowserContext | null;
@@ -29,6 +35,24 @@ export const getProfileNameForThread = (threadID: string) =>
 
 export const sleep = async (millisecond: number) => {
   return new Promise((resolve) => setTimeout(resolve, millisecond));
+};
+
+export const buildAxiosProxy = (
+  proxy: IStaticProxy | undefined,
+  isUseProxy: boolean,
+): AxiosProxyConfig | undefined => {
+  if (!isUseProxy || !proxy?.ip || !proxy?.port) {
+    return undefined;
+  }
+  const proxyConfig: AxiosProxyConfig = {
+    host: proxy.ip,
+    port: proxy.port,
+    protocol: proxy.protocol?.toLowerCase() || "http",
+  };
+  if (proxy.username && proxy.password) {
+    proxyConfig.auth = { username: proxy.username, password: proxy.password };
+  }
+  return proxyConfig;
 };
 
 export const getActualValue = (

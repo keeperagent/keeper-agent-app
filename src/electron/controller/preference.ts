@@ -29,7 +29,10 @@ export const perferenceController = () => {
       const [res] = await preferenceDB.getOnePreference();
 
       event.reply(MESSAGE.GET_ONE_PREFERENCE_RES, {
-        data: { ...res, isRevisionDownloaded: browserDownloader.isChromiumInstalled() },
+        data: {
+          ...res,
+          isChromeDownloaded: browserDownloader.isChromiumInstalled(),
+        },
       });
     },
   );
@@ -50,7 +53,10 @@ export const perferenceController = () => {
       }
 
       event.reply(MESSAGE.UPDATE_PREFERENCE_RES, {
-        data: { ...res, isRevisionDownloaded: browserDownloader.isChromiumInstalled() },
+        data: {
+          ...res,
+          isChromeDownloaded: browserDownloader.isChromiumInstalled(),
+        },
         requestId,
       });
 

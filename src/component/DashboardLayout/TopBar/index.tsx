@@ -133,10 +133,9 @@ const TopBar = (props: IProps) => {
         )}
       </div>
 
-      {!preference?.isRevisionDownloaded && !isWorkflow && <DownloadBrowser />}
+      {!preference?.isChromeDownloaded && !isWorkflow && <DownloadBrowser />}
 
       <div className="setting">
-        {/* <LanguageSwitch /> */}
         <ThemeSwitch />
 
         {!isWorkflow && <UserInfo />}

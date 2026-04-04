@@ -9,7 +9,7 @@ import {
   Keypair,
   Connection,
 } from "@solana/web3.js";
-import axios from "axios";
+import axios, { AxiosProxyConfig } from "axios";
 import BN from "bn.js";
 import { SOL_MINT_ADDRESS } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
@@ -63,6 +63,7 @@ export class BonkFunClient {
     buyAmountSol: bigint,
     slippagePercentage: number,
     priorityFees?: PriorityFee,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, string | null, Error | null]> => {
     try {
       const owner = creator.publicKey;
@@ -77,7 +78,7 @@ export class BonkFunClient {
             }[];
           };
         };
-      } = await axios.get(`${mintHost}/main/configs`, { timeout: 10000 });
+      } = await axios.get(`${mintHost}/main/configs`, { timeout: 10000, proxy });
       const listConfig = configRes.data.data.data;
       const config = listConfig?.find(
         (config) =>
@@ -172,6 +173,7 @@ export class BonkFunClient {
           "Content-Type": "multipart/form-data",
           "ray-token": `token-${Date.now()}`,
         },
+        proxy,
       });
 
       const mintA = new PublicKey(r.data.data.mint);
@@ -209,9 +211,11 @@ export class BonkFunClient {
       // Sign with creator keypair BEFORE sending to server
       transaction.sign([creator]);
 
-      const { data } = await axios.post(`${mintHost}/create/sendTransaction`, {
-        txs: [RaydiumLaunchpad.txToBase64(transaction)],
-      });
+      const { data } = await axios.post(
+        `${mintHost}/create/sendTransaction`,
+        { txs: [RaydiumLaunchpad.txToBase64(transaction)] },
+        { proxy },
+      );
 
       const txBuf = Buffer.from(data.data.tx, "base64");
       const bothSignedTx = VersionedTransaction.deserialize(txBuf as any);

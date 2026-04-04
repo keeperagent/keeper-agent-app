@@ -98,7 +98,9 @@ const BrowserDownload = (props: IProps) => {
       title: translate("tour.clickToDownloadBrowser"),
       description: translate("tour.downloadBrowserDescription"),
       target: () => ref1.current,
-      nextButtonProps: { children: translate("gotit") },
+      nextButtonProps: {
+        children: translate("gotit"),
+      },
     },
   ];
 

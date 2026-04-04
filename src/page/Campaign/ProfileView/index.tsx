@@ -298,11 +298,15 @@ const renderColumns = (
     },
     {
       title: () => (
-        <Tooltip title={translate("closeAllBrowser")}>
-          <CloseIconWrapper>
-            <StopCircle onClick={() => onCloseCampaignProfileInBrowser()} />
-          </CloseIconWrapper>
-        </Tooltip>
+        <Fragment>
+          {Object.keys(mapOpenProfileId).length > 0 && (
+            <Tooltip title={translate("closeAllBrowser")}>
+              <CloseIconWrapper>
+                <StopCircle onClick={() => onCloseCampaignProfileInBrowser()} />
+              </CloseIconWrapper>
+            </Tooltip>
+          )}
+        </Fragment>
       ),
       dataIndex: "action",
       width: "11rem",

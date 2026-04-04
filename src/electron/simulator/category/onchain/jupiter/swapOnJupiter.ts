@@ -1,11 +1,11 @@
 import Big from "big.js";
+import { AxiosProxyConfig } from "axios";
 import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { logEveryWhere } from "@/electron/service/util";
 import type { IStructuredLogPayload } from "@/electron/type";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { IJupiterSwapInput } from "@/electron/type";
-import { JupiterClient } from "./client";
 import { getKeypairFromPrivateKey } from "@/electron/simulator/category/onchain/util";
 import {
   PLATFORM_SOL_WALLET,
@@ -13,6 +13,7 @@ import {
   SOL_MINT_ADDRESS,
   USD1_MINT_ADDRESS_ON_SOLANA,
 } from "@/electron/constant";
+import { JupiterClient } from "./client";
 
 export class SwapOnJupiter {
   private listNodeEndpoint: string[];
@@ -84,6 +85,7 @@ export class SwapOnJupiter {
     privateKey: string,
     numberOfTransaction: number,
     logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<Error | null> => {
     const startTime = new Date().getTime();
     const [wallet, errWallet] = getKeypairFromPrivateKey(privateKey);
@@ -93,7 +95,7 @@ export class SwapOnJupiter {
 
     const listResult: Promise<any>[] = [];
     for (let i = 0; i < numberOfTransaction; i++) {
-      const resultPromise = this.swap(swapInput, wallet, logInfo);
+      const resultPromise = this.swap(swapInput, wallet, logInfo, proxy);
       listResult.push(resultPromise);
     }
 
@@ -116,18 +118,20 @@ export class SwapOnJupiter {
     swapInput: IJupiterSwapInput,
     privateKey: string,
     logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> => {
     const [wallet, errWallet] = getKeypairFromPrivateKey(privateKey);
     if (!wallet || errWallet) {
       return [null, errWallet];
     }
-    return this.swap(swapInput, wallet, logInfo);
+    return this.swap(swapInput, wallet, logInfo, proxy);
   };
 
   private swap = async (
     swapInput: IJupiterSwapInput,
     wallet: Keypair,
     logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> => {
     const [provider, , errProvider] = this.provider.getNextProvider(
       this.listNodeEndpoint,
@@ -188,6 +192,7 @@ export class SwapOnJupiter {
       swapInput,
       apiKey,
       platformFeeTokenAccount,
+      proxy,
     );
     if (errQuote || !quote) {
       return [
@@ -220,6 +225,7 @@ export class SwapOnJupiter {
         swapInput,
         apiKey,
         platformFeeTokenAccount,
+        proxy,
       );
     if (errBuildTx) {
       return [null, errBuildTx];

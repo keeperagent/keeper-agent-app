@@ -28,6 +28,7 @@ import {
   processSkipSetting,
   getActualValue,
   sleep,
+  buildAxiosProxy,
 } from "@/electron/simulator/util";
 import { ThreadManager } from "./threadManager";
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
@@ -927,11 +928,18 @@ export class OnChainWorkflow {
         listVariable,
       );
 
-      const [price, err] = await this.pricing.getTokenPrice({
-        ...config,
-        coingeckoId,
-        tokenAddress,
-      });
+      const proxy = buildAxiosProxy(
+        flowProfile.profile?.proxy,
+        Boolean(flowProfile.campaignConfig?.isUseProxy),
+      );
+      const [price, err] = await this.pricing.getTokenPrice(
+        {
+          ...config,
+          coingeckoId,
+          tokenAddress,
+        },
+        proxy,
+      );
       if (err) {
         throw err;
       }
@@ -971,6 +979,10 @@ export class OnChainWorkflow {
         return flowProfile;
       }
 
+      const checkTokenPriceProxy = buildAxiosProxy(
+        flowProfile.profile?.proxy,
+        Boolean(flowProfile.campaignConfig?.isUseProxy),
+      );
       const input: ICheckTokenPriceInput = {
         dataSource: config?.dataSource || "",
         tokenAddress: config?.tokenAddress || "",
@@ -979,6 +991,7 @@ export class OnChainWorkflow {
         apiTimeout: config?.timeout || 0,
         poolInterval: config.poolInterval || 0,
         timeFrame: config?.timeFrame || 0,
+        proxy: checkTokenPriceProxy,
       };
       const priceChecking = this.priceCheckingManager.getPriceChecking(
         input,
@@ -1034,6 +1047,10 @@ export class OnChainWorkflow {
         return flowProfile;
       }
 
+      const checkMarketcapProxy = buildAxiosProxy(
+        flowProfile.profile?.proxy,
+        Boolean(flowProfile.campaignConfig?.isUseProxy),
+      );
       const input: ICheckMarketcapInput = {
         dataSource: config?.dataSource || "",
         tokenAddress: config?.tokenAddress || "",
@@ -1042,6 +1059,7 @@ export class OnChainWorkflow {
         apiTimeout: config?.timeout || 0,
         poolInterval: config.poolInterval || 0,
         timeFrame: config?.timeFrame || 0,
+        proxy: checkMarketcapProxy,
       };
       const marketcapChecking =
         this.marketcapCheckingManager.getMarketcapChecking(

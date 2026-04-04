@@ -10,6 +10,7 @@ import {
   updateVariable,
   processSkipSetting,
   getActualValue,
+  buildAxiosProxy,
 } from "@/electron/simulator/util";
 import { ThreadManager } from "./threadManager";
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
@@ -185,10 +186,15 @@ export class LaunchTokenWorkflow {
         website,
       };
 
+      const proxy = buildAxiosProxy(
+        flowProfile.profile?.proxy,
+        Boolean(flowProfile.campaignConfig?.isUseProxy),
+      );
       const [txHash, tokenAddress, err] = await this.bonkfun.createToken(
         privateKey,
         listNodeProvider,
         config,
+        proxy,
       );
       if (err) {
         throw err;
