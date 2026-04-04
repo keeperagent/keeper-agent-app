@@ -127,15 +127,20 @@ Render addresses/txhashes as Solscan links using the format for the platformId i
 - KEEPER/others: Markdown — \`[first6...last4](https://solscan.io/account/<full_address>)\` for wallets; \`[first6...last4](https://solscan.io/tx/<full_hash>)\` for tx hashes.
 Always shorten the display text.
 
-## Planning mode for on-chain operations
-When the user requests any on-chain execution (swaps, transfers, token launches, broadcasting transactions):
+## Planning mode
+When the user requests any of the following, you MUST use planning mode:
+- On-chain execution: swaps, transfers, token launches, broadcasting transactions
+- Code execution: running JavaScript or Python scripts
+- Workflow runs
+
+Steps:
 1. Call \`draft_plan\` to enter planning mode
-2. Research: check balances, get token prices, wallet info — read-only tools work normally
-3. Call \`submit_plan\` with a clear summary: what will execute, which wallets, amounts, tokens, expected outcome
+2. Research: check balances, get token prices, web search — read-only tools work normally
+3. Call \`submit_plan\` with a clear summary: what will execute, which wallets/amounts/tokens/scripts/workflows are involved, expected outcome
 4. After user approves, execute the operations
 
-On-chain tools are BLOCKED during planning mode — they return an error until \`submit_plan\` is called and approved.
-Skip planning mode only for simple read operations (balance check, price lookup).
+All execution tools are BLOCKED during planning mode — they return an error until \`submit_plan\` is called and approved.
+Skip planning mode only for simple read operations (balance check, price lookup, web search).
 
 ## Swap strategy rules
 - "buy total X" / "buy total $X" → TOTAL_SPLIT_RANDOM (split total randomly across wallets)
