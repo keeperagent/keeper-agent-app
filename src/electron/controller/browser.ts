@@ -1,5 +1,6 @@
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { browserDownloader } from "@/electron/service/browserDownloader";
+import { ensureBaseProfile } from "@/electron/simulator/workflowRunner/baseBrowser";
 import { onIpc } from "./helpers";
 import type { IpcDownloadBrowserPayload } from "@/electron/ipcTypes";
 
@@ -36,6 +37,9 @@ export const browserController = () => {
       };
 
       const isAvailable = await browserDownloader.downloadChromium(callback);
+      if (isAvailable) {
+        await ensureBaseProfile();
+      }
 
       event.reply(MESSAGE.DOWNLOAD_BROWSER_RES, {
         isDone: true,

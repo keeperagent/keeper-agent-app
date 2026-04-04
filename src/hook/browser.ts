@@ -4,12 +4,14 @@ import { message } from "antd";
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { actSaveDownloadStatus } from "@/redux/browser";
 import { useTranslation } from "./useTranslation";
+import { useGetPreference } from "./preference";
 
 const useDownloadBrowser = () => {
   const [loading, setLoading] = useState(false);
   const [isExist, setRevisionExist] = useState(false);
   const dispatch = useDispatch();
   const { translate, locale } = useTranslation();
+  const { getPreference } = useGetPreference();
 
   useEffect(() => {
     window?.electron?.on(
@@ -74,7 +76,9 @@ const useDownloadBrowser = () => {
         if (isDone) {
           setLoading(false);
 
-          if (!isAvailable) {
+          if (isAvailable) {
+            getPreference();
+          } else {
             message.error(translate("browser.notExist"));
           }
         }

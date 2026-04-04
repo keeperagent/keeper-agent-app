@@ -387,8 +387,12 @@ const createBaseProfileExtension = async (
     "--disable-client-side-phishing-detection",
     "--disable-speech-api",
     "--no-first-run",
-    `--load-extension=${listExtensionPath}`,
-    `--disable-extensions-except=${listExtensionPath}`,
+    ...(listExtensionPath
+      ? [
+          `--load-extension=${listExtensionPath}`,
+          `--disable-extensions-except=${listExtensionPath}`,
+        ]
+      : []),
   ];
 
   const browser = await chromium.launchPersistentContext(getBaseProfilePath(), {

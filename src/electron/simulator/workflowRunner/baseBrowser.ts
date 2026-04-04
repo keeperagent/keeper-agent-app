@@ -20,6 +20,35 @@ import {
 import { TEMP_PROFILENAME } from "@/electron/simulator/constant";
 import { StopSignal } from "@/electron/simulator/stopSignal";
 import { chromium } from "@/electron/service/stealthBrowser";
+import { IExtension } from "@/electron/type";
+import { extensionDB } from "@/electron/database/extension";
+import { createBaseProfileExtension } from "@/electron/service/extension";
+
+let baseProfileInitPromise: Promise<void> | null = null;
+export const ensureBaseProfile = async (): Promise<void> => {
+  const baseProfilePath = getBaseProfilePath();
+  const isExist = fs.pathExistsSync(baseProfilePath);
+  const isEmpty = !isExist || fs.readdirSync(baseProfilePath).length === 0;
+  if (!isEmpty) {
+    return;
+  }
+
+  if (!baseProfileInitPromise) {
+    baseProfileInitPromise = (async () => {
+      const [allExtension] = await extensionDB.getListExtension();
+      const listExtensionPath =
+        allExtension?.data
+          ?.map((extension: IExtension) => extension?.storedAtPath || "")
+          ?.filter((extPath: string) => Boolean(extPath))
+          .join(",") || "";
+      await createBaseProfileExtension(listExtensionPath);
+    })().finally(() => {
+      baseProfileInitPromise = null;
+    });
+  }
+
+  await baseProfileInitPromise;
+};
 
 export class BaseBrowser {
   private windowPosition: {
@@ -259,6 +288,7 @@ export class BaseBrowser {
         }
       }
 
+      await ensureBaseProfile();
       fs.copySync(getBaseProfilePath(), profileFolderPath, {
         overwrite: true,
         recursive: true,
