@@ -664,11 +664,10 @@ const createKeeperAgent = async (
     },
   );
 
-  const isToolEnabled = (key: string) => !disabledTools.has(key);
   const planningTools = [
-    isToolEnabled(BASE_TOOL_KEYS.DRAFT_PLAN) && draftPlanTool(toolContext),
-    isToolEnabled(BASE_TOOL_KEYS.SUBMIT_PLAN) && submitPlanTool(toolContext),
-  ].filter((tool): any => Boolean(tool));
+    draftPlanTool(toolContext),
+    submitPlanTool(toolContext),
+  ];
 
   const agent = createDeepAgent({
     model: llm,
@@ -835,11 +834,16 @@ const createRegistryKeeperAgent = async (
   const systemPrompt =
     registry.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
 
+  const registryPlanningTools = [
+    draftPlanTool(toolContext),
+    submitPlanTool(toolContext),
+  ];
+
   const agent = createDeepAgent({
     model: llm,
     systemPrompt,
     backend,
-    tools: [] as any,
+    tools: registryPlanningTools as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,
