@@ -27,10 +27,7 @@ export class PriceCheckingManager {
   private mapPriceCheckingOfWorkflow: Map<string, PriceChecking[]> = new Map();
 
   private getKey = (input: ICheckTokenPriceInput): string => {
-    const proxyKey = input.proxy
-      ? `${input.proxy.host}:${input.proxy.port}`
-      : "";
-    return `${input.dataSource}_${input.tokenAddress}_${input.coingeckoId}_${input.chainId}_${input.apiTimeout}_${input.poolInterval}_${input.timeFrame}_${proxyKey}`;
+    return `${input.dataSource}_${input.tokenAddress}_${input.coingeckoId}_${input.chainId}_${input.apiTimeout}_${input.poolInterval}_${input.timeFrame}`;
   };
 
   private getWorkflowKey = (workflowId: number): string => {
