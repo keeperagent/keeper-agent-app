@@ -550,6 +550,9 @@ class AgentChatBridge {
     try {
       const { agent } = await this.getOrCreateAgent(session);
 
+      // Reset plan state at the start of each run — each new user message requires a fresh plan approval
+      session.toolContext.resetPlanState();
+
       // Wire plan approval callback for IPC sessions (desktop app)
       if (options?.ipcEvent) {
         session.toolContext.update({
@@ -723,6 +726,12 @@ class AgentChatBridge {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found or has expired");
 
+    const pendingApproval = this.pendingPlanApprovals.get(sessionId);
+    if (pendingApproval) {
+      pendingApproval(false);
+      this.pendingPlanApprovals.delete(sessionId);
+    }
+
     await this.maybeFlushMemoryOnExit(session);
 
     if (session.keeper) {
@@ -755,6 +764,12 @@ class AgentChatBridge {
   };
 
   destroySession = async (sessionId: string) => {
+    const pendingApproval = this.pendingPlanApprovals.get(sessionId);
+    if (pendingApproval) {
+      pendingApproval(false);
+      this.pendingPlanApprovals.delete(sessionId);
+    }
+
     const session = this.sessions.get(sessionId);
     if (session?.keeper) {
       await session.keeper.cleanup();

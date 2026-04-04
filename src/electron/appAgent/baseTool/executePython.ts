@@ -6,7 +6,7 @@ import path from "path";
 import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { safeStringify } from "@/electron/appAgent/utils";
-import type { ToolContext } from "@/electron/appAgent/toolContext";
+import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 
 const TIMEOUT_MS = 60_000;
 const INSTALL_TIMEOUT_MS = 60_000;
@@ -57,7 +57,7 @@ export const executePythonTool = (toolContext?: ToolContext) =>
       "IMPORTANT: Do NOT retry if the same error occurs. Report the error to the user instead. " +
       "Input: the Python code string to execute.",
     func: async (code: string) => {
-      if (toolContext?.planningMode) {
+      if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
             "Cannot execute code in planning mode. Call submit_plan with your execution plan first to get user approval.",

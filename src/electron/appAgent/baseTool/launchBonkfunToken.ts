@@ -12,7 +12,7 @@ import { safeStringify } from "@/electron/appAgent/utils";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { logEveryWhere } from "@/electron/service/util";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 
 export const launchBonkfunTokenTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
@@ -76,7 +76,7 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
       unitPrice,
       launchCurrency = "SOL",
     }) => {
-      if (toolContext?.planningMode) {
+      if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
             "Cannot launch token in planning mode. Call submit_plan with your execution plan first to get user approval.",

@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod/v3";
 import { safeStringify } from "@/electron/appAgent/utils";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 
 export const draftPlanTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
@@ -13,7 +13,7 @@ export const draftPlanTool = (toolContext: ToolContext) =>
       "Use this tool first, then research and prepare your plan, then call submit_plan.",
     schema: z.object({}),
     func: async () => {
-      toolContext.update({ planningMode: true });
+      toolContext.update({ planState: PlanState.DRAFTED });
       return safeStringify({
         status: "planning_mode_active",
         message:

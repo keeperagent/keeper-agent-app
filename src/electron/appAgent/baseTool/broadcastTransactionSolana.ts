@@ -9,7 +9,7 @@ import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { SolanaTransactionExecutor } from "@/electron/simulator/category/onchain/solanaExecuteTransaction";
 import { logEveryWhere } from "@/electron/service/util";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { extractErrorMessage } from "./utils";
 
 const CONFIRMATION_TIMEOUT = 30000;
@@ -46,7 +46,7 @@ The transaction data must be base64-encoded. The tool handles signing with each 
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary instructions).`,
     schema: broadcastTransactionSolanaSchema,
     func: async ({ transactionData }) => {
-      if (toolContext?.planningMode) {
+      if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
             "Cannot broadcast transaction in planning mode. Call submit_plan with your execution plan first to get user approval.",

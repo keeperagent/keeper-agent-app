@@ -9,8 +9,8 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { EvmTransactionExecutor } from "@/electron/simulator/category/onchain/evmExecuteTransaction";
 import { logEveryWhere } from "@/electron/service/util";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { capitalizeFirstLetter, extractErrorMessage } from "./utils";
-import { ToolContext } from "@/electron/appAgent/toolContext";
 
 const CONFIRMATION_TIMEOUT = 30000;
 
@@ -69,7 +69,7 @@ The transaction data must be hex-encoded (0x-prefixed). Gas limit and gas price 
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary calldata).`,
     schema: broadcastTransactionEvmSchema,
     func: async ({ toAddress, transactionData, transactionValue = "0" }) => {
-      if (toolContext?.planningMode) {
+      if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
             "Cannot broadcast transaction in planning mode. Call submit_plan with your execution plan first to get user approval.",

@@ -572,6 +572,7 @@ const useDashboardAgent = () => {
     setStreamingContent("");
     streamingContentRef.current = "";
     setExecutingTool(null);
+    setPlanReview(null);
     toolDepthRef.current = 0;
     expectingEncryptKeyRef.current = false;
     // Clear SQLite history so the next session starts fresh
@@ -633,6 +634,7 @@ const useDashboardAgent = () => {
       return;
     }
     setError(null);
+    setPlanReview(null);
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION, {
       sessionId: sessionIdRef.current,
     });

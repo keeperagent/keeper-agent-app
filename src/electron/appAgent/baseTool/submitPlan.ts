@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod/v3";
 import { safeStringify } from "@/electron/appAgent/utils";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 
 export const submitPlanTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
@@ -32,17 +32,16 @@ export const submitPlanTool = (toolContext: ToolContext) =>
               "User rejected the plan. Planning mode remains active. You may revise and submit a new plan.",
           });
         }
-        toolContext.update({ planningMode: false });
+        toolContext.update({ planState: PlanState.APPROVED });
         return safeStringify({
           status: "approved",
           message:
-            "User approved the plan. Planning mode exited. You may now execute the operations.",
+            "User approved the plan. You may now execute the operations.",
         });
       }
 
-      // Non-IPC platforms (Telegram, WhatsApp): present plan and exit planning mode
-      // Confirmation happens through normal conversation flow
-      toolContext.update({ planningMode: false });
+      // Non-IPC platforms (Telegram, WhatsApp): auto-approve and proceed
+      toolContext.update({ planState: PlanState.APPROVED });
       return safeStringify({
         status: "plan_presented",
         plan,

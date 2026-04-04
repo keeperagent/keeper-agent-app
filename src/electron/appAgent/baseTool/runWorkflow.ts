@@ -6,7 +6,7 @@ import { workflowManager } from "@/electron/simulator/workflow";
 import { RESPONSE_CODE } from "@/electron/constant";
 import { ICampaignProfile, IWorkflowVariable } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
-import type { ToolContext } from "@/electron/appAgent/toolContext";
+import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -42,7 +42,7 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
       encryptKey?: string;
       variables?: Record<string, string>;
     }) => {
-      if (toolContext?.planningMode) {
+      if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
             "Cannot run workflow in planning mode. Call submit_plan with your execution plan first to get user approval.",

@@ -10,8 +10,8 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { redistributeToCapacity, extractErrorMessage } from "./utils";
-import { ToolContext } from "@/electron/appAgent/toolContext";
 
 const GAS_BUFFER_SOL = 0.0005;
 
@@ -99,7 +99,7 @@ CRITICAL - Confirmation Required:
       maxAmount,
       balanceTimeoutMs = 15000,
     }) => {
-      if (toolContext?.planningMode) {
+      if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
             "Cannot execute transfer in planning mode. Call submit_plan with your execution plan first to get user approval.",

@@ -5,6 +5,11 @@ export interface IAttachedFileContext {
   extension?: string;
 }
 
+export enum PlanState {
+  DRAFTED = "drafted",
+  APPROVED = "approved",
+}
+
 interface IToolContextData {
   nodeEndpointGroupId?: number;
   encryptKey?: string;
@@ -15,7 +20,7 @@ interface IToolContextData {
   chainKey?: string;
   attachedFiles?: IAttachedFileContext[];
   llmProvider?: string;
-  planningMode?: boolean;
+  planState?: PlanState;
   requestPlanApproval?: (plan: string) => Promise<boolean>;
 }
 
@@ -72,8 +77,8 @@ export class ToolContext {
     if (data.llmProvider !== undefined) {
       this.data.llmProvider = data.llmProvider;
     }
-    if (data.planningMode !== undefined) {
-      this.data.planningMode = data.planningMode;
+    if (data.planState !== undefined) {
+      this.data.planState = data.planState;
     }
     if (data.requestPlanApproval !== undefined) {
       this.data.requestPlanApproval = data.requestPlanApproval;
@@ -116,8 +121,12 @@ export class ToolContext {
     return this.data.llmProvider;
   }
 
-  get planningMode(): boolean {
-    return this.data.planningMode || false;
+  get planState(): PlanState | undefined {
+    return this.data.planState;
+  }
+
+  resetPlanState(): void {
+    this.data.planState = undefined;
   }
 
   get requestPlanApproval(): ((plan: string) => Promise<boolean>) | undefined {

@@ -37,7 +37,6 @@ const Wrapper = styled.div`
     .plan-review-title {
       font-size: 1.3rem;
       font-weight: 600;
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
       line-height: 1.4;
       color: var(--color-text-hover);
     }
