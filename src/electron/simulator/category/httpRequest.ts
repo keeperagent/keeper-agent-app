@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, Method } from "axios";
+import axios, { AxiosProxyConfig, AxiosRequestConfig, Method } from "axios";
 import { logEveryWhere } from "@/electron/service/util";
 import { IKeyValue } from "@/electron/type";
 
@@ -9,7 +9,8 @@ class HttpRequest {
     requestBody: any,
     headers: IKeyValue[],
     params: IKeyValue[],
-    timeout: number
+    timeout: number,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> => {
     try {
       const requestHeaders = headers.reduce(
@@ -17,7 +18,7 @@ class HttpRequest {
           acc[curr.key] = String(curr.value);
           return acc;
         },
-        {}
+        {},
       );
 
       const queryParams = params.reduce(
@@ -25,7 +26,7 @@ class HttpRequest {
           acc[curr.key] = String(curr.value);
           return acc;
         },
-        {}
+        {},
       );
 
       const config: AxiosRequestConfig = {
@@ -35,6 +36,7 @@ class HttpRequest {
         headers: requestHeaders,
         params: queryParams,
         timeout,
+        proxy,
       };
 
       const response = await axios(config);

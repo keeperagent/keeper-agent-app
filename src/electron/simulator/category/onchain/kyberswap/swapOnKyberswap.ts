@@ -1,5 +1,6 @@
 import { Wallet, ethers } from "ethers";
 import Big from "big.js";
+import { AxiosProxyConfig } from "axios";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import {
   TOKEN_TYPE,
@@ -27,13 +28,13 @@ export class SwapOnKyberswap {
     this.evmProvider = new EVMProvider();
     this.kyberswapClient = new KyberSwapClient(
       PLATFORM_SWAP_FEE_BPS,
-      PLATFORM_EVM_WALLET
+      PLATFORM_EVM_WALLET,
     );
   }
 
   private async getNonce(
     walletAddress: string,
-    provider: ethers.providers.JsonRpcProvider
+    provider: ethers.providers.JsonRpcProvider,
   ): Promise<number> {
     const currentNonce = await provider?.getTransactionCount(walletAddress);
     return currentNonce;
@@ -44,13 +45,14 @@ export class SwapOnKyberswap {
     privateKey: string,
     numberOfTransaction: number,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<Error | null> {
     const startTime = new Date().getTime();
     const listResult: Promise<any>[] = [];
 
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!provider) {
       return Error("can not get provider " + errProvider?.message);
@@ -68,7 +70,8 @@ export class SwapOnKyberswap {
         nonce,
         provider,
         timeout,
-        logInfo
+        logInfo,
+        proxy,
       );
       listResult.push(resultPromise);
     }
@@ -80,9 +83,11 @@ export class SwapOnKyberswap {
     logEveryWhere({
       campaignId: logInfo.campaignId,
       workflowId: logInfo.workflowId,
-      message: `Executing Kyberswap trade with wallet ${wallet?.address
-        }, all ${numberOfTransaction} transaction done, take: ${(endTime - startTime) / 1000
-        } seconds`,
+      message: `Executing Kyberswap trade with wallet ${
+        wallet?.address
+      }, all ${numberOfTransaction} transaction done, take: ${
+        (endTime - startTime) / 1000
+      } seconds`,
     });
     return null;
   }
@@ -91,10 +96,11 @@ export class SwapOnKyberswap {
     input: ISwapKyberswapInput,
     privateKey: string,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> {
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
       return [null, Error("can not get provider " + errProvider?.message)];
@@ -103,12 +109,12 @@ export class SwapOnKyberswap {
     const wallet = new ethers.Wallet(privateKey, provider);
     await this.checkApproval(input, wallet, provider, timeout, logInfo);
     const nonce = await this.getNonce(wallet?.address, provider);
-    return this.swap(input, wallet, nonce, provider, timeout, logInfo);
+    return this.swap(input, wallet, nonce, provider, timeout, logInfo, proxy);
   }
 
   private async validateSwap(
     input: ISwapKyberswapInput,
-    wallet: ethers.Wallet
+    wallet: ethers.Wallet,
   ): Promise<Error | null> {
     if (isNaN(Number(input.amount)) || Number(input.amount) <= 0) {
       return Error("amount must greater or equal to 0");
@@ -121,7 +127,7 @@ export class SwapOnKyberswap {
         : TOKEN_TYPE.EVM_ERC20_TOKEN,
       wallet?.address,
       input.inputTokenAddress,
-      15000
+      15000,
     );
     if (err) {
       return err;
@@ -140,7 +146,8 @@ export class SwapOnKyberswap {
     nonce: number,
     provider: ethers.providers.JsonRpcProvider,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> {
     try {
       const validatedErr = await this.validateSwap(input, wallet);
@@ -153,7 +160,7 @@ export class SwapOnKyberswap {
       } else {
         const [inputTokenContract] = await this.evmProvider.getTokenContract(
           [provider.connection.url],
-          input.inputTokenAddress
+          input.inputTokenAddress,
         );
         input.inputTokenDecimal = inputTokenContract?.decimal || 0;
       }
@@ -163,12 +170,12 @@ export class SwapOnKyberswap {
       } else {
         const [outputTokenContract] = await this.evmProvider.getTokenContract(
           [provider.connection.url],
-          input.outputTokenAddress
+          input.outputTokenAddress,
         );
         input.outputTokenDecimal = outputTokenContract?.decimal || 0;
       }
 
-      return this.executeSwap(input, wallet, nonce, timeout, logInfo);
+      return this.executeSwap(input, wallet, nonce, timeout, logInfo, proxy);
     } catch (err: any) {
       return [null, err];
     }
@@ -179,7 +186,7 @@ export class SwapOnKyberswap {
     wallet: ethers.Wallet,
     provider: ethers.providers.JsonRpcProvider,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> {
     // do not need approval if input is native token
     if (input.isInputNativeToken) {
@@ -189,16 +196,16 @@ export class SwapOnKyberswap {
     const inputTokenContract = new ethers.Contract(
       input.inputTokenAddress,
       ERC20_ABI,
-      wallet
+      wallet,
     );
     const approvalAmount = await inputTokenContract?.allowance(
       wallet?.address,
-      MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN[input.chainKey]
+      MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN[input.chainKey],
     );
 
     const amountIn = this.getAmountIn(
       input.amount,
-      input.inputTokenDecimal
+      input.inputTokenDecimal,
     ).toString();
     if (new Big(approvalAmount).gte(new Big(amountIn.toString()))) {
       return [null, null];
@@ -216,7 +223,7 @@ export class SwapOnKyberswap {
       ethers.constants.MaxUint256,
       {
         gasPrice,
-      }
+      },
     );
     await sendWithTimeout(approvalTx.wait(), timeout);
     approvalTxHash = approvalTx.hash;
@@ -235,10 +242,11 @@ export class SwapOnKyberswap {
     wallet: Wallet,
     nonce: number,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
+    proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> {
     const [routeSummary, priceImpact, err] =
-      await this.kyberswapClient.getSwapRoute(input);
+      await this.kyberswapClient.getSwapRoute(input, proxy);
     if (err) {
       return [null, err];
     }
@@ -253,7 +261,7 @@ export class SwapOnKyberswap {
       campaignId: logInfo.campaignId,
       workflowId: logInfo.workflowId,
       message: `Executing Kyberswap trade with price impact: ${priceImpact?.toFixed(
-        2
+        2,
       )}%, slippage: ${input.slippage}%`,
     });
 
@@ -261,14 +269,20 @@ export class SwapOnKyberswap {
       return [
         null,
         Error(
-          `Kyberswap trade error, price impact is too high, max is ${input.priceImpact
-          }%, current is ${priceImpact?.toFixed(2)}%`
+          `Kyberswap trade error, price impact is too high, max is ${
+            input.priceImpact
+          }%, current is ${priceImpact?.toFixed(2)}%`,
         ),
       ];
     }
 
     const [swapTxData, errSwapTxData] =
-      await this.kyberswapClient.getSwapTxData(input, routeSummary, wallet);
+      await this.kyberswapClient.getSwapTxData(
+        input,
+        routeSummary,
+        wallet,
+        proxy,
+      );
     if (errSwapTxData) {
       return [null, errSwapTxData];
     }
@@ -282,15 +296,16 @@ export class SwapOnKyberswap {
       return [
         null,
         Error(
-          `router address is not correct, get ${swapTxData?.routerAddress
-          }, expect ${MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN[input.chainKey]}`
+          `router address is not correct, get ${
+            swapTxData?.routerAddress
+          }, expect ${MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN[input.chainKey]}`,
         ),
       ];
     }
 
     const amountIn = this.getAmountIn(input.amount, input.inputTokenDecimal);
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
       return [null, Error("can not get provider " + errProvider?.message)];
@@ -304,7 +319,7 @@ export class SwapOnKyberswap {
       wallet?.address,
       swapTxData?.routerAddress,
       transactionValue.toString(),
-      provider
+      provider,
     );
     if (errGasLimit) {
       return [null, errGasLimit];
@@ -359,9 +374,11 @@ export class SwapOnKyberswap {
     logEveryWhere({
       campaignId: logInfo.campaignId,
       workflowId: logInfo.workflowId,
-      message: `Executing Kyberswap trade with wallet: ${wallet?.address
-        }, nonce: ${nonce}, transaction hash: ${tx.hash} done, take: ${(endTime - startTime) / 1000
-        } seconds`,
+      message: `Executing Kyberswap trade with wallet: ${
+        wallet?.address
+      }, nonce: ${nonce}, transaction hash: ${tx.hash} done, take: ${
+        (endTime - startTime) / 1000
+      } seconds`,
     });
     return [tx.hash, null];
   }
@@ -371,7 +388,7 @@ export class SwapOnKyberswap {
     from: string,
     to: string,
     value: string,
-    provider: ethers.providers.JsonRpcProvider
+    provider: ethers.providers.JsonRpcProvider,
   ): Promise<[ethers.BigNumber | null, Error | null]> {
     try {
       const gasEstimate = await provider?.estimateGas({

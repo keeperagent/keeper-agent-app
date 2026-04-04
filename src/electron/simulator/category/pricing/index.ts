@@ -1,5 +1,6 @@
 import { Coingecko } from "./coingecko";
 import { Dexsceener } from "./dexscreener";
+import { AxiosProxyConfig } from "axios";
 import { IGetTokenPriceNodeConfig } from "@/electron/type";
 import { PRICE_DATA_SOURCE } from "@/electron/constant";
 
@@ -15,16 +16,17 @@ export class Pricing {
   constructor(cacheTimeMilisecond: number) {
     this.coingecko = new Coingecko(
       "https://api.coingecko.com/api/v3",
-      cacheTimeMilisecond
+      cacheTimeMilisecond,
     );
     this.dexscreener = new Dexsceener(
       "https://api.dexscreener.com",
-      cacheTimeMilisecond
+      cacheTimeMilisecond,
     );
   }
 
   getTokenPrice = async (
-    config: IGetTokenPriceNodeConfig
+    config: IGetTokenPriceNodeConfig,
+    proxy?: AxiosProxyConfig,
   ): Promise<[number | null, Error | null]> => {
     let price;
     let err;
@@ -32,13 +34,15 @@ export class Pricing {
     if (config?.dataSource === PRICE_DATA_SOURCE.COINGECKO) {
       [price, err] = await this.coingecko.getTokenPrice(
         config?.coingeckoId!,
-        config?.timeout! * 1000
+        config?.timeout! * 1000,
+        proxy,
       );
     } else {
       [price, err] = await this.dexscreener.getTokenPrice(
         config?.tokenAddress!,
         config?.chainId!,
-        config?.timeout! * 1000
+        config?.timeout! * 1000,
+        proxy,
       );
     }
 
@@ -46,7 +50,8 @@ export class Pricing {
   };
 
   getMarketcap = async (
-    config: IGetTokenPriceNodeConfig
+    config: IGetTokenPriceNodeConfig,
+    proxy?: AxiosProxyConfig,
   ): Promise<[IPriceAndMarketcap | null, Error | null]> => {
     let item: IPriceAndMarketcap | null = null;
     let err;
@@ -54,13 +59,15 @@ export class Pricing {
     if (config?.dataSource === PRICE_DATA_SOURCE.COINGECKO) {
       [item, err] = await this.coingecko.getMarketcap(
         config?.coingeckoId!,
-        config?.timeout! * 1000
+        config?.timeout! * 1000,
+        proxy,
       );
     } else {
       [item, err] = await this.dexscreener.getMarketcap(
         config?.tokenAddress!,
         config?.chainId!,
-        config?.timeout! * 1000
+        config?.timeout! * 1000,
+        proxy,
       );
     }
 

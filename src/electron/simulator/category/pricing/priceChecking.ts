@@ -1,5 +1,6 @@
 import { Pricing } from "./index";
 import { QueueItem, TimeoutQueue } from "@/electron/service/timeoutQueue";
+import { AxiosProxyConfig } from "axios";
 import { ICheckTokenPriceNodeConfig } from "@/electron/type";
 import { COMPARISION_EXPRESSION, PRICE_DATA_SOURCE } from "@/electron/constant";
 import { sleep } from "@/electron/simulator/util";
@@ -13,6 +14,7 @@ export type ICheckTokenPriceInput = {
   apiTimeout: number;
   poolInterval: number;
   timeFrame: number;
+  proxy?: AxiosProxyConfig;
 };
 
 export type ICheckTokenPriceCondition = {
@@ -25,7 +27,10 @@ export class PriceCheckingManager {
   private mapPriceCheckingOfWorkflow: Map<string, PriceChecking[]> = new Map();
 
   private getKey = (input: ICheckTokenPriceInput): string => {
-    return `${input.dataSource}_${input.tokenAddress}_${input.coingeckoId}_${input.chainId}_${input.apiTimeout}_${input.poolInterval}_${input.timeFrame}`;
+    const proxyKey = input.proxy
+      ? `${input.proxy.host}:${input.proxy.port}`
+      : "";
+    return `${input.dataSource}_${input.tokenAddress}_${input.coingeckoId}_${input.chainId}_${input.apiTimeout}_${input.poolInterval}_${input.timeFrame}_${proxyKey}`;
   };
 
   private getWorkflowKey = (workflowId: number): string => {
@@ -34,7 +39,7 @@ export class PriceCheckingManager {
 
   getPriceChecking = (
     input: ICheckTokenPriceInput,
-    workflowId: number
+    workflowId: number,
   ): PriceChecking => {
     const key = this.getKey(input);
     if (!this.mapPriceChecking.has(key)) {
@@ -76,11 +81,13 @@ export class PriceChecking {
   private timeoutCache: TimeoutQueue<number>;
   private pricing: Pricing;
   private input: ICheckTokenPriceInput | null = null;
+  private proxy: AxiosProxyConfig | undefined;
   private isRunning = false;
   private error: Error | null = null;
 
   constructor(input: ICheckTokenPriceInput) {
     this.input = input;
+    this.proxy = input.proxy;
     this.pricing = new Pricing(0);
 
     this.timeoutCache = new TimeoutQueue(input.timeFrame * 1000);
@@ -111,7 +118,7 @@ export class PriceChecking {
   };
 
   checkPrice = (
-    condition: ICheckTokenPriceCondition
+    condition: ICheckTokenPriceCondition,
   ): [boolean, number, Error | null] => {
     if (this.error !== null) {
       return [false, 0, this.error];
@@ -119,9 +126,11 @@ export class PriceChecking {
 
     const [listPrice, allPrice] = this.timeoutCache.get(
       this.getCacheKey(),
-      this.input?.timeFrame! * 1000
+      this.input?.timeFrame! * 1000,
     );
-    logEveryWhere({ message: `checkPrice with cache length: ${allPrice?.length}` });
+    logEveryWhere({
+      message: `checkPrice with cache length: ${allPrice?.length}`,
+    });
 
     if (listPrice.length === 0 || allPrice?.length <= 1) {
       return [false, 0, null];
@@ -194,13 +203,16 @@ export class PriceChecking {
       return new Error("input is null");
     }
 
-    const [tokenPrice, err] = await this.pricing.getTokenPrice({
-      coingeckoId: this.input?.coingeckoId,
-      timeout: this.input.apiTimeout,
-      tokenAddress: this.input.tokenAddress,
-      chainId: this.input.chainId,
-      dataSource: this.input.dataSource,
-    } as ICheckTokenPriceNodeConfig);
+    const [tokenPrice, err] = await this.pricing.getTokenPrice(
+      {
+        coingeckoId: this.input?.coingeckoId,
+        timeout: this.input.apiTimeout,
+        tokenAddress: this.input.tokenAddress,
+        chainId: this.input.chainId,
+        dataSource: this.input.dataSource,
+      } as ICheckTokenPriceNodeConfig,
+      this.proxy,
+    );
     if (err || tokenPrice === null) {
       return err;
     }

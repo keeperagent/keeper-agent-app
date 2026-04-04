@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosProxyConfig } from "axios";
 import { TimeoutCache } from "@/electron/service/timeoutCache";
 import { IPriceAndMarketcap } from "./index";
 
@@ -13,7 +13,8 @@ export class Coingecko {
 
   async getTokenPrice(
     coingeckoId: string,
-    timeout: number
+    timeout: number,
+    proxy?: AxiosProxyConfig,
   ): Promise<[number | null, Error | null]> {
     try {
       const cacheKey = `price_coingeko_${coingeckoId}`;
@@ -25,6 +26,7 @@ export class Coingecko {
       const url = `${this.endpoint}/coins/markets?ids=${coingeckoId}&vs_currency=usd`;
       const response = await axios.get(url, {
         timeout,
+        proxy,
       });
       const price: IPriceAndMarketcap = {
         price: response?.data?.[0]?.current_price,
@@ -39,7 +41,8 @@ export class Coingecko {
 
   getMarketcap = async (
     coingeckoId: string,
-    timeout: number
+    timeout: number,
+    proxy?: AxiosProxyConfig,
   ): Promise<[IPriceAndMarketcap | null, Error | null]> => {
     try {
       const cacheKey = `marketcap_coingeko_${coingeckoId}`;
@@ -51,6 +54,7 @@ export class Coingecko {
       const url = `${this.endpoint}/coins/markets?ids=${coingeckoId}&vs_currency=usd`;
       const response = await axios.get(url, {
         timeout,
+        proxy,
       });
       const marketcap: IPriceAndMarketcap = {
         price: response?.data?.[0]?.current_price,

@@ -1,5 +1,6 @@
 import { IPriceAndMarketcap, Pricing } from "./index";
 import { QueueItem, TimeoutQueue } from "@/electron/service/timeoutQueue";
+import { AxiosProxyConfig } from "axios";
 import { ICheckTokenPriceNodeConfig } from "@/electron/type";
 import { COMPARISION_EXPRESSION, PRICE_DATA_SOURCE } from "@/electron/constant";
 import { sleep } from "@/electron/simulator/util";
@@ -13,6 +14,7 @@ export type ICheckMarketcapInput = {
   apiTimeout: number;
   poolInterval: number;
   timeFrame: number;
+  proxy?: AxiosProxyConfig;
 };
 
 export type ICheckMarketcapCondition = {
@@ -26,7 +28,10 @@ export class MarketcapCheckingManager {
     new Map();
 
   private getKey = (input: ICheckMarketcapInput): string => {
-    return `${input.dataSource}_${input.tokenAddress}_${input.coingeckoId}_${input.chainId}_${input.apiTimeout}_${input.poolInterval}_${input.timeFrame}`;
+    const proxyKey = input.proxy
+      ? `${input.proxy.host}:${input.proxy.port}`
+      : "";
+    return `${input.dataSource}_${input.tokenAddress}_${input.coingeckoId}_${input.chainId}_${input.apiTimeout}_${input.poolInterval}_${input.timeFrame}_${proxyKey}`;
   };
 
   private getWorkflowKey = (workflowId: number): string => {
@@ -80,11 +85,13 @@ export class MarketcapChecking {
   private timeoutCache: TimeoutQueue<IPriceAndMarketcap>;
   private pricing: Pricing;
   private input: ICheckMarketcapInput | null = null;
+  private proxy: AxiosProxyConfig | undefined;
   private isRunning = false;
   private error: Error | null = null;
 
   constructor(input: ICheckMarketcapInput) {
     this.input = input;
+    this.proxy = input.proxy;
     this.pricing = new Pricing(0);
 
     this.timeoutCache = new TimeoutQueue(input.timeFrame * 1000);
@@ -125,7 +132,9 @@ export class MarketcapChecking {
       this.getCacheKey(),
       (this.input?.timeFrame || 0) * 1000,
     );
-    logEveryWhere({ message: `checkMarketcap with cache length: ${allMarketcap?.length}` });
+    logEveryWhere({
+      message: `checkMarketcap with cache length: ${allMarketcap?.length}`,
+    });
 
     if (listMarketcap.length === 0 || allMarketcap?.length <= 1) {
       return [false, snapshot, null];
@@ -206,13 +215,16 @@ export class MarketcapChecking {
       return new Error("input is null");
     }
 
-    const [data, err] = await this.pricing.getMarketcap({
-      coingeckoId: this.input?.coingeckoId,
-      timeout: this.input.apiTimeout,
-      tokenAddress: this.input.tokenAddress,
-      chainId: this.input.chainId,
-      dataSource: this.input.dataSource,
-    } as ICheckTokenPriceNodeConfig);
+    const [data, err] = await this.pricing.getMarketcap(
+      {
+        coingeckoId: this.input?.coingeckoId,
+        timeout: this.input.apiTimeout,
+        tokenAddress: this.input.tokenAddress,
+        chainId: this.input.chainId,
+        dataSource: this.input.dataSource,
+      } as ICheckTokenPriceNodeConfig,
+      this.proxy,
+    );
     if (err || data === null) {
       return err;
     }

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import axios from "axios";
+import axios, { AxiosProxyConfig } from "axios";
 import { PublicKey } from "@solana/web3.js";
 import { IJupiterSwapInput } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
@@ -17,6 +17,7 @@ export class JupiterClient {
     input: IJupiterSwapInput,
     apiKey: string,
     platformFeeTokenAccount: PublicKey | null,
+    proxy?: AxiosProxyConfig,
   ): Promise<[any, Error | null]> => {
     try {
       if (!apiKey) {
@@ -46,6 +47,7 @@ export class JupiterClient {
         headers: {
           "x-api-key": apiKey,
         },
+        proxy,
       });
 
       return [response?.data, null];
@@ -67,6 +69,7 @@ export class JupiterClient {
     input: IJupiterSwapInput,
     apiKey: string,
     platformFeeTokenAccount: PublicKey | null,
+    proxy?: AxiosProxyConfig,
   ): Promise<[any, Error | null]> => {
     try {
       if (!apiKey) {
@@ -107,6 +110,7 @@ export class JupiterClient {
           headers: {
             "x-api-key": apiKey,
           },
+          proxy,
         },
       );
 
