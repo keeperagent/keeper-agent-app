@@ -6,6 +6,7 @@ export enum BaseToolGroup {
   SCHEDULER = "scheduler",
   RESEARCH = "research",
   AGENT_TASK_MANAGEMENT = "agent_task_management",
+  PLANNING = "planning",
 }
 
 export type BaseToolRegistryItem = {
@@ -13,6 +14,7 @@ export type BaseToolRegistryItem = {
   name: string;
   description: string;
   group: BaseToolGroup;
+  locked?: boolean;
 };
 
 export const BASE_TOOL_KEYS = {
@@ -54,6 +56,8 @@ export const BASE_TOOL_KEYS = {
   CREATE_AGENT_TASK: "create_agent_task",
   UPDATE_AGENT_TASK: "update_agent_task",
   DELETE_AGENT_TASK: "delete_agent_task",
+  DRAFT_PLAN: "draft_plan",
+  SUBMIT_PLAN: "submit_plan",
 } as const;
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -267,6 +271,23 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     description: "Permanently delete an agent task by ID",
     group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
   },
+  // Planning Mode Tools
+  {
+    key: BASE_TOOL_KEYS.DRAFT_PLAN,
+    name: "Draft plan",
+    description:
+      "Research and prepare before running any transaction, code, or workflow",
+    group: BaseToolGroup.PLANNING,
+    locked: true,
+  },
+  {
+    key: BASE_TOOL_KEYS.SUBMIT_PLAN,
+    name: "Submit plan",
+    description:
+      "Present execution plan to the user and wait for approval before any execution",
+    group: BaseToolGroup.PLANNING,
+    locked: true,
+  },
   // Code Execution Tools
   {
     key: BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT,
@@ -328,4 +349,5 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.SCHEDULER]: "Scheduler",
   [BaseToolGroup.RESEARCH]: "Research",
   [BaseToolGroup.AGENT_TASK_MANAGEMENT]: "Agent task management",
+  [BaseToolGroup.PLANNING]: "Planning",
 };

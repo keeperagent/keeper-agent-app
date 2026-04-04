@@ -1,7 +1,7 @@
 import { Op } from "sequelize";
 import { redact } from "@keeperagent/crypto-key-guard";
 import { logEveryWhere } from "@/electron/service/util";
-import { ChatPlatform, IChatMessage } from "@/electron/chatGateway/types";
+import { ChatPlatform, ChatRole, IChatMessage } from "@/electron/chatGateway/types";
 import { ChatHistoryModel } from "./index";
 
 type AgentContext = {
@@ -162,7 +162,7 @@ class ChatHistoryDB {
         where: { isSummary: true, platformId, platformChatId },
       });
       const data = await ChatHistoryModel.create({
-        role: "summary",
+        role: ChatRole.SUMMARY,
         content,
         isSummary: true,
         summaryUpTo,

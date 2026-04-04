@@ -23,7 +23,9 @@ import {
   fileInfoToAttached,
   fileToAttached,
 } from "./util";
+import { ChatRole } from "@/electron/chatGateway/types";
 import ChatComposer from "./ChatComposer";
+import PlanReview from "./PlanReview";
 
 const LoadingDots = () => (
   <LoadingDotsWrapper>
@@ -101,6 +103,7 @@ type Props = {
   onStop: () => void;
   onReset?: () => void;
   onErrorClose?: () => void;
+  onApprovePlan?: (approved: boolean) => void;
   showLayoutOption?: boolean;
   layoutMode?: string;
   onSetLayoutMode?: (mode: string) => void;
@@ -118,6 +121,7 @@ const AgentChatView = ({
   onStop,
   onReset,
   onErrorClose,
+  onApprovePlan,
   showLayoutOption,
   layoutMode,
   onSetLayoutMode,
@@ -146,7 +150,9 @@ const AgentChatView = ({
   const sendButtonRef = useRef<HTMLButtonElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
+  const planReviewRef = useRef<HTMLDivElement | null>(null);
   const prevMessagesLenRef = useRef<number>(0);
+  const prevHasPlanReviewRef = useRef(false);
   const conversationClearedRef = useRef(false);
 
   const onCopyMessage = (content: string, index: number) => {
@@ -370,6 +376,16 @@ const AgentChatView = ({
     prevMessagesLenRef.current = currentLen;
   }, [messages, loading]);
 
+  useEffect(() => {
+    if (hasPlanReview && !prevHasPlanReviewRef.current) {
+      planReviewRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+    prevHasPlanReviewRef.current = hasPlanReview;
+  }, [messages]);
+
   const handleSend = () => {
     const trimmed = draftMessage.trim();
     if (!trimmed) {
@@ -406,6 +422,7 @@ const AgentChatView = ({
     clearAttachedFiles();
   };
 
+  const hasPlanReview = messages.some((msg) => !!msg.planReview);
   const showEmptyState = Boolean(emptyState) && messages.length === 0;
 
   return (
@@ -443,7 +460,23 @@ const AgentChatView = ({
         ) : (
           <Fragment>
             {messages.map((msg, index) => {
-              const isUser = msg.role === "human" || msg.role === "user";
+              if (msg.planReview) {
+                return (
+                  <div
+                    key={`plan-review-${index}`}
+                    className="message"
+                    ref={planReviewRef}
+                  >
+                    <PlanReview
+                      plan={msg.planReview.plan}
+                      onApprove={() => onApprovePlan?.(true)}
+                      onReject={() => onApprovePlan?.(false)}
+                    />
+                  </div>
+                );
+              }
+
+              const isUser = msg.role === ChatRole.HUMAN || msg.role === "user";
               const timestamp = msg.timestamp
                 ? msg.timestamp.toLocaleTimeString("en-US", {
                     hour: "2-digit",
@@ -533,6 +566,13 @@ const AgentChatView = ({
           <ComposerStatus>
             <LoadingDots />
             <span>{translate("agent.preparingAgent")}</span>
+          </ComposerStatus>
+        )}
+
+        {hasPlanReview && (
+          <ComposerStatus>
+            <LoadingDots />
+            <span>{translate("agent.waitingForApproval")}</span>
           </ComposerStatus>
         )}
 

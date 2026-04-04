@@ -22,10 +22,17 @@ export enum WhatsAppAction {
   STATUS = "status",
 }
 
+export enum ChatRole {
+  HUMAN = "human",
+  AI = "ai",
+  TOOL = "tool",
+  SUMMARY = "summary",
+}
+
 /** A stored chat history record (role/content pair saved to the database). */
 export type IChatMessage = {
   id?: number;
-  role: string;
+  role: ChatRole;
   content: string;
   isSummary?: boolean;
   summaryUpTo?: number | null;

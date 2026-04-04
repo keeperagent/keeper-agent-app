@@ -5,6 +5,8 @@ import { app } from "electron";
 import path from "path";
 import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
+import { safeStringify } from "@/electron/appAgent/utils";
+import type { ToolContext } from "@/electron/appAgent/toolContext";
 
 const TIMEOUT_MS = 60_000;
 const INSTALL_TIMEOUT_MS = 60_000;
@@ -47,7 +49,7 @@ const installModule = (moduleName: string): Promise<string> => {
   });
 };
 
-export const executeJavaScriptTool = () =>
+export const executeJavaScriptTool = (toolContext?: ToolContext) =>
   new DynamicTool({
     name: "execute_javascript",
     description:
@@ -60,6 +62,13 @@ export const executeJavaScriptTool = () =>
       "IMPORTANT: Do NOT retry if the same error occurs. Report the error to the user instead. " +
       "Input: the JavaScript code string to execute.",
     func: async (code: string) => {
+      if (toolContext?.planningMode) {
+        return safeStringify({
+          error:
+            "Cannot execute code in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       const workspaceDir = getJsWorkspaceDir();
       await mkdir(workspaceDir, { recursive: true });
       const scriptPath = path.join(workspaceDir, "agent_script.cjs");

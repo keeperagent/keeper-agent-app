@@ -46,6 +46,13 @@ The transaction data must be base64-encoded. The tool handles signing with each 
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary instructions).`,
     schema: broadcastTransactionSolanaSchema,
     func: async ({ transactionData }) => {
+      if (toolContext?.planningMode) {
+        return safeStringify({
+          error:
+            "Cannot broadcast transaction in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;

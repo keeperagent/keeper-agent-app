@@ -1,4 +1,5 @@
 import { redact } from "@keeperagent/crypto-key-guard";
+import { ChatRole } from "@/electron/chatGateway/types";
 import type { AttachedFile } from "./AttachedFiles";
 
 /** Absolute path for backend. Uses Electron getPathForFile when available (pick/drop). */
@@ -60,14 +61,15 @@ export type DisplayMessage = {
   isLoading?: boolean;
   timestamp?: Date;
   executingToolText?: string;
+  planReview?: { sessionId: string; plan: string };
 };
 
 export const deriveLabel = (role: string, t: (key: string) => string) => {
   const normalized = role?.toLowerCase() || "";
-  if (normalized.includes("human") || normalized.includes("user")) {
+  if (normalized === ChatRole.HUMAN || normalized.includes("human") || normalized.includes("user")) {
     return t("agent.messageLabelYou");
   }
-  if (normalized.includes("tool")) {
+  if (normalized === ChatRole.TOOL || normalized.includes("tool")) {
     return t("agent.messageLabelToolOutput");
   }
   if (normalized.includes("system")) {
@@ -78,10 +80,10 @@ export const deriveLabel = (role: string, t: (key: string) => string) => {
 
 export const deriveClassName = (role: string) => {
   const normalized = role?.toLowerCase() || "";
-  if (normalized.includes("human") || normalized.includes("user")) {
+  if (normalized === ChatRole.HUMAN || normalized.includes("human") || normalized.includes("user")) {
     return "message user";
   }
-  if (normalized.includes("tool")) {
+  if (normalized === ChatRole.TOOL || normalized.includes("tool")) {
     return "message tool";
   }
   return "message assistant";

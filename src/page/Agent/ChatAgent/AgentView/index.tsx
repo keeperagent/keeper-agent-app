@@ -5,6 +5,8 @@ import { RootState } from "@/redux/store";
 import { useDashboardAgent, useTranslation } from "@/hook";
 import { actSetLayoutMode } from "@/redux/agent";
 import { getToolDisplayName } from "@/electron/constant";
+import { ChatRole } from "@/electron/chatGateway/types";
+
 import AgentChatView, {
   type DisplayMessage,
   type AttachedFile,
@@ -36,10 +38,12 @@ const AgentView = (props: any) => {
     error,
     streamingContent,
     executingTool,
+    planReview,
     createSession,
     sendMessage,
     stopAgent,
     resetSession,
+    approvePlan,
     setError,
   } = useDashboardAgent();
 
@@ -51,7 +55,7 @@ const AgentView = (props: any) => {
 
   const displayedMessages: DisplayMessage[] = useMemo(() => {
     const mapped: DisplayMessage[] = (conversation || [])
-      .filter((msg) => !(msg?.role || "").toLowerCase().includes("tool"))
+      .filter((msg) => !(msg?.role || "").toLowerCase().includes(ChatRole.TOOL))
       .map((msg) => {
         const { text: content } = sanitizeForDisplay(msg?.content || "", true);
         const msgWithRaw = msg as typeof msg & {
@@ -111,6 +115,16 @@ const AgentView = (props: any) => {
       });
     }
 
+    if (planReview) {
+      mapped.push({
+        role: "plan-review",
+        label: "",
+        content: "",
+        className: "message",
+        planReview,
+      });
+    }
+
     return mapped;
   }, [
     conversation,
@@ -120,6 +134,7 @@ const AgentView = (props: any) => {
     sessionId,
     agentReady,
     creatingSession,
+    planReview,
     translate,
   ]);
 
@@ -145,18 +160,21 @@ const AgentView = (props: any) => {
     sendMessage(messageWithContext, { encryptKey, displayText: draft });
   };
 
+  const hasPlanReview = displayedMessages.some((msg) => !!msg.planReview);
+
   return (
     <AgentChatView
       messages={displayedMessages}
       loading={loading}
       error={error}
-      composerDisabled={creatingSession || (!!sessionId && !agentReady)}
+      composerDisabled={creatingSession || (!!sessionId && !agentReady) || hasPlanReview}
       showPreparingStatus={creatingSession || (!!sessionId && !agentReady)}
       canReset={conversation.length > 0}
       onSend={onSend}
       onStop={stopAgent}
       onReset={resetSession}
       onErrorClose={() => setError(null)}
+      onApprovePlan={approvePlan}
       showLayoutOption
       layoutMode={layoutMode}
       onSetLayoutMode={props?.actSetLayoutMode}

@@ -15,6 +15,8 @@ interface IToolContextData {
   chainKey?: string;
   attachedFiles?: IAttachedFileContext[];
   llmProvider?: string;
+  planningMode?: boolean;
+  requestPlanApproval?: (plan: string) => Promise<boolean>;
 }
 
 /**
@@ -70,6 +72,12 @@ export class ToolContext {
     if (data.llmProvider !== undefined) {
       this.data.llmProvider = data.llmProvider;
     }
+    if (data.planningMode !== undefined) {
+      this.data.planningMode = data.planningMode;
+    }
+    if (data.requestPlanApproval !== undefined) {
+      this.data.requestPlanApproval = data.requestPlanApproval;
+    }
   }
 
   get nodeEndpointGroupId(): number | undefined {
@@ -106,5 +114,13 @@ export class ToolContext {
 
   get llmProvider(): string | undefined {
     return this.data.llmProvider;
+  }
+
+  get planningMode(): boolean {
+    return this.data.planningMode || false;
+  }
+
+  get requestPlanApproval(): ((plan: string) => Promise<boolean>) | undefined {
+    return this.data.requestPlanApproval;
   }
 }

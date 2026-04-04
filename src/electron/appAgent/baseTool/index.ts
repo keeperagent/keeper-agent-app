@@ -31,3 +31,5 @@ export {
   updateAgentTaskTool,
   deleteAgentTaskTool,
 } from "./agentTask";
+export { draftPlanTool } from "./draftPlan";
+export { submitPlanTool } from "./submitPlan";

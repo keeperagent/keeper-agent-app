@@ -76,6 +76,13 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
       unitPrice,
       launchCurrency = "SOL",
     }) => {
+      if (toolContext?.planningMode) {
+        return safeStringify({
+          error:
+            "Cannot launch token in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       // Resolve image: use provided imageUrl or first image from attached files
       let effectiveImageUrl = imageUrl?.trim() || "";
       if (!effectiveImageUrl && toolContext?.attachedFiles?.length) {

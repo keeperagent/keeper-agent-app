@@ -45,6 +45,8 @@ import {
   runWorkflowTool,
   stopWorkflowTool,
   checkWorkflowStatusTool,
+  draftPlanTool,
+  submitPlanTool,
 } from "./baseTool";
 import {
   createAgentScheduleTool,
@@ -124,6 +126,16 @@ Render addresses/txhashes as Solscan links using the format for the platformId i
 - WHATSAPP: Plain text — \`first6...last4 (https://solscan.io/account/<full_address>)\` for wallets; \`first6...last4 (https://solscan.io/tx/<full_hash>)\` for tx hashes.
 - KEEPER/others: Markdown — \`[first6...last4](https://solscan.io/account/<full_address>)\` for wallets; \`[first6...last4](https://solscan.io/tx/<full_hash>)\` for tx hashes.
 Always shorten the display text.
+
+## Planning mode for on-chain operations
+When the user requests any on-chain execution (swaps, transfers, token launches, broadcasting transactions):
+1. Call \`draft_plan\` to enter planning mode
+2. Research: check balances, get token prices, wallet info — read-only tools work normally
+3. Call \`submit_plan\` with a clear summary: what will execute, which wallets, amounts, tokens, expected outcome
+4. After user approves, execute the operations
+
+On-chain tools are BLOCKED during planning mode — they return an error until \`submit_plan\` is called and approved.
+Skip planning mode only for simple read operations (balance check, price lookup).
 
 ## Swap strategy rules
 - "buy total X" / "buy total $X" → TOTAL_SPLIT_RANDOM (split total randomly across wallets)
@@ -287,8 +299,9 @@ const buildBaseSubAgents = (
   ].filter((tool): any => Boolean(tool));
 
   const codeExecutionTools = [
-    isEnabled(BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT) && executeJavaScriptTool(),
-    isEnabled(BASE_TOOL_KEYS.EXECUTE_PYTHON) && executePythonTool(),
+    isEnabled(BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT) &&
+      executeJavaScriptTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.EXECUTE_PYTHON) && executePythonTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
   const agents = [];
@@ -646,11 +659,17 @@ const createKeeperAgent = async (
     },
   );
 
+  const isToolEnabled = (key: string) => !disabledTools.has(key);
+  const planningTools = [
+    isToolEnabled(BASE_TOOL_KEYS.DRAFT_PLAN) && draftPlanTool(toolContext),
+    isToolEnabled(BASE_TOOL_KEYS.SUBMIT_PLAN) && submitPlanTool(toolContext),
+  ].filter((tool): any => Boolean(tool));
+
   const agent = createDeepAgent({
     model: llm,
     systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
     backend,
-    tools: [] as any,
+    tools: planningTools as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

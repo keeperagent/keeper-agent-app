@@ -24,6 +24,7 @@ import {
   extractErrorMessage,
 } from "./utils";
 import { ToolContext } from "@/electron/appAgent/toolContext";
+import { safeStringify } from "../utils";
 
 const BALANCE_BATCH_SIZE = 10;
 
@@ -224,6 +225,13 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
       includedSources = "",
       excludedSources = "",
     }) => {
+      if (toolContext?.planningMode) {
+        return safeStringify({
+          error:
+            "Cannot execute swap in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       const chainKey = toolContext?.chainKey as KYBERSWAP_CHAIN_KEY;
       // Validate token addresses are valid EVM addresses
       const isValidEVMAddress = (address: string): boolean => {

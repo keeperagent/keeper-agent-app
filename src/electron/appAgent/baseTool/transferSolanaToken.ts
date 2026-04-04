@@ -99,6 +99,13 @@ CRITICAL - Confirmation Required:
       maxAmount,
       balanceTimeoutMs = 15000,
     }) => {
+      if (toolContext?.planningMode) {
+        return safeStringify({
+          error:
+            "Cannot execute transfer in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;

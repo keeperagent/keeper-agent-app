@@ -69,6 +69,13 @@ The transaction data must be hex-encoded (0x-prefixed). Gas limit and gas price 
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary calldata).`,
     schema: broadcastTransactionEvmSchema,
     func: async ({ toAddress, transactionData, transactionValue = "0" }) => {
+      if (toolContext?.planningMode) {
+        return safeStringify({
+          error:
+            "Cannot broadcast transaction in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       const chainKey = toolContext?.chainKey || "";
       const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
       const effectiveEncryptKey = toolContext?.encryptKey;
