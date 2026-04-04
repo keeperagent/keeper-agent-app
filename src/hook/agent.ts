@@ -8,11 +8,7 @@ import {
   LLMProvider,
 } from "@/redux/agent";
 import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
-
-enum AgentRole {
-  HUMAN = "human",
-  AI = "ai",
-}
+import { ChatRole } from "@/electron/chatGateway/types";
 
 type AgentToolStep = {
   toolName: string;
@@ -22,7 +18,7 @@ type AgentToolStep = {
 };
 
 type AgentMessage = {
-  role: AgentRole;
+  role: ChatRole;
   content: string;
   timestamp?: number;
 };
@@ -61,6 +57,10 @@ const useDashboardAgent = () => {
   const [error, setError] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState<string>("");
   const [executingTool, setExecutingTool] = useState<string | null>(null);
+  const [planReview, setPlanReview] = useState<{
+    sessionId: string;
+    plan: string;
+  } | null>(null);
 
   const sessionIdRef = useRef<string | null>(sessionId);
   const streamingContentRef = useRef<string>("");
@@ -95,7 +95,7 @@ const useDashboardAgent = () => {
 
     // Detect when the agent asks the user for their encryptKey so the next
     // user message can be intercepted and redacted before DB/display.
-    if (msg.role === AgentRole.AI) {
+    if (msg.role === ChatRole.AI) {
       const lower = msg.content.toLowerCase();
       expectingEncryptKeyRef.current =
         lower.includes("encryptkey") ||
@@ -193,7 +193,7 @@ const useDashboardAgent = () => {
       const remainingContent = streamingContentRef.current || "";
       if (remainingContent.trim()) {
         const assistantMessage: AgentMessage = {
-          role: AgentRole.AI,
+          role: ChatRole.AI,
           content: remainingContent,
           timestamp: Date.now(),
         };
@@ -202,7 +202,7 @@ const useDashboardAgent = () => {
       } else if (result?.isError) {
         // Top-level run error — show the error message directly
         const errorMessage: AgentMessage = {
-          role: AgentRole.AI,
+          role: ChatRole.AI,
           content: `Error: ${result.errorMsg || "An error occurred."}`,
           timestamp: Date.now(),
         };
@@ -213,7 +213,7 @@ const useDashboardAgent = () => {
         const failedStep = (result?.steps || []).find((s: any) => !s.success);
         if (failedStep) {
           const errorMessage: AgentMessage = {
-            role: AgentRole.AI,
+            role: ChatRole.AI,
             content: `Error: ${failedStep.result || "An error occurred while executing the task."}`,
             timestamp: Date.now(),
           };
@@ -280,7 +280,7 @@ const useDashboardAgent = () => {
         // so the tool execution indicator appears as a separate step
         if (streamingContentRef.current.trim()) {
           const partialMessage: AgentMessage = {
-            role: AgentRole.AI,
+            role: ChatRole.AI,
             content: streamingContentRef.current,
             timestamp: Date.now(),
           };
@@ -357,7 +357,13 @@ const useDashboardAgent = () => {
       if (errMessage) {
         setError(errMessage);
       }
-      // RUN_RES handler will take care of resetting loading/streaming state
+    };
+
+    const handlePlanReview = (_event: any, payload: any) => {
+      const { sessionId: payloadSessionId, plan } = payload || {};
+      if (payloadSessionId === sessionIdRef.current && plan) {
+        setPlanReview({ sessionId: payloadSessionId, plan });
+      }
     };
 
     const handleChangeProvider = (_event: any, payload: any) => {
@@ -401,6 +407,7 @@ const useDashboardAgent = () => {
       handleChangeProvider,
     );
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_STOP_RES, handleStop);
+    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW, handlePlanReview);
 
     return () => {
       window?.electron?.removeAllListeners(
@@ -425,6 +432,7 @@ const useDashboardAgent = () => {
         MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER_RES,
       );
       window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_STOP_RES);
+      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW);
     };
   }, [saveMessageToDB]);
 
@@ -525,7 +533,7 @@ const useDashboardAgent = () => {
       const contentForDisplay = displayText;
 
       const userMessage: AgentMessage = {
-        role: AgentRole.HUMAN,
+        role: ChatRole.HUMAN,
         content: contentForDisplay,
         timestamp: Date.now(),
       };
@@ -564,6 +572,7 @@ const useDashboardAgent = () => {
     setStreamingContent("");
     streamingContentRef.current = "";
     setExecutingTool(null);
+    setPlanReview(null);
     toolDepthRef.current = 0;
     expectingEncryptKeyRef.current = false;
     // Clear SQLite history so the next session starts fresh
@@ -594,11 +603,38 @@ const useDashboardAgent = () => {
     });
   }, []);
 
+  const approvePlan = useCallback(
+    (approved: boolean) => {
+      const currentPlanReview = planReview;
+      if (!currentPlanReview) {
+        return;
+      }
+      setPlanReview(null);
+
+      if (approved) {
+        const echoMessage: AgentMessage = {
+          role: ChatRole.AI,
+          content: `**✓ Plan approved**\n\n${currentPlanReview.plan}`,
+          timestamp: Date.now(),
+        };
+        setConversation((prev) => [...prev, echoMessage]);
+        saveMessageToDB(echoMessage);
+      }
+
+      window?.electron?.send(MESSAGE.DASHBOARD_AGENT_PLAN_APPROVAL, {
+        sessionId: currentPlanReview.sessionId,
+        approved,
+      });
+    },
+    [planReview, saveMessageToDB],
+  );
+
   const destroySession = useCallback(() => {
     if (!sessionIdRef.current) {
       return;
     }
     setError(null);
+    setPlanReview(null);
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION, {
       sessionId: sessionIdRef.current,
     });
@@ -615,6 +651,7 @@ const useDashboardAgent = () => {
     error,
     streamingContent,
     executingTool,
+    planReview,
     llmProvider,
     createSession,
     sendMessage,
@@ -622,6 +659,7 @@ const useDashboardAgent = () => {
     resetSession,
     destroySession,
     changeProvider,
+    approvePlan,
     setError,
   };
 };

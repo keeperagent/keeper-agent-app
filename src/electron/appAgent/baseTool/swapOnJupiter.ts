@@ -11,8 +11,8 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { redistributeToCapacity, extractErrorMessage } from "./utils";
-import { ToolContext } from "@/electron/appAgent/toolContext";
 
 const GAS_BUFFER_SOL = 0.0005;
 const BALANCE_BATCH_SIZE = 10;
@@ -117,13 +117,14 @@ const swapOnJupiterSchema = z
       return true;
     },
     {
-      message:
-        "maxAmount is required when amountStrategy is RANDOM_PER_WALLET",
+      message: "maxAmount is required when amountStrategy is RANDOM_PER_WALLET",
       path: ["maxAmount"],
     },
   ) as z.ZodTypeAny;
 
-export const swapOnJupiterTool = (toolContext?: ToolContext): DynamicStructuredTool =>
+export const swapOnJupiterTool = (
+  toolContext?: ToolContext,
+): DynamicStructuredTool =>
   new DynamicStructuredTool({
     name: "swap_on_jupiter",
     description: `Swap tokens on Solana via Jupiter. BUY = SOL -> token, SELL = token -> SOL.
@@ -155,6 +156,13 @@ Display: SOL for native, "tokens" for token amounts. NEVER show balance after sw
       pritorityFeeMicroLamport = 0,
       shouldWaitTransactionComfirmed = true,
     }) => {
+      if (toolContext?.planState !== PlanState.APPROVED) {
+        return safeStringify({
+          error:
+            "Cannot execute swap in planning mode. Call submit_plan with your execution plan first to get user approval.",
+          status: "blocked_planning_mode",
+        });
+      }
       // Validate token addresses are valid Solana addresses
       const isValidSolanaAddress = (address: string): boolean => {
         try {

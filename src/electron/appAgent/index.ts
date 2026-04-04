@@ -45,6 +45,8 @@ import {
   runWorkflowTool,
   stopWorkflowTool,
   checkWorkflowStatusTool,
+  draftPlanTool,
+  submitPlanTool,
 } from "./baseTool";
 import {
   createAgentScheduleTool,
@@ -124,6 +126,21 @@ Render addresses/txhashes as Solscan links using the format for the platformId i
 - WHATSAPP: Plain text — \`first6...last4 (https://solscan.io/account/<full_address>)\` for wallets; \`first6...last4 (https://solscan.io/tx/<full_hash>)\` for tx hashes.
 - KEEPER/others: Markdown — \`[first6...last4](https://solscan.io/account/<full_address>)\` for wallets; \`[first6...last4](https://solscan.io/tx/<full_hash>)\` for tx hashes.
 Always shorten the display text.
+
+## Planning mode
+When the user requests any of the following, you MUST use planning mode:
+- On-chain execution: swaps, transfers, token launches, broadcasting transactions
+- Code execution: running JavaScript or Python scripts
+- Workflow runs
+
+Steps:
+1. Call \`draft_plan\` to enter planning mode
+2. Research: check balances, get token prices, web search — read-only tools work normally
+3. Call \`submit_plan\` with a clear summary: what will execute, which wallets/amounts/tokens/scripts/workflows are involved, expected outcome
+4. After user approves, execute the operations
+
+All execution tools are BLOCKED during planning mode — they return an error until \`submit_plan\` is called and approved.
+Skip planning mode only for simple read operations (balance check, price lookup, web search).
 
 ## Swap strategy rules
 - "buy total X" / "buy total $X" → TOTAL_SPLIT_RANDOM (split total randomly across wallets)
@@ -287,8 +304,9 @@ const buildBaseSubAgents = (
   ].filter((tool): any => Boolean(tool));
 
   const codeExecutionTools = [
-    isEnabled(BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT) && executeJavaScriptTool(),
-    isEnabled(BASE_TOOL_KEYS.EXECUTE_PYTHON) && executePythonTool(),
+    isEnabled(BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT) &&
+      executeJavaScriptTool(toolContext),
+    isEnabled(BASE_TOOL_KEYS.EXECUTE_PYTHON) && executePythonTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
   const agents = [];
@@ -646,11 +664,16 @@ const createKeeperAgent = async (
     },
   );
 
+  const planningTools = [
+    draftPlanTool(toolContext),
+    submitPlanTool(toolContext),
+  ];
+
   const agent = createDeepAgent({
     model: llm,
     systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
     backend,
-    tools: [] as any,
+    tools: planningTools as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,
@@ -811,11 +834,16 @@ const createRegistryKeeperAgent = async (
   const systemPrompt =
     registry.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
 
+  const registryPlanningTools = [
+    draftPlanTool(toolContext),
+    submitPlanTool(toolContext),
+  ];
+
   const agent = createDeepAgent({
     model: llm,
     systemPrompt,
     backend,
-    tools: [] as any,
+    tools: registryPlanningTools as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

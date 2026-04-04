@@ -32,7 +32,7 @@ import { getMemoryDir } from "@/electron/service/agentSkill";
 import { LLMProvider } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
-import { ChatPlatform } from "./types";
+import { ChatPlatform, ChatRole } from "./types";
 import type { IChatAdapter, IPlatformMessage } from "./types";
 
 const MEMORY_FILE = "AGENT.md";
@@ -189,6 +189,7 @@ class AgentChatBridge {
   private abortControllers = new Map<string, AbortController>();
   private activeRuns = new Set<string>();
   private adapters = new Map<string, IChatAdapter>();
+  pendingPlanApprovals = new Map<string, (approved: boolean) => void>();
 
   //  Pre-warmed session created at startup, claimed by the first IPC call.
   private prewarmedSessionId: string | null = null;
@@ -319,7 +320,7 @@ class AgentChatBridge {
       const conversationText = messages
         .map(
           (msg) =>
-            `${msg.role === "human" ? "User" : "Assistant"}: ${msg.content}`,
+            `${msg.role === ChatRole.HUMAN ? "User" : "Assistant"}: ${msg.content}`,
         )
         .join("\n\n");
 
@@ -382,7 +383,7 @@ class AgentChatBridge {
       const conversationText = allNew
         .map(
           (msg) =>
-            `${msg.role === "human" ? "User" : "Assistant"}: ${msg.content}`,
+            `${msg.role === ChatRole.HUMAN ? "User" : "Assistant"}: ${msg.content}`,
         )
         .join("\n\n");
       await runMemoryFlush(session.provider, conversationText);
@@ -502,15 +503,15 @@ class AgentChatBridge {
     sessionId: string,
     input: string,
     options?: {
-      /** For IPC: the Electron IPC event to stream chunks through. */
+      // For IPC: the Electron IPC event to stream chunks through.
       ipcEvent?: Electron.IpcMainEvent;
-      /** Callback for each streamed text chunk (for platform adapters). */
+      // Callback for each streamed text chunk (for platform adapters).
       onChunk?: (chunk: string) => void;
-      /** Callback when a tool starts executing. */
+      // Callback when a tool starts executing.
       onToolStart?: (toolName: string, subagentType?: string) => void;
-      /** Callback when a tool finishes executing. */
+      // Callback when a tool finishes executing.
       onToolComplete?: (toolName: string) => void;
-      /** Image files to include as multimodal content blocks. */
+      // Image files to include as multimodal content blocks.
       attachedFiles?: IAttachedFileContext[];
     },
   ): Promise<{
@@ -548,6 +549,23 @@ class AgentChatBridge {
 
     try {
       const { agent } = await this.getOrCreateAgent(session);
+
+      // Reset plan state at the start of each run — each new user message requires a fresh plan approval
+      session.toolContext.resetPlanState();
+
+      // Wire plan approval callback for IPC sessions (desktop app)
+      if (options?.ipcEvent) {
+        session.toolContext.update({
+          requestPlanApproval: (plan: string) =>
+            new Promise<boolean>((resolve) => {
+              this.pendingPlanApprovals.set(sessionId, resolve);
+              options.ipcEvent!.reply(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW, {
+                sessionId,
+                plan,
+              });
+            }),
+        });
+      }
 
       // Layer 2: redact crypto secrets before they reach the LLM provider
       const { text: redactedInput, secrets: newSecrets } = redact(input.trim());
@@ -708,6 +726,12 @@ class AgentChatBridge {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found or has expired");
 
+    const pendingApproval = this.pendingPlanApprovals.get(sessionId);
+    if (pendingApproval) {
+      pendingApproval(false);
+      this.pendingPlanApprovals.delete(sessionId);
+    }
+
     await this.maybeFlushMemoryOnExit(session);
 
     if (session.keeper) {
@@ -740,6 +764,12 @@ class AgentChatBridge {
   };
 
   destroySession = async (sessionId: string) => {
+    const pendingApproval = this.pendingPlanApprovals.get(sessionId);
+    if (pendingApproval) {
+      pendingApproval(false);
+      this.pendingPlanApprovals.delete(sessionId);
+    }
+
     const session = this.sessions.get(sessionId);
     if (session?.keeper) {
       await session.keeper.cleanup();
@@ -869,7 +899,7 @@ class AgentChatBridge {
 
     // Save user message to chat history (with encryptKey already redacted above)
     await chatHistoryDB.saveMessage({
-      role: "human",
+      role: ChatRole.HUMAN,
       content: userText,
       timestamp: Date.now(),
       platformId: adapter.platformId,
@@ -962,7 +992,7 @@ class AgentChatBridge {
 
       // Save assistant response to chat history
       await chatHistoryDB.saveMessage({
-        role: "ai",
+        role: ChatRole.AI,
         content: finalText,
         timestamp: Date.now(),
         platformId: adapter.platformId,
@@ -988,15 +1018,12 @@ class AgentChatBridge {
           .editMessage(
             message.chatId,
             statusMessageId,
-            `Error: ${err?.message || "Something went wrong"}`,
+            `Error: ${err?.message}`,
           )
           .catch(() => {});
       } else {
         await adapter
-          .sendText(
-            message.chatId,
-            `Error: ${err?.message || "Something went wrong"}`,
-          )
+          .sendText(message.chatId, `Error: ${err?.message}`)
           .catch(() => {});
       }
       logEveryWhere({

@@ -1,3 +1,4 @@
+import { ipcMain } from "electron";
 import { onIpc } from "./helpers";
 import { MESSAGE } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
@@ -285,6 +286,18 @@ export const agentController = () => {
       createResponse(event, MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION_RES, {
         data: { sessionId },
       });
+    },
+  );
+
+  ipcMain.on(
+    MESSAGE.DASHBOARD_AGENT_PLAN_APPROVAL,
+    (_event, payload: { sessionId: string; approved: boolean }) => {
+      const { sessionId, approved } = payload || {};
+      const resolve = agentChatBridge.pendingPlanApprovals.get(sessionId);
+      if (resolve) {
+        resolve(approved === true);
+        agentChatBridge.pendingPlanApprovals.delete(sessionId);
+      }
     },
   );
 };
