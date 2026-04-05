@@ -6,7 +6,30 @@ import { useUpdatePreference, useTranslation } from "@/hook";
 import { IPreference, LLMProvider } from "@/electron/type";
 import { PasswordInput } from "@/component/Input";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
+import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { Wrapper } from "./style";
+
+const ProviderLabel = ({
+  provider,
+  label,
+}: {
+  provider: LLMProvider;
+  label: string;
+}) => {
+  const providerConfig = LLM_PROVIDERS.find((p) => p.key === provider);
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "1rem" }}>
+      {providerConfig && (
+        <img
+          src={providerConfig.icon}
+          alt={providerConfig.label}
+          style={{ width: 16, height: 16, objectFit: "contain" }}
+        />
+      )}
+      {label}
+    </span>
+  );
+};
 
 type IProps = {
   preference: IPreference | null;
@@ -25,6 +48,9 @@ const LanguageModel = (props: IProps) => {
       openAIModel: preference?.openAIModel,
       anthropicModel: preference?.anthropicModel,
       googleGeminiModel: preference?.googleGeminiModel,
+      openAIBackgroundModel: preference?.openAIBackgroundModel,
+      anthropicBackgroundModel: preference?.anthropicBackgroundModel,
+      googleGeminiBackgroundModel: preference?.googleGeminiBackgroundModel,
     });
   }, [preference]);
 
@@ -45,6 +71,9 @@ const LanguageModel = (props: IProps) => {
         openAIModel,
         anthropicModel,
         googleGeminiModel,
+        openAIBackgroundModel,
+        anthropicBackgroundModel,
+        googleGeminiBackgroundModel,
       } = await form.validateFields([
         "openAIApiKey",
         "anthropicApiKey",
@@ -52,6 +81,9 @@ const LanguageModel = (props: IProps) => {
         "openAIModel",
         "anthropicModel",
         "googleGeminiModel",
+        "openAIBackgroundModel",
+        "anthropicBackgroundModel",
+        "googleGeminiBackgroundModel",
       ]);
 
       await updatePreference({
@@ -62,6 +94,9 @@ const LanguageModel = (props: IProps) => {
         openAIModel: openAIModel || "",
         anthropicModel: anthropicModel || "",
         googleGeminiModel: googleGeminiModel || "",
+        openAIBackgroundModel: openAIBackgroundModel || "",
+        anthropicBackgroundModel: anthropicBackgroundModel || "",
+        googleGeminiBackgroundModel: googleGeminiBackgroundModel || "",
       });
     } catch {}
   };
@@ -70,7 +105,12 @@ const LanguageModel = (props: IProps) => {
     <Wrapper>
       <Form layout="vertical" form={form}>
         <Form.Item
-          label={`${translate("workflow.anthropicApiKeyLabel")}:`}
+          label={
+            <ProviderLabel
+              provider={LLMProvider.CLAUDE}
+              label={`${translate("workflow.anthropicApiKeyLabel")}:`}
+            />
+          }
           name="anthropicApiKey"
           tooltip={translate("workflow.anthropicApiKeyTooltip")}
         >
@@ -94,10 +134,28 @@ const LanguageModel = (props: IProps) => {
           />
         </Form.Item>
 
+        <Form.Item
+          label={`${translate("workflow.anthropicBackgroundModelLabel")}:`}
+          name="anthropicBackgroundModel"
+          tooltip={translate("workflow.backgroundModelTooltip")}
+          style={{ marginTop: "-1rem" }}
+        >
+          <Input
+            className="custom-input"
+            placeholder="claude-haiku-4-5-20251001"
+            size="large"
+          />
+        </Form.Item>
+
         <Divider />
 
         <Form.Item
-          label={`${translate("workflow.openAIApiKeyLabel")}:`}
+          label={
+            <ProviderLabel
+              provider={LLMProvider.OPENAI}
+              label={`${translate("workflow.openAIApiKeyLabel")}:`}
+            />
+          }
           name="openAIApiKey"
           tooltip={translate("workflow.openAIApiKeyTooltip")}
         >
@@ -121,10 +179,28 @@ const LanguageModel = (props: IProps) => {
           />
         </Form.Item>
 
+        <Form.Item
+          label={`${translate("workflow.openAIBackgroundModelLabel")}:`}
+          name="openAIBackgroundModel"
+          tooltip={translate("workflow.backgroundModelTooltip")}
+          style={{ marginTop: "-1rem" }}
+        >
+          <Input
+            className="custom-input"
+            placeholder="gpt-4o-mini"
+            size="large"
+          />
+        </Form.Item>
+
         <Divider />
 
         <Form.Item
-          label={`${translate("workflow.googleGeminiApiKeyLabel")}:`}
+          label={
+            <ProviderLabel
+              provider={LLMProvider.GEMINI}
+              label={`${translate("workflow.googleGeminiApiKeyLabel")}:`}
+            />
+          }
           name="googleGeminiApiKey"
           tooltip={translate("workflow.googleGeminiApiKeyTooltip")}
         >
@@ -146,6 +222,19 @@ const LanguageModel = (props: IProps) => {
           <Input
             className="custom-input"
             placeholder={DEFAULT_LLM_MODELS[LLMProvider.GEMINI]}
+            size="large"
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={`${translate("workflow.googleGeminiBackgroundModelLabel")}:`}
+          name="googleGeminiBackgroundModel"
+          tooltip={translate("workflow.backgroundModelTooltip")}
+          style={{ marginTop: "-1rem" }}
+        >
+          <Input
+            className="custom-input"
+            placeholder="gemini-2.0-flash"
             size="large"
           />
         </Form.Item>

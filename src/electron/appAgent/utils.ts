@@ -97,6 +97,23 @@ export const getGoogleGeminiModel = async (): Promise<string | null> => {
   return preference?.googleGeminiModel || null;
 };
 
+export const getOpenAIBackgroundModel = async (): Promise<string | null> => {
+  const [preference] = await preferenceDB.getOnePreference();
+  return preference?.openAIBackgroundModel || null;
+};
+
+export const getAnthropicBackgroundModel = async (): Promise<string | null> => {
+  const [preference] = await preferenceDB.getOnePreference();
+  return preference?.anthropicBackgroundModel || null;
+};
+
+export const getGoogleGeminiBackgroundModel = async (): Promise<
+  string | null
+> => {
+  const [preference] = await preferenceDB.getOnePreference();
+  return preference?.googleGeminiBackgroundModel || null;
+};
+
 export const getTavilyKey = async (): Promise<
   [string | null, Error | null]
 > => {

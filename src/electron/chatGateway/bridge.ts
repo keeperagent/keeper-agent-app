@@ -1,8 +1,8 @@
-/*
-  AgentChatBridge — Connects chat platforms (Telegram, desktop UI, etc.) to the KeeperAgent.
-  Each platform registers an IChatAdapter. Incoming user messages are routed to the agent, and the agent's response is streamed back through the same adapter.
-  Manages one agent session per (platformId + chatId), with streaming, tool status updates, and background memory compaction.
-*/
+/**
+ * AgentChatBridge — Connects chat platforms (Telegram, desktop UI, etc.) to the KeeperAgent.
+ * Each platform registers an IChatAdapter. Incoming user messages are routed to the agent, and the agent's response is streamed back through the same adapter.
+ * Manages one agent session per (platformId + chatId), with streaming, tool status updates, and background memory compaction.
+ */
 
 import { randomUUID } from "crypto";
 import {
@@ -17,7 +17,7 @@ import path from "path";
 import { redact, guard } from "@keeperagent/crypto-key-guard";
 import {
   createKeeperAgent,
-  createLLM,
+  createBackgroundLLM,
   hasApiKey,
   type KeeperAgent,
   ToolContext,
@@ -25,10 +25,7 @@ import {
 } from "@/electron/appAgent";
 import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
 import { logEveryWhere } from "@/electron/service/util";
-import {
-  chatHistoryDB,
-  AGENT_CONTEXT_LIMIT,
-} from "@/electron/database/chatHistory";
+import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { getMemoryDir } from "@/electron/service/agentSkill";
 import { LLMProvider } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
@@ -38,7 +35,7 @@ import type { IChatAdapter, IPlatformMessage } from "./types";
 
 const MEMORY_FILE = "AGENT.md";
 const COMPACTION_THRESHOLD = 40_000;
-const MIN_MESSAGES_FOR_EXIT_FLUSH = 20;
+const MIN_MESSAGES_FOR_COMPACTION = 10;
 
 export type AgentSession = {
   checkpointer: MemorySaver;
@@ -57,40 +54,106 @@ export type AgentSession = {
   expectingEncryptKey: boolean;
 };
 
-const runMemoryFlush = async (
+const MEMORY_EXTRACTION_SYSTEM_PROMPT =
+  "You are updating a persistent memory file for an AI assistant.\n\n" +
+  "Extract ONLY facts that meet ALL of these criteria:\n" +
+  "1. Still likely to be true in future sessions (durable, not time-sensitive)\n" +
+  "2. About who the user is or how they prefer to work\n" +
+  "3. Not already captured in the existing memory\n\n" +
+  "DO NOT extract:\n" +
+  "- Real-time or time-sensitive data (prices, statuses, current state)\n" +
+  "- Secrets, passwords, keys, or credentials of any kind\n" +
+  "- One-off task details that only matter for this session\n" +
+  "- Anything the user hasn't explicitly told you or clearly demonstrated as a preference\n\n" +
+  "Return the COMPLETE updated file — preserve all existing entries, add new ones under the right section.\n" +
+  "If nothing new meets the criteria, return the file unchanged.";
+
+const MEMORY_TEMPLATE =
+  "# Agent Memory\n\n" +
+  "## User Profile\n\n" +
+  "## Working Preferences\n\n" +
+  "## Durable Facts\n\n" +
+  "## Feedback & Corrections\n";
+
+/**
+ * Extracts durable facts from a conversation and persists them to the agent
+ * memory file (AGENT.md by default).
+ *
+ * Called in three places:
+ *  1. compactSessionIfNeeded — before old messages are discarded at the 40K token threshold
+ *  2. resetSession           — when the user explicitly starts a new conversation
+ *  3. cleanupAll             — when the app quits, covers sessions never manually reset
+ *
+ * Uses the user-configured background model (cheaper) instead of the main
+ * agent model. For Claude, adds cache_control markers on the stable parts
+ * (system prompt + current memory) to reduce token cost on repeated calls.
+ */
+const extractMemoryFromConversation = async (
   provider: LLMProvider,
-  conversationText: string,
+  messages: Array<{ role: ChatRole; content: string }>,
+  memoryFile: string = MEMORY_FILE,
 ): Promise<void> => {
   try {
     const memoryDir = getMemoryDir();
-    const memoryPath = path.join(memoryDir, MEMORY_FILE);
+    const memoryPath = path.join(memoryDir, memoryFile);
 
-    let currentMemory =
-      "# Agent Memory\n\n## User Preferences\n\n## Important Information\n\n## Learned Patterns\n";
+    let currentMemory = MEMORY_TEMPLATE;
     try {
       currentMemory = await fs.readFile(memoryPath, "utf-8");
     } catch {}
 
-    const llm = await createLLM(provider, 0);
+    const llm = await createBackgroundLLM(provider);
+
+    // Build system message — add cache_control for Claude (stable content, reused across calls)
+    const systemContent: any =
+      provider === LLMProvider.CLAUDE
+        ? [
+            {
+              type: "text",
+              text: MEMORY_EXTRACTION_SYSTEM_PROMPT,
+              cache_control: { type: "ephemeral" },
+            },
+          ]
+        : MEMORY_EXTRACTION_SYSTEM_PROMPT;
+
+    // currentMemory is stable between calls — cache it on Claude
+    const currentMemoryContent: any =
+      provider === LLMProvider.CLAUDE
+        ? [
+            {
+              type: "text",
+              text: `Current memory file:\n${currentMemory}`,
+              cache_control: { type: "ephemeral" },
+            },
+          ]
+        : `Current memory file:\n${currentMemory}`;
+
+    // Reconstruct proper message objects so Claude cache hits apply to conversation tokens
+    const conversationMessages = messages.map((msg) =>
+      msg.role === ChatRole.HUMAN
+        ? new HumanMessage(msg.content)
+        : new AIMessage(msg.content),
+    );
+
     const response = await llm.invoke([
-      new SystemMessage(
-        "You are updating a persistent memory file for an AI assistant. " +
-          "Review the conversation and extract ONLY new, durable facts worth remembering across future sessions: " +
-          "user preferences, wallet addresses or labels, recurring patterns, important decisions. " +
-          "Do NOT add conversational filler or task-specific details that won't matter later. " +
-          "Return the COMPLETE updated memory file content — keep all existing entries and add new ones under the correct section. " +
-          "Sections: ## User Preferences, ## Important Information, ## Learned Patterns. " +
-          "If nothing new is worth adding, return the file unchanged.",
+      new SystemMessage({ content: systemContent }),
+      new HumanMessage({ content: currentMemoryContent }),
+      new AIMessage(
+        "Understood. I will extract only durable facts from the conversation below.",
       ),
+      ...conversationMessages,
       new HumanMessage(
-        `Current memory file:\n${currentMemory}\n\n---\nConversation to extract from:\n${conversationText}`,
+        "Based on the conversation above, update the memory file now.",
       ),
     ]);
 
-    const updatedMemory =
+    const rawMemory =
       typeof response.content === "string"
         ? response.content
         : JSON.stringify(response.content);
+
+    // Remove any crypto secrets the LLM may have leaked
+    const { text: updatedMemory } = redact(rawMemory);
 
     await fs.ensureDir(memoryDir);
 
@@ -115,10 +178,10 @@ const runMemoryFlush = async (
     } catch {}
 
     await fs.writeFile(memoryPath, updatedMemory, "utf-8");
-    logEveryWhere({ message: "[AgentChatBridge] Memory flush completed" });
+    logEveryWhere({ message: "[AgentChatBridge] Memory extraction completed" });
   } catch (err: any) {
     logEveryWhere({
-      message: `[AgentChatBridge] Memory flush error: ${err?.message}`,
+      message: `[AgentChatBridge] Memory extraction error: ${err?.message}`,
     });
   }
 };
@@ -303,7 +366,13 @@ class AgentChatBridge {
     return keeper;
   };
 
-  private maybeRunSummarization = async (
+  /**
+   * Fires after each agent run. When context tokens exceed 40K, summarizes old
+   * messages into a compact block, extracts memory, then resets the thread so
+   * the next run starts fresh with the summary injected as context.
+   * Returns the summary text if compaction ran.
+   */
+  private compactSessionIfNeeded = async (
     session: AgentSession,
   ): Promise<string | null> => {
     if (session.isCompacting) return null;
@@ -317,7 +386,7 @@ class AgentChatBridge {
         session.platformId,
         session.platformChatId,
       );
-      if (messages.length < 10) {
+      if (messages.length < MIN_MESSAGES_FOR_COMPACTION) {
         return null;
       }
 
@@ -333,22 +402,26 @@ class AgentChatBridge {
         )
         .join("\n\n");
 
-      const llm = await createLLM(session.provider, 0);
+      const llm = await createBackgroundLLM(session.provider);
       const response = await llm.invoke([
         new SystemMessage(
           "Summarize the following conversation in 300-400 words. " +
             "Capture key topics discussed, decisions made, user preferences, " +
-            "and important context. Be factual and concise.",
+            "and important context. Be factual and concise. " +
+            "Never include secrets, passwords, private keys, seed phrases, or credentials of any kind in the summary.",
         ),
         new HumanMessage(conversationText),
       ]);
 
-      const summaryText =
+      const rawSummary =
         typeof response.content === "string"
           ? response.content
           : JSON.stringify(response.content);
 
-      await runMemoryFlush(session.provider, conversationText);
+      // Remove any crypto secrets the LLM may have included despite prompt instructions
+      const { text: summaryText } = redact(rawSummary);
+
+      await extractMemoryFromConversation(session.provider, messages);
       await chatHistoryDB.saveSummary(
         summaryText,
         lastId,
@@ -369,39 +442,30 @@ class AgentChatBridge {
     }
   };
 
-  private maybeFlushMemoryOnExit = async (
+  // Extract memory from messages not yet processed since the last compaction
+  // Skip if there are no new messages to process
+  private runMemoryExtractionForSession = async (
     session: AgentSession,
   ): Promise<void> => {
-    if (session.contextTokens === 0) {
-      return;
-    }
     try {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
       );
-      const [recentMessages] = await chatHistoryDB.getRecentMessages(
-        AGENT_CONTEXT_LIMIT,
-        session.platformId,
-        session.platformChatId,
-      );
-      const allNew = [...messages, ...recentMessages];
-      if (allNew.length < MIN_MESSAGES_FOR_EXIT_FLUSH) {
+      if (messages.length === 0) {
         return;
       }
-      const conversationText = allNew
-        .map(
-          (msg) =>
-            `${msg.role === ChatRole.HUMAN ? "User" : "Assistant"}: ${msg.content}`,
-        )
-        .join("\n\n");
-      await runMemoryFlush(session.provider, conversationText);
-    } catch {}
+      await extractMemoryFromConversation(session.provider, messages);
+    } catch (err: any) {
+      logEveryWhere({
+        message: `[AgentChatBridge] Memory extraction error: ${err?.message}`,
+      });
+    }
   };
 
   // recreate agent after summary
   private postRunCompaction = (sessionKey: string, session: AgentSession) => {
-    this.maybeRunSummarization(session)
+    this.compactSessionIfNeeded(session)
       .then((summaryText) => {
         if (!summaryText) {
           return;
@@ -761,7 +825,8 @@ class AgentChatBridge {
       this.pendingPlanApprovals.delete(sessionId);
     }
 
-    await this.maybeFlushMemoryOnExit(session);
+    // Extract memory from remaining messages before clearing the session
+    this.runMemoryExtractionForSession(session).catch(() => {});
 
     if (session.keeper) {
       await session.keeper.cleanup();
@@ -834,7 +899,6 @@ class AgentChatBridge {
     }
 
     for (const [sessionKey, session] of this.sessions) {
-      await this.maybeFlushMemoryOnExit(session);
       if (session.initPromise) {
         await session.initPromise.catch(() => {});
         session.initPromise = null;
@@ -856,7 +920,8 @@ class AgentChatBridge {
   // Cleanup all (app quit)
   cleanupAll = async () => {
     for (const [id, session] of this.sessions) {
-      await this.maybeFlushMemoryOnExit(session);
+      // Extract memory before closing app
+      await this.runMemoryExtractionForSession(session).catch(() => {});
       if (session.keeper) {
         try {
           await session.keeper.cleanup();

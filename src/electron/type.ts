@@ -2399,6 +2399,9 @@ export type IPreference = {
   openAIModel?: string;
   anthropicModel?: string;
   googleGeminiModel?: string;
+  openAIBackgroundModel?: string;
+  anthropicBackgroundModel?: string;
+  googleGeminiBackgroundModel?: string;
   jupiterApiKeys?: string[];
   tavilyApiKey?: string;
   exaApiKey?: string;
