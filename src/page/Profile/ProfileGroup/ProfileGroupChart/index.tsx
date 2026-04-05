@@ -57,7 +57,7 @@ const buildTreeData = (
 
     return {
       name: profileGroup.name || "",
-      nodeType: "profileGroup" as const,
+      nodeType: "profileGroup",
       tooltipLabel: `${profileGroup.totalProfile || 0} profiles`,
       children,
     };

@@ -6,7 +6,7 @@ export enum BaseToolGroup {
   SCHEDULER = "scheduler",
   RESEARCH = "research",
   AGENT_TASK_MANAGEMENT = "agent_task_management",
-  PLANNING = "planning",
+  AGENT_ORCHESTRATION = "agent_orchestration",
 }
 
 export type BaseToolRegistryItem = {
@@ -58,7 +58,13 @@ export const BASE_TOOL_KEYS = {
   DELETE_AGENT_TASK: "delete_agent_task",
   DRAFT_PLAN: "draft_plan",
   SUBMIT_PLAN: "submit_plan",
-} as const;
+  SEND_MESSAGE: "send_message",
+  READ_MESSAGES: "read_messages",
+  ACKNOWLEDGE_MESSAGE: "acknowledge_message",
+  CREATE_AGENT_TEAM: "create_agent_team",
+  GET_TEAM_PROGRESS: "get_team_progress",
+  DELEGATE_TASK: "delegate_task",
+};
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
   // Transaction Tools
@@ -277,7 +283,7 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     name: "Draft plan",
     description:
       "Research and prepare before running any transaction, code, or workflow",
-    group: BaseToolGroup.PLANNING,
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
     locked: true,
   },
   {
@@ -285,8 +291,53 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     name: "Submit plan",
     description:
       "Present execution plan to the user and wait for approval before any execution",
-    group: BaseToolGroup.PLANNING,
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
     locked: true,
+  },
+  // Agent Team Tools
+  {
+    key: BASE_TOOL_KEYS.SEND_MESSAGE,
+    name: "Send mailbox message",
+    description:
+      "Send a mailbox message to a registry agent or broadcast to all team members",
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
+    locked: true,
+  },
+  {
+    key: BASE_TOOL_KEYS.READ_MESSAGES,
+    name: "Read mailbox",
+    description:
+      "Fetch unread messages from your agent mailbox — direct or broadcast",
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
+    locked: true,
+  },
+  {
+    key: BASE_TOOL_KEYS.ACKNOWLEDGE_MESSAGE,
+    name: "Acknowledge mailbox message",
+    description: "Mark a mailbox message as acknowledged after processing it",
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
+    locked: true,
+  },
+  {
+    key: BASE_TOOL_KEYS.CREATE_AGENT_TEAM,
+    name: "Create agent team",
+    description:
+      "Create an in-memory agent team with a shared goal and a set of registry agents",
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
+  },
+  {
+    key: BASE_TOOL_KEYS.GET_TEAM_PROGRESS,
+    name: "Get team progress",
+    description:
+      "Check a team's task statuses, per-agent stats, and overall completion percentage",
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
+  },
+  {
+    key: BASE_TOOL_KEYS.DELEGATE_TASK,
+    name: "Delegate task",
+    description:
+      "Assign a task to a team agent, or auto-dispatch to the best available one",
+    group: BaseToolGroup.AGENT_ORCHESTRATION,
   },
   // Code Execution Tools
   {
@@ -349,5 +400,5 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.SCHEDULER]: "Scheduler",
   [BaseToolGroup.RESEARCH]: "Research",
   [BaseToolGroup.AGENT_TASK_MANAGEMENT]: "Agent task management",
-  [BaseToolGroup.PLANNING]: "Planning",
+  [BaseToolGroup.AGENT_ORCHESTRATION]: "Agent orchestration",
 };

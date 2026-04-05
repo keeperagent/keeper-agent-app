@@ -30,6 +30,7 @@ import nodeSecretFactory from "./model/nodeSecret";
 import agentRegistryFactory from "./model/agentRegistry";
 import mcpTokenFactory from "./model/mcpToken";
 import agentTaskFactory from "./model/agentTask";
+import agentMailboxFactory from "./model/agentMailbox";
 import appLogFactory from "./model/appLog";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
@@ -68,6 +69,7 @@ export const NodeSecretModel = nodeSecretFactory(db);
 export const AgentRegistryModel = agentRegistryFactory(db);
 export const McpTokenModel = mcpTokenFactory(db);
 export const AgentTaskModel = agentTaskFactory(db);
+export const AgentMailboxModel = agentMailboxFactory(db);
 export const AppLogModel = appLogFactory(db);
 
 // @CampaignModel -> @ProfileGroupModel
@@ -329,6 +331,13 @@ JobModel.belongsTo(AgentRegistryModel, {
 AgentRegistryModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
+  constraints: false,
+});
+
+// @AgentMailboxModel -> @AgentRegistryModel (fromAgent)
+AgentMailboxModel.belongsTo(AgentRegistryModel, {
+  foreignKey: { name: "fromAgentId", allowNull: true },
+  as: "fromAgent",
   constraints: false,
 });
 

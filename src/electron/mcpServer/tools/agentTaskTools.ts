@@ -14,13 +14,11 @@ import {
 import { appLogDB } from "@/electron/database/appLog";
 import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
 
-const DENIED_RESPONSE = {
-  content: [{ type: "text" as const, text: "Action denied by user." }],
-};
-
 const wrapText = (text: string) => ({
   content: [{ type: "text" as const, text }],
 });
+
+const DENIED_RESPONSE = wrapText("Action denied by user.");
 
 const formatArgs = (args: Record<string, unknown>) =>
   Object.entries(args)
@@ -36,8 +34,7 @@ export const registerAgentTaskReadTools = (server: McpServer) => {
       description: listInstance.description,
       inputSchema: listInstance.schema.shape,
     },
-    async (args: any) =>
-      wrapText((await (listInstance.func as any)(args)) as string),
+    async (args: any) => wrapText((await listInstance.invoke(args)).toString()),
   );
 
   const getOneInstance = getAgentTaskTool();
@@ -48,7 +45,7 @@ export const registerAgentTaskReadTools = (server: McpServer) => {
       inputSchema: getOneInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (getOneInstance.func as any)(args)) as string),
+      wrapText((await getOneInstance.invoke(args)).toString()),
   );
 };
 
@@ -85,7 +82,7 @@ export const registerAgentTaskWriteTools = (
       if (!approved) {
         return DENIED_RESPONSE;
       }
-      const result = await (createInstance.func as any)(args);
+      const result = (await createInstance.invoke(args)).toString();
       return wrapText(result as string);
     },
   );
@@ -117,7 +114,7 @@ export const registerAgentTaskWriteTools = (
       if (!approved) {
         return DENIED_RESPONSE;
       }
-      const result = await (updateInstance.func as any)(args);
+      const result = (await updateInstance.invoke(args)).toString();
       return wrapText(result as string);
     },
   );

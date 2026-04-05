@@ -35,7 +35,9 @@ class ProfileDB {
       listData = listData?.map((item: Model<any, any>) => formatProfile(item));
       return [listData || [], null];
     } catch (err: any) {
-      logEveryWhere({ message: `getAllProfileOfGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getAllProfileOfGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -82,8 +84,8 @@ class ProfileDB {
       // When searchText is set, omit limit/offset so LIKE search works. See: https://github.com/sequelize/sequelize/issues/12971
       const listDataAwait = ProfileModel.findAll({
         order: [
-          searchText ? (["name", "ASC"] as const) : [],
-          !searchText ? (["updateAt", "DESC"] as const) : [],
+          searchText ? ["name", "ASC"] : [],
+          !searchText ? ["updateAt", "DESC"] : [],
         ].filter((pair) => pair?.length > 0) as [string, string][],
         ...(searchText
           ? {}
@@ -238,7 +240,9 @@ class ProfileDB {
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteProfileInGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteProfileInGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }

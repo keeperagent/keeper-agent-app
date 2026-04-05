@@ -5,7 +5,7 @@ import {
   ICampaignProfile,
   IMcpServer,
   IAgentRegistry,
-  IAgentTask,
+  IAgentMailbox,
   IPreference,
   IProfile,
   IProfileGroup,
@@ -14,6 +14,7 @@ import {
   ISchedule,
   IJob,
   IWorkflow,
+  IAgentTask,
 } from "@/electron/type";
 import { encryptionService } from "./encrypt";
 
@@ -346,6 +347,16 @@ const formatAgentTask = (raw: any): IAgentTask => {
   };
 };
 
+const formatAgentMailbox = (raw: any): IAgentMailbox => {
+  const formatedData = formatDBResponse(raw);
+  return {
+    ...formatedData,
+    fromAgent: formatedData?.fromAgent
+      ? formatAgentRegistry(formatedData?.fromAgent)
+      : undefined,
+  };
+};
+
 export {
   formatResourceGroup,
   formatProfileGroup,
@@ -358,5 +369,6 @@ export {
   formatWorkflow,
   formatSchedule,
   formatJob,
+  formatAgentMailbox,
   formatAgentTask,
 };
