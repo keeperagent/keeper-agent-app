@@ -74,7 +74,6 @@ import {
   getTeamProgressTool,
   delegateTaskTool,
 } from "./baseTool/agentTeam";
-import { searchToolsTool } from "./baseTool/toolDiscovery";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
 import {
@@ -732,7 +731,6 @@ const createKeeperAgent = async (
   const planningTools = [
     draftPlanTool(toolContext),
     submitPlanTool(toolContext),
-    searchToolsTool(),
   ];
 
   const agent = createDeepAgent({

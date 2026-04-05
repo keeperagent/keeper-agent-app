@@ -64,7 +64,6 @@ export const BASE_TOOL_KEYS = {
   CREATE_AGENT_TEAM: "create_agent_team",
   GET_TEAM_PROGRESS: "get_team_progress",
   DELEGATE_TASK: "delegate_task",
-  SEARCH_TOOLS: "search_tools",
 };
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -292,15 +291,6 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     name: "Submit plan",
     description:
       "Present execution plan to the user and wait for approval before any execution",
-    group: BaseToolGroup.AGENT_ORCHESTRATION,
-    locked: true,
-  },
-  // Tool Discovery
-  {
-    key: BASE_TOOL_KEYS.SEARCH_TOOLS,
-    name: "Search tools",
-    description:
-      "Discover available tools and which subagent handles them by searching with capability keywords",
     group: BaseToolGroup.AGENT_ORCHESTRATION,
     locked: true,
   },
