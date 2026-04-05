@@ -25,30 +25,6 @@ const Wrapper = styled.div`
     gap: 1rem;
     padding: 0.5rem 1rem;
     border-radius: 1.2rem;
-
-    .agent-status__badge {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 0.8rem;
-      font-size: 1.1rem;
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
-      background: ${({ theme }: { theme: ITheme }) => theme.colorBgPrimary};
-      border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-    }
-
-    .agent-status__value {
-      font-weight: 700;
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
-    }
-
-    .agent-status__label {
-      font-size: 1rem;
-      font-weight: 500;
-      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
-      text-transform: lowercase;
-    }
   }
 
   .list-provider {
@@ -116,4 +92,28 @@ const Wrapper = styled.div`
   }
 `;
 
-export { Wrapper };
+const StatBadgeWrapper = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.8rem;
+  font-size: 1.1rem;
+  color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+  background: ${({ theme }: { theme: ITheme }) => theme.colorBgPrimary};
+  border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+
+  .value {
+    font-weight: 700;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+  }
+
+  .label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+    text-transform: lowercase;
+  }
+`;
+
+export { Wrapper, StatBadgeWrapper };

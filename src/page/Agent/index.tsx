@@ -1,59 +1,42 @@
 import { lazy, Suspense, useState, useEffect, useMemo, Fragment } from "react";
+import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
 import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
-import { IPreference } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
 import { useUpdatePreference } from "@/hook/preference";
-import claudeLogo from "@/asset/claude.webp";
-import openaiLogo from "@/asset/openai.webp";
-import geminiLogo from "@/asset/gemini.webp";
-import { EMPTY_STRING } from "@/config/constant";
-import { Wrapper } from "./style";
+import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { Wrapper, StatBadgeWrapper } from "./style";
 import ChatAgent from "./ChatAgent";
 
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
 const ToolsManager = lazy(() => import("./ToolsManager"));
+
+const AgentStatBadge = ({ count, label }: { count: number; label: string }) => (
+  <StatBadgeWrapper title={label}>
+    <span className="value">
+      <AnimatedNumber animateToNumber={count} />
+    </span>
+    <span className="label">{label}</span>
+  </StatBadgeWrapper>
+);
+
+const TabFallback = (
+  <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
+    <Spin />
+  </div>
+);
+
 const TAB = {
   AGENT: "AGENT",
   MCP_SERVER: "MCP_SERVER",
   SKILLS: "SKILLS",
   TOOLS: "TOOLS",
 };
-
-const PROVIDERS: {
-  key: LLMProvider;
-  labelKey: string;
-  icon: string;
-  apiKeyField: keyof IPreference;
-  modelField: keyof IPreference;
-}[] = [
-  {
-    key: LLMProvider.CLAUDE,
-    labelKey: "agent.providerClaude",
-    icon: claudeLogo,
-    apiKeyField: "anthropicApiKey",
-    modelField: "anthropicModel",
-  },
-  {
-    key: LLMProvider.OPENAI,
-    labelKey: "agent.providerOpenAI",
-    icon: openaiLogo,
-    apiKeyField: "openAIApiKey",
-    modelField: "openAIModel",
-  },
-  {
-    key: LLMProvider.GEMINI,
-    labelKey: "agent.providerGemini",
-    icon: geminiLogo,
-    apiKeyField: "googleGeminiApiKey",
-    modelField: "googleGeminiModel",
-  },
-];
 
 const AgentPage = (props: any) => {
   const { llmProvider, actSetLLMProvider, preference, agentStatsFromReady } =
@@ -64,7 +47,6 @@ const AgentPage = (props: any) => {
 
   const [activeTab, setActiveTab] = useState(TAB.AGENT);
   const [encryptKey, setEncryptKey] = useState("");
-  /** Defer heavy content so route change and shell paint immediately. */
   const [contentReady, setContentReady] = useState(false);
 
   useEffect(() => {
@@ -82,7 +64,7 @@ const AgentPage = (props: any) => {
     setActiveTab(key);
   };
 
-  const isProviderConfigured = (provider: (typeof PROVIDERS)[number]) => {
+  const isProviderConfigured = (provider: (typeof LLM_PROVIDERS)[number]) => {
     return (
       Boolean(preference?.[provider.apiKeyField]) &&
       Boolean(preference?.[provider.modelField])
@@ -99,7 +81,7 @@ const AgentPage = (props: any) => {
 
   const currentModelName = useMemo(() => {
     const providerKey = currentProvider as LLMProvider;
-    const provider = PROVIDERS.find((p) => p.key === providerKey);
+    const provider = LLM_PROVIDERS.find((p) => p.key === providerKey);
     if (!provider) {
       return DEFAULT_LLM_MODELS[providerKey];
     }
@@ -150,55 +132,31 @@ const AgentPage = (props: any) => {
         />
 
         <div className="agent-status">
-          <span
-            className="agent-status__badge"
-            title={translate("agent.subAgents")}
-          >
-            <span className="agent-status__value">
-              {agentStats.subAgents || EMPTY_STRING}
-            </span>
-            <span className="agent-status__label">
-              {translate("agent.subAgents")}
-            </span>
-          </span>
-
-          <span
-            className="agent-status__badge"
-            title={translate("agent.tools")}
-          >
-            <span className="agent-status__value">
-              {agentStats.tools || EMPTY_STRING}
-            </span>
-            <span className="agent-status__label">
-              {translate("agent.tools")}
-            </span>
-          </span>
-
-          <span
-            className="agent-status__badge"
-            title={translate("agent.skills")}
-          >
-            <span className="agent-status__value">
-              {agentStats.skills || EMPTY_STRING}
-            </span>
-            <span className="agent-status__label">
-              {translate("agent.skills")}
-            </span>
-          </span>
+          <AgentStatBadge
+            count={agentStats.subAgents}
+            label={translate("agent.subAgents")}
+          />
+          <AgentStatBadge
+            count={agentStats.tools}
+            label={translate("agent.tools")}
+          />
+          <AgentStatBadge
+            count={agentStats.skills}
+            label={translate("agent.skills")}
+          />
         </div>
 
         <div className="list-provider">
           <span className="current-model">{currentModelName}</span>
 
-          {PROVIDERS.map((provider) => {
+          {LLM_PROVIDERS.map((provider) => {
             const isDisabled = !isProviderConfigured(provider);
-            const providerLabel = translate(provider.labelKey);
             const tooltipTitle = isDisabled
               ? translate("agent.apiKeyNotConfigured").replace(
                   "{provider}",
-                  providerLabel,
+                  provider.label,
                 )
-              : providerLabel;
+              : provider.label;
 
             return (
               <Tooltip key={provider.key} title={tooltipTitle}>
@@ -206,7 +164,7 @@ const AgentPage = (props: any) => {
                   className={`provider-item ${currentProvider === provider.key ? "active" : ""} ${isDisabled ? "disabled" : ""}`}
                   onClick={() => !isDisabled && onSelectProvider(provider.key)}
                 >
-                  <img src={provider.icon} alt={providerLabel} />
+                  <img src={provider.icon} alt={provider.label} />
                 </div>
               </Tooltip>
             );
@@ -232,55 +190,19 @@ const AgentPage = (props: any) => {
           )}
 
           {activeTab === TAB.MCP_SERVER && (
-            <Suspense
-              fallback={
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "2rem",
-                  }}
-                >
-                  <Spin />
-                </div>
-              }
-            >
+            <Suspense fallback={TabFallback}>
               <McpServerManager />
             </Suspense>
           )}
 
           {activeTab === TAB.SKILLS && (
-            <Suspense
-              fallback={
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "2rem",
-                  }}
-                >
-                  <Spin />
-                </div>
-              }
-            >
+            <Suspense fallback={TabFallback}>
               <SkillsManager />
             </Suspense>
           )}
 
           {activeTab === TAB.TOOLS && (
-            <Suspense
-              fallback={
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "2rem",
-                  }}
-                >
-                  <Spin />
-                </div>
-              }
-            >
+            <Suspense fallback={TabFallback}>
               <ToolsManager />
             </Suspense>
           )}
