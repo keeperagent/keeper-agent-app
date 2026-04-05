@@ -358,7 +358,7 @@ const ActivityLogPage = (props: any) => {
       title: translate("activityLog.status"),
       dataIndex: "status",
       width: "12%",
-      align: "center" as const,
+      align: "center",
       render: (_: any, record: IAppLog) => renderLogStatus(record),
     },
     {

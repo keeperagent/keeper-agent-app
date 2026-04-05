@@ -29,7 +29,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: searchCampaignsInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (searchCampaignsInstance.func as any)(args)) as string),
+      wrapText((await searchCampaignsInstance.invoke(args)).toString()),
   );
 
   const searchWorkflowsInstance = searchWorkflowsTool();
@@ -40,7 +40,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: searchWorkflowsInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (searchWorkflowsInstance.func as any)(args)) as string),
+      wrapText((await searchWorkflowsInstance.invoke(args)).toString()),
   );
 
   const checkWorkflowStatusInstance = checkWorkflowStatusTool();
@@ -51,9 +51,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: checkWorkflowStatusInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText(
-        (await (checkWorkflowStatusInstance.func as any)(args)) as string,
-      ),
+      wrapText((await checkWorkflowStatusInstance.invoke(args)).toString()),
   );
 
   const listAgentSchedulesInstance = listAgentSchedulesTool();
@@ -64,9 +62,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: listAgentSchedulesInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText(
-        (await (listAgentSchedulesInstance.func as any)(args)) as string,
-      ),
+      wrapText((await listAgentSchedulesInstance.invoke(args)).toString()),
   );
 
   const getTokenPriceInstance = getTokenPriceTool();
@@ -77,7 +73,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: getTokenPriceInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (getTokenPriceInstance.func as any)(args)) as string),
+      wrapText((await getTokenPriceInstance.invoke(args)).toString()),
   );
 
   server.registerTool(
@@ -126,10 +122,10 @@ const registerReadTools = (server: McpServer) => {
         isAllWallet: isAllWallet !== false,
         listCampaignProfileId,
       });
-      const result = await (getSolanaTokenBalanceTool(toolCtx).func as any)({
+      const result = await getSolanaTokenBalanceTool(toolCtx).invoke({
         tokenAddress,
       });
-      return wrapText(result as string);
+      return wrapText(result.toString());
     },
   );
 
@@ -188,10 +184,10 @@ const registerReadTools = (server: McpServer) => {
         isAllWallet: isAllWallet !== false,
         listCampaignProfileId,
       });
-      const result = await (getEvmTokenBalanceTool(toolCtx).func as any)({
+      const result = await getEvmTokenBalanceTool(toolCtx).invoke({
         tokenAddress,
       });
-      return wrapText(result as string);
+      return wrapText(result.toString());
     },
   );
 
@@ -203,7 +199,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: webSearchTavilyInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (webSearchTavilyInstance.func as any)(args)) as string),
+      wrapText((await webSearchTavilyInstance.invoke(args)).toString()),
   );
 
   const webSearchExaInstance = webSearchExaTool();
@@ -214,7 +210,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: webSearchExaInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (webSearchExaInstance.func as any)(args)) as string),
+      wrapText((await webSearchExaInstance.invoke(args)).toString()),
   );
 
   const webExtractTavilyInstance = webExtractTavilyTool();
@@ -225,7 +221,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: webExtractTavilyInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (webExtractTavilyInstance.func as any)(args)) as string),
+      wrapText((await webExtractTavilyInstance.invoke(args)).toString()),
   );
 
   const findSimilarExaInstance = findSimilarExaTool();
@@ -236,7 +232,7 @@ const registerReadTools = (server: McpServer) => {
       inputSchema: findSimilarExaInstance.schema.shape,
     },
     async (args: any) =>
-      wrapText((await (findSimilarExaInstance.func as any)(args)) as string),
+      wrapText((await findSimilarExaInstance.invoke(args)).toString()),
   );
 
   registerAgentTaskReadTools(server);

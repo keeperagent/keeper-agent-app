@@ -11,7 +11,8 @@ import ToolItem from "./ToolItem";
 import { Wrapper } from "./style";
 
 const GROUPS: BaseToolGroup[] = [
-  BaseToolGroup.PLANNING,
+  BaseToolGroup.AGENT_ORCHESTRATION,
+  BaseToolGroup.AGENT_TASK_MANAGEMENT,
   BaseToolGroup.TRANSACTION,
   BaseToolGroup.CODE_EXECUTION,
   BaseToolGroup.WORKFLOW,

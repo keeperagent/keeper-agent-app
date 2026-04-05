@@ -2677,6 +2677,23 @@ export enum AGENT_SETTING_TYPE {
   AGENT_PRESET = "AGENT_PRESET",
 }
 
+export enum AgentMailboxStatus {
+  UNREAD = "UNREAD",
+  ACKNOWLEDGED = "ACKNOWLEDGED",
+}
+
+export type IAgentMailbox = {
+  id?: number;
+  fromAgentId?: number;
+  toAgentId?: number;
+  subject: string;
+  body: string;
+  status?: AgentMailboxStatus;
+  isBroadcast?: boolean;
+  createAt?: number;
+  fromAgent?: { id: number; name: string };
+};
+
 export enum AgentTaskStatus {
   INIT = "INIT",
   AWAITING_APPROVAL = "AWAITING_APPROVAL",

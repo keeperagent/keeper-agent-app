@@ -64,6 +64,17 @@ import {
   updateAgentTaskTool,
   deleteAgentTaskTool,
 } from "./baseTool/agentTask";
+import {
+  sendMessageTool,
+  readMessagesTool,
+  acknowledgeMessageTool,
+} from "./baseTool/agentMailbox";
+import {
+  createAgentTeamTool,
+  getTeamProgressTool,
+  delegateTaskTool,
+} from "./baseTool/agentTeam";
+import { searchToolsTool } from "./baseTool/toolDiscovery";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { mcpToolLoader } from "./mcpTool";
 import {
@@ -493,6 +504,30 @@ const buildBaseSubAgents = (
     });
   }
 
+  const mailboxTools = [
+    sendMessageTool(toolContext),
+    readMessagesTool(toolContext),
+    acknowledgeMessageTool(),
+  ];
+
+  agents.push({
+    name: "team_mailbox_agent",
+    description:
+      "Send messages to other registry agents, read your mailbox, and acknowledge processed messages. " +
+      "Use for agent-to-agent coordination within a team.",
+    systemPrompt:
+      "You are a mailbox subagent for agent-to-agent communication.\n\n" +
+      "## Tools\n" +
+      "- **send_message**: Send a direct message to a specific agent (by ID) or broadcast to all agents (to='*').\n" +
+      "- **read_messages**: Read unread messages. Pass includeAcknowledged=true to see all.\n" +
+      "- **acknowledge_message**: Mark a message as acknowledged after you have processed it.\n\n" +
+      "## Rules\n" +
+      "- Always acknowledge messages after processing them so they are excluded from future reads.\n" +
+      "- Keep message subjects short and descriptive.\n" +
+      "- Return results concisely.",
+    tools: mailboxTools as any,
+  });
+
   return agents;
 };
 
@@ -685,16 +720,26 @@ const createKeeperAgent = async (
     },
   );
 
+  const teamCoordinationTools = [
+    !disabledTools.has(BASE_TOOL_KEYS.CREATE_AGENT_TEAM) &&
+      createAgentTeamTool(),
+    !disabledTools.has(BASE_TOOL_KEYS.GET_TEAM_PROGRESS) &&
+      getTeamProgressTool(),
+    !disabledTools.has(BASE_TOOL_KEYS.DELEGATE_TASK) &&
+      delegateTaskTool(toolContext),
+  ].filter((tool): any => Boolean(tool));
+
   const planningTools = [
     draftPlanTool(toolContext),
     submitPlanTool(toolContext),
+    searchToolsTool(),
   ];
 
   const agent = createDeepAgent({
     model: llm,
     systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
     backend,
-    tools: planningTools as any,
+    tools: [...planningTools, ...teamCoordinationTools] as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,
@@ -736,7 +781,7 @@ const createRegistryKeeperAgent = async (
   const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
 
   const toolContext = providedToolContext || new ToolContext();
-  toolContext.update({ llmProvider: provider });
+  toolContext.update({ llmProvider: provider, agentRegistryId: registry.id });
 
   // Parse whitelist — empty array = allow all base tools (same as default agent)
   let allowedBaseToolsSet: Set<string> | null = null;

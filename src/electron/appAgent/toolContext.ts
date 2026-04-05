@@ -22,6 +22,8 @@ interface IToolContextData {
   llmProvider?: string;
   planState?: PlanState;
   requestPlanApproval?: (plan: string) => Promise<boolean>;
+  // Set for registry agents so mailbox tools know the sender ID. Undefined for the main agent
+  agentRegistryId?: number;
 }
 
 /**
@@ -83,6 +85,9 @@ export class ToolContext {
     if (data.requestPlanApproval !== undefined) {
       this.data.requestPlanApproval = data.requestPlanApproval;
     }
+    if (data.agentRegistryId !== undefined) {
+      this.data.agentRegistryId = data.agentRegistryId;
+    }
   }
 
   get nodeEndpointGroupId(): number | undefined {
@@ -131,5 +136,9 @@ export class ToolContext {
 
   get requestPlanApproval(): ((plan: string) => Promise<boolean>) | undefined {
     return this.data.requestPlanApproval;
+  }
+
+  get agentRegistryId(): number | undefined {
+    return this.data.agentRegistryId;
   }
 }

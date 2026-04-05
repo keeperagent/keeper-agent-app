@@ -32,13 +32,11 @@ import {
 } from "@/electron/appAgent/baseTool/scheduler";
 import { registerAgentTaskWriteTools } from "./agentTaskTools";
 
-const DENIED_RESPONSE = {
-  content: [{ type: "text" as const, text: "Action denied by user." }],
-};
-
 const wrapText = (text: string) => ({
   content: [{ type: "text" as const, text }],
 });
+
+const DENIED_RESPONSE = wrapText("Action denied by user.");
 
 const SENSITIVE_KEY_PATTERN = /(key|secret|token|password|encrypt|phrase)/i;
 
@@ -124,8 +122,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (createWalletGroupInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText(
+        (await createWalletGroupInstance.invoke(args)).toString(),
+      );
     },
   );
 
@@ -146,8 +145,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (generateWalletsInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await generateWalletsInstance.invoke(args)).toString());
     },
   );
 
@@ -168,8 +166,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (createProfileGroupInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText(
+        (await createProfileGroupInstance.invoke(args)).toString(),
+      );
     },
   );
 
@@ -190,8 +189,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (createCampaignInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await createCampaignInstance.invoke(args)).toString());
     },
   );
 
@@ -218,8 +216,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (createNodeProviderGroupInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText(
+        (await createNodeProviderGroupInstance.invoke(args)).toString(),
+      );
     },
   );
 
@@ -243,8 +242,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (stopWorkflowInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await stopWorkflowInstance.invoke(args)).toString());
     },
   );
 
@@ -283,13 +281,13 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       }
       const toolCtx = new ToolContext();
       toolCtx.update({ encryptKey });
-      const result = await (runWorkflowTool(toolCtx).func as any)({
+      const result = await runWorkflowTool(toolCtx).invoke({
         campaignId,
         workflowId,
         encryptKey,
         variables,
       });
-      return wrapText(result as string);
+      return wrapText(result.toString());
     },
   );
 
@@ -316,8 +314,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (executeJsInstance.func as any)(code);
-      return wrapText(result as string);
+      return wrapText((await executeJsInstance.invoke({ code })).toString());
     },
   );
 
@@ -342,8 +339,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (executePythonInstance.func as any)(code);
-      return wrapText(result as string);
+      return wrapText(
+        (await executePythonInstance.invoke({ code })).toString(),
+      );
     },
   );
 
@@ -443,10 +441,11 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       }
       const toolCtx = new ToolContext();
       toolCtx.update({ llmProvider });
-      const result = await (createAgentScheduleTool(toolCtx).func as any)(
-        scheduleArgs,
+      return wrapText(
+        (
+          await createAgentScheduleTool(toolCtx).invoke(scheduleArgs)
+        ).toString(),
       );
-      return wrapText(result as string);
     },
   );
 
@@ -467,8 +466,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (updateScheduleInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await updateScheduleInstance.invoke(args)).toString());
     },
   );
 
@@ -489,8 +487,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (deleteScheduleInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await deleteScheduleInstance.invoke(args)).toString());
     },
   );
 
@@ -511,8 +508,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (pauseScheduleInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await pauseScheduleInstance.invoke(args)).toString());
     },
   );
 
@@ -533,8 +529,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (resumeScheduleInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await resumeScheduleInstance.invoke(args)).toString());
     },
   );
 
@@ -555,8 +550,7 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       if (approval === ApprovalResult.DENIED) {
         return DENIED_RESPONSE;
       }
-      const result = await (runScheduleNowInstance.func as any)(args);
-      return wrapText(result as string);
+      return wrapText((await runScheduleNowInstance.invoke(args)).toString());
     },
   );
 
@@ -633,8 +627,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         isAllWallet,
         listCampaignProfileId,
       });
-      const result = await (swapOnJupiterTool(toolCtx).func as any)(swapArgs);
-      return wrapText(result as string);
+      return wrapText(
+        (await swapOnJupiterTool(toolCtx).invoke(swapArgs)).toString(),
+      );
     },
   );
 
@@ -713,8 +708,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         listCampaignProfileId,
         chainKey,
       });
-      const result = await (swapOnKyberswapTool(toolCtx).func as any)(swapArgs);
-      return wrapText(result as string);
+      return wrapText(
+        (await swapOnKyberswapTool(toolCtx).invoke(swapArgs)).toString(),
+      );
     },
   );
 
@@ -780,10 +776,11 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         isAllWallet,
         listCampaignProfileId,
       });
-      const result = await (transferSolanaTokenTool(toolCtx).func as any)(
-        transferArgs,
+      return wrapText(
+        (
+          await transferSolanaTokenTool(toolCtx).invoke(transferArgs)
+        ).toString(),
       );
-      return wrapText(result as string);
     },
   );
 
@@ -835,10 +832,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         isAllWallet,
         listCampaignProfileId,
       });
-      const result = await (launchPumpfunTokenTool(toolCtx).func as any)(
-        launchArgs,
+      return wrapText(
+        (await launchPumpfunTokenTool(toolCtx).invoke(launchArgs)).toString(),
       );
-      return wrapText(result as string);
     },
   );
 
@@ -890,10 +886,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         isAllWallet,
         listCampaignProfileId,
       });
-      const result = await (launchBonkfunTokenTool(toolCtx).func as any)(
-        launchArgs,
+      return wrapText(
+        (await launchBonkfunTokenTool(toolCtx).invoke(launchArgs)).toString(),
       );
-      return wrapText(result as string);
     },
   );
 
@@ -953,10 +948,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         listCampaignProfileId,
         chainKey,
       });
-      const result = await (broadcastTransactionEvmTool(toolCtx).func as any)(
-        txArgs,
+      return wrapText(
+        (await broadcastTransactionEvmTool(toolCtx).invoke(txArgs)).toString(),
       );
-      return wrapText(result as string);
     },
   );
 
@@ -1003,10 +997,11 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         isAllWallet,
         listCampaignProfileId,
       });
-      const result = await (
-        broadcastTransactionSolanaTool(toolCtx).func as any
-      )(txArgs);
-      return wrapText(result as string);
+      return wrapText(
+        (
+          await broadcastTransactionSolanaTool(toolCtx).invoke(txArgs)
+        ).toString(),
+      );
     },
   );
 

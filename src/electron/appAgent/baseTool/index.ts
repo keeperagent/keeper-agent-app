@@ -31,5 +31,16 @@ export {
   updateAgentTaskTool,
   deleteAgentTaskTool,
 } from "./agentTask";
+export {
+  createAgentTeamTool,
+  getTeamProgressTool,
+  delegateTaskTool,
+} from "./agentTeam";
+export { searchToolsTool } from "./toolDiscovery";
 export { draftPlanTool } from "./draftPlan";
 export { submitPlanTool } from "./submitPlan";
+export {
+  sendMessageTool,
+  readMessagesTool,
+  acknowledgeMessageTool,
+} from "./agentMailbox";
