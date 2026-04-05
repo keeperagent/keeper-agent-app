@@ -1,43 +1,39 @@
-/*
-  AgentChatBridge — Connects chat platforms (Telegram, desktop UI, etc.) to the KeeperAgent.
-  Each platform registers an IChatAdapter. Incoming user messages are routed to the agent, and the agent's response is streamed back through the same adapter.
-  Manages one agent session per (platformId + chatId), with streaming, tool status updates, and background memory compaction.
-*/
+/**
+ * AgentChatBridge — Connects chat platforms (Telegram, desktop UI, etc.) to the KeeperAgent.
+ * Each platform registers an IChatAdapter. Incoming user messages are routed to the agent, and the agent's response is streamed back through the same adapter.
+ * Manages one agent session per (platformId + chatId), with streaming, tool status updates, and background memory compaction.
+ */
 
 import { randomUUID } from "crypto";
 import {
+  AIMessage,
   HumanMessage,
   SystemMessage,
   type ContentBlock,
 } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import fs from "fs-extra";
-import path from "path";
 import { redact, guard } from "@keeperagent/crypto-key-guard";
 import {
   createKeeperAgent,
-  createLLM,
+  createBackgroundLLM,
   hasApiKey,
   type KeeperAgent,
   ToolContext,
   type IAttachedFileContext,
 } from "@/electron/appAgent";
+import { extractMemoryFromConversation } from "./memoryExtraction";
 import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
 import { logEveryWhere } from "@/electron/service/util";
-import {
-  chatHistoryDB,
-  AGENT_CONTEXT_LIMIT,
-} from "@/electron/database/chatHistory";
-import { getMemoryDir } from "@/electron/service/agentSkill";
+import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { LLMProvider } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { ChatPlatform, ChatRole } from "./types";
 import type { IChatAdapter, IPlatformMessage } from "./types";
 
-const MEMORY_FILE = "AGENT.md";
 const COMPACTION_THRESHOLD = 40_000;
-const MIN_MESSAGES_FOR_EXIT_FLUSH = 20;
+const MIN_MESSAGES_FOR_COMPACTION = 10;
 
 export type AgentSession = {
   checkpointer: MemorySaver;
@@ -50,74 +46,10 @@ export type AgentSession = {
   platformId: ChatPlatform;
   platformChatId: string;
   isCompacting: boolean;
-  /** Set when the agent's last response asked the user for their encryptKey. */
+  //  Summary text from the last compaction, injected into the new thread on first run
+  pendingSummary: string | null;
+  // Set when the agent's last response asked the user for their encryptKey
   expectingEncryptKey: boolean;
-};
-
-const runMemoryFlush = async (
-  provider: LLMProvider,
-  conversationText: string,
-): Promise<void> => {
-  try {
-    const memoryDir = getMemoryDir();
-    const memoryPath = path.join(memoryDir, MEMORY_FILE);
-
-    let currentMemory =
-      "# Agent Memory\n\n## User Preferences\n\n## Important Information\n\n## Learned Patterns\n";
-    try {
-      currentMemory = await fs.readFile(memoryPath, "utf-8");
-    } catch {}
-
-    const llm = await createLLM(provider, 0);
-    const response = await llm.invoke([
-      new SystemMessage(
-        "You are updating a persistent memory file for an AI assistant. " +
-          "Review the conversation and extract ONLY new, durable facts worth remembering across future sessions: " +
-          "user preferences, wallet addresses or labels, recurring patterns, important decisions. " +
-          "Do NOT add conversational filler or task-specific details that won't matter later. " +
-          "Return the COMPLETE updated memory file content — keep all existing entries and add new ones under the correct section. " +
-          "Sections: ## User Preferences, ## Important Information, ## Learned Patterns. " +
-          "If nothing new is worth adding, return the file unchanged.",
-      ),
-      new HumanMessage(
-        `Current memory file:\n${currentMemory}\n\n---\nConversation to extract from:\n${conversationText}`,
-      ),
-    ]);
-
-    const updatedMemory =
-      typeof response.content === "string"
-        ? response.content
-        : JSON.stringify(response.content);
-
-    await fs.ensureDir(memoryDir);
-
-    try {
-      if (await fs.pathExists(memoryPath)) {
-        const stamp = new Date()
-          .toISOString()
-          .replace(/[-:]/g, "")
-          .replace("T", "-")
-          .slice(0, 13);
-        await fs.copy(memoryPath, path.join(memoryDir, `AGENT-${stamp}.md`));
-
-        const allFiles = await fs.readdir(memoryDir);
-        const backups = allFiles
-          .filter((file) => /^AGENT-\d{8}-\d{4}\.md$/.test(file))
-          .sort();
-        const toDelete = backups.slice(0, Math.max(0, backups.length - 7));
-        for (const file of toDelete) {
-          await fs.remove(path.join(memoryDir, file));
-        }
-      }
-    } catch {}
-
-    await fs.writeFile(memoryPath, updatedMemory, "utf-8");
-    logEveryWhere({ message: "[AgentChatBridge] Memory flush completed" });
-  } catch (err: any) {
-    logEveryWhere({
-      message: `[AgentChatBridge] Memory flush error: ${err?.message}`,
-    });
-  }
 };
 
 const normalizeLlmErrorMessage = (raw: string): string => {
@@ -300,22 +232,34 @@ class AgentChatBridge {
     return keeper;
   };
 
-  private maybeRunSummarization = async (
+  /**
+   * Fires after each agent run. When context tokens exceed 40K, summarizes old
+   * messages into a compact block, extracts memory, then resets the thread so
+   * the next run starts fresh with the summary injected as context.
+   * Returns the summary text if compaction ran.
+   */
+  private compactSessionIfNeeded = async (
     session: AgentSession,
-  ): Promise<boolean> => {
-    if (session.isCompacting) return false;
+  ): Promise<string | null> => {
+    if (session.isCompacting) return null;
     try {
-      if (session.contextTokens <= COMPACTION_THRESHOLD) return false;
+      if (session.contextTokens <= COMPACTION_THRESHOLD) {
+        return null;
+      }
       session.isCompacting = true;
 
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
       );
-      if (messages.length < 10) return false;
+      if (messages.length < MIN_MESSAGES_FOR_COMPACTION) {
+        return null;
+      }
 
       const lastId = messages[messages.length - 1]?.id;
-      if (!lastId) return false;
+      if (!lastId) {
+        return null;
+      }
 
       const conversationText = messages
         .map(
@@ -324,22 +268,26 @@ class AgentChatBridge {
         )
         .join("\n\n");
 
-      const llm = await createLLM(session.provider, 0);
+      const llm = await createBackgroundLLM(session.provider);
       const response = await llm.invoke([
         new SystemMessage(
           "Summarize the following conversation in 300-400 words. " +
             "Capture key topics discussed, decisions made, user preferences, " +
-            "and important context. Be factual and concise.",
+            "and important context. Be factual and concise. " +
+            "Never include secrets, passwords, private keys, seed phrases, or credentials of any kind in the summary.",
         ),
         new HumanMessage(conversationText),
       ]);
 
-      const summaryText =
+      const rawSummary =
         typeof response.content === "string"
           ? response.content
           : JSON.stringify(response.content);
 
-      await runMemoryFlush(session.provider, conversationText);
+      // Remove any crypto secrets the LLM may have included despite prompt instructions
+      const { text: summaryText } = redact(rawSummary);
+
+      await extractMemoryFromConversation(session.provider, messages);
       await chatHistoryDB.saveSummary(
         summaryText,
         lastId,
@@ -349,52 +297,43 @@ class AgentChatBridge {
       logEveryWhere({
         message: "[AgentChatBridge] Background summarisation completed",
       });
-      return true;
+      return summaryText;
     } catch (err: any) {
       logEveryWhere({
         message: `[AgentChatBridge] Summarisation error: ${err?.message}`,
       });
-      return false;
+      return null;
     } finally {
       session.isCompacting = false;
     }
   };
 
-  private maybeFlushMemoryOnExit = async (
+  // Extract memory from messages not yet processed since the last compaction
+  // Skip if there are no new messages to process
+  private runMemoryExtractionForSession = async (
     session: AgentSession,
   ): Promise<void> => {
-    if (session.contextTokens === 0) {
-      return;
-    }
     try {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
       );
-      const [recentMessages] = await chatHistoryDB.getRecentMessages(
-        AGENT_CONTEXT_LIMIT,
-        session.platformId,
-        session.platformChatId,
-      );
-      const allNew = [...messages, ...recentMessages];
-      if (allNew.length < MIN_MESSAGES_FOR_EXIT_FLUSH) {
+      if (messages.length === 0) {
         return;
       }
-      const conversationText = allNew
-        .map(
-          (msg) =>
-            `${msg.role === ChatRole.HUMAN ? "User" : "Assistant"}: ${msg.content}`,
-        )
-        .join("\n\n");
-      await runMemoryFlush(session.provider, conversationText);
-    } catch {}
+      await extractMemoryFromConversation(session.provider, messages);
+    } catch (err: any) {
+      logEveryWhere({
+        message: `[AgentChatBridge] Memory extraction error: ${err?.message}`,
+      });
+    }
   };
 
   // recreate agent after summary
   private postRunCompaction = (sessionKey: string, session: AgentSession) => {
-    this.maybeRunSummarization(session)
-      .then((compacted) => {
-        if (!compacted) {
+    this.compactSessionIfNeeded(session)
+      .then((summaryText) => {
+        if (!summaryText) {
           return;
         }
         const currentSession = this.sessions.get(sessionKey);
@@ -408,6 +347,7 @@ class AgentChatBridge {
         currentSession.threadId = randomUUID();
         currentSession.checkpointer = new MemorySaver();
         currentSession.contextTokens = 0;
+        currentSession.pendingSummary = summaryText;
         this.initAgentInBackground(sessionKey, currentSession);
         logEveryWhere({
           message: "[AgentChatBridge] Agent recreated after compaction",
@@ -430,6 +370,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       isCompacting: false,
+      pendingSummary: null,
       expectingEncryptKey: false,
     };
     this.sessions.set(sessionKey, session);
@@ -484,6 +425,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       isCompacting: false,
+      pendingSummary: null,
       expectingEncryptKey: false,
     };
     this.sessions.set(sessionKey, session);
@@ -580,8 +522,25 @@ class AgentChatBridge {
         redactedInput,
         options?.attachedFiles,
       );
+
+      // Inject the compaction summary as the first exchange in the new thread so the agent has session context even after the checkpointer was reset
+      const initialMessages: (HumanMessage | AIMessage)[] = [];
+      if (session.pendingSummary) {
+        initialMessages.push(
+          new HumanMessage(
+            `This conversation continues from a previous session that was compacted. ` +
+              `Summary of the prior context:\n\n${session.pendingSummary}`,
+          ),
+          new AIMessage(
+            "Understood. I have the context from the previous conversation and will continue from where we left off.",
+          ),
+        );
+        session.pendingSummary = null;
+      }
+      initialMessages.push(humanMessage);
+
       const eventStream = (agent as any).streamEvents(
-        { messages: [humanMessage] },
+        { messages: initialMessages },
         {
           configurable: { thread_id: session.threadId },
           version: "v2",
@@ -732,7 +691,8 @@ class AgentChatBridge {
       this.pendingPlanApprovals.delete(sessionId);
     }
 
-    await this.maybeFlushMemoryOnExit(session);
+    // Extract memory from remaining messages before clearing the session
+    this.runMemoryExtractionForSession(session).catch(() => {});
 
     if (session.keeper) {
       await session.keeper.cleanup();
@@ -763,20 +723,6 @@ class AgentChatBridge {
     this.initAgentInBackground(sessionId, session);
   };
 
-  destroySession = async (sessionId: string) => {
-    const pendingApproval = this.pendingPlanApprovals.get(sessionId);
-    if (pendingApproval) {
-      pendingApproval(false);
-      this.pendingPlanApprovals.delete(sessionId);
-    }
-
-    const session = this.sessions.get(sessionId);
-    if (session?.keeper) {
-      await session.keeper.cleanup();
-    }
-    this.sessions.delete(sessionId);
-  };
-
   getStatus = async (sessionId: string) => {
     const session = this.sessions.get(sessionId);
     if (session && !session.keeper && !session.initPromise) {
@@ -805,7 +751,6 @@ class AgentChatBridge {
     }
 
     for (const [sessionKey, session] of this.sessions) {
-      await this.maybeFlushMemoryOnExit(session);
       if (session.initPromise) {
         await session.initPromise.catch(() => {});
         session.initPromise = null;
@@ -827,7 +772,8 @@ class AgentChatBridge {
   // Cleanup all (app quit)
   cleanupAll = async () => {
     for (const [id, session] of this.sessions) {
-      await this.maybeFlushMemoryOnExit(session);
+      // Extract memory before closing app
+      await this.runMemoryExtractionForSession(session).catch(() => {});
       if (session.keeper) {
         try {
           await session.keeper.cleanup();
@@ -861,6 +807,7 @@ class AgentChatBridge {
         platformId: adapter.platformId,
         platformChatId: message.chatId,
         isCompacting: false,
+        pendingSummary: null,
         expectingEncryptKey: false,
       };
       this.sessions.set(sessionKey, session);

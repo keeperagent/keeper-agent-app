@@ -9,6 +9,7 @@ import { AppLogModel } from "@/electron/database";
 import { AppLogActorType } from "@/electron/type";
 import { sendToRenderer } from "@/electron/main";
 import { getMemoryDir } from "@/electron/service/agentSkill";
+import { MEMORY_TEMPLATE } from "@/electron/appAgent";
 import { agentRegistryChatBridge } from "@/electron/chatGateway/agentRegistryBridge";
 import type {
   IpcGetListAgentRegistryPayload,
@@ -25,8 +26,6 @@ import type {
   IpcRegistryAgentResetSessionPayload,
 } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
-
-const MEMORY_TEMPLATE = "# Agent Memory\n";
 
 const getRegistryMemoryFile = (agentRegistryId: number): string =>
   `AGENT_REGISTRY_${agentRegistryId}.md`;
@@ -159,10 +158,8 @@ export const agentRegistryController = () => {
     MESSAGE.REGISTRY_AGENT_CREATE_SESSION_RES,
     async (event, payload) => {
       const { agentRegistryId } = payload || {};
-      const sessionId = await agentRegistryChatBridge.createSession(
-        agentRegistryId,
-        event,
-      );
+      const sessionId =
+        await agentRegistryChatBridge.createSession(agentRegistryId);
       event.reply(MESSAGE.REGISTRY_AGENT_CREATE_SESSION_RES, {
         data: sessionId,
       });
@@ -201,16 +198,6 @@ export const agentRegistryController = () => {
       const { sessionId } = payload || {};
       await agentRegistryChatBridge.resetSession(sessionId);
       event.reply(MESSAGE.REGISTRY_AGENT_RESET_SESSION_RES, { data: true });
-    },
-  );
-
-  onIpc<{ sessionId: string }>(
-    MESSAGE.REGISTRY_AGENT_DESTROY_SESSION,
-    MESSAGE.REGISTRY_AGENT_DESTROY_SESSION_RES,
-    async (event, payload) => {
-      const { sessionId } = payload || {};
-      await agentRegistryChatBridge.destroySession(sessionId);
-      event.reply(MESSAGE.REGISTRY_AGENT_DESTROY_SESSION_RES, { data: true });
     },
   );
 };

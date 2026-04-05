@@ -73,6 +73,9 @@ import {
   getOpenAIModel,
   getAnthropicModel,
   getGoogleGeminiModel,
+  getOpenAIBackgroundModel,
+  getAnthropicBackgroundModel,
+  getGoogleGeminiBackgroundModel,
 } from "./utils";
 import { preferenceDB } from "@/electron/database/preference";
 import { IAgentRegistry, LLMProvider } from "@/electron/type";
@@ -80,7 +83,12 @@ import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { ToolContext } from "./toolContext";
 
 const DEFAULT_MEMORY_FILE = "AGENT.md";
-const MEMORY_TEMPLATE = "# Agent Memory\n";
+const MEMORY_TEMPLATE =
+  "# Agent Memory\n\n" +
+  "## User Profile\n\n" +
+  "## Working Preferences\n\n" +
+  "## Durable Facts\n\n" +
+  "## Feedback & Corrections\n";
 
 const ensureAgentMemoryFile = async (memoryFile: string): Promise<void> => {
   const memoryDir = getMemoryDir();
@@ -104,7 +112,8 @@ const buildSystemPrompt = (
   return `You are Keeper Agent, an AI assistant for crypto wallets, campaigns, profiles, and on-chain operations.
 
 ## Memory
-Read \`${memoryVirtualPath}\` at conversation start. Save user preferences there when told.
+Read \`${memoryVirtualPath}\` at conversation start.
+When you learn something new about the user — their preferences, working style, or stable facts about how they operate — write it to \`${memoryVirtualPath}\` immediately. Do not wait to be asked.
 
 ## Priority: skills → subagents → tools
 1. Check \`/skills/\` first; read the relevant SKILL.md and follow it.
@@ -585,6 +594,18 @@ const createLLM = async (
   }
 };
 
+const createBackgroundLLM = async (provider: LLMProvider) => {
+  let backgroundModel: string | null = null;
+  if (provider === LLMProvider.CLAUDE) {
+    backgroundModel = await getAnthropicBackgroundModel();
+  } else if (provider === LLMProvider.GEMINI) {
+    backgroundModel = await getGoogleGeminiBackgroundModel();
+  } else if (provider === LLMProvider.OPENAI) {
+    backgroundModel = await getOpenAIBackgroundModel();
+  }
+  return createLLM(provider, 0, backgroundModel || undefined);
+};
+
 const createKeeperAgent = async (
   options?: CreateAgentOptions,
 ): Promise<KeeperAgent> => {
@@ -891,7 +912,9 @@ export {
   createKeeperAgent,
   createRegistryKeeperAgent,
   createLLM,
+  createBackgroundLLM,
   hasApiKey,
+  MEMORY_TEMPLATE,
   type KeeperAgent,
 };
 export { ToolContext, type IAttachedFileContext } from "./toolContext";

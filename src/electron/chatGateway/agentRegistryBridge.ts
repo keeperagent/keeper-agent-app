@@ -16,6 +16,9 @@ import { logEveryWhere } from "@/electron/service/util";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import type { IAgentRegistry } from "@/electron/type";
+import { LLMProvider } from "@/electron/type";
+import { extractMemoryFromConversation } from "./memoryExtraction";
+import { ChatRole } from "./types";
 
 type RegistrySession = {
   agentRegistryId: number;
@@ -25,6 +28,8 @@ type RegistrySession = {
   keeper: KeeperAgent | null;
   initPromise: Promise<void> | null;
   toolContext: ToolContext;
+  // Conversation buffer for memory extraction — accumulates messages since last extraction
+  conversationHistory: Array<{ role: ChatRole; content: string }>;
 };
 
 class AgentRegistryBridge {
@@ -35,17 +40,15 @@ class AgentRegistryBridge {
   private sessionKey = (agentRegistryId: number): string =>
     `registry:${agentRegistryId}`;
 
-  createSession = async (
-    agentRegistryId: number,
-    ipcEvent?: Electron.IpcMainEvent,
-  ): Promise<string> => {
+  createSession = async (agentRegistryId: number): Promise<string> => {
     const sessionKey = this.sessionKey(agentRegistryId);
 
     if (this.sessions.has(sessionKey)) {
       return sessionKey;
     }
 
-    const [registry] = await agentRegistryDB.getOneAgentRegistry(agentRegistryId);
+    const [registry] =
+      await agentRegistryDB.getOneAgentRegistry(agentRegistryId);
     if (!registry) {
       throw new Error(`AgentRegistry #${agentRegistryId} not found`);
     }
@@ -58,9 +61,10 @@ class AgentRegistryBridge {
       keeper: null,
       initPromise: null,
       toolContext: new ToolContext(),
+      conversationHistory: [],
     };
     this.sessions.set(sessionKey, session);
-    this.initAgentInBackground(sessionKey, session, ipcEvent);
+    this.initAgentInBackground(sessionKey, session);
 
     return sessionKey;
   };
@@ -68,7 +72,6 @@ class AgentRegistryBridge {
   private initAgentInBackground = (
     sessionKey: string,
     session: RegistrySession,
-    ipcEvent?: Electron.IpcMainEvent,
   ) => {
     session.initPromise = (async () => {
       const keeper = await createRegistryKeeperAgent({
@@ -77,7 +80,10 @@ class AgentRegistryBridge {
         toolContext: session.toolContext,
       });
 
-      if (this.sessions.has(sessionKey) && this.sessions.get(sessionKey) === session) {
+      if (
+        this.sessions.has(sessionKey) &&
+        this.sessions.get(sessionKey) === session
+      ) {
         session.keeper = keeper;
         mainWindow?.webContents?.send(MESSAGE.REGISTRY_AGENT_READY, {
           sessionId: sessionKey,
@@ -106,7 +112,9 @@ class AgentRegistryBridge {
       });
   };
 
-  private getOrCreateKeeper = async (session: RegistrySession): Promise<KeeperAgent> => {
+  private getOrCreateKeeper = async (
+    session: RegistrySession,
+  ): Promise<KeeperAgent> => {
     if (session.initPromise) {
       await session.initPromise;
       session.initPromise = null;
@@ -129,7 +137,12 @@ class AgentRegistryBridge {
     input: string,
     encryptKey: string | undefined,
     ipcEvent: Electron.IpcMainEvent,
-  ): Promise<{ output: string; isError?: boolean; errorMsg?: string; stopped?: boolean }> => {
+  ): Promise<{
+    output: string;
+    isError?: boolean;
+    errorMsg?: string;
+    stopped?: boolean;
+  }> => {
     const session = this.sessions.get(sessionId);
     if (!session) {
       return { output: "", isError: true, errorMsg: "Session not found" };
@@ -184,9 +197,12 @@ class AgentRegistryBridge {
           } else if (Array.isArray(content)) {
             text = content
               .filter(
-                (chunk: any) => chunk?.type === "text" || typeof chunk === "string",
+                (chunk: any) =>
+                  chunk?.type === "text" || typeof chunk === "string",
               )
-              .map((chunk: any) => (typeof chunk === "string" ? chunk : chunk.text || ""))
+              .map((chunk: any) =>
+                typeof chunk === "string" ? chunk : chunk.text || "",
+              )
               .join("");
           }
           if (text) {
@@ -235,6 +251,14 @@ class AgentRegistryBridge {
         return { output: finalOutput, stopped: true };
       }
 
+      // Buffer this exchange for memory extraction on reset/quit
+      if (finalOutput) {
+        session.conversationHistory.push(
+          { role: ChatRole.HUMAN, content: redactedInput },
+          { role: ChatRole.AI, content: finalOutput },
+        );
+      }
+
       return { output: finalOutput };
     } catch (err: any) {
       if (abortController.signal.aborted) {
@@ -244,11 +268,32 @@ class AgentRegistryBridge {
       logEveryWhere({
         message: `[AgentRegistryBridge] Run error for ${sessionId}: ${errorMsg}`,
       });
-      return { output: finalOutput || `Error: ${errorMsg}`, isError: true, errorMsg };
+      return {
+        output: finalOutput || `Error: ${errorMsg}`,
+        isError: true,
+        errorMsg,
+      };
     } finally {
       this.activeRuns.delete(sessionId);
       this.abortControllers.delete(sessionId);
     }
+  };
+
+  private runMemoryExtractionForSession = async (
+    session: RegistrySession,
+  ): Promise<void> => {
+    if (session.conversationHistory.length === 0) {
+      return;
+    }
+    const provider =
+      (session.registry.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
+    const memoryFile = `AGENT_REGISTRY_${session.agentRegistryId}.md`;
+    await extractMemoryFromConversation(
+      provider,
+      session.conversationHistory,
+      memoryFile,
+    );
+    session.conversationHistory = [];
   };
 
   stopAgent = (sessionId: string): void => {
@@ -265,6 +310,7 @@ class AgentRegistryBridge {
       return;
     }
 
+    this.runMemoryExtractionForSession(session).catch(() => {});
     if (session.keeper) {
       await session.keeper.cleanup();
       session.keeper = null;
@@ -273,14 +319,6 @@ class AgentRegistryBridge {
     session.threadId = randomUUID();
     session.checkpointer = new MemorySaver();
     this.initAgentInBackground(sessionId, session);
-  };
-
-  destroySession = async (sessionId: string): Promise<void> => {
-    const session = this.sessions.get(sessionId);
-    if (session?.keeper) {
-      await session.keeper.cleanup().catch(() => {});
-    }
-    this.sessions.delete(sessionId);
   };
 
   // Called when a registry config changes — recreate the session so new config applies
@@ -296,7 +334,8 @@ class AgentRegistryBridge {
     }
     session.initPromise = null;
 
-    const [registry] = await agentRegistryDB.getOneAgentRegistry(agentRegistryId);
+    const [registry] =
+      await agentRegistryDB.getOneAgentRegistry(agentRegistryId);
     if (!registry) {
       this.sessions.delete(sessionKey);
       return;
@@ -305,6 +344,16 @@ class AgentRegistryBridge {
     session.threadId = randomUUID();
     session.checkpointer = new MemorySaver();
     this.initAgentInBackground(sessionKey, session);
+  };
+
+  cleanupAll = async (): Promise<void> => {
+    for (const session of this.sessions.values()) {
+      await this.runMemoryExtractionForSession(session).catch(() => {});
+      if (session.keeper) {
+        await session.keeper.cleanup().catch(() => {});
+      }
+    }
+    this.sessions.clear();
   };
 }
 

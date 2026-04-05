@@ -107,6 +107,21 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: "",
       },
+      openAIBackgroundModel: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      anthropicBackgroundModel: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
+      googleGeminiBackgroundModel: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "",
+      },
       jupiterApiKeys: {
         type: DataTypes.STRING,
         defaultValue: "[]",
