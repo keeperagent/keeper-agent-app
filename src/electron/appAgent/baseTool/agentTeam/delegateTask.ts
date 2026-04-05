@@ -1,6 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentTeamStore } from "@/electron/appAgent/agentTeam/store";
+import { agentRegistryDB } from "@/electron/database/agentRegistry";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
 import { sendToRenderer } from "@/electron/main";
@@ -76,12 +77,32 @@ export const delegateTaskTool = (toolContext: ToolContext) =>
         );
       }
 
+      let assignedAgentId = preferredAgentId;
+      if (assignedAgentId === undefined) {
+        const [activeAgents] = await agentRegistryDB.getActiveAgentRegistries();
+        const teamActiveAgents = (activeAgents || []).filter((agent) =>
+          team.agentIds.includes(agent.id!),
+        );
+        if (teamActiveAgents.length === 0) {
+          throw new Error(`No active agents available in team ${teamId}`);
+        }
+        const inProgressCounts = await Promise.all(
+          teamActiveAgents.map(async (agent) => {
+            const [count] = await agentTaskDB.countInProgressByAgent(agent.id!);
+            return { agentId: agent.id!, count: count || 0 };
+          }),
+        );
+        assignedAgentId = inProgressCounts.reduce((least, current) =>
+          current.count < least.count ? current : least,
+        ).agentId;
+      }
+
       const [task, err] = await agentTaskDB.createAgentTask({
         title,
         description,
         priority:
           PRIORITY_MAP[priority || "medium"] || AgentTaskPriority.MEDIUM,
-        assignedAgentId: preferredAgentId,
+        assignedAgentId,
         dueAt: dueDate,
         status: AgentTaskStatus.INIT,
         creatorType: AgentTaskCreatorType.AGENT,

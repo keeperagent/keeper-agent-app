@@ -29,26 +29,25 @@ export const getTeamProgressTool = () =>
         }),
       );
 
-      const [allTasks] = await agentTaskDB.getListAgentTask();
-      const teamTasks = (allTasks || []).filter(
-        (task) =>
-          team.taskIds.includes(task.id!) ||
-          team.agentIds.includes(task.assignedAgentId!),
-      );
+      let [tasks] = await agentTaskDB.getListAgentTask({
+        taskIds: team.taskIds,
+        agentIds: team.agentIds,
+      });
+      tasks = tasks || [];
 
       const statusCounts: Record<string, number> = {};
-      for (const task of teamTasks) {
+      for (const task of tasks) {
         const status = task.status || "unknown";
         statusCounts[status] = (statusCounts[status] || 0) + 1;
       }
 
       const doneCount = statusCounts[AgentTaskStatus.DONE] || 0;
-      const totalCount = teamTasks.length;
+      const totalCount = tasks.length;
       const overallProgress =
         totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
       const agents = agentDetails.filter(Boolean).map((agent) => {
-        const agentTasks = teamTasks.filter(
+        const agentTasks = tasks.filter(
           (task) => task.assignedAgentId === agent!.id,
         );
         return {
@@ -74,7 +73,7 @@ export const getTeamProgressTool = () =>
         overallProgress,
         taskSummary: { total: totalCount, ...statusCounts },
         agents,
-        tasks: teamTasks.map((task) => ({
+        tasks: tasks.map((task) => ({
           id: task.id,
           title: task.title,
           status: task.status,

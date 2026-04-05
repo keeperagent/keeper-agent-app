@@ -10,9 +10,24 @@ const PRIORITY_ORDER = literal(
 );
 
 class AgentTaskDB {
-  async getListAgentTask(): Promise<[IAgentTask[] | null, Error | null]> {
+  async getListAgentTask(filter?: {
+    taskIds?: number[];
+    agentIds?: number[];
+  }): Promise<[IAgentTask[] | null, Error | null]> {
     try {
+      const where: any = {};
+      if (filter?.taskIds?.length || filter?.agentIds?.length) {
+        const conditions = [];
+        if (filter.taskIds?.length) {
+          conditions.push({ id: { [Op.in]: filter.taskIds } });
+        }
+        if (filter.agentIds?.length) {
+          conditions.push({ assignedAgentId: { [Op.in]: filter.agentIds } });
+        }
+        where[Op.or] = conditions;
+      }
       const list = await AgentTaskModel.findAll({
+        where,
         order: [["createAt", "DESC"]],
         include: [
           {
