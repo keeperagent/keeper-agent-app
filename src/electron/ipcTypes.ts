@@ -551,10 +551,6 @@ export type IpcAgentChangeProviderPayload = {
 export type IpcAgentGetStatusPayload = {
   sessionId?: string;
 };
-export type IpcAgentDestroySessionPayload = {
-  sessionId: string;
-};
-
 // Browser
 export type IpcDownloadBrowserPayload = {
   revision: string;

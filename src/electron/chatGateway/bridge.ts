@@ -13,7 +13,6 @@ import {
 } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import fs from "fs-extra";
-import path from "path";
 import { redact, guard } from "@keeperagent/crypto-key-guard";
 import {
   createKeeperAgent,
@@ -23,17 +22,16 @@ import {
   ToolContext,
   type IAttachedFileContext,
 } from "@/electron/appAgent";
+import { extractMemoryFromConversation } from "./memoryExtraction";
 import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
-import { getMemoryDir } from "@/electron/service/agentSkill";
 import { LLMProvider } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { ChatPlatform, ChatRole } from "./types";
 import type { IChatAdapter, IPlatformMessage } from "./types";
 
-const MEMORY_FILE = "AGENT.md";
 const COMPACTION_THRESHOLD = 40_000;
 const MIN_MESSAGES_FOR_COMPACTION = 10;
 
@@ -52,138 +50,6 @@ export type AgentSession = {
   pendingSummary: string | null;
   // Set when the agent's last response asked the user for their encryptKey
   expectingEncryptKey: boolean;
-};
-
-const MEMORY_EXTRACTION_SYSTEM_PROMPT =
-  "You are updating a persistent memory file for an AI assistant.\n\n" +
-  "Extract ONLY facts that meet ALL of these criteria:\n" +
-  "1. Still likely to be true in future sessions (durable, not time-sensitive)\n" +
-  "2. About who the user is or how they prefer to work\n" +
-  "3. Not already captured in the existing memory\n\n" +
-  "DO NOT extract:\n" +
-  "- Real-time or time-sensitive data (prices, statuses, current state)\n" +
-  "- Secrets, passwords, keys, or credentials of any kind\n" +
-  "- One-off task details that only matter for this session\n" +
-  "- Anything the user hasn't explicitly told you or clearly demonstrated as a preference\n\n" +
-  "Return the COMPLETE updated file — preserve all existing entries, add new ones under the right section.\n" +
-  "If nothing new meets the criteria, return the file unchanged.";
-
-const MEMORY_TEMPLATE =
-  "# Agent Memory\n\n" +
-  "## User Profile\n\n" +
-  "## Working Preferences\n\n" +
-  "## Durable Facts\n\n" +
-  "## Feedback & Corrections\n";
-
-/**
- * Extracts durable facts from a conversation and persists them to the agent
- * memory file (AGENT.md by default).
- *
- * Called in three places:
- *  1. compactSessionIfNeeded — before old messages are discarded at the 40K token threshold
- *  2. resetSession           — when the user explicitly starts a new conversation
- *  3. cleanupAll             — when the app quits, covers sessions never manually reset
- *
- * Uses the user-configured background model (cheaper) instead of the main
- * agent model. For Claude, adds cache_control markers on the stable parts
- * (system prompt + current memory) to reduce token cost on repeated calls.
- */
-const extractMemoryFromConversation = async (
-  provider: LLMProvider,
-  messages: Array<{ role: ChatRole; content: string }>,
-  memoryFile: string = MEMORY_FILE,
-): Promise<void> => {
-  try {
-    const memoryDir = getMemoryDir();
-    const memoryPath = path.join(memoryDir, memoryFile);
-
-    let currentMemory = MEMORY_TEMPLATE;
-    try {
-      currentMemory = await fs.readFile(memoryPath, "utf-8");
-    } catch {}
-
-    const llm = await createBackgroundLLM(provider);
-
-    // Build system message — add cache_control for Claude (stable content, reused across calls)
-    const systemContent: any =
-      provider === LLMProvider.CLAUDE
-        ? [
-            {
-              type: "text",
-              text: MEMORY_EXTRACTION_SYSTEM_PROMPT,
-              cache_control: { type: "ephemeral" },
-            },
-          ]
-        : MEMORY_EXTRACTION_SYSTEM_PROMPT;
-
-    // currentMemory is stable between calls — cache it on Claude
-    const currentMemoryContent: any =
-      provider === LLMProvider.CLAUDE
-        ? [
-            {
-              type: "text",
-              text: `Current memory file:\n${currentMemory}`,
-              cache_control: { type: "ephemeral" },
-            },
-          ]
-        : `Current memory file:\n${currentMemory}`;
-
-    // Reconstruct proper message objects so Claude cache hits apply to conversation tokens
-    const conversationMessages = messages.map((msg) =>
-      msg.role === ChatRole.HUMAN
-        ? new HumanMessage(msg.content)
-        : new AIMessage(msg.content),
-    );
-
-    const response = await llm.invoke([
-      new SystemMessage({ content: systemContent }),
-      new HumanMessage({ content: currentMemoryContent }),
-      new AIMessage(
-        "Understood. I will extract only durable facts from the conversation below.",
-      ),
-      ...conversationMessages,
-      new HumanMessage(
-        "Based on the conversation above, update the memory file now.",
-      ),
-    ]);
-
-    const rawMemory =
-      typeof response.content === "string"
-        ? response.content
-        : JSON.stringify(response.content);
-
-    // Remove any crypto secrets the LLM may have leaked
-    const { text: updatedMemory } = redact(rawMemory);
-
-    await fs.ensureDir(memoryDir);
-
-    try {
-      if (await fs.pathExists(memoryPath)) {
-        const stamp = new Date()
-          .toISOString()
-          .replace(/[-:]/g, "")
-          .replace("T", "-")
-          .slice(0, 13);
-        await fs.copy(memoryPath, path.join(memoryDir, `AGENT-${stamp}.md`));
-
-        const allFiles = await fs.readdir(memoryDir);
-        const backups = allFiles
-          .filter((file) => /^AGENT-\d{8}-\d{4}\.md$/.test(file))
-          .sort();
-        const toDelete = backups.slice(0, Math.max(0, backups.length - 7));
-        for (const file of toDelete) {
-          await fs.remove(path.join(memoryDir, file));
-        }
-      }
-    } catch {}
-
-    await fs.writeFile(memoryPath, updatedMemory, "utf-8");
-    logEveryWhere({ message: "[AgentChatBridge] Memory extraction completed" });
-  } catch (err: any) {
-    logEveryWhere({
-      message: `[AgentChatBridge] Memory extraction error: ${err?.message}`,
-    });
-  }
 };
 
 const normalizeLlmErrorMessage = (raw: string): string => {
@@ -855,20 +721,6 @@ class AgentChatBridge {
     session.contextTokens = 0;
 
     this.initAgentInBackground(sessionId, session);
-  };
-
-  destroySession = async (sessionId: string) => {
-    const pendingApproval = this.pendingPlanApprovals.get(sessionId);
-    if (pendingApproval) {
-      pendingApproval(false);
-      this.pendingPlanApprovals.delete(sessionId);
-    }
-
-    const session = this.sessions.get(sessionId);
-    if (session?.keeper) {
-      await session.keeper.cleanup();
-    }
-    this.sessions.delete(sessionId);
   };
 
   getStatus = async (sessionId: string) => {

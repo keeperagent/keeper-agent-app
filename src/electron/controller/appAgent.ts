@@ -3,6 +3,7 @@ import { onIpc } from "./helpers";
 import { MESSAGE } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { agentChatBridge } from "@/electron/chatGateway/bridge";
+import { agentRegistryChatBridge } from "@/electron/chatGateway/agentRegistryBridge";
 import { LLMProvider } from "@/electron/type";
 import type { IAttachedFileContext } from "@/electron/appAgent";
 import type {
@@ -12,7 +13,6 @@ import type {
   IpcAgentResetSessionPayload,
   IpcAgentChangeProviderPayload,
   IpcAgentGetStatusPayload,
-  IpcAgentDestroySessionPayload,
 } from "@/electron/ipcTypes";
 import { hasApiKey } from "@/electron/appAgent";
 
@@ -107,6 +107,7 @@ export const recreateAllAgents = () => {
 
 export const cleanupAllAgentSessions = async () => {
   await agentChatBridge.cleanupAll();
+  await agentRegistryChatBridge.cleanupAll();
 };
 
 export const agentController = () => {
@@ -270,21 +271,6 @@ export const agentController = () => {
             skillsCount: session.keeper.skillsCount,
           }),
         },
-      });
-    },
-  );
-
-  onIpc<IpcAgentDestroySessionPayload>(
-    MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION,
-    MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION_RES,
-    async (event, payload) => {
-      const { sessionId } = payload || {};
-      if (!sessionId) {
-        throw new Error("sessionId is required");
-      }
-      await agentChatBridge.destroySession(sessionId);
-      createResponse(event, MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION_RES, {
-        data: { sessionId },
       });
     },
   );

@@ -914,6 +914,7 @@ export {
   createLLM,
   createBackgroundLLM,
   hasApiKey,
+  MEMORY_TEMPLATE,
   type KeeperAgent,
 };
 export { ToolContext, type IAttachedFileContext } from "./toolContext";

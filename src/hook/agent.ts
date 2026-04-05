@@ -245,21 +245,6 @@ const useDashboardAgent = () => {
       setError(null);
     };
 
-    const handleDestroy = (_event: any, payload: any) => {
-      const { error: errMessage } = payload || {};
-      if (errMessage) {
-        setError(errMessage);
-        return;
-      }
-      setSessionId(null);
-      setConversation([]);
-      setSteps([]);
-      setOutput("");
-      setError(null);
-      setStreamingContent("");
-      setExecutingTool(null);
-      toolDepthRef.current = 0;
-    };
 
     const handleStreamChunk = (_event: any, payload: any) => {
       const { sessionId: payloadSessionId, chunk } = payload || {};
@@ -397,10 +382,6 @@ const useDashboardAgent = () => {
       MESSAGE.DASHBOARD_AGENT_RESET_SESSION_RES,
       handleReset,
     );
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION_RES,
-      handleDestroy,
-    );
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_READY, handleAgentReady);
     window?.electron?.on(
       MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER_RES,
@@ -423,9 +404,6 @@ const useDashboardAgent = () => {
       );
       window?.electron?.removeAllListeners(
         MESSAGE.DASHBOARD_AGENT_RESET_SESSION_RES,
-      );
-      window?.electron?.removeAllListeners(
-        MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION_RES,
       );
       window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_READY);
       window?.electron?.removeAllListeners(
@@ -629,17 +607,6 @@ const useDashboardAgent = () => {
     [planReview, saveMessageToDB],
   );
 
-  const destroySession = useCallback(() => {
-    if (!sessionIdRef.current) {
-      return;
-    }
-    setError(null);
-    setPlanReview(null);
-    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_DESTROY_SESSION, {
-      sessionId: sessionIdRef.current,
-    });
-  }, []);
-
   return {
     sessionId,
     conversation,
@@ -657,7 +624,6 @@ const useDashboardAgent = () => {
     sendMessage,
     stopAgent,
     resetSession,
-    destroySession,
     changeProvider,
     approvePlan,
     setError,

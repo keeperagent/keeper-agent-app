@@ -415,7 +415,7 @@ class AgentTaskScheduler {
       });
     } else {
       agentCreator = await createKeeperAgent({
-        provider: (job.llmProvider as LLMProvider) || LLMProvider.CLAUDE,
+        provider: job.llmProvider as LLMProvider,
         toolContext,
         memoryFile,
       });
