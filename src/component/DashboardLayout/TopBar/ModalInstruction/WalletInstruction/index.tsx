@@ -83,8 +83,8 @@ const WalletInstruction = (props: IProps) => {
       </div>
 
       <div className="item" style={{ marginTop: "1rem" }}>
-        When saving your wallet, you should use a{" "}
-        <span className="bold">Secret key</span>. When a secret key is set, the
+        When saving your wallet, you should use an{" "}
+        <span className="bold">Encrypt key</span>. When an encrypt key is set, the
         data will go through an encryption step before being saved to your
         computer. So if someone sees or gets information from your computer,
         they only get the encrypted data, and they can't see the original data,

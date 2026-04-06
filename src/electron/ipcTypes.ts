@@ -392,7 +392,7 @@ export type IpcUpsertNodeSecretPayload = {
   requestId?: string;
   workflowId: number;
   nodeId: string;
-  secretKey?: string;
+  encryptKey?: string;
 };
 
 export type IpcGetNodeSecretPayload = {
@@ -606,11 +606,11 @@ export type IpcGlobalSearchPayload = {
   searchText: string;
 };
 
-// SecretKeyCache
-export type IpcGetSecretKeyCachePayload = {
+// EncryptKeyCache
+export type IpcGetEncryptKeyCachePayload = {
   campaignId: number;
 };
-export type IpcSetSecretKeyCachePayload = {
+export type IpcSetEncryptKeyCachePayload = {
   campaignId: number;
   value: any;
 };

@@ -384,10 +384,10 @@ const WalletView = (props: any) => {
           </Col>
 
           <Col span={12}>
-            <Form.Item label={`${translate("wallet.secretKey")}:`}>
+            <Form.Item label={`${translate("wallet.encryptKey")}:`}>
               <PasswordInput
                 name="encryptKey"
-                placeholder={translate("wallet.secretKey")}
+                placeholder={translate("wallet.encryptKey")}
                 onChange={onChangeEncryptKey}
                 extendClass="encryptKey-agent"
               />

@@ -260,8 +260,8 @@ const formatMcpServer = (data: any): IMcpServer => {
 
 const formatAgentRegistry = (data: any): IAgentRegistry => {
   let formatedData = formatDBResponse(data);
-  const hasSecretKey = Boolean(formatedData?.secretKey);
-  formatedData = _.omit(formatedData, ["secretKey"]);
+  const hasEncryptKey = Boolean(formatedData?.encryptKey);
+  formatedData = _.omit(formatedData, ["encryptKey"]);
   return {
     ...formatedData,
     allowedBaseTools:
@@ -292,7 +292,7 @@ const formatAgentRegistry = (data: any): IAgentRegistry => {
             Number(item),
           )
         : formatedData?.profileIds || [],
-    hasSecretKey,
+    hasEncryptKey,
   };
 };
 
@@ -319,15 +319,15 @@ const formatSchedule = (data: any): ISchedule => {
 
 const formatJob = (data: any): IJob => {
   let formatedData = formatDBResponse(data);
-  const hasSecretKey = Boolean(formatedData?.secretKey);
-  formatedData = _.omit(formatedData, ["secretKey"]);
+  const hasEncryptKey = Boolean(formatedData?.encryptKey);
+  formatedData = _.omit(formatedData, ["encryptKey"]);
   formatedData = {
     ...formatedData,
     schedule:
       formatedData?.Schedules && formatedData?.Schedules?.length > 0
         ? formatSchedule(formatedData?.Schedules[0])
         : null,
-    hasSecretKey,
+    hasEncryptKey,
   };
 
   formatedData = {

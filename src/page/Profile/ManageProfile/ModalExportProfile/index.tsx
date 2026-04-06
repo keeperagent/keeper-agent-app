@@ -143,12 +143,12 @@ const ModalExportProfile = (props: any) => {
           </Form.Item>
 
           <Form.Item
-            label={`${translate("wallet.secretKey")}`}
+            label={`${translate("wallet.encryptKey")}`}
             name="encryptKey"
           >
             <PasswordInput
               name="encryptKey"
-              placeholder={`${translate("wallet.enterSecretKey")}`}
+              placeholder={`${translate("wallet.enterEncryptKey")}`}
               extendClass="encryptKey-manual"
             />
           </Form.Item>

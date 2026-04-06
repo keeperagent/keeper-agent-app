@@ -8,7 +8,7 @@ const useSaveNodeSecret = () => {
   const saveNodeSecret = (
     workflowId: number,
     nodeId: string,
-    secretKey: string,
+    encryptKey: string,
   ): Promise<void> => {
     return new Promise((resolve) => {
       const requestId = uid(25);
@@ -17,7 +17,7 @@ const useSaveNodeSecret = () => {
         requestId,
         workflowId,
         nodeId,
-        secretKey,
+        encryptKey,
       });
 
       const handler = (_event: any, payload: any) => {
@@ -55,7 +55,7 @@ const useGetNodeSecret = () => {
         if (payload?.requestId !== requestId) return;
         window?.electron?.removeAllListeners(MESSAGE.GET_NODE_SECRET_RES);
         setLoading(false);
-        resolve(Boolean(payload?.hasSecretKey));
+        resolve(Boolean(payload?.hasEncryptKey));
       };
 
       window?.electron?.on(MESSAGE.GET_NODE_SECRET_RES, handler);

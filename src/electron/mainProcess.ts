@@ -27,7 +27,7 @@ import { telegramController } from "./controller/telegram";
 import { runScheduleController } from "./controller/schedule";
 import { runJobController } from "./controller/job";
 import { masterPasswordController } from "./controller/masterPassword";
-import { runSecretKeyController } from "./controller/secretKeyCache";
+import { runEncryptKeyController } from "./controller/encryptKeyCache";
 import { telegramBotService } from "./chatGateway/adapters/telegram";
 import { whatsappService } from "./chatGateway/adapters/whatsapp";
 import { scheduleManager } from "./schedule";
@@ -75,7 +75,7 @@ const runMainProcess = () => {
   runScheduleController();
   runJobController();
   masterPasswordController();
-  runSecretKeyController();
+  runEncryptKeyController();
   searchController();
   agentController();
   mcpServerController();

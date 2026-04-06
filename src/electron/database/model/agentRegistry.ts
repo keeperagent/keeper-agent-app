@@ -87,7 +87,7 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      secretKey: {
+      encryptKey: {
         type: DataTypes.STRING,
         allowNull: true,
       },

@@ -26,11 +26,11 @@
       b) Set all at once — send `varName=value` lines in one message.
       c) Skip / Next step → go to Step 3.
 
-    Step 3 – Secret key (optional)
-      User can enter a secret key or skip it → go to Step 4.
+    Step 3 – Encrypt key (optional)
+      User can enter an encrypt key or skip it → go to Step 4.
 
     Step 4 – Confirm & run
-      Shows a summary (campaign, workflow, variables, secret key).
+      Shows a summary (campaign, workflow, variables, encrypt key).
       "Run now" sends the config to the renderer via IPC and saves
       it for future re-runs. "Cancel" aborts the flow.
 
@@ -364,12 +364,12 @@ class TelegramBotService {
         })
         .join("\n");
 
-      let hint = `\n\n💡 <i>Quick run = skip variables & secret key, use defaults</i>`;
+      let hint = `\n\n💡 <i>Quick run = skip variables & encrypt key, use defaults</i>`;
       if (lastRunConfig) {
         const lastVars = Object.entries(lastRunConfig.variables)
           .map(([key, value]) => `${key}=${value}`)
           .join(", ");
-        hint += `\n🔄 <i>Re-run = use last settings${lastVars ? `: ${lastVars}` : ""}${lastRunConfig.encryptKey ? ", with secret key" : ""}</i>`;
+        hint += `\n🔄 <i>Re-run = use last settings${lastVars ? `: ${lastVars}` : ""}${lastRunConfig.encryptKey ? ", with encrypt key" : ""}</i>`;
       }
 
       ctx.reply(
@@ -404,18 +404,18 @@ class TelegramBotService {
         },
       );
     } else {
-      let hint = `\n\n💡 <i>Quick run = skip secret key, run immediately</i>`;
+      let hint = `\n\n💡 <i>Quick run = skip encrypt key, run immediately</i>`;
       if (lastRunConfig) {
-        hint += `\n🔄 <i>Re-run = use last settings${lastRunConfig.encryptKey ? ", with secret key" : ""}</i>`;
+        hint += `\n🔄 <i>Re-run = use last settings${lastRunConfig.encryptKey ? ", with encrypt key" : ""}</i>`;
       }
 
-      ctx.reply(`Do you want to set an secret key?` + hint, {
+      ctx.reply(`Do you want to set an encrypt key?` + hint, {
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "Enter secret key",
+                text: "Enter encrypt key",
                 callback_data: buildAction(
                   TELEGRAM_BOT.ACTION_ENTER_ENCRYPT_KEY + "_",
                   workflowId,
@@ -423,7 +423,7 @@ class TelegramBotService {
                 ),
               },
               {
-                text: "Skip secret key",
+                text: "Skip encrypt key",
                 callback_data: buildAction(
                   TELEGRAM_BOT.ACTION_SKIP_ENCRYPT_KEY + "_",
                   workflowId,
@@ -502,12 +502,12 @@ class TelegramBotService {
         ? TELEGRAM_BOT.ACTION_BACK_TO_VARLIST
         : TELEGRAM_BOT.ACTION_BACK_TO_STEP1;
 
-    ctx.reply("Do you want to set an secret key?", {
+    ctx.reply("Do you want to set an encrypt key?", {
       reply_markup: {
         inline_keyboard: [
           [
             {
-              text: "Enter secret key",
+              text: "Enter encrypt key",
               callback_data: buildAction(
                 TELEGRAM_BOT.ACTION_ENTER_ENCRYPT_KEY + "_",
                 workflowId,
@@ -515,7 +515,7 @@ class TelegramBotService {
               ),
             },
             {
-              text: "Skip secret key",
+              text: "Skip encrypt key",
               callback_data: buildAction(
                 TELEGRAM_BOT.ACTION_SKIP_ENCRYPT_KEY + "_",
                 workflowId,
@@ -548,7 +548,7 @@ class TelegramBotService {
     let msg = `<b>📋 Confirm Run</b>\n\n`;
     msg += `<b>Campaign:</b> ${campaignName}\n`;
     msg += `<b>Workflow:</b> ${workflowName}\n`;
-    msg += `<b>Secret key:</b> ${encryptKey ? "Yes (set)" : "No"}\n`;
+    msg += `<b>Encrypt key:</b> ${encryptKey ? "Yes (set)" : "No"}\n`;
 
     const varEntries = Object.entries(variables);
     if (varEntries.length > 0) {
@@ -1001,7 +1001,7 @@ class TelegramBotService {
         );
       });
 
-      // Next step -> secret key
+      // Next step -> encrypt key
       telegramBot.action(/^next_step_var_[\d_]+$/, async (ctx) => {
         await ctx.deleteMessage();
         const { workflowId, campaignId } = parseIds(ctx.match[0]);
@@ -1012,7 +1012,7 @@ class TelegramBotService {
         this.showEncryptKeyOptions(ctx, workflowId, campaignId);
       });
 
-      // Step 3: Enter or skip secret key
+      // Step 3: Enter or skip encrypt key
       telegramBot.action(
         [
           /^enter_encrypt_key_campaign[\d_]+/,
@@ -1040,7 +1040,7 @@ class TelegramBotService {
           if (callbackData.startsWith(TELEGRAM_BOT.ACTION_ENTER_ENCRYPT_KEY)) {
             this.runSessionMap.get(chatId)!.awaitingInput =
               AWAITING_ENCRYPT_KEY;
-            ctx.reply("Enter your secret key:", {
+            ctx.reply("Enter your encrypt key:", {
               reply_markup: {
                 inline_keyboard: [
                   [

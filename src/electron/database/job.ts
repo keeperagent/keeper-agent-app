@@ -137,8 +137,8 @@ class JobDB {
         {
           ...data,
           isCompleted: false,
-          secretKey: data?.secretKey
-            ? encryptionService.encryptData(data?.secretKey)
+          encryptKey: data?.encryptKey
+            ? encryptionService.encryptData(data?.encryptKey)
             : "",
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
@@ -184,13 +184,13 @@ class JobDB {
           ...data,
           updateAt: new Date().getTime(),
         },
-        ["id", "secretKey", "hasSecretKey"],
+        ["id", "encryptKey", "hasEncryptKey"],
       );
 
-      // Only update secretKey when explicitly provided
-      if (data?.secretKey !== undefined) {
-        updateData.secretKey = data.secretKey
-          ? encryptionService.encryptData(data.secretKey)
+      // Only update encryptKey when explicitly provided
+      if (data?.encryptKey !== undefined) {
+        updateData.encryptKey = data.encryptKey
+          ? encryptionService.encryptData(data.encryptKey)
           : "";
       }
 
@@ -205,19 +205,19 @@ class JobDB {
     }
   }
 
-  async getSecretKey(id: number): Promise<[string | null, Error | null]> {
+  async getEncryptKey(id: number): Promise<[string | null, Error | null]> {
     try {
       const data = await JobModel.findOne({
         where: { id },
-        attributes: ["secretKey"],
+        attributes: ["encryptKey"],
         raw: false,
       });
       const formatedData = formatDBResponse(data as any);
-      if (!formatedData?.secretKey) {
+      if (!formatedData?.encryptKey) {
         return ["", null];
       }
       return [
-        encryptionService.decryptData(formatedData.secretKey) || "",
+        encryptionService.decryptData(formatedData.encryptKey) || "",
         null,
       ];
     } catch (err: any) {

@@ -94,8 +94,8 @@ class AgentRegistryDB {
           allowedSkillIds: JSON.stringify(data?.allowedSkillIds || []),
           allowedSubAgentIds: JSON.stringify(data?.allowedSubAgentIds || []),
           profileIds: JSON.stringify(data?.profileIds || []),
-          secretKey: data?.secretKey
-            ? encryptionService.encryptData(data.secretKey)
+          encryptKey: data?.encryptKey
+            ? encryptionService.encryptData(data.encryptKey)
             : "",
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
@@ -126,13 +126,13 @@ class AgentRegistryDB {
           profileIds: JSON.stringify(data?.profileIds || []),
           updateAt: new Date().getTime(),
         },
-        ["id", "secretKey", "hasSecretKey"],
+        ["id", "encryptKey", "hasEncryptKey"],
       );
 
-      // Only update secretKey when explicitly provided
-      if (data?.secretKey !== undefined) {
-        updateData.secretKey = data.secretKey
-          ? encryptionService.encryptData(data.secretKey)
+      // Only update encryptKey when explicitly provided
+      if (data?.encryptKey !== undefined) {
+        updateData.encryptKey = data.encryptKey
+          ? encryptionService.encryptData(data.encryptKey)
           : "";
       }
 
@@ -166,17 +166,17 @@ class AgentRegistryDB {
     }
   }
 
-  async getSecretKey(id: number): Promise<string> {
+  async getEncryptKey(id: number): Promise<string> {
     const data = await AgentRegistryModel.findOne({
       where: { id },
-      attributes: ["secretKey"],
+      attributes: ["encryptKey"],
       raw: false,
     });
     const formatedData = formatDBResponse(data as any);
-    if (!formatedData?.secretKey) {
+    if (!formatedData?.encryptKey) {
       return "";
     }
-    return encryptionService.decryptData(formatedData.secretKey) || "";
+    return encryptionService.decryptData(formatedData.encryptKey) || "";
   }
 
   async deleteAgentRegistry(

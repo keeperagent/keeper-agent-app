@@ -3,17 +3,17 @@ import { logEveryWhere } from "@/electron/service/util";
 import { encryptionService } from "@/electron/service/encrypt";
 
 class NodeSecretDB {
-  saveSecretKey = async (
+  saveEncryptKey = async (
     workflowId: number,
     nodeId: string,
-    secretKey: string,
+    encryptKey: string,
   ): Promise<Error | null> => {
     try {
       const now = new Date().getTime();
       await NodeSecretModel.upsert({
         workflowId,
         nodeId,
-        secretKey: secretKey ? encryptionService.encryptData(secretKey) : "",
+        encryptKey: encryptKey ? encryptionService.encryptData(encryptKey) : "",
         createAt: now,
         updateAt: now,
       });
@@ -24,7 +24,7 @@ class NodeSecretDB {
     }
   };
 
-  getSecretKey = async (
+  getEncryptKey = async (
     workflowId: number,
     nodeId: string,
   ): Promise<string | null> => {
@@ -33,12 +33,12 @@ class NodeSecretDB {
         where: { workflowId, nodeId },
         raw: true,
       });
-      if (!row?.secretKey) {
+      if (!row?.encryptKey) {
         return null;
       }
-      return encryptionService.decryptData(row.secretKey) || null;
+      return encryptionService.decryptData(row.encryptKey) || null;
     } catch (err: any) {
-      logEveryWhere({ message: `nodeSecretDB.getSecretKey() error: ${err?.message}` });
+      logEveryWhere({ message: `nodeSecretDB.getEncryptKey() error: ${err?.message}` });
       return null;
     }
   };

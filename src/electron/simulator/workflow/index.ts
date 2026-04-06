@@ -78,7 +78,7 @@ export class WorkflowManager {
         job?.campaignId,
         job?.scheduleId || 0,
       );
-      workflow.runWorkflow(job?.secretKey || "");
+      workflow.runWorkflow(job?.encryptKey || "");
       await sleep(5000);
     }
   };

@@ -72,7 +72,7 @@ const JobPicker = (props: IProps) => {
       previousJob?.campaignId !== job?.campaignId ||
       previousJob?.workflowId !== job?.workflowId ||
       previousJob?.timeout !== job?.timeout ||
-      previousJob?.hasSecretKey !== job?.hasSecretKey ||
+      previousJob?.hasEncryptKey !== job?.hasEncryptKey ||
       previousJob?.prompt !== job?.prompt
     ) {
       form.setFieldsValue({
@@ -140,8 +140,8 @@ const JobPicker = (props: IProps) => {
   };
 
   const onChangeEncryptKey = (value: string) => {
-    onChangeJob({ ...job, secretKey: value }, index);
-    form.setFieldsValue({ secretKey: value });
+    onChangeJob({ ...job, encryptKey: value }, index);
+    form.setFieldsValue({ encryptKey: value });
   };
 
   const onChangeTimeout = (value: number | null) => {
@@ -295,16 +295,16 @@ const JobPicker = (props: IProps) => {
                 </Form.Item>
 
                 <Form.Item
-                  label={`${translate("wallet.secretKey")}:`}
-                  name="secretKey"
+                  label={`${translate("wallet.encryptKey")}:`}
+                  name="encryptKey"
                   className="input-password-wrapper"
                 >
                   <PasswordInput
-                    name="secretKey"
-                    placeholder={translate("wallet.secretKey")}
+                    name="encryptKey"
+                    placeholder={translate("wallet.encryptKey")}
                     onChange={onChangeEncryptKey}
-                    extendClass={`secretKey-${index}`}
-                    initialValue={job?.hasSecretKey ? "•" : ""}
+                    extendClass={`encryptKey-${index}`}
+                    initialValue={job?.hasEncryptKey ? "•" : ""}
                     shouldHideValue={true}
                   />
                 </Form.Item>

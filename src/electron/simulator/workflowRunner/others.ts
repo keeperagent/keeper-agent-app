@@ -254,7 +254,7 @@ export class OtherWorkflow {
         let encryptKey = "";
         if (flowProfile?.nodeID && flowProfile?.campaignConfig?.workflowId) {
           encryptKey =
-            (await nodeSecretDB.getSecretKey(
+            (await nodeSecretDB.getEncryptKey(
               flowProfile.campaignConfig.workflowId,
               flowProfile.nodeID,
             )) || "";
@@ -310,7 +310,7 @@ export class OtherWorkflow {
         let encryptKey = "";
         if (flowProfile?.nodeID && flowProfile?.campaignConfig?.workflowId) {
           encryptKey =
-            (await nodeSecretDB.getSecretKey(
+            (await nodeSecretDB.getEncryptKey(
               flowProfile.campaignConfig.workflowId,
               flowProfile.nodeID,
             )) || "";
@@ -406,7 +406,7 @@ export class OtherWorkflow {
         let encryptKey = "";
         if (flowProfile?.nodeID && flowProfile?.campaignConfig?.workflowId) {
           encryptKey =
-            (await nodeSecretDB.getSecretKey(
+            (await nodeSecretDB.getEncryptKey(
               flowProfile.campaignConfig.workflowId,
               flowProfile.nodeID,
             )) || "";
@@ -518,7 +518,7 @@ export class OtherWorkflow {
         let encryptKey = "";
         if (flowProfile?.nodeID && flowProfile?.campaignConfig?.workflowId) {
           encryptKey =
-            (await nodeSecretDB.getSecretKey(
+            (await nodeSecretDB.getEncryptKey(
               flowProfile.campaignConfig.workflowId,
               flowProfile.nodeID,
             )) || "";

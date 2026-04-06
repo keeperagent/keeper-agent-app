@@ -11,11 +11,11 @@ export const nodeSecretController = () => {
     MESSAGE.UPSERT_NODE_SECRET,
     MESSAGE.UPSERT_NODE_SECRET_RES,
     async (event, payload) => {
-      const { requestId, workflowId, nodeId, secretKey } = payload;
-      const err = await nodeSecretDB.saveSecretKey(
+      const { requestId, workflowId, nodeId, encryptKey } = payload;
+      const err = await nodeSecretDB.saveEncryptKey(
         workflowId,
         nodeId,
-        secretKey || "",
+        encryptKey || "",
       );
       event.reply(MESSAGE.UPSERT_NODE_SECRET_RES, {
         requestId,
@@ -29,10 +29,10 @@ export const nodeSecretController = () => {
     MESSAGE.GET_NODE_SECRET_RES,
     async (event, payload) => {
       const { requestId, workflowId, nodeId } = payload;
-      const secretKey = await nodeSecretDB.getSecretKey(workflowId, nodeId);
+      const encryptKey = await nodeSecretDB.getEncryptKey(workflowId, nodeId);
       event.reply(MESSAGE.GET_NODE_SECRET_RES, {
         requestId,
-        hasSecretKey: Boolean(secretKey),
+        hasEncryptKey: Boolean(encryptKey),
       });
     },
   );

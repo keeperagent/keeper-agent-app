@@ -832,7 +832,7 @@ export class Workflow {
         isPending: false,
         isFirstJob: true,
         isRunning: true,
-        secretKey: this.encryptKey,
+        encryptKey: this.encryptKey,
         lastRunTime: new Date().getTime(),
       });
     } else {
@@ -840,7 +840,7 @@ export class Workflow {
         id: existedJob?.id,
         isRunning: true,
         lastRunTime: new Date().getTime(),
-        secretKey: this.encryptKey,
+        encryptKey: this.encryptKey,
       });
     }
   };
@@ -869,7 +869,7 @@ export class Workflow {
       await jobDB.updateJob({
         id: existedJob?.id,
         isRunning: false,
-        secretKey: "",
+        encryptKey: "",
         lastEndTime: new Date().getTime(),
       });
     }
