@@ -144,26 +144,26 @@ const ListAgent = (props: any) => {
                 onOpenChat={onOpenChat}
               />
             ))}
-
-            {listAgentRegistry.length === 0 && (
-              <div className="empty-state">
-                <div className="empty-state__title">
-                  {translate("agent.noRegistryAgents")}
-                </div>
-                <div className="empty-state__desc">
-                  {translate("agent.addRegistryDesc")}
-                </div>
-
-                <Button
-                  className="header-add-btn"
-                  type="primary"
-                  onClick={onOpenCreate}
-                >
-                  {translate("agent.addRegistry")}
-                </Button>
-              </div>
-            )}
           </div>
+
+          {listAgentRegistry.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-state__title">
+                {translate("agent.noRegistryAgents")}
+              </div>
+              <div className="empty-state__desc">
+                {translate("agent.addRegistryDesc")}
+              </div>
+
+              <Button
+                className="header-add-btn"
+                type="primary"
+                onClick={onOpenCreate}
+              >
+                {translate("agent.addRegistry")}
+              </Button>
+            </div>
+          )}
 
           {totalData > PAGE_SIZE && (
             <div className="pagination">
