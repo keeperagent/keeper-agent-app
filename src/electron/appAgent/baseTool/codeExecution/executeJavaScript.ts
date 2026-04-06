@@ -1,38 +1,49 @@
 import { DynamicTool } from "@langchain/core/tools";
 import { execFile } from "child_process";
 import { mkdir, writeFile } from "fs/promises";
-import { app } from "electron";
 import path from "path";
-import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
+import { redact } from "@keeperagent/crypto-key-guard";
 import { logEveryWhere } from "@/electron/service/util";
 import { safeStringify } from "@/electron/appAgent/utils";
+import {
+  buildSafeEnv,
+  getWorkspaceRoot,
+} from "@/electron/appAgent/baseTool/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 
 const TIMEOUT_MS = 60_000;
 const INSTALL_TIMEOUT_MS = 60_000;
 const MAX_OUTPUT_LENGTH = 10_000;
 
-const getWorkspaceRoot = () =>
-  path.join(app.getPath("userData"), KA_WORKSPACE_FOLDER);
+const getJsWorkspaceDir = () => path.join(getWorkspaceRoot(), "javascript");
 
-const getPyWorkspaceDir = () => path.join(getWorkspaceRoot(), "python");
+const getNodePath = (): string =>
+  path.join(getJsWorkspaceDir(), "node_modules");
 
-/** Extract module name from a "No module named" error message. */
 const extractMissingModule = (errorMsg: string): string | null => {
-  const match = errorMsg.match(/No module named '([^']+)'/);
-  return match ? match[1].split(".")[0] : null;
+  const match = errorMsg.match(
+    /Cannot find module '(@[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+|[^'/]+)'/,
+  );
+  return match ? match[1] : null;
 };
 
-/** Install a pip package into the python workspace. */
 const installModule = (moduleName: string): Promise<string> => {
-  const cwd = getPyWorkspaceDir();
+  // Accepts plain packages (e.g. "lodash") and scoped packages (e.g. "@scope/pkg").
+  // Only alphanumerics, underscores, dots, and hyphens are allowed in each segment.
+  if (!/^(@[a-zA-Z0-9_.-]+\/)?[a-zA-Z0-9_.-]+$/.test(moduleName)) {
+    throw new Error(
+      `Refusing to install suspicious module name: '${moduleName}'`,
+    );
+  }
+
+  const cwd = getJsWorkspaceDir();
   logEveryWhere({
-    message: `[Agent] pip installing '${moduleName}' in ${cwd}`,
+    message: `[Agent] Installing module '${moduleName}' in ${cwd}`,
   });
   return new Promise((resolve, reject) => {
     execFile(
-      "pip3",
-      ["install", moduleName, "--target", path.join(cwd, "site-packages")],
+      "npm",
+      ["install", moduleName, "--save", "--ignore-scripts"],
       { timeout: INSTALL_TIMEOUT_MS, cwd },
       (error, stdout, stderr) => {
         if (error) {
@@ -45,17 +56,18 @@ const installModule = (moduleName: string): Promise<string> => {
   });
 };
 
-export const executePythonTool = (toolContext?: ToolContext) =>
+export const executeJavaScriptTool = (toolContext?: ToolContext) =>
   new DynamicTool({
-    name: "execute_python",
+    name: "execute_javascript",
     description:
-      "Execute Python code and return the output. " +
-      "The code runs in a child process with full access to imports and async. " +
-      "Use print() to output results — only stdout is captured and returned. " +
-      "Missing pip packages will be auto-installed on first use. " +
+      "Execute JavaScript code in a Node.js environment and return the output. " +
+      "The code runs in a child process with full access to require() and async/await. " +
+      "For HTTP requests: use the axios library — add const axios = require('axios'); then use axios.get(url), axios.post(url, data), etc. " +
+      "Use console.log() to output results — only stdout is captured and returned. " +
+      "Missing npm packages will be auto-installed on first use. " +
       "The code has a 60-second timeout. " +
       "IMPORTANT: Do NOT retry if the same error occurs. Report the error to the user instead. " +
-      "Input: the Python code string to execute.",
+      "Input: the JavaScript code string to execute.",
     func: async (code: string) => {
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
@@ -64,25 +76,24 @@ export const executePythonTool = (toolContext?: ToolContext) =>
           status: "blocked_planning_mode",
         });
       }
-      const workspaceDir = getPyWorkspaceDir();
+      const workspaceDir = getJsWorkspaceDir();
       await mkdir(workspaceDir, { recursive: true });
-      const sitePackagesDir = path.join(workspaceDir, "site-packages");
-      await mkdir(sitePackagesDir, { recursive: true });
-      const scriptPath = path.join(workspaceDir, "agent_script.py");
+      const agentId = toolContext?.agentRegistryId || "main";
+      const scriptPath = path.join(workspaceDir, `agent_script_${agentId}.cjs`);
+      const childEnv = await buildSafeEnv(getWorkspaceRoot(), {
+        NODE_PATH: getNodePath(),
+      });
 
       const runScript = (): Promise<{ stdout: string; stderr: string }> =>
         new Promise((resolve, reject) => {
           execFile(
-            "python3",
+            "node",
             [scriptPath],
             {
               timeout: TIMEOUT_MS,
               maxBuffer: 1024 * 1024,
               cwd: getWorkspaceRoot(),
-              env: {
-                ...process.env,
-                PYTHONPATH: sitePackagesDir,
-              },
+              env: childEnv,
             },
             (error, stdout, stderr) => {
               if (error) {
@@ -99,7 +110,8 @@ export const executePythonTool = (toolContext?: ToolContext) =>
         });
 
       try {
-        await writeFile(scriptPath, code, "utf-8");
+        const wrappedCode = `(async () => {\n${code}\n})().catch(e => { console.error(e.message || e); process.exit(1); });`;
+        await writeFile(scriptPath, wrappedCode, "utf-8");
 
         let result: { stdout: string; stderr: string };
         try {
@@ -126,6 +138,7 @@ export const executePythonTool = (toolContext?: ToolContext) =>
 
         const { stdout, stderr } = result;
 
+        // Combine stdout + stderr for full visibility
         let output = stdout;
         if (stderr) {
           output = output
@@ -134,22 +147,23 @@ export const executePythonTool = (toolContext?: ToolContext) =>
         }
 
         if (!output) {
-          logEveryWhere({ message: "[Agent] execute_python: no output" });
-          return "No output. Your code must use print() to output results. Do NOT retry without fixing this.";
+          logEveryWhere({ message: "[Agent] execute_javascript: no output" });
+          return "No output. Your code must use console.log() to print results. Do NOT retry without fixing this.";
         }
 
+        const { text: redactedOutput } = redact(output);
         const truncated =
-          output.length > MAX_OUTPUT_LENGTH
-            ? output.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"
-            : output;
+          redactedOutput.length > MAX_OUTPUT_LENGTH
+            ? redactedOutput.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"
+            : redactedOutput;
 
         logEveryWhere({
-          message: `[Agent] execute_python: success (${stdout.length} chars)`,
+          message: `[Agent] execute_javascript: success (${stdout.length} chars)`,
         });
         return truncated;
       } catch (err: any) {
         logEveryWhere({
-          message: `[Agent] execute_python() error: ${err?.message}`,
+          message: `[Agent] execute_javascript() error: ${err?.message}`,
         });
         return `Error: ${err?.message || String(err)}. Do NOT retry with the same code.`;
       }

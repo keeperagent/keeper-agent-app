@@ -22,7 +22,7 @@ import {
   redistributeToCapacity,
   capitalizeFirstLetter,
   extractErrorMessage,
-} from "./utils";
+} from "../utils";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { safeStringify } from "../utils";
 

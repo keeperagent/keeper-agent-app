@@ -1,6 +1,45 @@
+import { mkdir } from "fs/promises";
+import { app } from "electron";
+import path from "path";
+import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
+
+export const getWorkspaceRoot = () =>
+  path.join(app.getPath("userData"), KA_WORKSPACE_FOLDER);
+
+const SAFE_ENV_KEYS = [
+  "PATH",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TZ",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+];
+
+export const buildSafeEnv = async (
+  workspaceRoot: string,
+  extras: Record<string, string>,
+): Promise<NodeJS.ProcessEnv> => {
+  // Use a fake HOME instead of the real one to prevent scripts from accessing
+  // sensitive directories like ~/.ssh, ~/.aws, ~/.config, etc.
+  const sandboxHome = `${workspaceRoot}/sandbox_home`;
+  await mkdir(sandboxHome, { recursive: true });
+
+  const safeEnv: NodeJS.ProcessEnv = { HOME: sandboxHome };
+  for (const key of SAFE_ENV_KEYS) {
+    if (process.env[key]) {
+      safeEnv[key] = process.env[key];
+    }
+  }
+  return { ...safeEnv, ...extras };
+};
+
 // Helper function to capitalize first letter of chain name
 export const capitalizeFirstLetter = (str: string): string => {
-  if (!str) return str;
+  if (!str) {
+    return str;
+  }
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
@@ -16,11 +55,11 @@ export const capitalizeFirstLetter = (str: string): string => {
 export const redistributeToCapacity = (
   planned: number[],
   available: number[],
-  targetTotal: number
+  targetTotal: number,
 ): number[] => {
   // Initial clamp to capacity.
   let effective = planned.map((amt, idx) =>
-    Math.min(Math.max(amt, 0), Math.max(available[idx], 0))
+    Math.min(Math.max(amt, 0), Math.max(available[idx], 0)),
   );
   const current = effective.reduce((a, b) => a + b, 0);
   const deficit = Math.max(targetTotal - current, 0);
@@ -28,14 +67,14 @@ export const redistributeToCapacity = (
 
   // Remaining capacity after clamp.
   const remaining = available.map((cap, idx) =>
-    Math.max(cap - effective[idx], 0)
+    Math.max(cap - effective[idx], 0),
   );
   const remainingTotal = remaining.reduce((a, b) => a + b, 0);
   if (remainingTotal === 0) return effective;
 
   // Single proportional fill.
   effective = effective.map(
-    (amt, idx) => amt + (remaining[idx] / remainingTotal) * deficit
+    (amt, idx) => amt + (remaining[idx] / remainingTotal) * deficit,
   );
 
   // Final clamp to eliminate any floating-point overshoot.
@@ -48,7 +87,7 @@ export const redistributeToCapacity = (
 
   // Final clamp to ensure we don't exceed available capacity
   effective = effective.map((amt, idx) =>
-    Math.min(amt, Math.max(available[idx], 0))
+    Math.min(amt, Math.max(available[idx], 0)),
   );
 
   // CRITICAL: After clamping to capacity, ensure total doesn't exceed targetTotal
@@ -90,7 +129,7 @@ export const extractErrorMessage = (error: any): string => {
   try {
     const stringified = JSON.stringify(
       error,
-      Object.getOwnPropertyNames(error)
+      Object.getOwnPropertyNames(error),
     );
     if (stringified && stringified !== "{}" && stringified !== "null") {
       return stringified;
