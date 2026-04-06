@@ -7,6 +7,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { safeStringify } from "@/electron/appAgent/utils";
 import {
   buildSafeEnv,
+  containsSensitivePath,
   getWorkspaceRoot,
 } from "@/electron/appAgent/baseTool/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
@@ -64,7 +65,7 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
       "The code runs in a child process with full access to require() and async/await. " +
       "For HTTP requests: use the axios library — add const axios = require('axios'); then use axios.get(url), axios.post(url, data), etc. " +
       "Use console.log() to output results — only stdout is captured and returned. " +
-      "Missing npm packages will be auto-installed on first use. " +
+      "If the code requires external npm packages, list them explicitly in your submit_plan summary BEFORE calling this tool, so the user can see what will be installed. " +
       "The code has a 60-second timeout. " +
       "IMPORTANT: Do NOT retry if the same error occurs. Report the error to the user instead. " +
       "Input: the JavaScript code string to execute.",
@@ -74,6 +75,13 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
           error:
             "Cannot execute code in planning mode. Call submit_plan with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
+        });
+      }
+      if (containsSensitivePath(code)) {
+        return safeStringify({
+          error:
+            "Execution blocked: code references sensitive application files (database or profile data) that are not accessible to scripts.",
+          status: "blocked_sensitive_path",
         });
       }
       const workspaceDir = getJsWorkspaceDir();
@@ -92,7 +100,7 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
             {
               timeout: TIMEOUT_MS,
               maxBuffer: 1024 * 1024,
-              cwd: getWorkspaceRoot(),
+              cwd: getJsWorkspaceDir(),
               env: childEnv,
             },
             (error, stdout, stderr) => {

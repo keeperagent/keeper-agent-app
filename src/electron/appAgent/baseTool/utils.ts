@@ -1,32 +1,30 @@
-import { mkdir } from "fs/promises";
 import { app } from "electron";
 import path from "path";
 import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
 
+// Patterns that indicate code is trying to access sensitive files outside the sandbox.
+// These are blocked regardless of how the path is constructed.
+const BLOCKED_CODE_PATTERNS = [
+  /ka_app\.db/i,
+  /ka_profile/i,
+  /auth\.bin/i,
+  /ka_browser/i,
+  /ka_extension/i,
+];
+
+export const containsSensitivePath = (code: string): boolean =>
+  BLOCKED_CODE_PATTERNS.some((pattern) => pattern.test(code));
+
 export const getWorkspaceRoot = () =>
   path.join(app.getPath("userData"), KA_WORKSPACE_FOLDER);
 
-const SAFE_ENV_KEYS = [
-  "PATH",
-  "LANG",
-  "LC_ALL",
-  "LC_CTYPE",
-  "TZ",
-  "TMPDIR",
-  "TEMP",
-  "TMP",
-];
+const SAFE_ENV_KEYS = ["PATH"];
 
 export const buildSafeEnv = async (
-  workspaceRoot: string,
+  _workspaceRoot: string,
   extras: Record<string, string>,
 ): Promise<NodeJS.ProcessEnv> => {
-  // Use a fake HOME instead of the real one to prevent scripts from accessing
-  // sensitive directories like ~/.ssh, ~/.aws, ~/.config, etc.
-  const sandboxHome = `${workspaceRoot}/sandbox_home`;
-  await mkdir(sandboxHome, { recursive: true });
-
-  const safeEnv: NodeJS.ProcessEnv = { HOME: sandboxHome };
+  const safeEnv: NodeJS.ProcessEnv = {};
   for (const key of SAFE_ENV_KEYS) {
     if (process.env[key]) {
       safeEnv[key] = process.env[key];

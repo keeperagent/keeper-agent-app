@@ -46,8 +46,29 @@ class KeeperMcpServer {
       next();
     });
 
+    // Failed auth attempts per IP — reset after 15 minutes
+    const failedAttempts = new Map<
+      string,
+      { count: number; resetAt: number }
+    >();
+    const MAX_FAILED_ATTEMPTS = 10;
+    const FAILED_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+
     // Bearer token authentication middleware
     const authenticate = async (req: any, res: any, next: any) => {
+      const ip = req.socket.remoteAddress || "unknown";
+      const now = Date.now();
+      const record = failedAttempts.get(ip);
+
+      if (record) {
+        if (now < record.resetAt && record.count >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).json({ error: "Too many failed attempts" });
+          return;
+        }
+        if (now >= record.resetAt) {
+          failedAttempts.delete(ip);
+        }
+      }
       const authHeader = req.headers.authorization || "";
       const match = authHeader.match(/^Bearer\s+(.+)$/i);
       if (!match) {
@@ -58,9 +79,19 @@ class KeeperMcpServer {
       const tokenHash = hashToken(match[1]);
       const [tokenRecord] = await mcpTokenDB.getByTokenHash(tokenHash);
       if (!tokenRecord) {
+        const existing = failedAttempts.get(ip);
+        if (existing && now < existing.resetAt) {
+          existing.count++;
+        } else {
+          failedAttempts.set(ip, {
+            count: 1,
+            resetAt: now + FAILED_ATTEMPT_WINDOW_MS,
+          });
+        }
         res.status(401).json({ error: "Invalid token" });
         return;
       }
+      failedAttempts.delete(ip);
       req.mcpToken = tokenRecord;
       next();
     };

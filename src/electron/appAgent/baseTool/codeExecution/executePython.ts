@@ -7,6 +7,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { safeStringify } from "@/electron/appAgent/utils";
 import {
   buildSafeEnv,
+  containsSensitivePath,
   getWorkspaceRoot,
 } from "@/electron/appAgent/baseTool/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
@@ -72,7 +73,7 @@ export const executePythonTool = (toolContext?: ToolContext) =>
       "Execute Python code and return the output. " +
       "The code runs in a child process with full access to imports and async. " +
       "Use print() to output results — only stdout is captured and returned. " +
-      "Missing pip packages will be auto-installed on first use. " +
+      "If the code requires external pip packages, list them explicitly in your submit_plan summary BEFORE calling this tool, so the user can see what will be installed. " +
       "The code has a 60-second timeout. " +
       "IMPORTANT: Do NOT retry if the same error occurs. Report the error to the user instead. " +
       "Input: the Python code string to execute.",
@@ -82,6 +83,13 @@ export const executePythonTool = (toolContext?: ToolContext) =>
           error:
             "Cannot execute code in planning mode. Call submit_plan with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
+        });
+      }
+      if (containsSensitivePath(code)) {
+        return safeStringify({
+          error:
+            "Execution blocked: code references sensitive application files (database or profile data) that are not accessible to scripts.",
+          status: "blocked_sensitive_path",
         });
       }
       const workspaceDir = getPyWorkspaceDir();
@@ -102,7 +110,7 @@ export const executePythonTool = (toolContext?: ToolContext) =>
             {
               timeout: TIMEOUT_MS,
               maxBuffer: 1024 * 1024,
-              cwd: getWorkspaceRoot(),
+              cwd: getPyWorkspaceDir(),
               env: childEnv,
             },
             (error, stdout, stderr) => {

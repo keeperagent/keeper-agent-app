@@ -757,6 +757,33 @@ class TelegramBotService {
 
       logEveryWhere({ message: "Starting Telegram bot" });
 
+      // Authorization middleware — only the registered chat can interact with the bot.
+      // If no chat is registered yet, only /connect is allowed through (first-time setup).
+      telegramBot.use(async (ctx, next) => {
+        const [pref] = await preferenceDB.getOnePreference();
+        const authorizedChatId = pref?.chatIdTelegram;
+        const incomingChatId = ctx.chat?.id;
+
+        if (!authorizedChatId) {
+          // No chat registered yet — only allow /connect so the owner can set up
+          const text =
+            ctx.message && "text" in ctx.message ? ctx.message.text : "";
+          if (text?.startsWith(`/${TELEGRAM_BOT.COMMAND_CONNECT_BOT}`)) {
+            return next();
+          }
+          return;
+        }
+
+        if (incomingChatId !== authorizedChatId) {
+          logEveryWhere({
+            message: `[TelegramBot] Rejected unauthorized chat: ${incomingChatId}`,
+          });
+          return;
+        }
+
+        return next();
+      });
+
       telegramBot.telegram.setMyCommands([
         {
           command: TELEGRAM_BOT.COMMAND_CONNECT_BOT,
