@@ -3,7 +3,6 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { actSetIsRun } from "@/redux/workflowRunner";
 import { sleep } from "@/service/util";
-import { actSetEncryptKey } from "@/redux/campaign";
 import { useStartWorkflow, useStopWorkflow } from "./workflowRunner";
 import { useUpdateListCampaignProfile } from "./campaignProfile";
 
@@ -36,8 +35,6 @@ const useHandleWorkflowUsingTelegram = () => {
       `/dashboard/campaign?campaignId=${campaignId}&workflowId=${workflowId}&mode=VIEW_WORKFLOW`,
     );
 
-    await sleep(200);
-    dispatch(actSetEncryptKey(encryptKey));
     await sleep(200);
     stopWorkflow(workflowId, campaignId);
     await sleep(200);

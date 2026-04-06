@@ -11,7 +11,6 @@ interface ICampaignState {
   selectedCampaign: ICampaign | null;
   currentModalStep: number;
   isModalOpen: boolean;
-  encryptKey: string;
   sortField: ISorter | {};
   tableViewMode: string;
   showProfileStatistic: boolean;
@@ -25,7 +24,6 @@ const initialState: ICampaignState = {
   selectedCampaign: null,
   currentModalStep: 0,
   isModalOpen: false,
-  encryptKey: "",
   sortField: {},
   tableViewMode: "",
   showProfileStatistic: false,
@@ -93,12 +91,6 @@ export const campaignSlice = createSlice({
     ) => {
       state.currentModalStep = action?.payload;
     },
-    actSetEncryptKey: (
-      state: ICampaignState,
-      action: PayloadAction<string>,
-    ) => {
-      state.encryptKey = action?.payload;
-    },
     actSetSortField: (
       state: ICampaignState,
       action: PayloadAction<ISorter | null>,
@@ -132,7 +124,6 @@ export const {
   actSaveDeleteCampaign,
   actSetModalCampaignOpen,
   actSetCurrentModalStep,
-  actSetEncryptKey,
   actSetSortField,
   actSetTableViewMode,
   actShowProfileStatistic,
