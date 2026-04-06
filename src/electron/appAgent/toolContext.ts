@@ -21,6 +21,7 @@ interface IToolContextData {
   attachedFiles?: IAttachedFileContext[];
   llmProvider?: string;
   planState?: PlanState;
+  approvedPlan?: string;
   requestPlanApproval?: (plan: string) => Promise<boolean>;
   // Set for registry agents so mailbox tools know the sender ID. Undefined for the main agent
   agentRegistryId?: number;
@@ -82,6 +83,9 @@ export class ToolContext {
     if (data.planState !== undefined) {
       this.data.planState = data.planState;
     }
+    if (data.approvedPlan !== undefined) {
+      this.data.approvedPlan = data.approvedPlan;
+    }
     if (data.requestPlanApproval !== undefined) {
       this.data.requestPlanApproval = data.requestPlanApproval;
     }
@@ -132,6 +136,11 @@ export class ToolContext {
 
   resetPlanState(): void {
     this.data.planState = undefined;
+    this.data.approvedPlan = undefined;
+  }
+
+  get approvedPlan(): string | undefined {
+    return this.data.approvedPlan;
   }
 
   get requestPlanApproval(): ((plan: string) => Promise<boolean>) | undefined {

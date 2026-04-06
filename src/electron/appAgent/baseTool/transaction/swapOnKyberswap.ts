@@ -18,13 +18,13 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import { logEveryWhere, sleep } from "@/electron/service/util";
+import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
+import { safeStringify } from "@/electron/appAgent/utils";
 import {
   redistributeToCapacity,
   capitalizeFirstLetter,
   extractErrorMessage,
 } from "../utils";
-import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
-import { safeStringify } from "../utils";
 
 const BALANCE_BATCH_SIZE = 10;
 
