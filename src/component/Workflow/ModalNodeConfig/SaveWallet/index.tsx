@@ -50,6 +50,7 @@ const SaveWallet = (props: Props) => {
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
   const [encryptKey, setEncryptKey] = useState("");
+  const [isEncryptKeyTouched, setIsEncryptKeyTouched] = useState(false);
   const [hasEncryptKey, setHasEncryptKey] = useState(false);
   const [form] = Form.useForm();
   const [mode, setMode] = useState(ENCRYPT_MODE.NO_ENSCRYPT);
@@ -89,6 +90,7 @@ const SaveWallet = (props: Props) => {
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
 
     setEncryptKey("");
+    setIsEncryptKeyTouched(false);
     setHasEncryptKey(false);
     if (isModalOpen && workflowId && nodeId) {
       getNodeSecret(workflowId, nodeId).then((hasKey) => {
@@ -130,12 +132,7 @@ const SaveWallet = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
       ]);
-      if (
-        workflowId &&
-        nodeId &&
-        encryptKey !== undefined &&
-        encryptKey !== null
-      ) {
+      if (workflowId && nodeId && isEncryptKeyTouched) {
         await saveNodeSecret(workflowId, nodeId, encryptKey);
       }
       onSaveNodeConfig({
@@ -307,7 +304,10 @@ const SaveWallet = (props: Props) => {
                   name="encryptKey"
                   placeholder={`${translate("wallet.enterSecretKey")}`}
                   extendClass="encryptKey"
-                  onChange={setEncryptKey}
+                  onChange={(value) => {
+                    setEncryptKey(value);
+                    setIsEncryptKeyTouched(true);
+                  }}
                   initialValue={hasEncryptKey ? "•" : ""}
                   shouldHideValue={true}
                 />
