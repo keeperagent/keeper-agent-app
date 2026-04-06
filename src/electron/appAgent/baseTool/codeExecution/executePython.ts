@@ -17,29 +17,16 @@ const MAX_OUTPUT_LENGTH = 10_000;
 
 const getPyWorkspaceDir = () => path.join(getWorkspaceRoot(), "python");
 
-/** Extract module name from a "No module named" error message. */
 const extractMissingModule = (errorMsg: string): string | null => {
   const match = errorMsg.match(/No module named '([^']+)'/);
   return match ? match[1].split(".")[0] : null;
 };
 
-/** Install a pip package into the python workspace. */
-const installModule = (moduleName: string): Promise<string> => {
-  const cwd = getPyWorkspaceDir();
-  logEveryWhere({
-    message: `[Agent] pip installing '${moduleName}' in ${cwd}`,
-  });
-  return new Promise((resolve, reject) => {
+const runPipInstall = (args: string[], cwd: string): Promise<string> =>
+  new Promise((resolve, reject) => {
     execFile(
       "pip3",
-      [
-        "install",
-        moduleName,
-        "--target",
-        path.join(cwd, "site-packages"),
-        "--only-binary",
-        ":all:",
-      ],
+      args,
       { timeout: INSTALL_TIMEOUT_MS, cwd },
       (error, stdout, stderr) => {
         if (error) {
@@ -50,6 +37,32 @@ const installModule = (moduleName: string): Promise<string> => {
       },
     );
   });
+
+const installModule = async (moduleName: string): Promise<string> => {
+  if (!/^[a-zA-Z0-9_-]+$/.test(moduleName)) {
+    throw new Error(
+      `Refusing to install suspicious module name: '${moduleName}'`,
+    );
+  }
+
+  const cwd = getPyWorkspaceDir();
+  const targetDir = path.join(cwd, "site-packages");
+
+  logEveryWhere({
+    message: `[Agent] pip installing '${moduleName}' (binary-only) in ${cwd}`,
+  });
+
+  const baseArgs = ["install", moduleName, "--target", targetDir];
+
+  try {
+    return await runPipInstall([...baseArgs, "--only-binary", ":all:"], cwd);
+  } catch (binaryInstallError: any) {
+    logEveryWhere({
+      message: `[Agent] Binary-only install of '${moduleName}' failed (${binaryInstallError?.message}), retrying without --only-binary`,
+    });
+
+    return runPipInstall(baseArgs, cwd);
+  }
 };
 
 export const executePythonTool = (toolContext?: ToolContext) =>

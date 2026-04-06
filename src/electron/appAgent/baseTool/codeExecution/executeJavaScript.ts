@@ -17,18 +17,21 @@ const MAX_OUTPUT_LENGTH = 10_000;
 
 const getJsWorkspaceDir = () => path.join(getWorkspaceRoot(), "javascript");
 
-/** NODE_PATH only includes ka_workspace/node_modules (agent-installed packages). */
 const getNodePath = (): string =>
   path.join(getJsWorkspaceDir(), "node_modules");
 
-/** Extract module name from a "Cannot find module" error message. */
 const extractMissingModule = (errorMsg: string): string | null => {
   const match = errorMsg.match(/Cannot find module '([^'/]+)'/);
   return match ? match[1] : null;
 };
 
-/** Install an npm package into ka_workspace. */
 const installModule = (moduleName: string): Promise<string> => {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(moduleName)) {
+    throw new Error(
+      `Refusing to install suspicious module name: '${moduleName}'`,
+    );
+  }
+
   const cwd = getJsWorkspaceDir();
   logEveryWhere({
     message: `[Agent] Installing module '${moduleName}' in ${cwd}`,
