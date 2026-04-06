@@ -1,51 +1,74 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod/v3";
-import { PublicKey } from "@solana/web3.js";
+import { ethers } from "ethers";
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
+import { EVM_TRANSACTION_TYPE } from "@/electron/constant";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
-import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
-import { SolanaTransactionExecutor } from "@/electron/simulator/category/onchain/solanaExecuteTransaction";
+import { EvmTransactionExecutor } from "@/electron/simulator/category/onchain/evmExecuteTransaction";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
-import { extractErrorMessage } from "./utils";
+import { capitalizeFirstLetter, extractErrorMessage } from "../utils";
 
 const CONFIRMATION_TIMEOUT = 30000;
 
-const broadcastTransactionSolanaSchema = z.object({
-  transactionData: z
+const broadcastTransactionEvmSchema = z.object({
+  toAddress: z
     .string()
+    .optional()
     .refine(
       (val) => {
-        try {
-          const decoded = Buffer.from(val, "base64");
-          return decoded.length > 0 && decoded.toString("base64") === val;
-        } catch {
-          return false;
+        if (!val || val.trim() === "") {
+          return true;
         }
+        return ethers.utils.isAddress(val);
       },
       {
         message:
-          "Must be a valid base64-encoded string representing a serialized Solana transaction.",
+          "Must be a valid EVM address (0x followed by 40 hex characters). Omit for contract deployment.",
       },
     )
     .describe(
-      "Base64-encoded serialized Solana transaction. The transaction should have instructions set but does NOT need to be signed — the tool will sign it with the wallet's private key and set a fresh blockhash.",
+      "Target contract or address for the transaction. Omit for contract deployment.",
     ),
+  transactionData: z
+    .string()
+    .refine((val) => /^0x[0-9a-fA-F]+$/.test(val), {
+      message: "Must be a 0x-prefixed hexadecimal string (e.g. 0xa9059cbb...).",
+    })
+    .describe(
+      "Hex-encoded transaction calldata (0x-prefixed). For contract interactions, this is the ABI-encoded function call.",
+    ),
+  transactionValue: z
+    .string()
+    .default("0")
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) {
+          return true;
+        }
+        return /^[0-9]+$/.test(val);
+      },
+      {
+        message: "Must be a non-negative integer string representing wei.",
+      },
+    )
+    .describe("Value to send in wei (as string). Defaults to '0'."),
 });
 
-export const broadcastTransactionSolanaTool = (
+export const broadcastTransactionEvmTool = (
   toolContext?: ToolContext,
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
-    name: "broadcast_transaction_solana",
-    description: `Broadcast a serialized transaction to Solana using campaign wallets.
-The transaction data must be base64-encoded. The tool handles signing with each wallet's private key and refreshes the blockhash automatically.
-Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary instructions).`,
-    schema: broadcastTransactionSolanaSchema,
-    func: async ({ transactionData }) => {
+    name: "broadcast_transaction_evm",
+    description: `Broadcast a transaction to an EVM chain using campaign wallets.
+The transaction data must be hex-encoded (0x-prefixed). Gas limit and gas price are auto-estimated.
+Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary calldata).`,
+    schema: broadcastTransactionEvmSchema,
+    func: async ({ toAddress, transactionData, transactionValue = "0" }) => {
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
@@ -53,6 +76,7 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
           status: "blocked_planning_mode",
         });
       }
+      const chainKey = toolContext?.chainKey || "";
       const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
@@ -132,20 +156,17 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
           ?.filter((wallet): wallet is IWallet => Boolean(wallet)) || [];
 
       if (!wallets.length) {
-        throw new Error("No wallets found for the selected campaign profiles");
+        throw new Error(
+          "No valid wallets found in the selected campaign profiles",
+        );
       }
 
-      // Validate wallet addresses are valid Solana addresses
+      // Validate wallet addresses are valid EVM addresses
       const invalidWallets = wallets.filter((wallet) => {
         if (!wallet?.address) {
           return true;
         }
-        try {
-          new PublicKey(wallet.address);
-          return false;
-        } catch {
-          return true;
-        }
+        return !ethers.utils.isAddress(wallet.address);
       });
 
       if (invalidWallets.length > 0) {
@@ -154,12 +175,11 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
           .slice(0, 3)
           .join(", ");
         throw new Error(
-          `Invalid wallet addresses detected for Solana chain. Found ${invalidWallets.length} invalid wallet(s): ${invalidAddresses}${invalidWallets.length > 3 ? "..." : ""}. Please check: (1) If you provided the correct encryption key, (2) If you selected wallets on the correct chain (Solana).`,
+          `Invalid wallet addresses detected for EVM chain (${chainKey}). Found ${invalidWallets.length} invalid wallet(s): ${invalidAddresses}${invalidWallets.length > 3 ? "..." : ""}. Please check: (1) If you provided the correct encryption key, (2) If you selected wallets on the correct chain (${chainKey}).`,
         );
       }
 
-      const solanaProvider = new SolanaProvider();
-      const executor = new SolanaTransactionExecutor(solanaProvider);
+      const executor = new EvmTransactionExecutor();
 
       const logInfo = {
         campaignId: effectiveCampaignId,
@@ -167,7 +187,7 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
       };
 
       logEveryWhere({
-        message: `[Agent] Broadcasting Solana transaction for ${wallets.length} wallet(s)`,
+        message: `[Agent] Broadcasting EVM transaction for ${wallets.length} wallet(s) on ${chainKey}`,
       });
 
       const results: Array<{
@@ -180,15 +200,20 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
         const wallet = wallets[index];
 
         try {
-          const [txHash, err] = await executor.executeTransaction(
+          const [txHash, err] = await executor.executeSingleTransaction(
             {
-              name: "agent_broadcast_solana",
+              name: "agent_broadcast_evm",
               sleep: 0,
               transactionData,
+              toAddress: toAddress || "",
+              transactionValue: transactionValue || "0",
+              transactionType: EVM_TRANSACTION_TYPE.LEGACY,
               shouldWaitTransactionComfirmed: true,
+              gasPrice: "",
+              gasLimit: "",
             },
-            wallet?.privateKey || "",
             listNodeProvider,
+            wallet?.privateKey || "",
             CONFIRMATION_TIMEOUT,
             logInfo,
           );
@@ -213,7 +238,7 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
       const failedEntries = results.filter((result) => result.error);
 
       return safeStringify({
-        chain: "Solana",
+        chain: capitalizeFirstLetter(chainKey),
         summary: {
           total: wallets.length,
           success: successCount,

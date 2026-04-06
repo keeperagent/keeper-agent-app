@@ -11,7 +11,7 @@ import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
-import { redistributeToCapacity, extractErrorMessage } from "./utils";
+import { redistributeToCapacity, extractErrorMessage } from "../utils";
 
 const GAS_BUFFER_SOL = 0.0005;
 
