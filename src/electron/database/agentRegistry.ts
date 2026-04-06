@@ -1,7 +1,10 @@
 import _ from "lodash";
 import { IAgentRegistry, IGetListResponse } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
-import { formatAgentRegistry } from "@/electron/service/formatData";
+import {
+  formatDBResponse,
+  formatAgentRegistry,
+} from "@/electron/service/formatData";
 import { encryptionService } from "@/electron/service/encrypt";
 import { AgentRegistryModel, CampaignModel, JobModel } from "./index";
 
@@ -113,26 +116,29 @@ class AgentRegistryDB {
     data: IAgentRegistry,
   ): Promise<[IAgentRegistry | null, Error | null]> {
     try {
-      await AgentRegistryModel.update(
-        _.omit(
-          {
-            ...data,
-            allowedBaseTools: JSON.stringify(data?.allowedBaseTools || []),
-            allowedMcpServerIds: JSON.stringify(
-              data?.allowedMcpServerIds || [],
-            ),
-            allowedSkillIds: JSON.stringify(data?.allowedSkillIds || []),
-            allowedSubAgentIds: JSON.stringify(data?.allowedSubAgentIds || []),
-            profileIds: JSON.stringify(data?.profileIds || []),
-            secretKey: data?.secretKey
-              ? encryptionService.encryptData(data.secretKey)
-              : "",
-            updateAt: new Date().getTime(),
-          },
-          ["id"],
-        ),
-        { where: { id: data?.id } },
+      const updateData: any = _.omit(
+        {
+          ...data,
+          allowedBaseTools: JSON.stringify(data?.allowedBaseTools || []),
+          allowedMcpServerIds: JSON.stringify(data?.allowedMcpServerIds || []),
+          allowedSkillIds: JSON.stringify(data?.allowedSkillIds || []),
+          allowedSubAgentIds: JSON.stringify(data?.allowedSubAgentIds || []),
+          profileIds: JSON.stringify(data?.profileIds || []),
+          updateAt: new Date().getTime(),
+        },
+        ["id", "secretKey", "hasSecretKey"],
       );
+
+      // Only update secretKey when explicitly provided
+      if (data?.secretKey !== undefined) {
+        updateData.secretKey = data.secretKey
+          ? encryptionService.encryptData(data.secretKey)
+          : "";
+      }
+
+      await AgentRegistryModel.update(updateData, {
+        where: { id: data?.id },
+      });
 
       return await this.getOneAgentRegistry(data?.id!);
     } catch (err: any) {
@@ -157,6 +163,23 @@ class AgentRegistryDB {
         message: `getActiveAgentRegistries() error: ${err?.message}`,
       });
       return [[], err];
+    }
+  }
+
+  async getSecretKey(id: number): Promise<string> {
+    try {
+      const data = await AgentRegistryModel.findOne({
+        where: { id },
+        attributes: ["secretKey"],
+        raw: false,
+      });
+      const formatedData = formatDBResponse(data as any);
+      if (!formatedData?.secretKey) {
+        return "";
+      }
+      return encryptionService.decryptData(formatedData.secretKey) || "";
+    } catch {
+      return "";
     }
   }
 

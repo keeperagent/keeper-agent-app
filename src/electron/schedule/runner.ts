@@ -114,7 +114,8 @@ class ScheduleRunner {
       workflowName: job?.workflow?.name,
       message: `job trigger, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
     });
-    workflow.runWorkflow(job.secretKey || "");
+    const jobSecretKey = await jobDB.getSecretKey(job.id!);
+    workflow.runWorkflow(jobSecretKey);
 
     const checkTimeoutInterval = setInterval(async () => {
       isJobTimeout = await jobDB.checkJobTimeout(job);

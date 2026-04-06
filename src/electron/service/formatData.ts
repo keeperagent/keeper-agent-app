@@ -259,7 +259,9 @@ const formatMcpServer = (data: any): IMcpServer => {
 };
 
 const formatAgentRegistry = (data: any): IAgentRegistry => {
-  const formatedData = formatDBResponse(data);
+  let formatedData = formatDBResponse(data);
+  const hasSecretKey = Boolean(formatedData?.secretKey);
+  formatedData = _.omit(formatedData, ["secretKey"]);
   return {
     ...formatedData,
     allowedBaseTools:
@@ -290,9 +292,7 @@ const formatAgentRegistry = (data: any): IAgentRegistry => {
             Number(item),
           )
         : formatedData?.profileIds || [],
-    secretKey: formatedData?.secretKey
-      ? encryptionService.decryptData(formatedData.secretKey)
-      : "",
+    hasSecretKey,
   };
 };
 
@@ -319,15 +319,15 @@ const formatSchedule = (data: any): ISchedule => {
 
 const formatJob = (data: any): IJob => {
   let formatedData = formatDBResponse(data);
+  const hasSecretKey = Boolean(formatedData?.secretKey);
+  formatedData = _.omit(formatedData, ["secretKey"]);
   formatedData = {
     ...formatedData,
     schedule:
       formatedData?.Schedules && formatedData?.Schedules?.length > 0
         ? formatSchedule(formatedData?.Schedules[0])
         : null,
-    secretKey: formatedData?.secretKey
-      ? encryptionService.decryptData(formatedData?.secretKey)
-      : "",
+    hasSecretKey,
   };
 
   formatedData = {
@@ -358,6 +358,7 @@ const formatAgentMailbox = (raw: any): IAgentMailbox => {
 };
 
 export {
+  formatDBResponse,
   formatResourceGroup,
   formatProfileGroup,
   formatCampaign,

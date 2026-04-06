@@ -119,7 +119,7 @@ const ModalAgentRegistry = (props: Props) => {
       registry?.llmModel || getDefaultModelForProvider(provider, preference);
     setLlmProvider(provider);
 
-    setSecretKeyValue(registry?.secretKey || "");
+    setSecretKeyValue("");
     form.setFieldsValue({
       name: registry?.name,
       description: registry?.description || "",
@@ -194,8 +194,8 @@ const ModalAgentRegistry = (props: Props) => {
         campaignId: values?.campaignId,
         profileIds: values?.profileIds || [],
         isAllWallet: Boolean(values.isAllWallet),
-        secretKey: values.secretKey || "",
         maxConcurrentTasks: values.maxConcurrentTasks,
+        secretKey: secretKeyValue || undefined,
       };
 
       if (isEdit && registry?.id) {
@@ -476,7 +476,7 @@ const ModalAgentRegistry = (props: Props) => {
                 }
                 extendClass="agentSecretKey"
                 onChange={setSecretKeyValue}
-                initialValue={secretKeyValue}
+                initialValue={registry?.hasSecretKey ? "•" : ""}
                 shouldHideValue={true}
               />
             </Form.Item>

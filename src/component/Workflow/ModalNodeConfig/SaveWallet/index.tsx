@@ -49,7 +49,8 @@ const SaveWallet = (props: Props) => {
 
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
-  const [encryptKey, setEncryptKey] = useState(""); // actual secret key — only for display, never stored in Redux
+  const [encryptKey, setEncryptKey] = useState("");
+  const [hasEncryptKey, setHasEncryptKey] = useState(false);
   const [form] = Form.useForm();
   const [mode, setMode] = useState(ENCRYPT_MODE.NO_ENSCRYPT);
   const { getListWalletGroup, loading } = useGetListWalletGroup();
@@ -88,9 +89,10 @@ const SaveWallet = (props: Props) => {
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
 
     setEncryptKey("");
+    setHasEncryptKey(false);
     if (isModalOpen && workflowId && nodeId) {
-      getNodeSecret(workflowId, nodeId).then((key) => {
-        setEncryptKey(key);
+      getNodeSecret(workflowId, nodeId).then((hasKey) => {
+        setHasEncryptKey(hasKey);
       });
     }
   }, [isModalOpen, config, form]);
@@ -128,8 +130,8 @@ const SaveWallet = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
       ]);
-      if (workflowId && nodeId) {
-        await saveNodeSecret(workflowId, nodeId, encryptKey || "");
+      if (workflowId && nodeId && encryptKey) {
+        await saveNodeSecret(workflowId, nodeId, encryptKey);
       }
       onSaveNodeConfig({
         sleep,
@@ -301,7 +303,7 @@ const SaveWallet = (props: Props) => {
                   placeholder={`${translate("wallet.enterSecretKey")}`}
                   extendClass="encryptKey"
                   onChange={setEncryptKey}
-                  initialValue={encryptKey}
+                  initialValue={hasEncryptKey ? "•" : ""}
                   shouldHideValue={true}
                 />
               </Form.Item>

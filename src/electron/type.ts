@@ -2514,7 +2514,8 @@ export type IJob = {
   workflow?: IWorkflow;
   campaignId?: number | null;
   campaign?: ICampaign;
-  secretKey?: string;
+  secretKey?: string; // input only: plaintext value sent to backend, never returned from backend
+  hasSecretKey?: boolean; // output only: indicates whether a secretKey is stored in DB
   timeout?: number;
   retry?: number; // number of retries on failure
   startTime?: string;
@@ -2777,7 +2778,8 @@ export type IAgentRegistry = {
   campaign?: ICampaign;
   profileIds?: number[];
   isAllWallet?: boolean;
-  secretKey?: string;
+  secretKey?: string; // input only: plaintext value sent to backend, never returned from backend
+  hasSecretKey?: boolean; // output only: indicates whether a secretKey is stored in DB
   createAt?: number;
   updateAt?: number;
 };

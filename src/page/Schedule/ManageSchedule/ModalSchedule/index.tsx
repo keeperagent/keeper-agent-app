@@ -28,7 +28,6 @@ const defaultScheduleWorkflow: IJob = {
   timeout: 10,
   workflowId: null,
   campaignId: null,
-  secretKey: "",
   order: 0,
 };
 const emptyScheduleWorkflow: IJob[] = [defaultScheduleWorkflow];

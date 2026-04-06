@@ -34,11 +34,14 @@ const useSaveNodeSecret = () => {
   return { saveNodeSecret, loading };
 };
 
-/** Fetch a per-node secret key from the database (never stored in Redux). */
+/** Check whether a per-node secret key exists in the database (never returns the plaintext value). */
 const useGetNodeSecret = () => {
   const [loading, setLoading] = useState(false);
 
-  const getNodeSecret = (workflowId: number, nodeId: string): Promise<string> => {
+  const getNodeSecret = (
+    workflowId: number,
+    nodeId: string,
+  ): Promise<boolean> => {
     return new Promise((resolve) => {
       const requestId = uid(25);
       setLoading(true);
@@ -52,7 +55,7 @@ const useGetNodeSecret = () => {
         if (payload?.requestId !== requestId) return;
         window?.electron?.removeAllListeners(MESSAGE.GET_NODE_SECRET_RES);
         setLoading(false);
-        resolve(payload?.secretKey || "");
+        resolve(Boolean(payload?.hasSecretKey));
       };
 
       window?.electron?.on(MESSAGE.GET_NODE_SECRET_RES, handler);

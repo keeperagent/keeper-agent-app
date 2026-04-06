@@ -864,7 +864,6 @@ export class Workflow {
         id: existedJob?.id,
         isRunning: false,
         lastEndTime: new Date().getTime(),
-        secretKey: existedJob.secretKey,
       });
     } else {
       await jobDB.updateJob({
@@ -894,7 +893,6 @@ export class Workflow {
       isCompleted: true,
       isRunning: false,
       lastEndTime: new Date().getTime(),
-      secretKey: existedJob?.secretKey,
     });
   };
 
