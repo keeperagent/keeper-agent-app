@@ -72,22 +72,18 @@ const JobPicker = (props: IProps) => {
       previousJob?.campaignId !== job?.campaignId ||
       previousJob?.workflowId !== job?.workflowId ||
       previousJob?.timeout !== job?.timeout ||
-      previousJob?.secretKey !== job?.secretKey ||
+      previousJob?.hasSecretKey !== job?.hasSecretKey ||
       previousJob?.prompt !== job?.prompt
     ) {
       form.setFieldsValue({
         campaignId: job?.campaignId,
         workflowId: job?.workflowId,
         timeout: job?.timeout || 0,
-        secretKey: job?.secretKey || "",
         prompt: job?.prompt || "",
       });
     }
 
     if (!initialized) {
-      form.setFieldsValue({
-        secretKey: "",
-      });
       setInitialized(true);
     }
 
@@ -115,7 +111,6 @@ const JobPicker = (props: IProps) => {
           type: JobType.AGENT,
           workflowId: null,
           campaignId: null,
-          secretKey: "",
           llmProvider: job.llmProvider || LLMProvider.CLAUDE,
         },
         index,
@@ -309,7 +304,7 @@ const JobPicker = (props: IProps) => {
                     placeholder={translate("wallet.secretKey")}
                     onChange={onChangeEncryptKey}
                     extendClass={`secretKey-${index}`}
-                    initialValue={job?.secretKey}
+                    initialValue={job?.hasSecretKey ? "•" : ""}
                     shouldHideValue={true}
                   />
                 </Form.Item>

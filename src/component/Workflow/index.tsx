@@ -38,7 +38,6 @@ import {
   actSaveSelectedEdge,
   actSetSelectedWorkflowType,
 } from "@/redux/workflowRunner";
-import { actSetEncryptKey } from "@/redux/campaign";
 import { actSetSidebarOpen } from "@/redux/layout";
 import {
   EXTENSION,
@@ -110,8 +109,6 @@ type IProps = {
   actSaveSelectedNode: (payload: string | null) => void;
   actSaveSelectedEdge: (payload: string | null) => void;
   actSetSelectedWorkflowType: (payload: string | null) => void;
-  actSetEncryptKey: (payload: string) => void;
-  encryptKey: string;
   status: IStatus;
   currentRound: number;
 };
@@ -131,7 +128,6 @@ const Workflow = (props: IProps) => {
     actSaveSelectedNode,
     actSaveSelectedEdge,
     actSetSelectedWorkflowType,
-    actSetEncryptKey,
   } = props;
   const { translate } = useTranslation();
   const { selectedNodeID, flowData = null } = workflowState;
@@ -194,7 +190,6 @@ const Workflow = (props: IProps) => {
     return () => {
       actSaveSelectedNode(null);
       actSaveSelectedEdge(null);
-      actSetEncryptKey("");
     };
   }, []);
 
@@ -773,7 +768,6 @@ export default connect(
     selectedWorkflow: state?.Workflow?.selectedWorkflow,
     preference: state?.Preference?.preference,
     isLightMode: state?.Layout?.isLightMode,
-    encryptKey: state?.Campaign?.encryptKey,
     status: state?.CampaignProfile?.status,
     currentRound: state?.WorkflowRunner?.currentRound,
   }),
@@ -785,6 +779,5 @@ export default connect(
     actSaveSelectedNode,
     actSaveSelectedEdge,
     actSetSelectedWorkflowType,
-    actSetEncryptKey,
   },
 )(Workflow);

@@ -7,11 +7,11 @@ import {
   createLLM,
 } from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
-import { encryptionService } from "@/electron/service/encrypt";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { scheduleDB } from "@/electron/database/schedule";
 import { appLogDB } from "@/electron/database/appLog";
 import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { jobDB } from "@/electron/database/job";
 import { preferenceDB } from "@/electron/database/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { logEveryWhere, sleep } from "@/electron/service/util";
@@ -263,7 +263,11 @@ class AgentTaskScheduler {
         schedule.id!,
       );
 
-      workflow.runWorkflow(job.secretKey || "", overrideListVariable);
+      const [jobSecretKey, secretKeyErr] = await jobDB.getSecretKey(job.id!);
+      if (secretKeyErr) {
+        throw secretKeyErr;
+      }
+      workflow.runWorkflow(jobSecretKey || "", overrideListVariable);
 
       while (workflow.monitor.isRunning) {
         await sleep(1000);
@@ -371,14 +375,21 @@ class AgentTaskScheduler {
 
     const toolContext = new ToolContext();
 
-    if (job.secretKey) {
+    if (job.hasSecretKey) {
       try {
-        toolContext.update({
-          encryptKey: encryptionService.decryptData(job.secretKey),
-        });
+        const [agentSecretKey, agentSecretKeyErr] = await jobDB.getSecretKey(
+          job.id!,
+        );
+        if (agentSecretKeyErr) {
+          logEveryWhere({
+            message: `AgentTaskScheduler failed to get encryptKey for job ${job.id}: ${agentSecretKeyErr?.message}`,
+          });
+        } else if (agentSecretKey) {
+          toolContext.update({ encryptKey: agentSecretKey });
+        }
       } catch {
         logEveryWhere({
-          message: `AgentTaskScheduler: failed to decrypt encryptKey for job ${job.id}`,
+          message: `AgentTaskScheduler: failed to get encryptKey for job ${job.id}`,
         });
       }
     }

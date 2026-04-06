@@ -32,7 +32,7 @@ export const nodeSecretController = () => {
       const secretKey = await nodeSecretDB.getSecretKey(workflowId, nodeId);
       event.reply(MESSAGE.GET_NODE_SECRET_RES, {
         requestId,
-        secretKey: secretKey || "",
+        hasSecretKey: Boolean(secretKey),
       });
     },
   );

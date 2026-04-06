@@ -11,7 +11,7 @@ import {
 import { IJob } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { encryptionService } from "@/electron/service/encrypt";
-import { formatJob } from "@/electron/service/formatData";
+import { formatDBResponse, formatJob } from "@/electron/service/formatData";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { preferenceDB } from "./preference";
 import { campaignProfileDB } from "./campaignProfile";
@@ -179,25 +179,48 @@ class JobDB {
 
   async updateJob(data: IJob): Promise<[IJob | null, Error | null]> {
     try {
-      let updateData: any = {
-        ...data,
-        updateAt: new Date().getTime(),
-      };
-      if (data?.secretKey) {
-        updateData = {
-          ...updateData,
-          secretKey: data?.secretKey
-            ? encryptionService.encryptData(data?.secretKey)
-            : "",
-        };
+      const updateData: any = _.omit(
+        {
+          ...data,
+          updateAt: new Date().getTime(),
+        },
+        ["id", "secretKey", "hasSecretKey"],
+      );
+
+      // Only update secretKey when explicitly provided
+      if (data?.secretKey !== undefined) {
+        updateData.secretKey = data.secretKey
+          ? encryptionService.encryptData(data.secretKey)
+          : "";
       }
-      await JobModel.update(_.omit(updateData, ["id"]), {
+
+      await JobModel.update(updateData, {
         where: { id: data?.id },
       });
 
       return await this.getOneJob(data?.id!);
     } catch (err: any) {
       logEveryWhere({ message: `updateJob() error: ${err?.message}` });
+      return [null, err];
+    }
+  }
+
+  async getSecretKey(id: number): Promise<[string | null, Error | null]> {
+    try {
+      const data = await JobModel.findOne({
+        where: { id },
+        attributes: ["secretKey"],
+        raw: false,
+      });
+      const formatedData = formatDBResponse(data as any);
+      if (!formatedData?.secretKey) {
+        return ["", null];
+      }
+      return [
+        encryptionService.decryptData(formatedData.secretKey) || "",
+        null,
+      ];
+    } catch (err: any) {
       return [null, err];
     }
   }

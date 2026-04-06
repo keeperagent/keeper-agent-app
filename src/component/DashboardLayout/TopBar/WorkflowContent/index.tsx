@@ -31,7 +31,6 @@ import {
   actSetCurrentRound,
 } from "@/redux/workflowRunner";
 import { actSaveSelectedWorkflow } from "@/redux/workflow";
-import { actSetEncryptKey } from "@/redux/campaign";
 import ModalResetCampaignProfile from "@/component/ModalResetCampaignProfile";
 import {
   actSetModalCampaignOpen,
@@ -99,26 +98,18 @@ type IProps = {
   actSetShowModalSetting: (payload: boolean) => void;
   actSetModalCampaignOpen: (payload: boolean) => void;
   actSetCurrentModalStep: (payload: number) => void;
-  actSetEncryptKey: (payload: string) => void;
   actSetIsSaved: (payload: boolean) => void;
   actUndo: () => void;
   actRedo: () => void;
   actSaveSelectedWorkflow: (payload: IWorkflow | null) => void;
   actSaveCampaignProfileStatus: (payload: IStatus) => void;
   actSetCurrentRound: (payload: number) => void;
-  encryptKey: string;
   user: IUser | null;
 };
 
 const WorkflowContent = (props: IProps) => {
   const { translate } = useTranslation();
-  const {
-    selectedCampaign,
-    selectedWorkflow,
-    workflowState,
-    encryptKey,
-    user,
-  } = props;
+  const { selectedCampaign, selectedWorkflow, workflowState, user } = props;
   const { isRunning, flowData = null } = workflowState;
   const {
     redoable = false,
@@ -132,31 +123,31 @@ const WorkflowContent = (props: IProps) => {
   const { startWorkflow, loading: isStartWorkflowLoading } = useStartWorkflow();
   const { stopWorkflow, loading: isStopWorkflowLoading } = useStopWorkflow();
   const [isModalResetOpen, setModalResetOpen] = useState(false);
+  const [encryptKey, setEncryptKey] = useState("");
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
   const {
     getCacheSecretKey,
-    secretKey,
+    hasEncryptKey,
+    cachedEncryptKey,
     loading: isGetCacheSecretKeyLoading,
   } = useGetCacheSecretKey();
   const { setCacheSecretKey } = useSetCacheSecretKey();
-
-  useEffect(() => {
-    form?.setFieldsValue({
-      encryptKey,
-    });
-  }, [form, encryptKey]);
 
   useEffect(() => {
     if (isGetCacheSecretKeyLoading) {
       return;
     }
 
-    if (secretKey) {
-      props?.actSetEncryptKey(secretKey);
+    if (!hasEncryptKey) {
+      setEncryptKey("");
     }
-  }, [isGetCacheSecretKeyLoading, secretKey]);
+  }, [isGetCacheSecretKeyLoading, hasEncryptKey]);
+
+  useEffect(() => {
+    setEncryptKey(cachedEncryptKey);
+  }, [cachedEncryptKey]);
 
   const isCampaignView = useMemo(() => {
     return pathname === "/dashboard/campaign";
@@ -166,6 +157,8 @@ const WorkflowContent = (props: IProps) => {
     if (selectedCampaign?.id && isCampaignView) {
       getCacheSecretKey(selectedCampaign?.id);
     }
+    setEncryptKey("");
+    form.setFieldValue("encryptKey", "");
   }, [selectedCampaign?.id, selectedWorkflow?.id, isCampaignView]);
 
   const onSaveFlow = async () => {
@@ -263,7 +256,7 @@ const WorkflowContent = (props: IProps) => {
   };
 
   const onChangeEncryptKey = (value: string) => {
-    props?.actSetEncryptKey(value);
+    setEncryptKey(value);
     setCacheSecretKey(selectedCampaign?.id || 0, value);
   };
 
@@ -398,6 +391,8 @@ const WorkflowContent = (props: IProps) => {
                 onChange={onChangeEncryptKey}
                 extendClass="encryptKey-campaign"
                 name="encryptKey"
+                initialValue={hasEncryptKey ? "•" : ""}
+                shouldHideValue={true}
               />
 
               <Tooltip title={translate("workflow.encryptProfile")}>
@@ -423,7 +418,6 @@ export default connect(
   (state: RootState) => ({
     workflowState: state?.WorkflowRunner,
     selectedCampaign: state?.Campaign?.selectedCampaign,
-    encryptKey: state?.Campaign?.encryptKey,
     selectedWorkflow: state?.Workflow?.selectedWorkflow,
     user: state?.Auth?.user,
   }),
@@ -433,7 +427,6 @@ export default connect(
     actSetShowModalSetting,
     actSetModalCampaignOpen,
     actSetCurrentModalStep,
-    actSetEncryptKey,
     actSetIsSaved,
     actSaveSelectedWorkflow,
     actClearWhenStop,

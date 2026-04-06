@@ -16,7 +16,8 @@ export const runSecretKeyController = () => {
       const value = secretKeyCache.get(secretKeyCache.getCacheKey(campaignId));
 
       event.reply(MESSAGE.GET_SECRET_KEY_CACHE_RES, {
-        data: value,
+        hasSecretKey: Boolean(value),
+        secretKey: value || "",
       });
     },
   );

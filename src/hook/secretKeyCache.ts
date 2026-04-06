@@ -3,14 +3,24 @@ import { MESSAGE } from "@/electron/constant";
 import { useIpcAction } from "./useIpcAction";
 
 const useGetCacheSecretKey = () => {
-  const [secretKey, setSecretKey] = useState<string | null>(null);
+  const [hasEncryptKey, setHasEncryptKey] = useState(false);
+  const [cachedEncryptKey, setCachedEncryptKey] = useState("");
   const { execute, loading } = useIpcAction(
     MESSAGE.GET_SECRET_KEY_CACHE,
     MESSAGE.GET_SECRET_KEY_CACHE_RES,
-    { onSuccess: (payload) => setSecretKey(payload?.data) },
+    {
+      onSuccess: (payload) => {
+        setHasEncryptKey(Boolean(payload?.hasSecretKey));
+        setCachedEncryptKey(payload?.secretKey || "");
+      },
+    },
   );
-  const getCacheSecretKey = (campaignId: number) => execute({ campaignId });
-  return { loading, getCacheSecretKey, secretKey };
+  const getCacheSecretKey = (campaignId: number) => {
+    setHasEncryptKey(false);
+    setCachedEncryptKey("");
+    execute({ campaignId });
+  };
+  return { loading, getCacheSecretKey, hasEncryptKey, cachedEncryptKey };
 };
 
 const useSetCacheSecretKey = () => {

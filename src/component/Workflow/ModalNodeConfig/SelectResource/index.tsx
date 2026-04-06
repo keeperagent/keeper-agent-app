@@ -57,7 +57,9 @@ const SelectResource = (props: Props) => {
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
   const [mode, setMode] = useState(ENCRYPT_MODE.NO_ENSCRYPT);
-  const [encryptKey, setEncryptKey] = useState(""); // actual secret key — only for display, never stored in Redux
+  const [encryptKey, setEncryptKey] = useState("");
+  const [isEncryptKeyTouched, setIsEncryptKeyTouched] = useState(false);
+  const [hasEncryptKey, setHasEncryptKey] = useState(false);
   const [selectedResourceGroup, setSelectedResourceGroup] =
     useState<IResourceGroup | null>(null);
   const [form] = Form.useForm();
@@ -104,9 +106,11 @@ const SelectResource = (props: Props) => {
     setMode(config?.mode || ENCRYPT_MODE.NO_ENSCRYPT);
 
     setEncryptKey("");
+    setIsEncryptKeyTouched(false);
+    setHasEncryptKey(false);
     if (isModalOpen && workflowId && nodeId) {
-      getNodeSecret(workflowId, nodeId).then((key) => {
-        setEncryptKey(key);
+      getNodeSecret(workflowId, nodeId).then((hasKey) => {
+        setHasEncryptKey(hasKey);
       });
     }
   }, [isModalOpen, config, form]);
@@ -149,8 +153,8 @@ const SelectResource = (props: Props) => {
         "alertTelegramWhenError",
       ]);
 
-      if (workflowId && nodeId) {
-        await saveNodeSecret(workflowId, nodeId, encryptKey || "");
+      if (workflowId && nodeId && isEncryptKeyTouched) {
+        await saveNodeSecret(workflowId, nodeId, encryptKey);
       }
       onSaveNodeConfig({
         sleep,
@@ -347,8 +351,11 @@ const SelectResource = (props: Props) => {
                   name="encryptKey"
                   placeholder={`${translate("wallet.enterSecretKey")}`}
                   extendClass="encryptKey"
-                  onChange={setEncryptKey}
-                  initialValue={encryptKey}
+                  onChange={(value) => {
+                    setEncryptKey(value);
+                    setIsEncryptKeyTouched(true);
+                  }}
+                  initialValue={hasEncryptKey ? "•" : ""}
                   shouldHideValue={true}
                 />
               </Form.Item>
