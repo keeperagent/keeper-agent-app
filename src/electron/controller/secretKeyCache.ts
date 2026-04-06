@@ -17,6 +17,7 @@ export const runSecretKeyController = () => {
 
       event.reply(MESSAGE.GET_SECRET_KEY_CACHE_RES, {
         hasSecretKey: Boolean(value),
+        secretKey: value || "",
       });
     },
   );

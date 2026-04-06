@@ -130,6 +130,7 @@ const WorkflowContent = (props: IProps) => {
   const {
     getCacheSecretKey,
     hasEncryptKey,
+    cachedEncryptKey,
     loading: isGetCacheSecretKeyLoading,
   } = useGetCacheSecretKey();
   const { setCacheSecretKey } = useSetCacheSecretKey();
@@ -143,6 +144,10 @@ const WorkflowContent = (props: IProps) => {
       setEncryptKey("");
     }
   }, [isGetCacheSecretKeyLoading, hasEncryptKey]);
+
+  useEffect(() => {
+    setEncryptKey(cachedEncryptKey);
+  }, [cachedEncryptKey]);
 
   const isCampaignView = useMemo(() => {
     return pathname === "/dashboard/campaign";

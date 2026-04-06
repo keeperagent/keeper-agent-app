@@ -429,7 +429,8 @@ const ManageCampaignProfile = (props: IProps) => {
   const { updateCampaignProfile } = useUpdateCampaignProfile();
   const {
     getCacheSecretKey,
-    secretKey,
+    hasEncryptKey,
+    cachedEncryptKey,
     loading: isGetCacheSecretKeyLoading,
   } = useGetCacheSecretKey();
   const { setCacheSecretKey } = useSetCacheSecretKey();
@@ -440,9 +441,8 @@ const ManageCampaignProfile = (props: IProps) => {
       return;
     }
 
-    setEncryptKey(secretKey || "");
-    form.setFieldsValue({ encryptKey: secretKey || "" });
-  }, [isGetCacheSecretKeyLoading, secretKey]);
+    setEncryptKey(cachedEncryptKey || "");
+  }, [isGetCacheSecretKeyLoading, cachedEncryptKey]);
 
   useEffect(() => {
     if (selectedCampaign?.id) {
@@ -989,9 +989,11 @@ const ManageCampaignProfile = (props: IProps) => {
           <PasswordInput
             name="encryptKey"
             placeholder={translate("wallet.secretKey")}
-            width="14rem"
+            width="16rem"
             onChange={onChangeEncryptKey}
             extendClass="encryptKey-header"
+            initialValue={hasEncryptKey ? "•" : ""}
+            shouldHideValue={true}
           />
         </Form>
 
