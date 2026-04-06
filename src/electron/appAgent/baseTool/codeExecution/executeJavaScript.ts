@@ -21,12 +21,16 @@ const getNodePath = (): string =>
   path.join(getJsWorkspaceDir(), "node_modules");
 
 const extractMissingModule = (errorMsg: string): string | null => {
-  const match = errorMsg.match(/Cannot find module '([^'/]+)'/);
+  const match = errorMsg.match(
+    /Cannot find module '(@[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+|[^'/]+)'/,
+  );
   return match ? match[1] : null;
 };
 
 const installModule = (moduleName: string): Promise<string> => {
-  if (!/^[a-zA-Z0-9_.-]+$/.test(moduleName)) {
+  // Accepts plain packages (e.g. "lodash") and scoped packages (e.g. "@scope/pkg").
+  // Only alphanumerics, underscores, dots, and hyphens are allowed in each segment.
+  if (!/^(@[a-zA-Z0-9_.-]+\/)?[a-zA-Z0-9_.-]+$/.test(moduleName)) {
     throw new Error(
       `Refusing to install suspicious module name: '${moduleName}'`,
     );
