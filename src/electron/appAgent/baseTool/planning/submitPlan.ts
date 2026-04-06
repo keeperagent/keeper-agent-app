@@ -32,7 +32,10 @@ export const submitPlanTool = (toolContext: ToolContext) =>
               "User rejected the plan. Planning mode remains active. You may revise and submit a new plan.",
           });
         }
-        toolContext.update({ planState: PlanState.APPROVED });
+        toolContext.update({
+          planState: PlanState.APPROVED,
+          approvedPlan: plan,
+        });
         return safeStringify({
           status: "approved",
           message:
@@ -41,7 +44,7 @@ export const submitPlanTool = (toolContext: ToolContext) =>
       }
 
       // Non-IPC platforms (Telegram, WhatsApp): auto-approve and proceed
-      toolContext.update({ planState: PlanState.APPROVED });
+      toolContext.update({ planState: PlanState.APPROVED, approvedPlan: plan });
       return safeStringify({
         status: "plan_presented",
         plan,

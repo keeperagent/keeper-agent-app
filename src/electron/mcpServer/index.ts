@@ -46,13 +46,13 @@ class KeeperMcpServer {
       next();
     });
 
-    // Failed auth attempts per IP — reset after 15 minutes
+    // Failed auth attempts per IP — reset after 5 minutes
     const failedAttempts = new Map<
       string,
       { count: number; resetAt: number }
     >();
     const MAX_FAILED_ATTEMPTS = 10;
-    const FAILED_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+    const FAILED_ATTEMPT_WINDOW_MS = 5 * 60 * 1000;
 
     // Bearer token authentication middleware
     const authenticate = async (req: any, res: any, next: any) => {

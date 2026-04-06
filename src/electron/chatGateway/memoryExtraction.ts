@@ -8,6 +8,7 @@ import path from "path";
 import dayjs from "dayjs";
 import { redact } from "@keeperagent/crypto-key-guard";
 import { createBackgroundLLM, MEMORY_TEMPLATE } from "@/electron/appAgent";
+import { sanitizeMemoryContent } from "@/electron/appAgent/memorySanitizer";
 import { logEveryWhere } from "@/electron/service/util";
 import { getMemoryDir } from "@/electron/service/agentSkill";
 import { LLMProvider } from "@/electron/type";
@@ -118,8 +119,9 @@ export const extractMemoryFromConversation = async (
         ? response.content
         : JSON.stringify(response.content);
 
-    // Remove crypto secrets the LLM may have included despite prompt instructions
-    const { text: updatedMemory } = redact(rawMemory);
+    // Remove crypto secrets and injected behavioral instructions
+    const { text: redactedMemory } = redact(rawMemory);
+    const updatedMemory = sanitizeMemoryContent(redactedMemory);
     await fs.ensureDir(memoryDir);
     await backupMemoryFile(memoryDir, memoryPath, memoryFile);
 
@@ -142,7 +144,8 @@ export const extractMemoryFromConversation = async (
           typeof compactionResponse.content === "string"
             ? compactionResponse.content
             : JSON.stringify(compactionResponse.content);
-        const { text: compactedMemory } = redact(rawCompacted);
+        const { text: redactedCompacted } = redact(rawCompacted);
+        const compactedMemory = sanitizeMemoryContent(redactedCompacted);
         await fs.writeFile(memoryPath, compactedMemory, "utf-8");
         logEveryWhere({
           message: `[MemoryExtraction] Compacted ${memoryFile} (${lineCount} → ${compactedMemory.split("\n").length} lines)`,

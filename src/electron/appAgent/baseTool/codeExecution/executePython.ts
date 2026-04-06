@@ -136,6 +136,15 @@ export const executePythonTool = (toolContext?: ToolContext) =>
         } catch (err: any) {
           const missingModule = extractMissingModule(err.message);
           if (missingModule) {
+            const approvedPlan = toolContext?.approvedPlan || "";
+            if (
+              !approvedPlan.toLowerCase().includes(missingModule.toLowerCase())
+            ) {
+              return safeStringify({
+                error: `Package '${missingModule}' was not listed in the approved plan. Re-draft your plan explicitly listing all pip packages that will be installed, then ask the user to approve again.`,
+                status: "blocked_unapproved_package",
+              });
+            }
             try {
               await installModule(missingModule);
               logEveryWhere({
