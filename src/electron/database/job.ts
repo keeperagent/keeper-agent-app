@@ -205,7 +205,7 @@ class JobDB {
     }
   }
 
-  async getSecretKey(id: number): Promise<string> {
+  async getSecretKey(id: number): Promise<[string | null, Error | null]> {
     try {
       const data = await JobModel.findOne({
         where: { id },
@@ -214,11 +214,14 @@ class JobDB {
       });
       const formatedData = formatDBResponse(data as any);
       if (!formatedData?.secretKey) {
-        return "";
+        return ["", null];
       }
-      return encryptionService.decryptData(formatedData.secretKey) || "";
-    } catch {
-      return "";
+      return [
+        encryptionService.decryptData(formatedData.secretKey) || "",
+        null,
+      ];
+    } catch (err: any) {
+      return [null, err];
     }
   }
 

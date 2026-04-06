@@ -130,7 +130,12 @@ const SaveWallet = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
       ]);
-      if (workflowId && nodeId && encryptKey) {
+      if (
+        workflowId &&
+        nodeId &&
+        encryptKey !== undefined &&
+        encryptKey !== null
+      ) {
         await saveNodeSecret(workflowId, nodeId, encryptKey);
       }
       onSaveNodeConfig({

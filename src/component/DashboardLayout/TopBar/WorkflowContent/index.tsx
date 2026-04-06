@@ -152,6 +152,8 @@ const WorkflowContent = (props: IProps) => {
     if (selectedCampaign?.id && isCampaignView) {
       getCacheSecretKey(selectedCampaign?.id);
     }
+    setEncryptKey("");
+    form.setFieldValue("encryptKey", "");
   }, [selectedCampaign?.id, selectedWorkflow?.id, isCampaignView]);
 
   const onSaveFlow = async () => {

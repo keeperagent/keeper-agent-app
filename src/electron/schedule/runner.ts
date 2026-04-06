@@ -114,8 +114,14 @@ class ScheduleRunner {
       workflowName: job?.workflow?.name,
       message: `job trigger, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
     });
-    const jobSecretKey = await jobDB.getSecretKey(job.id!);
-    workflow.runWorkflow(jobSecretKey);
+    const [jobSecretKey, secretKeyErr] = await jobDB.getSecretKey(job.id!);
+    if (secretKeyErr) {
+      logEveryWhere({
+        message: `ScheduleRunner failed to get secret key for job ${job.id}: ${secretKeyErr?.message}`,
+      });
+      return;
+    }
+    workflow.runWorkflow(jobSecretKey || "");
 
     const checkTimeoutInterval = setInterval(async () => {
       isJobTimeout = await jobDB.checkJobTimeout(job);

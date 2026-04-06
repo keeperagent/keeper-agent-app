@@ -167,20 +167,16 @@ class AgentRegistryDB {
   }
 
   async getSecretKey(id: number): Promise<string> {
-    try {
-      const data = await AgentRegistryModel.findOne({
-        where: { id },
-        attributes: ["secretKey"],
-        raw: false,
-      });
-      const formatedData = formatDBResponse(data as any);
-      if (!formatedData?.secretKey) {
-        return "";
-      }
-      return encryptionService.decryptData(formatedData.secretKey) || "";
-    } catch {
+    const data = await AgentRegistryModel.findOne({
+      where: { id },
+      attributes: ["secretKey"],
+      raw: false,
+    });
+    const formatedData = formatDBResponse(data as any);
+    if (!formatedData?.secretKey) {
       return "";
     }
+    return encryptionService.decryptData(formatedData.secretKey) || "";
   }
 
   async deleteAgentRegistry(

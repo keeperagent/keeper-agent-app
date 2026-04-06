@@ -151,7 +151,12 @@ const SelectResource = (props: Props) => {
         "alertTelegramWhenError",
       ]);
 
-      if (workflowId && nodeId && encryptKey) {
+      if (
+        workflowId &&
+        nodeId &&
+        encryptKey !== undefined &&
+        encryptKey !== null
+      ) {
         await saveNodeSecret(workflowId, nodeId, encryptKey);
       }
       onSaveNodeConfig({

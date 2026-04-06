@@ -263,8 +263,11 @@ class AgentTaskScheduler {
         schedule.id!,
       );
 
-      const jobSecretKey = await jobDB.getSecretKey(job.id!);
-      workflow.runWorkflow(jobSecretKey, overrideListVariable);
+      const [jobSecretKey, secretKeyErr] = await jobDB.getSecretKey(job.id!);
+      if (secretKeyErr) {
+        throw secretKeyErr;
+      }
+      workflow.runWorkflow(jobSecretKey || "", overrideListVariable);
 
       while (workflow.monitor.isRunning) {
         await sleep(1000);
@@ -374,8 +377,14 @@ class AgentTaskScheduler {
 
     if (job.hasSecretKey) {
       try {
-        const agentSecretKey = await jobDB.getSecretKey(job.id!);
-        if (agentSecretKey) {
+        const [agentSecretKey, agentSecretKeyErr] = await jobDB.getSecretKey(
+          job.id!,
+        );
+        if (agentSecretKeyErr) {
+          logEveryWhere({
+            message: `AgentTaskScheduler failed to get encryptKey for job ${job.id}: ${agentSecretKeyErr?.message}`,
+          });
+        } else if (agentSecretKey) {
           toolContext.update({ encryptKey: agentSecretKey });
         }
       } catch {

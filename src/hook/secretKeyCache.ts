@@ -11,7 +11,10 @@ const useGetCacheSecretKey = () => {
       onSuccess: (payload) => setHasEncryptKey(Boolean(payload?.hasSecretKey)),
     },
   );
-  const getCacheSecretKey = (campaignId: number) => execute({ campaignId });
+  const getCacheSecretKey = (campaignId: number) => {
+    setHasEncryptKey(false);
+    execute({ campaignId });
+  };
   return { loading, getCacheSecretKey, hasEncryptKey };
 };
 
