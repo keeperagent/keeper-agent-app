@@ -15,6 +15,12 @@ const BLOCKED_CODE_PATTERNS = [
 export const containsSensitivePath = (code: string): boolean =>
   BLOCKED_CODE_PATTERNS.some((pattern) => pattern.test(code));
 
+// Escapes all regex metacharacters in a string so it can be safely embedded
+// inside `new RegExp(...)` and matched as a literal, not a pattern.
+// Example: "socket.io" → "socket\\.io" (dot won't match any char)
+export const escapeForRegex = (str: string) =>
+  str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const getWorkspaceRoot = () =>
   path.join(app.getPath("userData"), KA_WORKSPACE_FOLDER);
 

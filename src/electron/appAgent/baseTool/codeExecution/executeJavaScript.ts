@@ -8,6 +8,7 @@ import { safeStringify } from "@/electron/appAgent/utils";
 import {
   buildSafeEnv,
   containsSensitivePath,
+  escapeForRegex,
   getWorkspaceRoot,
 } from "@/electron/appAgent/baseTool/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
@@ -128,9 +129,11 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
           const missingModule = extractMissingModule(err.message);
           if (missingModule) {
             const approvedPlan = toolContext?.approvedPlan || "";
-            if (
-              !approvedPlan.toLowerCase().includes(missingModule.toLowerCase())
-            ) {
+            const modulePattern = new RegExp(
+              `\\b${escapeForRegex(missingModule)}\\b`,
+              "i",
+            );
+            if (!modulePattern.test(approvedPlan)) {
               return safeStringify({
                 error: `Package '${missingModule}' was not listed in the approved plan. Re-draft your plan explicitly listing all npm packages that will be installed, then ask the user to approve again.`,
                 status: "blocked_unapproved_package",

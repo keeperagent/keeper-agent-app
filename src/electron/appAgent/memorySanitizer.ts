@@ -21,12 +21,7 @@ const INJECTION_PHRASES = [
   /disregard\s+(all|your|previous)/i,
 ];
 
-/**
- * Strips lines from memory content that contain dangerous tool names or
- * injection phrases. Applied before any write to memory files — both via
- * the MemoryWriteGuardMiddleware (agent write_file calls) and via
- * extractMemoryFromConversation (session-end LLM extraction).
- */
+// Remove dangerous content from memory before it is written to disk.
 export const sanitizeMemoryContent = (content: string): string =>
   content
     .split("\n")
