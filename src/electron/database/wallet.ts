@@ -238,11 +238,13 @@ class WalletDB {
   ): Promise<[number | null, Error | null]> {
     try {
       const data = await WalletModel.destroy({
-        where: { groupId: listGroupId },
+        where: { groupId: { [Op.in]: listGroupId } },
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteWalletInGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteWalletInGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }

@@ -143,8 +143,7 @@ const getMacAddress = () => {
 
 const initDeviceId = async () => {
   const [preference, err] = await preferenceDB.getOnePreferenceRaw();
-
-  if (err && preference?.deviceId) {
+  if (err || preference?.deviceId) {
     return;
   }
 

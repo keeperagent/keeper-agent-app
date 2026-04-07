@@ -33,6 +33,7 @@ export default (db: Sequelize) =>
           unique: true,
           fields: ["address", "phrase", "privateKey", "groupId"],
         },
+        { fields: ["groupId", "index"] },
       ],
-    }
+    },
   );

@@ -258,6 +258,7 @@ export default (db: Sequelize) =>
     {
       timestamps: false,
       indexes: [
+        { fields: ["groupId"] },
         {
           unique: true,
           fields: [

@@ -207,9 +207,12 @@ class ProfileDB {
       );
 
       if (data?.listResourceId) {
-        const campaignObject = await ProfileModel.findByPk(data?.id);
+        const profileObject = await ProfileModel.findByPk(data?.id);
+        if (!profileObject) {
+          return [null, new Error(`Profile not found: id=${data?.id}`)];
+        }
         // @ts-ignore
-        await campaignObject.setResources(data?.listResourceId);
+        await profileObject.setResources(data?.listResourceId);
       }
 
       return await this.getOneProfile(data?.id!);

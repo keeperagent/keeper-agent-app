@@ -222,13 +222,16 @@ class CampaignDB {
       });
 
       const campaignObject = await CampaignModel.findByPk(data?.id);
+      if (!campaignObject) {
+        return [null, new Error(`Campaign not found: id=${data?.id}`)];
+      }
 
-      if (data?.listWorkflowId) {
+      if (campaignObject && data?.listWorkflowId) {
         // @ts-ignore
         await campaignObject.setWorkflows(data?.listWorkflowId);
       }
 
-      if (data?.listCampaignProfileId) {
+      if (campaignObject && data?.listCampaignProfileId) {
         // @ts-ignore
         await campaignObject.setCampaignProfiles(data?.listCampaignProfileId);
       }

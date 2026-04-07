@@ -530,7 +530,7 @@ class ScheduleDB {
       return [listSchedule, null];
     } catch (err: any) {
       logEveryWhere({
-        message: `getNoRepeatScheduleToRun() error: ${err?.message}`,
+        message: `getAllRunningSchedule() error: ${err?.message}`,
       });
       return [null, err];
     }

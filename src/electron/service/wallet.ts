@@ -240,7 +240,6 @@ const createWalletFromPhrase = async ({
 
     const startTime = new Date().getTime();
     const listWallet: IWallet[] = [];
-    const total = 0;
 
     for (let i = 0; i < batchSize; i++) {
       const index = i + startIndex;
@@ -272,7 +271,7 @@ const createWalletFromPhrase = async ({
 
     return [
       {
-        totalWallet: total,
+        totalWallet: listWallet.length,
         duration: Math.round((endTime - startTime) / 1000),
       },
       null,

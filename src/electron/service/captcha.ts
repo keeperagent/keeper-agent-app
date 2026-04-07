@@ -167,7 +167,7 @@ const getHCaptchaV2Key = async (
 
     return [sitekey?.toString(), null];
   } catch (err: any) {
-    logEveryWhere({ message: `getReCaptchaV2Key() error: ${err?.message}` });
+    logEveryWhere({ message: `getHCaptchaV2Key() error: ${err?.message}` });
     return [null, err];
   }
 };
@@ -185,7 +185,9 @@ const getCloudfareCaptchaKey = async (
     logEveryWhere({ message: `Captcha key: ${captchaKey}` });
     return [captchaKey, null];
   } catch (err: any) {
-    logEveryWhere({ message: `getReCaptchaV2Key() error: ${err?.message}` });
+    logEveryWhere({
+      message: `getCloudfareCaptchaKey() error: ${err?.message}`,
+    });
     return [null, err];
   }
 };
@@ -211,7 +213,7 @@ const getCaptchaToken = async (
       }
 
       const res = await api.get(
-        `/res.php?key=${twoCaptchaAPIKey}&action=get&id=${captchaID}&&json=1`,
+        `/res.php?key=${twoCaptchaAPIKey}&action=get&id=${captchaID}&json=1`,
       );
       if (step !== 0) {
         logEveryWhere({
