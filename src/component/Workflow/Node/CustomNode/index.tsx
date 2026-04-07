@@ -27,6 +27,7 @@ import {
   MESSAGE_CONDITION_RETURN_FALSE,
   MESSAGE_TURN_OFF_PROFILE,
 } from "@/electron/simulator/constant";
+import { EDGE_HANDLE } from "@/config/constant";
 import { mapNodeIcon } from "../../Panel/config";
 import { CustomNodeWrapper, TooltipWrapper } from "./style";
 
@@ -467,23 +468,50 @@ const CustomNode = (props: any) => {
         </Tooltip>
       )}
 
-      <div className="handle-area">
-        <Handle
-          className="node-handle"
-          position={Position.Right}
-          type="source"
-        />
+      <Handle
+        type="target"
+        position={Position.Left}
+        isConnectableStart={false}
+        style={{
+          position: "absolute",
+          left: "calc(50% - 4px)",
+          top: "calc(50% - 4px)",
+          width: 8,
+          height: 8,
+          transform: "none",
+          opacity: 0,
+          border: "none",
+          borderRadius: 0,
+          background: "transparent",
+        }}
+      />
 
-        <div className="icon">
-          <RedoIcon color="var(--color-primary)" />
+      <div className="branch-handles">
+        <div className="branch-handle-item success">
+          <div className="icon">
+            <RedoIcon color="#52c41a" />
+          </div>
+
+          <Handle
+            className="node-handle"
+            position={Position.Right}
+            type="source"
+            id={EDGE_HANDLE.SUCCESS}
+          />
         </div>
 
-        <Handle
-          className="node-handle"
-          position={Position.Left}
-          type="target"
-          isConnectableStart={false}
-        />
+        <div className="branch-handle-item error">
+          <div className="icon">
+            <RedoIcon color="#ff4d4f" />
+          </div>
+
+          <Handle
+            className="node-handle"
+            position={Position.Right}
+            type="source"
+            id={EDGE_HANDLE.ERROR}
+          />
+        </div>
       </div>
     </CustomNodeWrapper>
   );

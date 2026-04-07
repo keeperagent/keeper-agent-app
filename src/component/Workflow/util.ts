@@ -143,14 +143,27 @@ const checkConnectEdge = (
   listNodeCanHaveTwoEdges: string[],
 ): boolean => {
   const sourceNewEdge = newEdge?.source || "";
+  const newEdgeHandle = newEdge?.sourceHandle || "";
 
-  // node just connectd edge can has two edges
+  // branch edges (success/error handles) are always allowed — each handle can have one edge
+  if (newEdgeHandle) {
+    const existingEdgeFromSameHandle = currentEdges.find(
+      (edge: any) =>
+        edge?.source === sourceNewEdge && edge?.sourceHandle === newEdgeHandle,
+    );
+    if (existingEdgeFromSameHandle) {
+      return false;
+    }
+    return true;
+  }
+
+  // node just connected edge can has two edges
   const isHasTwoEdge = listNodeCanHaveTwoEdges.includes(sourceNewEdge);
   const countExistSourceEdge = currentEdges.filter(
     (edge: any) => edge.source === sourceNewEdge,
   ).length;
 
-  //  if node just connected can have two edge, check the count of it
+  // if node just connected can have two edge, check the count of it
   if (
     (isHasTwoEdge && countExistSourceEdge >= 2) ||
     (countExistSourceEdge >= 1 && !isHasTwoEdge)
@@ -236,7 +249,7 @@ const getLayoutedElements = (
     edgesep: BASE_NODE_SEPARATION_Y / 2,
   });
 
-  const dimensionMap = new Map<string, { width: number; height: number; }>();
+  const dimensionMap = new Map<string, { width: number; height: number }>();
 
   nodes.forEach((node) => {
     const dimensions = getNodeDimensions(node);
@@ -276,7 +289,7 @@ const getLayoutedElements = (
 
 const getDragPosition = (
   nodeId: string,
-  nextPosition: { x: number; y: number; },
+  nextPosition: { x: number; y: number },
   nodes: Node[],
 ) => {
   const currentNode = nodes.find((nodeItem) => nodeItem.id === nodeId);

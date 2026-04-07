@@ -12,8 +12,6 @@ import {
   BackgroundVariant,
   MarkerType,
   ConnectionMode,
-  getIncomers,
-  getOutgoers,
   getConnectedEdges,
   Connection,
   ReactFlowInstance,
@@ -46,7 +44,8 @@ import {
   NODE_TYPE,
   WORKFLOW_TYPE,
 } from "@/electron/constant";
-import { EDGE_TYPE } from "@/config/constant";
+import { EDGE_TYPE, EDGE_HANDLE } from "@/config/constant";
+import { EdgeConditionType } from "@/electron/simulator/workflow/common";
 import { useTranslation, useGetListExtensionByName } from "@/hook";
 import { IStatus } from "@/redux/campaignProfile";
 import ContextMenu from "./ContextMenu";
@@ -56,13 +55,9 @@ import CustomNode from "./Node/CustomNode";
 import StartNode from "./Node/StartNode";
 import CommentNode from "./Node/CommentNode";
 import EndNode from "./Node/EndNode";
-import FloatingEdge from "./FloatingEdge";
+import SuccessEdge from "./Edge/SuccessEdge";
+import ErrorEdge from "./Edge/ErrorEdge";
 import CustomConnectionLine from "./CustomConnectionLine";
-import ModalNodeConfig from "./ModalNodeConfig";
-import ModalQueueData from "./ModalQueueData";
-import ModalInstruction from "./ModalInstruction";
-import ModalContractSniperResult from "./ModalContractSniperResult";
-import ModalAnalyzeVariable from "./ModalAnalyzeVariable";
 import {
   edgeColorDarkMode,
   edgeColorLightMode,
@@ -76,11 +71,16 @@ import {
   getNewNodeId,
   cleanUpWrongEdge,
 } from "./util";
-import ModalWorkflowSetting from "./ModalWorkflowSetting";
-import BeforeQuitHandler from "./BeforeQuitHandler";
 import Monitor from "./Monitor";
-import ModalTokenPrice from "./ModalTokenPrice";
-import ModalMarketcap from "./ModalMarketcap";
+import BeforeQuitHandler from "./BeforeQuitHandler";
+import ModalNodeConfig from "./ModalNodeConfig";
+import ModalWorkflowSetting from "./Modal/ModalWorkflowSetting";
+import ModalTokenPrice from "./Modal//ModalTokenPrice";
+import ModalMarketcap from "./Modal/ModalMarketcap";
+import ModalQueueData from "./Modal/ModalQueueData";
+import ModalInstruction from "./Modal/ModalInstruction";
+import ModalContractSniperResult from "./Modal/ModalContractSniperResult";
+import ModalAnalyzeVariable from "./Modal/ModalAnalyzeVariable";
 
 let draggingNodeId: string | null = null;
 let fitViewTimeout: any = null;
@@ -94,7 +94,8 @@ const nodeTypes: any = {
 };
 
 const edgeTypes = {
-  [EDGE_TYPE.FLOATING]: FloatingEdge,
+  [EDGE_TYPE.SUCCESS]: SuccessEdge,
+  [EDGE_TYPE.ERROR]: ErrorEdge,
 };
 
 type IProps = {
@@ -290,21 +291,45 @@ const Workflow = (props: IProps) => {
   }, []);
 
   // when connect two node
+  const isValidConnection = useCallback((connection: any) => {
+    const targetHandle = connection?.targetHandle;
+    if (
+      targetHandle === EDGE_HANDLE.SUCCESS ||
+      targetHandle === EDGE_HANDLE.ERROR
+    ) {
+      return false;
+    }
+    return true;
+  }, []);
+
   const onConnect = useCallback(
     (params: Edge | Connection) => {
       const sourceNode: any = _.find(nodes, { id: params?.source });
       const targetNode: any = _.find(nodes, { id: params?.target });
-      let isWithQueue = true;
 
       if (targetNode?.type === NODE_TYPE.START_NODE) {
         return;
       }
-      if (sourceNode?.type === NODE_TYPE.START_NODE) {
-        isWithQueue = false;
+      const isWithQueue = sourceNode?.type !== NODE_TYPE.START_NODE;
+
+      // determine conditionType and edge type from source handle
+      const isErrorHandle = params?.sourceHandle === EDGE_HANDLE.ERROR;
+      let edgeType = EDGE_TYPE.SUCCESS;
+      let conditionType: EdgeConditionType | undefined =
+        EdgeConditionType.ON_SUCCESS;
+
+      if (isErrorHandle) {
+        edgeType = EDGE_TYPE.ERROR;
+        conditionType = EdgeConditionType.ON_ERROR;
       }
 
       const newEdges = addEdge(
-        { ...params, data: { withQueue: isWithQueue } },
+        {
+          ...params,
+          type: edgeType,
+          data: { withQueue: isWithQueue },
+          ...(conditionType ? { conditionType } : {}),
+        },
         edges,
       );
 
@@ -324,9 +349,7 @@ const Workflow = (props: IProps) => {
       } else if (!isCanConnectEdge) {
         message.warning(translate("workflow.invalidConnectEdge"), 4);
       } else {
-        // Clean up orphaned edges after connecting edges
         const cleanedEdges = cleanUpWrongEdge(newEdges, nodes);
-
         actSetEdges({ edges: cleanedEdges, saveHistory: true });
       }
     },
@@ -336,30 +359,11 @@ const Workflow = (props: IProps) => {
   const onNodesDelete = useCallback(
     (deleted: any[]) => {
       const newEdges = deleted.reduce((acc, node: Node) => {
-        const incomers = getIncomers(node, nodes, edges);
-        const outgoers = getOutgoers(node, nodes, edges);
-        const connectedEdgesOfNode = getConnectedEdges([node], edges);
-
-        const remainingEdges = acc.filter(
-          (edge: Edge) => !connectedEdgesOfNode.includes(edge),
-        );
-
-        const createdEdges = incomers.flatMap(({ id: source }) =>
-          outgoers.map(({ id: target }) => ({
-            id: `${source}->${target}`,
-            source,
-            target,
-            type: EDGE_TYPE.FLOATING,
-            data: { withQueue: true },
-          })),
-        );
-
-        const newEdges = [...remainingEdges, ...createdEdges];
-        return newEdges;
+        const connectedEdgesOfNode = getConnectedEdges([node], acc);
+        return acc.filter((edge: Edge) => !connectedEdgesOfNode.includes(edge));
       }, edges);
 
       const isHasCycle = hasCycle(newEdges, listLoopNodeId);
-
       if (!isHasCycle) {
         // Clean up orphaned edges after deleting nodes
         const cleanedEdges = cleanUpWrongEdge(newEdges, nodes);
@@ -558,6 +562,12 @@ const Workflow = (props: IProps) => {
   const edgesWithColor = useMemo(() => {
     const newEdges = edges?.map((edge: Edge) => {
       const markerEnd: any = edge?.markerEnd || {};
+      if (edge.type === EDGE_TYPE.ERROR) {
+        return {
+          ...edge,
+          markerEnd: { ...markerEnd, color: "#ff4d4f" },
+        };
+      }
       return {
         ...edge,
         style: { ...edge?.style, color: edgeColor, stroke: edgeColor },
@@ -662,14 +672,16 @@ const Workflow = (props: IProps) => {
           onEdgesChange={onEdgesChange}
           onNodesDelete={onNodesDelete}
           onConnect={onConnect}
+          isValidConnection={isValidConnection}
           onInit={setReactFlowInstance}
           edgeTypes={edgeTypes}
           // @ts-ignore
           nodeTypes={nodeTypes}
           maxZoom={20}
           connectionMode={ConnectionMode.Loose}
+          connectionRadius={60}
           defaultEdgeOptions={{
-            type: EDGE_TYPE.FLOATING,
+            type: EDGE_TYPE.SUCCESS,
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: edgeColor,

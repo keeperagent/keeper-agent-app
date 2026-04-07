@@ -15,7 +15,7 @@ import {
   WORKFLOW_TYPE,
   WALLET_VARIABLE,
 } from "@/electron/constant";
-import { INode, IEdge } from "./common";
+import { INode, IEdge, EdgeConditionType } from "./common";
 import {
   getCampaignAdditionalColumn,
   getResourceColumn,
@@ -134,8 +134,8 @@ const removeCycleTempEdges = (edges: IEdge[], cycle: string[]): IEdge[] => {
 };
 
 const findAllCycles = (startNode: string, edges: IEdge[]): string[][] => {
-  const graph: { [key: string]: string[]; } = {}; // Adjacency list representation of the graph
-  const visited: { [key: string]: boolean; } = {}; // Keep track of visited nodes
+  const graph: { [key: string]: string[] } = {}; // Adjacency list representation of the graph
+  const visited: { [key: string]: boolean } = {}; // Keep track of visited nodes
   const cycles: string[][] = []; // Array to store cycles
 
   // Build the adjacency list
@@ -195,23 +195,40 @@ const updateItemInList = (indexOfData: number, listData: any[], data?: any) => {
   return tempListData;
 };
 
-const getFlowPath = (nodes: INode[], edges: IEdge[]): string[] => {
+const getStartNodeId = (nodes: INode[]): string => {
   const startNode = nodes?.find(
     (node: INode) => node.type === NODE_TYPE.START_NODE,
   );
-  const endNode = nodes?.find(
-    (node: INode) => node.type === NODE_TYPE.END_NODE,
+  return startNode?.id || "";
+};
+
+const getNextNodeId = (
+  currentNodeId: string,
+  edges: IEdge[],
+  hasError: boolean,
+): string | null => {
+  const outgoingEdges = edges?.filter(
+    (edge: IEdge) => edge.source === currentNodeId,
   );
 
-  if (!startNode) {
-    return [];
+  if (!outgoingEdges?.length) {
+    return null;
   }
 
-  const startNodeId: string = startNode?.id || "";
-  const endNodeId: string = endNode?.id || "";
-  const flowPath = createPathWorkflow(edges, nodes, startNodeId, endNodeId);
+  // if node has typed edges, use conditionType to pick the right one
+  const hasTypedEdges = outgoingEdges.some((edge: IEdge) => edge.conditionType);
+  if (hasTypedEdges) {
+    const conditionType = hasError
+      ? EdgeConditionType.ON_ERROR
+      : EdgeConditionType.ON_SUCCESS;
+    const matchedEdge = outgoingEdges.find(
+      (edge: IEdge) => edge.conditionType === conditionType,
+    );
+    return matchedEdge?.target || null;
+  }
 
-  return flowPath;
+  // single edge with no conditionType — always follow it
+  return outgoingEdges[0]?.target || null;
 };
 
 const enhanceConfigWithExtensionID = (
@@ -261,7 +278,7 @@ const getVariableFromProfile = (
   if (profile === null) {
     return [];
   }
-  const mapVariable: { [key: string]: IWorkflowVariable; } = {};
+  const mapVariable: { [key: string]: IWorkflowVariable } = {};
 
   // only campaign has default wallet variables
   if (campaign) {
@@ -285,7 +302,6 @@ const getVariableFromProfile = (
       }
     });
   }
-
 
   // variable from Resource
   profile?.listResource?.forEach((resource: IResource) => {
@@ -332,7 +348,8 @@ const getVariableFromProfile = (
 };
 
 export {
-  getFlowPath,
+  getStartNodeId,
+  getNextNodeId,
   createPathWorkflow,
   updateItemInList,
   enhanceConfigWithExtensionID,

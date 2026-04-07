@@ -2,8 +2,8 @@ import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useTranslation } from "@/hook";
 import { Wrapper } from "./style";
-import { INode } from "../../Panel/common";
-import Node from "../../Panel/Node";
+import { INode } from "../../../Panel/common";
+import Node from "../../../Panel/Node";
 import { getNodeContent } from "./config";
 
 type IProps = {
@@ -16,7 +16,7 @@ const Content = (props: IProps) => {
 
   const nodeContent = getNodeContent(
     selectedNode?.config?.workflowType || "",
-    translate
+    translate,
   );
 
   return (

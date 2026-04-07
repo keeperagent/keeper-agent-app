@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
-const LabelWrapper = styled.div`
+const QueueWrapper = styled.div`
   background-color: ${({ theme }: { theme: ITheme }) => theme.colorBgNode};
   font-size: 0.7rem;
   border-radius: 1px;
@@ -19,6 +19,19 @@ const LabelWrapper = styled.div`
     background-color: ${({ theme }: { theme: ITheme }) => theme.colorBgPrimary};
     padding: 3px 3px;
     border-radius: 1px 1px 0 0;
+    border-bottom: 0.01px solid
+      color-mix(
+        in srgb,
+        ${({ theme }: { theme: ITheme }) => theme.colorBorder} 40%,
+        transparent
+      );
+
+    .condition-label {
+      font-size: 0.35rem;
+      font-weight: 700;
+      margin-right: 2px;
+      letter-spacing: 0.02em;
+    }
 
     .value {
       font-size: 0.4rem;
@@ -65,4 +78,4 @@ const LabelWrapper = styled.div`
   }
 `;
 
-export { LabelWrapper };
+export { QueueWrapper };
