@@ -129,7 +129,7 @@ const ModalExportProfile = (props: any) => {
                   }
 
                   return Promise.reject(
-                    Error(translate("wallet.validateNameFile"))
+                    Error(translate("wallet.validateNameFile")),
                   );
                 },
               },
@@ -144,12 +144,12 @@ const ModalExportProfile = (props: any) => {
           </Form.Item>
 
           <Form.Item
-            label={`${translate("wallet.secretKey")}`}
+            label={`${translate("wallet.encryptKey")}`}
             name="encryptKey"
           >
             <PasswordInput
               name="encryptKey"
-              placeholder={`${translate("wallet.enterSecretKey")}`}
+              placeholder={`${translate("wallet.enterEncryptKey")}`}
               extendClass="encryptKey-manual"
             />
           </Form.Item>
@@ -163,5 +163,5 @@ export default connect(
   (state: RootState) => ({
     selectedCampaign: state?.Campaign?.selectedCampaign,
   }),
-  {}
+  {},
 )(ModalExportProfile);

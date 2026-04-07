@@ -323,7 +323,7 @@ const ManageResource = (props: any) => {
 
         <PasswordInput
           name="encryptKey"
-          placeholder={translate("wallet.secretKey")}
+          placeholder={translate("wallet.encryptKey")}
           width="15rem"
           onChange={setEncryptKey}
           extendClass="encryptKey-header"

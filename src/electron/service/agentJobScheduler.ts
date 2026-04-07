@@ -263,11 +263,11 @@ class AgentTaskScheduler {
         schedule.id!,
       );
 
-      const [jobSecretKey, secretKeyErr] = await jobDB.getSecretKey(job.id!);
-      if (secretKeyErr) {
-        throw secretKeyErr;
+      const [jobEncryptKey, encryptKeyErr] = await jobDB.getEncryptKey(job.id!);
+      if (encryptKeyErr) {
+        throw encryptKeyErr;
       }
-      workflow.runWorkflow(jobSecretKey || "", overrideListVariable);
+      workflow.runWorkflow(jobEncryptKey || "", overrideListVariable);
 
       while (workflow.monitor.isRunning) {
         await sleep(1000);
@@ -375,17 +375,17 @@ class AgentTaskScheduler {
 
     const toolContext = new ToolContext();
 
-    if (job.hasSecretKey) {
+    if (job.hasEncryptKey) {
       try {
-        const [agentSecretKey, agentSecretKeyErr] = await jobDB.getSecretKey(
+        const [agentEncryptKey, agentEncryptKeyErr] = await jobDB.getEncryptKey(
           job.id!,
         );
-        if (agentSecretKeyErr) {
+        if (agentEncryptKeyErr) {
           logEveryWhere({
-            message: `AgentTaskScheduler failed to get encryptKey for job ${job.id}: ${agentSecretKeyErr?.message}`,
+            message: `AgentTaskScheduler failed to get encryptKey for job ${job.id}: ${agentEncryptKeyErr?.message}`,
           });
-        } else if (agentSecretKey) {
-          toolContext.update({ encryptKey: agentSecretKey });
+        } else if (agentEncryptKey) {
+          toolContext.update({ encryptKey: agentEncryptKey });
         }
       } catch {
         logEveryWhere({

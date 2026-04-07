@@ -297,12 +297,12 @@ const SaveWallet = (props: Props) => {
 
             {mode === ENCRYPT_MODE.ENCRYPT && (
               <Form.Item
-                label={`${translate("wallet.secretKey")}:`}
+                label={`${translate("wallet.encryptKey")}:`}
                 name="encryptKey"
               >
                 <PasswordInput
                   name="encryptKey"
-                  placeholder={`${translate("wallet.enterSecretKey")}`}
+                  placeholder={`${translate("wallet.enterEncryptKey")}`}
                   extendClass="encryptKey"
                   onChange={(value) => {
                     setEncryptKey(value);

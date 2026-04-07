@@ -18,8 +18,8 @@ import {
   useTranslation,
   useStartWorkflow,
   useStopWorkflow,
-  useGetCacheSecretKey,
-  useSetCacheSecretKey,
+  useGetCacheEncryptKey,
+  useSetCacheEncryptKey,
 } from "@/hook";
 import {
   actUndo,
@@ -128,22 +128,22 @@ const WorkflowContent = (props: IProps) => {
   const navigate = useNavigate();
 
   const {
-    getCacheSecretKey,
+    getCacheEncryptKey,
     hasEncryptKey,
     cachedEncryptKey,
-    loading: isGetCacheSecretKeyLoading,
-  } = useGetCacheSecretKey();
-  const { setCacheSecretKey } = useSetCacheSecretKey();
+    loading: isGetCacheEncryptKeyLoading,
+  } = useGetCacheEncryptKey();
+  const { setCacheEncryptKey } = useSetCacheEncryptKey();
 
   useEffect(() => {
-    if (isGetCacheSecretKeyLoading) {
+    if (isGetCacheEncryptKeyLoading) {
       return;
     }
 
     if (!hasEncryptKey) {
       setEncryptKey("");
     }
-  }, [isGetCacheSecretKeyLoading, hasEncryptKey]);
+  }, [isGetCacheEncryptKeyLoading, hasEncryptKey]);
 
   useEffect(() => {
     setEncryptKey(cachedEncryptKey);
@@ -155,7 +155,7 @@ const WorkflowContent = (props: IProps) => {
 
   useEffect(() => {
     if (selectedCampaign?.id && isCampaignView) {
-      getCacheSecretKey(selectedCampaign?.id);
+      getCacheEncryptKey(selectedCampaign?.id);
     }
     setEncryptKey("");
     form.setFieldValue("encryptKey", "");
@@ -257,7 +257,7 @@ const WorkflowContent = (props: IProps) => {
 
   const onChangeEncryptKey = (value: string) => {
     setEncryptKey(value);
-    setCacheSecretKey(selectedCampaign?.id || 0, value);
+    setCacheEncryptKey(selectedCampaign?.id || 0, value);
   };
 
   return (
@@ -386,7 +386,7 @@ const WorkflowContent = (props: IProps) => {
           <Form form={form}>
             <div className="encryptKey">
               <PasswordInput
-                placeholder={translate("wallet.secretKey")}
+                placeholder={translate("wallet.encryptKey")}
                 width="15rem"
                 onChange={onChangeEncryptKey}
                 extendClass="encryptKey-campaign"

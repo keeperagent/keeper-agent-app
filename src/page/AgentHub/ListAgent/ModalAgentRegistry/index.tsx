@@ -85,7 +85,7 @@ const ModalAgentRegistry = (props: Props) => {
   } = props;
 
   const [llmProvider, setLlmProvider] = useState<string>(LLMProvider.CLAUDE);
-  const [secretKeyValue, setSecretKeyValue] = useState<string>("");
+  const [encryptKeyValue, setEncryptKeyValue] = useState<string>("");
 
   const { translate, locale } = useTranslation();
   const [form] = Form.useForm();
@@ -119,7 +119,7 @@ const ModalAgentRegistry = (props: Props) => {
       registry?.llmModel || getDefaultModelForProvider(provider, preference);
     setLlmProvider(provider);
 
-    setSecretKeyValue("");
+    setEncryptKeyValue("");
     form.setFieldsValue({
       name: registry?.name,
       description: registry?.description || "",
@@ -195,7 +195,7 @@ const ModalAgentRegistry = (props: Props) => {
         profileIds: values?.profileIds || [],
         isAllWallet: Boolean(values.isAllWallet),
         maxConcurrentTasks: values.maxConcurrentTasks,
-        secretKey: secretKeyValue || undefined,
+        encryptKey: encryptKeyValue || undefined,
       };
 
       if (isEdit && registry?.id) {
@@ -464,19 +464,19 @@ const ModalAgentRegistry = (props: Props) => {
             </Form.Item>
 
             <Form.Item
-              label={`${translate("wallet.secretKey")}:`}
+              label={`${translate("wallet.encryptKey")}:`}
               tooltip={translate("agent.encryptKeyTooltip")}
             >
               <PasswordInput
-                name="secretKey"
+                name="encryptKey"
                 placeholder={
                   isEdit
                     ? translate("agent.encryptKeyEditPlaceholder")
                     : translate("agent.encryptKeyPlaceholder")
                 }
-                extendClass="agentSecretKey"
-                onChange={setSecretKeyValue}
-                initialValue={registry?.hasSecretKey ? "•" : ""}
+                extendClass="agentEncryptKey"
+                onChange={setEncryptKeyValue}
+                initialValue={registry?.hasEncryptKey ? "•" : ""}
                 shouldHideValue={true}
               />
             </Form.Item>

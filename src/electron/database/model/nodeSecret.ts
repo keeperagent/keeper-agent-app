@@ -20,7 +20,7 @@ export default (db: Sequelize) =>
         allowNull: false,
         unique: "node_secret_unique",
       },
-      secretKey: {
+      encryptKey: {
         type: DataTypes.STRING,
         allowNull: true,
         defaultValue: "",

@@ -161,7 +161,7 @@ export {
   useCheckJobExisted,
 } from "./job";
 export { useSaveNodeSecret, useGetNodeSecret } from "./nodeSecret";
-export { useGetCacheSecretKey, useSetCacheSecretKey } from "./secretKeyCache";
+export { useGetCacheEncryptKey, useSetCacheEncryptKey } from "./encryptKeyCache";
 export { useGlobalSearch } from "./search";
 export {
   useCheckMasterPasswordExists,

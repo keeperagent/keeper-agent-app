@@ -12,7 +12,7 @@ import {
   handleDeeplinkWindow,
 } from "./service/deeplink";
 import { masterPasswordManager } from "./service/masterPassword";
-import { secretKeyCache } from "./service/secretKeyCache";
+import { encryptKeyCache } from "./service/encryptKeyCache";
 import { cleanupAllAgentSessions } from "./controller/appAgent";
 import { applyScreenCaptureProtection } from "./controller/preference";
 import { parseWindowsPath, parseUnixPath } from "./util";
@@ -129,7 +129,7 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
-  secretKeyCache.clear();
+  encryptKeyCache.clear();
   masterPasswordManager.clearMasterPassword();
 });
 

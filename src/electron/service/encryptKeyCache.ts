@@ -6,8 +6,8 @@ type CacheItem = {
 
 const maxTimeoutMinutes = 30;
 
-// Use this class to improve UX for CampaignProfile view and Workflow, because we dont want user reenter secret key every time they open the page. Do not cache secret key in browser, only use inmem cache
-class SecretKeyCache {
+// Use this class to improve UX for CampaignProfile view and Workflow, because we dont want user reenter encrypt key every time they open the page. Do not cache encrypt key in browser, only use inmem cache
+class EncryptKeyCache {
   private cache: Map<string, CacheItem>;
 
   constructor() {
@@ -45,4 +45,4 @@ class SecretKeyCache {
   };
 }
 
-export const secretKeyCache = new SecretKeyCache();
+export const encryptKeyCache = new EncryptKeyCache();

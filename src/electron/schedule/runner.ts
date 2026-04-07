@@ -114,14 +114,14 @@ class ScheduleRunner {
       workflowName: job?.workflow?.name,
       message: `job trigger, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
     });
-    const [jobSecretKey, secretKeyErr] = await jobDB.getSecretKey(job.id!);
-    if (secretKeyErr) {
+    const [jobEncryptKey, encryptKeyErr] = await jobDB.getEncryptKey(job.id!);
+    if (encryptKeyErr) {
       logEveryWhere({
-        message: `ScheduleRunner failed to get secret key for job ${job.id}: ${secretKeyErr?.message}`,
+        message: `ScheduleRunner failed to get encrypt key for job ${job.id}: ${encryptKeyErr?.message}`,
       });
       return;
     }
-    workflow.runWorkflow(jobSecretKey || "");
+    workflow.runWorkflow(jobEncryptKey || "");
 
     const checkTimeoutInterval = setInterval(async () => {
       isJobTimeout = await jobDB.checkJobTimeout(job);

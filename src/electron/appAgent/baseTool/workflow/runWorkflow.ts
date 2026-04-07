@@ -15,7 +15,7 @@ const schema = z.object({
     .string()
     .optional()
     .describe(
-      "Secret key to decrypt profile data. Required if the workflow uses encrypted data.",
+      "Encrypt key to decrypt profile data. Required if the workflow uses encrypted data.",
     ),
   variables: z
     .record(z.string())

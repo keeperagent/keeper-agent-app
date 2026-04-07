@@ -82,8 +82,8 @@ import {
   useSyncCampaignProfile,
   useSyncWorkflowData,
   useGetCampaignProfileColumnStats,
-  useGetCacheSecretKey,
-  useSetCacheSecretKey,
+  useGetCacheEncryptKey,
+  useSetCacheEncryptKey,
 } from "@/hook";
 import {
   GroupColumnConfig,
@@ -428,25 +428,25 @@ const ManageCampaignProfile = (props: IProps) => {
   } = useDeleteCampaignProfile();
   const { updateCampaignProfile } = useUpdateCampaignProfile();
   const {
-    getCacheSecretKey,
+    getCacheEncryptKey,
     hasEncryptKey,
     cachedEncryptKey,
-    loading: isGetCacheSecretKeyLoading,
-  } = useGetCacheSecretKey();
-  const { setCacheSecretKey } = useSetCacheSecretKey();
+    loading: isGetCacheEncryptKeyLoading,
+  } = useGetCacheEncryptKey();
+  const { setCacheEncryptKey } = useSetCacheEncryptKey();
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (isGetCacheSecretKeyLoading) {
+    if (isGetCacheEncryptKeyLoading) {
       return;
     }
 
     setEncryptKey(cachedEncryptKey || "");
-  }, [isGetCacheSecretKeyLoading, cachedEncryptKey]);
+  }, [isGetCacheEncryptKeyLoading, cachedEncryptKey]);
 
   useEffect(() => {
     if (selectedCampaign?.id) {
-      getCacheSecretKey(selectedCampaign?.id);
+      getCacheEncryptKey(selectedCampaign?.id);
     }
   }, [selectedCampaign?.id, selectedWorkflow?.id]);
 
@@ -595,7 +595,7 @@ const ManageCampaignProfile = (props: IProps) => {
     campaignProfile: ICampaignProfile,
   ) => {
     if (isCampaignProfileEncrypted(campaignProfile) && !encryptKey) {
-      message.error(translate("workflow.missingSecretKey"));
+      message.error(translate("workflow.missingEncryptKey"));
       return;
     }
 
@@ -960,7 +960,7 @@ const ManageCampaignProfile = (props: IProps) => {
 
   const onChangeEncryptKey = (value: string) => {
     setEncryptKey(value);
-    setCacheSecretKey(selectedCampaign?.id || 0, value);
+    setCacheEncryptKey(selectedCampaign?.id || 0, value);
   };
 
   return (
@@ -988,7 +988,7 @@ const ManageCampaignProfile = (props: IProps) => {
         <Form form={form}>
           <PasswordInput
             name="encryptKey"
-            placeholder={translate("wallet.secretKey")}
+            placeholder={translate("wallet.encryptKey")}
             width="16rem"
             onChange={onChangeEncryptKey}
             extendClass="encryptKey-header"
