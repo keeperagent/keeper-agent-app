@@ -13,9 +13,9 @@ const CustomConnectionLine = (props: ConnectionLineComponentProps) => {
     connectionLineStyle,
   } = props;
 
-  const fromNodeWidth = (fromNode as any)?.measured?.width || 0;
-  const fromNodeHeight = (fromNode as any)?.measured?.height || 0;
-  const fromNodePos = (fromNode as any)?.internals?.positionAbsolute;
+  const fromNodeWidth = fromNode?.measured?.width || 0;
+  const fromNodeHeight = fromNode?.measured?.height || 0;
+  const fromNodePos = fromNode?.position;
   const sourceDotX = fromNodePos ? fromNodePos.x + fromNodeWidth : fromX;
   const sourceDotY = fromNodePos ? fromNodePos.y + fromNodeHeight / 2 : fromY;
 
@@ -25,7 +25,7 @@ const CustomConnectionLine = (props: ConnectionLineComponentProps) => {
   if (toNode && toNode.id !== fromNode?.id) {
     const width = toNode?.measured?.width || 0;
     const height = toNode?.measured?.height || 0;
-    const posAbs = toNode?.internals?.positionAbsolute;
+    const posAbs = toNode?.position;
     if (posAbs) {
       targetX = posAbs.x + width / 2;
       targetY = posAbs.y + height / 2;

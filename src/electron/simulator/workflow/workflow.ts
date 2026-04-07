@@ -13,7 +13,7 @@ import {
   NODE_TYPE,
   WORKFLOW_TYPE,
 } from "@/electron/constant";
-import { IWorkflowData } from "./common";
+import { IWorkflowData, EdgeConditionType, INode } from "./common";
 import {
   enhanceConfigWithExtensionID,
   getStartNodeId,
@@ -344,13 +344,12 @@ export class Workflow {
           this.monitor.clearThreadError(threadID);
         }
 
-        const hasError = Boolean(this.monitor.mapThreadError[threadID]);
-
         // get current node id from edgeID's source, or start node for fresh profile
         const currentNodeId = flowProfile?.edgeID
           ? edges.find((edge) => edge.id === flowProfile?.edgeID)?.source || ""
           : "";
 
+        const hasError = Boolean(this.monitor.mapThreadError[threadID]);
         const targetNodeID = currentNodeId
           ? getNextNodeId(currentNodeId, edges, hasError)
           : startNodeId;
@@ -506,10 +505,24 @@ export class Workflow {
         }
       } else {
         // flow profile just finished a node — move to edge state
-        const targetEdgeID =
-          _.find(edges, {
-            source: flowProfile?.nodeID,
-          })?.id || null;
+        const threadError = this.monitor.mapThreadError[threadID];
+        const hasError =
+          Boolean(threadError) && threadError?.message !== MESSAGE_LOOP_DONE;
+        const outgoingEdges = edges.filter(
+          (edge) => edge.source === flowProfile?.nodeID,
+        );
+        const hasTypedEdges = outgoingEdges.some((edge) => edge.conditionType);
+        let targetEdgeID: string | null = null;
+        if (hasTypedEdges) {
+          const conditionType = hasError
+            ? EdgeConditionType.ON_ERROR
+            : EdgeConditionType.ON_SUCCESS;
+          targetEdgeID =
+            outgoingEdges.find((edge) => edge.conditionType === conditionType)
+              ?.id || null;
+        } else {
+          targetEdgeID = outgoingEdges[0]?.id || null;
+        }
 
         currentTime = new Date().getTime();
         flowProfile = {
@@ -550,7 +563,10 @@ export class Workflow {
       this.monitor?.setThreadError(threadIDStr, error);
 
       // send error to telegram
-      if (config?.alertTelegramWhenError) {
+      if (
+        config?.alertTelegramWhenError &&
+        error?.message !== MESSAGE_LOOP_DONE
+      ) {
         let errorMessage = "";
         errorMessage += `<i>${error}</i>\n`;
         errorMessage += `<strong>Current time:</strong> ${dayjs().format(
@@ -763,7 +779,9 @@ export class Workflow {
         return errUpdateProfile;
       }
     } else {
-      const firstNode = _.find(nodes, { id: getStartNodeId(nodes) });
+      const startNodeId = getStartNodeId(nodes);
+      const firstNodeId = getNextNodeId(startNodeId, edges, false);
+      const firstNode = nodes.find((node: INode) => node.id === firstNodeId);
       if (
         firstNode?.data?.config?.workflowType === WORKFLOW_TYPE.GENERATE_PROFILE
       ) {
