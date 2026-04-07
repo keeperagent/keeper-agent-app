@@ -509,6 +509,20 @@ export class Workflow {
           (node: INode) => node.id === flowProfile?.nodeID,
         );
         if (finishedNode?.type === NODE_TYPE.END_NODE) {
+          let endNodeConfig = flowProfile?.config || ({} as INodeConfig);
+          if (!endNodeConfig?.onSuccess) {
+            endNodeConfig = {
+              ...endNodeConfig,
+              onSuccess: NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE,
+            };
+          }
+          if (!endNodeConfig?.onError) {
+            endNodeConfig = {
+              ...endNodeConfig,
+              onError: NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE,
+            };
+          }
+          flowProfile = { ...flowProfile, config: endNodeConfig };
           await this.updateProfileWhenCompleted(flowProfile, threadID);
           continue;
         }
