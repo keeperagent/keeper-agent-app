@@ -120,7 +120,9 @@ const importDatabase = async (filePath: string): Promise<Error | null> => {
     });
     return err;
   } finally {
-    fs.unlinkSync(tempFilePath);
+    try {
+      fs.unlinkSync(tempFilePath);
+    } catch {}
   }
 };
 

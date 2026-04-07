@@ -387,9 +387,9 @@ class AgentTaskScheduler {
         } else if (agentEncryptKey) {
           toolContext.update({ encryptKey: agentEncryptKey });
         }
-      } catch {
+      } catch (err: any) {
         logEveryWhere({
-          message: `AgentTaskScheduler: failed to get encryptKey for job ${job.id}`,
+          message: `AgentTaskScheduler: failed to get encryptKey for job ${job.id}: ${err?.message}`,
         });
       }
     }

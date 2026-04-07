@@ -19,6 +19,10 @@ export const dialogController = () => {
     MESSAGE.CHOOSE_FOLDER,
     MESSAGE.CHOOSE_FOLDER_RES,
     async (event, _payload) => {
+      if (!mainWindow) {
+        return;
+      }
+
       // Reference: https://www.electronjs.org/docs/latest/api/dialog
       const chooseFolderDialog: OpenDialogOptions = {
         title: "Select folder",
@@ -41,6 +45,10 @@ export const dialogController = () => {
     MESSAGE.CHOOSE_FILE,
     MESSAGE.CHOOSE_FILE_RES,
     async (event, payload) => {
+      if (!mainWindow) {
+        return;
+      }
+
       const { filters, multiple = true } = payload || {};
       const chooseFileDialog: OpenDialogOptions = {
         title: "Select file(s)",
@@ -211,6 +219,9 @@ export const dialogController = () => {
         defaultPath: folderPath || undefined,
         properties: isOpenFile ? ["openFile"] : ["openDirectory"],
       };
+      if (!mainWindow) {
+        return;
+      }
       await dialog.showOpenDialog(mainWindow, openFolderDialog);
     },
   );

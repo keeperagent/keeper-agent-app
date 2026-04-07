@@ -311,13 +311,11 @@ JobModel.belongsTo(WorkflowModel, {
   foreignKey: { name: "workflowId", allowNull: true },
   as: "workflow",
   constraints: false,
-  onDelete: "CASCADE",
 });
 JobModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
   constraints: false,
-  onDelete: "CASCADE",
 });
 
 // @JobModel -> @AgentRegistryModel
@@ -341,6 +339,13 @@ AgentMailboxModel.belongsTo(AgentRegistryModel, {
   constraints: false,
 });
 
+// @AgentMailboxModel -> @AgentRegistryModel (toAgent)
+AgentMailboxModel.belongsTo(AgentRegistryModel, {
+  foreignKey: { name: "toAgentId", allowNull: true },
+  as: "toAgent",
+  constraints: false,
+});
+
 // @AgentTaskModel -> @AgentRegistryModel (assignedAgent)
 AgentTaskModel.belongsTo(AgentRegistryModel, {
   foreignKey: { name: "assignedAgentId", allowNull: true },
@@ -360,19 +365,16 @@ AppLogModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
   constraints: false,
-  onDelete: "CASCADE",
 });
 AppLogModel.belongsTo(WorkflowModel, {
   foreignKey: { name: "workflowId", allowNull: true },
   as: "workflow",
   constraints: false,
-  onDelete: "CASCADE",
 });
 AppLogModel.belongsTo(ScheduleModel, {
   foreignKey: { name: "scheduleId", allowNull: true },
   as: "schedule",
   constraints: false,
-  onDelete: "CASCADE",
 });
 
 /** Resolves when the database is ready (authenticate, sync, migrations done). Use to gate UI or main process until DB is loaded. */

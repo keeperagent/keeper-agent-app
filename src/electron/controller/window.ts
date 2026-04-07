@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, shell, screen } from "electron";
+import { ipcMain, shell, screen } from "electron";
 import os from "os";
 import { MESSAGE } from "@/electron/constant";
 import { mainWindow } from "@/electron/main";
@@ -6,21 +6,12 @@ import { onIpc } from "./helpers";
 import type { IpcOpenExternalLinkPayload } from "@/electron/ipcTypes";
 
 export const windowController = () => {
-  ipcMain.on(MESSAGE.CLOSE_CHILD_WINDOW, async (_event, _payload) => {
-    const listWindow = BrowserWindow.getAllWindows();
-    listWindow.forEach((win: BrowserWindow) => {
-      if (win.id !== mainWindow.id) {
-        win.close();
-      }
-    });
-  });
-
   ipcMain.on(MESSAGE.ENTER_FULL_SCREEN, async (_event, _payload) => {
-    mainWindow.setFullScreen(true);
+    mainWindow?.setFullScreen(true);
   });
 
   ipcMain.on(MESSAGE.EXIT_FULL_SCREEN, async (_event, _payload) => {
-    mainWindow.setFullScreen(false);
+    mainWindow?.setFullScreen(false);
   });
 
   ipcMain.on(

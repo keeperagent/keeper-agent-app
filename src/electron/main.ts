@@ -17,7 +17,7 @@ import { cleanupAllAgentSessions } from "./controller/appAgent";
 import { applyScreenCaptureProtection } from "./controller/preference";
 import { parseWindowsPath, parseUnixPath } from "./util";
 
-let mainWindow: BrowserWindow;
+let mainWindow: BrowserWindow | null = null;
 app.setName("Keeper Agent");
 protocol.registerSchemesAsPrivileged([
   {
@@ -59,21 +59,6 @@ const createWindow = async () => {
       spellcheck: false,
       sandbox: true,
     },
-  });
-
-  // https://www.electronjs.org/docs/latest/api/window-open
-  mainWindow.webContents.setWindowOpenHandler(() => {
-    return {
-      action: "allow",
-      overrideBrowserWindowOptions: {
-        frame: true,
-        fullscreenable: false,
-        webPreferences: {
-          preload: path.join(__dirname, "../preload/index.js"), // allow second window access to @window?.electron to call api
-          devTools: !app.isPackaged,
-        },
-      },
-    };
   });
 
   mainWindow.maximize();
@@ -118,7 +103,7 @@ app.on("ready", async () => {
 
   // Only create window after database is fully loaded (avoids sqlite3 load-order / crash issues).
   await dbReady;
-  createWindow();
+  await createWindow();
   registerDeeplink();
 });
 
@@ -129,11 +114,11 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
-  encryptKeyCache.clear();
-  masterPasswordManager.clearMasterPassword();
 });
 
 app.on("will-quit", async () => {
+  encryptKeyCache.clear();
+  masterPasswordManager.clearMasterPassword();
   await cleanupAllAgentSessions();
 });
 
@@ -141,7 +126,7 @@ app.on("activate", async () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    await createWindow();
   }
 });
 

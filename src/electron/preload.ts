@@ -8,6 +8,6 @@ contextBridge.exposeInMainWorld("electron", {
   on: (channel: string, callback?: any) => ipcRenderer.on(channel, callback),
   removeAllListeners: (channel: string) =>
     ipcRenderer.removeAllListeners(channel),
-  /** Absolute filesystem path for a File (from input or drop). */
+  // Absolute filesystem path for a File (from input or drop).
   getPathForFile: (file: File): string => webUtils.getPathForFile(file),
 });

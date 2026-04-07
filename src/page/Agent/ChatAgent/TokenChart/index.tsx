@@ -23,6 +23,7 @@ const TokenChart = (props: any) => {
       <ChartFrame
         title={translate("agent.dexscreenerChart")}
         src={src}
+        sandbox="allow-scripts allow-same-origin allow-popups"
         allowFullScreen
         loading="lazy"
       />
