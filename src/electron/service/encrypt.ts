@@ -63,7 +63,8 @@ export class EncryptionService {
    * Results are cached in memory for performance.
    */
   private deriveEncryptKey(secret: string): Buffer {
-    const cached = this.encryptKeyCache.get(secret);
+    const cacheKey = crypto.createHash("sha256").update(secret).digest("hex");
+    const cached = this.encryptKeyCache.get(cacheKey);
     if (cached) {
       return cached;
     }
@@ -75,7 +76,7 @@ export class EncryptionService {
       32,
       "sha256",
     );
-    this.encryptKeyCache.set(secret, encryptKey);
+    this.encryptKeyCache.set(cacheKey, encryptKey);
     return encryptKey;
   }
 

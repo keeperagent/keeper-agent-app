@@ -16,6 +16,7 @@ export const runEncryptKeyController = () => {
       const value = encryptKeyCache.get(encryptKeyCache.getCacheKey(campaignId));
 
       event.reply(MESSAGE.GET_ENCRYPT_KEY_CACHE_RES, {
+        campaignId,
         hasEncryptKey: Boolean(value),
         encryptKey: value || "",
       });

@@ -78,7 +78,12 @@ export class WorkflowManager {
         job?.campaignId,
         job?.scheduleId || 0,
       );
-      workflow.runWorkflow(job?.encryptKey || "");
+      let encryptKey = "";
+      if (job?.hasEncryptKey && job?.id) {
+        const [fetchedEncryptKey] = await jobDB.getEncryptKey(job.id);
+        encryptKey = fetchedEncryptKey || "";
+      }
+      workflow.runWorkflow(encryptKey);
       await sleep(5000);
     }
   };
