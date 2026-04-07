@@ -94,5 +94,11 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
+      indexes: [
+        { fields: ["logType", "scheduleId"] },
+        { fields: ["logType", "status"] },
+        { fields: ["logType", "jobId"] },
+        { fields: ["createAt"] },
+      ],
     },
   );

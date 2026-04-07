@@ -44,5 +44,9 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
+      indexes: [
+        { fields: ["toAgentId", "isBroadcast"] },
+        { fields: ["createAt"] },
+      ],
     },
   );

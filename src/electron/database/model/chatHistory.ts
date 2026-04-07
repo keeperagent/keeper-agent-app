@@ -49,5 +49,6 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
+      indexes: [{ fields: ["platformId", "platformChatId", "isSummary"] }],
     },
   );

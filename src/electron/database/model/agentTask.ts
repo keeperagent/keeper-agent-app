@@ -118,5 +118,10 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
+      indexes: [
+        { fields: ["status"] },
+        { fields: ["status", "assignedAgentId"] },
+        { fields: ["createAt"] },
+      ],
     },
   );
