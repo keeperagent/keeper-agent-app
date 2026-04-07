@@ -17,14 +17,37 @@ const removeLastTrailingSlash = (str: string): string => {
   return str.replace(/\/+$/, "");
 };
 
+const LOG_FLUSH_INTERVAL = 500;
+const pendingLogs: { message: string; id: string }[] = [];
+let logFlushTimer: ReturnType<typeof setInterval> | null = null;
+
+const flushPendingLogs = (): void => {
+  if (pendingLogs.length === 0) {
+    return;
+  }
+  if (!mainWindow?.webContents || mainWindow.webContents.isDestroyed()) {
+    pendingLogs.length = 0;
+    return;
+  }
+  try {
+    const batch = pendingLogs.splice(0, pendingLogs.length);
+    mainWindow.webContents.send(MESSAGE.LOG_BATCH, { data: batch });
+  } catch (err: any) {
+    console.log("flushPendingLogs() error: ", err?.message);
+  }
+};
+
 const logEveryWhere = (input: IStructuredLogPayload): void => {
   try {
     const message = JSON.stringify(input);
-
     console.log(message);
-    mainWindow?.webContents?.send(MESSAGE.LOG, {
-      data: { message, id: uid(15) },
-    });
+    pendingLogs.push({ message, id: uid(15) });
+
+    if (!logFlushTimer) {
+      logFlushTimer = setInterval(() => {
+        flushPendingLogs();
+      }, LOG_FLUSH_INTERVAL);
+    }
   } catch (err: any) {
     console.log("logEveryWhere() error: ", err?.message);
   }
