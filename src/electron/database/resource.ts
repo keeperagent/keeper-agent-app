@@ -85,7 +85,9 @@ class ResourceDB {
 
       return [listData, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListResourceById() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListResourceById() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -142,8 +144,8 @@ class ResourceDB {
   async createBulkResource(listResource: IResource[]): Promise<Error | null> {
     try {
       await ResourceModel.bulkCreate(
-        listResource?.map((wallet: IResource) => ({
-          ...wallet,
+        listResource?.map((resource: IResource) => ({
+          ...resource,
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
         })),
@@ -158,12 +160,12 @@ class ResourceDB {
   }
 
   async createResource(
-    wallet: IResource,
+    resource: IResource,
   ): Promise<[IResource | null, Error | null]> {
     try {
       const data = await ResourceModel.create(
         {
-          ...wallet,
+          ...resource,
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),
         },
@@ -215,7 +217,9 @@ class ResourceDB {
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteResourceInGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteResourceInGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }

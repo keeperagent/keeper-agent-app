@@ -166,17 +166,24 @@ class AgentRegistryDB {
     }
   }
 
-  async getEncryptKey(id: number): Promise<string> {
-    const data = await AgentRegistryModel.findOne({
-      where: { id },
-      attributes: ["encryptKey"],
-      raw: false,
-    });
-    const formatedData = formatDBResponse(data as any);
-    if (!formatedData?.encryptKey) {
-      return "";
+  async getEncryptKey(id: number): Promise<[string | null, Error | null]> {
+    try {
+      const data = await AgentRegistryModel.findOne({
+        where: { id },
+        attributes: ["encryptKey"],
+        raw: false,
+      });
+      const formatedData = formatDBResponse(data as any);
+      if (!formatedData?.encryptKey) {
+        return ["", null];
+      }
+      return [
+        encryptionService.decryptData(formatedData.encryptKey) || "",
+        null,
+      ];
+    } catch (err: any) {
+      return [null, err];
     }
-    return encryptionService.decryptData(formatedData.encryptKey) || "";
   }
 
   async deleteAgentRegistry(
