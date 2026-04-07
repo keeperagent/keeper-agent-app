@@ -36,6 +36,7 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { sleep } from "@/electron/simulator/util";
 import {
   MESSAGE_TURN_OFF_PROFILE,
+  MESSAGE_LOOP_DONE,
   NODE_ACTION,
 } from "@/electron/simulator/constant";
 import { preferenceDB } from "@/electron/database/preference";
@@ -338,7 +339,12 @@ export class Workflow {
       if (flowProfile?.nodeID === null) {
         // flow profile is between nodes — determine next node to run
         const threadError = this.monitor.mapThreadError[threadID];
-        const hasError = Boolean(threadError);
+
+        if (threadError?.message === MESSAGE_LOOP_DONE) {
+          this.monitor.clearThreadError(threadID);
+        }
+
+        const hasError = Boolean(this.monitor.mapThreadError[threadID]);
 
         // get current node id from edgeID's source, or start node for fresh profile
         const currentNodeId = flowProfile?.edgeID

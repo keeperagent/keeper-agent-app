@@ -577,6 +577,7 @@ export type IFlowProfile = {
   lastRunDuration?: number;
   campaignConfig?: CampaignConfig;
   isConditionSuccess?: boolean;
+  loopCounters?: { [nodeId: string]: number };
 };
 
 export type INodeConfig =

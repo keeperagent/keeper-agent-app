@@ -10,3 +10,4 @@ export enum NODE_ACTION {
 
 export const MESSAGE_TURN_OFF_PROFILE = "skip this profile";
 export const MESSAGE_CONDITION_RETURN_FALSE = "condition returns FALSE";
+export const MESSAGE_LOOP_DONE = "loop done";
