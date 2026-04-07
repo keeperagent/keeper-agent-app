@@ -505,6 +505,14 @@ export class Workflow {
         }
       } else {
         // flow profile just finished a node — move to edge state
+        const finishedNode = nodes.find(
+          (node: INode) => node.id === flowProfile?.nodeID,
+        );
+        if (finishedNode?.type === NODE_TYPE.END_NODE) {
+          await this.updateProfileWhenCompleted(flowProfile, threadID);
+          continue;
+        }
+
         const threadError = this.monitor.mapThreadError[threadID];
         const hasError =
           Boolean(threadError) && threadError?.message !== MESSAGE_LOOP_DONE;

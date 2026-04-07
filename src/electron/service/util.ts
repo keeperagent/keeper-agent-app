@@ -25,13 +25,10 @@ const flushPendingLogs = (): void => {
   if (pendingLogs.length === 0) {
     return;
   }
-  if (!mainWindow?.webContents || mainWindow.webContents.isDestroyed()) {
-    pendingLogs.length = 0;
-    return;
-  }
   try {
-    const batch = pendingLogs.splice(0, pendingLogs.length);
-    mainWindow.webContents.send(MESSAGE.LOG_BATCH, { data: batch });
+    const batch = pendingLogs.slice();
+    mainWindow?.webContents?.send(MESSAGE.LOG_BATCH, { data: batch });
+    pendingLogs.splice(0, batch.length);
   } catch (err: any) {
     console.log("flushPendingLogs() error: ", err?.message);
   }
