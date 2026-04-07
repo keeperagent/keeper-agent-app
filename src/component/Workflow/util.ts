@@ -222,10 +222,12 @@ const EXTRA_VERTICAL_GAP = 0;
 const getNodeDimensions = (node: Node) => {
   const style = (node?.style || {}) as Record<string, unknown>;
   const width =
+    node?.measured?.width ||
     parseDimension(extractDimensionValue(node?.width || undefined)) ||
     parseDimension(extractDimensionValue(style?.width)) ||
     NODE_WIDTH;
   const height =
+    node?.measured?.height ||
     parseDimension(extractDimensionValue(node?.height || undefined)) ||
     parseDimension(extractDimensionValue(style?.height)) ||
     NODE_HEIGHT;
