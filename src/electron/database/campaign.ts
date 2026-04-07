@@ -222,6 +222,9 @@ class CampaignDB {
       });
 
       const campaignObject = await CampaignModel.findByPk(data?.id);
+      if (!campaignObject) {
+        return [null, new Error(`Campaign not found: id=${data?.id}`)];
+      }
 
       if (campaignObject && data?.listWorkflowId) {
         // @ts-ignore

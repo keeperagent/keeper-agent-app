@@ -20,6 +20,7 @@ export const dialogController = () => {
     MESSAGE.CHOOSE_FOLDER_RES,
     async (event, _payload) => {
       if (!mainWindow) {
+        event.reply(MESSAGE.CHOOSE_FOLDER_RES, { data: null });
         return;
       }
 
@@ -46,6 +47,7 @@ export const dialogController = () => {
     MESSAGE.CHOOSE_FILE_RES,
     async (event, payload) => {
       if (!mainWindow) {
+        event.reply(MESSAGE.CHOOSE_FILE_RES, { data: null });
         return;
       }
 

@@ -208,10 +208,11 @@ class ProfileDB {
 
       if (data?.listResourceId) {
         const profileObject = await ProfileModel.findByPk(data?.id);
-        if (profileObject) {
-          // @ts-ignore
-          await profileObject.setResources(data?.listResourceId);
+        if (!profileObject) {
+          return [null, new Error(`Profile not found: id=${data?.id}`)];
         }
+        // @ts-ignore
+        await profileObject.setResources(data?.listResourceId);
       }
 
       return await this.getOneProfile(data?.id!);
