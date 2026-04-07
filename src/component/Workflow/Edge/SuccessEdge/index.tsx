@@ -5,12 +5,10 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
 } from "@xyflow/react";
-import { getEdgeParams } from "./util";
-import Label from "./Label";
+import { getEdgeParams } from "../util";
+import Queue from "../Queue";
 
-// reference: https://reactflow.dev/docs/examples/edges/simple-floating-edges/
-
-const FloatingEdge = (props: any) => {
+const SuccessEdge = (props: any) => {
   const { id, source, target, markerEnd, style, data, selected } = props;
 
   const sourceNode = useStore(
@@ -35,19 +33,18 @@ const FloatingEdge = (props: any) => {
   return (
     <Fragment>
       <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
-
       {data?.withQueue && (
         <EdgeLabelRenderer>
-          <Label
+          <Queue
             style={{
               position: "absolute",
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              // everything inside EdgeLabelRenderer has no pointer events by default
-              // if you have an interactive element, set pointer-events: all
               pointerEvents: "all",
             }}
             edgeID={id}
             selected={selected}
+            conditionLabel="SUCCESS"
+            conditionColor="var(--color-success)"
           />
         </EdgeLabelRenderer>
       )}
@@ -55,4 +52,4 @@ const FloatingEdge = (props: any) => {
   );
 };
 
-export default FloatingEdge;
+export default SuccessEdge;

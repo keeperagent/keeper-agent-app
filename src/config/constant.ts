@@ -48,7 +48,13 @@ export const FILE_TYPE = {
 };
 
 export const EDGE_TYPE = {
-  FLOATING: "FLOATING",
+  SUCCESS: "SUCCESS",
+  ERROR: "ERROR",
+};
+
+export const EDGE_HANDLE = {
+  SUCCESS: "SUCCESS",
+  ERROR: "ERROR",
 };
 
 export const SCRIPT_NAME_EN = {

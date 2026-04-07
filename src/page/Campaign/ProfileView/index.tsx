@@ -989,7 +989,7 @@ const ManageCampaignProfile = (props: IProps) => {
           <PasswordInput
             name="encryptKey"
             placeholder={translate("wallet.encryptKey")}
-            width="16rem"
+            width="17rem"
             onChange={onChangeEncryptKey}
             extendClass="encryptKey-header"
             initialValue={hasEncryptKey ? "•" : ""}

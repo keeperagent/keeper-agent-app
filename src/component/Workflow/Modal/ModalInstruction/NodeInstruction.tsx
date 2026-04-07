@@ -8,10 +8,10 @@ import { actSetSelectedWorkflowType } from "@/redux/workflowRunner";
 import { useTranslation } from "@/hook";
 import { SCRIPT_NAME_EN } from "@/config/constant";
 import { WORKFLOW_TYPE } from "@/electron/constant";
-import Node from "../Panel/Node";
-import { getListNode, INodeGroup } from "../Panel/config";
-import { removeSpecialCharacter } from "../Panel/util";
-import { INode } from "../Panel/common";
+import Node from "../../Panel/Node";
+import { getListNode, INodeGroup } from "../../Panel/config";
+import { removeSpecialCharacter } from "../../Panel/util";
+import { INode } from "../../Panel/common";
 import { Wrapper } from "./style";
 import Content from "./Content";
 

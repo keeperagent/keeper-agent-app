@@ -23,7 +23,6 @@ const initialWorkflowState = {
   mapExtensionID: {},
   nodes: [],
   edges: [],
-  flowPath: [],
 };
 
 export class Monitor {

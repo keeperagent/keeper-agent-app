@@ -12,6 +12,73 @@ const CustomNodeWrapper = styled.div`
   border: 1px solid transparent;
   position: relative;
 
+  .node-handle {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    transform: none;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .branch-handles {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    pointer-events: none;
+    visibility: hidden;
+
+    .branch-handle-item {
+      position: absolute;
+      right: -1rem;
+      width: 1.6rem;
+      height: 1.6rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: all;
+
+      &.success {
+        top: calc(25% - 0.8rem);
+      }
+
+      &.error {
+        top: calc(65% - 0.8rem);
+      }
+
+      .icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+
+        svg {
+          width: 1.5rem;
+          height: 1.5rem;
+          min-width: 1.5rem;
+          min-height: 1.5rem;
+        }
+      }
+
+      .node-handle {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 0;
+        transform: none;
+        opacity: 0;
+      }
+    }
+  }
+
   &.highlight {
     border: 1px solid var(--color-primary);
     background-color: ${({ theme }: { theme: ITheme }) =>
@@ -24,7 +91,7 @@ const CustomNodeWrapper = styled.div`
   }
 
   &:hover {
-    .handle-area {
+    .branch-handles {
       visibility: visible;
     }
   }
@@ -45,43 +112,6 @@ const CustomNodeWrapper = styled.div`
       width: 5px;
       min-width: 5px;
       min-height: 5px;
-    }
-  }
-
-  .handle-area {
-    position: absolute;
-    width: 30%;
-    height: 40%;
-    background: transparent;
-    border: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    visibility: hidden;
-
-    .icon {
-      width: 2rem;
-      height: 2rem;
-
-      svg {
-        width: 2rem;
-        height: 2rem;
-        min-width: 2rem;
-        min-height: 2rem;
-      }
-    }
-
-    .node-handle {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: 0;
-      transform: none;
-      opacity: 0;
     }
   }
 

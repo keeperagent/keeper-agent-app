@@ -13,10 +13,11 @@ import {
   NODE_TYPE,
   WORKFLOW_TYPE,
 } from "@/electron/constant";
-import { IWorkflowData } from "./common";
+import { IWorkflowData, EdgeConditionType, INode } from "./common";
 import {
   enhanceConfigWithExtensionID,
-  getFlowPath,
+  getStartNodeId,
+  getNextNodeId,
   getVariableFromProfile,
 } from "./util";
 import { Monitor } from "./monitor";
@@ -35,6 +36,7 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { sleep } from "@/electron/simulator/util";
 import {
   MESSAGE_TURN_OFF_PROFILE,
+  MESSAGE_LOOP_DONE,
   NODE_ACTION,
 } from "@/electron/simulator/constant";
 import { preferenceDB } from "@/electron/database/preference";
@@ -268,15 +270,14 @@ export class Workflow {
 
   private executeThread = async (threadID: string) => {
     const {
-      flowPath = [],
       mapExtensionID = {},
       nodes = [],
       edges = [],
     } = this.monitor.getWorkflowState();
 
+    const startNodeId = getStartNodeId(nodes);
+
     // while loop for Profile, each Profile run Node one by one
-    const initialFlowPathIndex = -1;
-    let flowPathIndex = initialFlowPathIndex;
     while (true) {
       if (!this.monitor.isRunning) {
         await this.stopWorkflow();
@@ -314,7 +315,7 @@ export class Workflow {
           });
         }
 
-        // terminate Thread when their is no more Profile
+        // terminate Thread when there is no more Profile
         if (!newFlowProfile) {
           break;
         }
@@ -336,9 +337,48 @@ export class Workflow {
       }
 
       if (flowProfile?.nodeID === null) {
-        // flow profile is in Edge
-        flowPathIndex += 1;
-        const targetNodeID = flowPath[flowPathIndex];
+        // flow profile is between nodes — determine next node to run
+        const threadError = this.monitor.mapThreadError[threadID];
+
+        if (threadError?.message === MESSAGE_LOOP_DONE) {
+          this.monitor.clearThreadError(threadID);
+        }
+
+        // get current node id from edgeID's source, or start node for fresh profile
+        const currentNodeId = flowProfile?.edgeID
+          ? edges.find((edge) => edge.id === flowProfile?.edgeID)?.source || ""
+          : "";
+
+        const hasError = Boolean(this.monitor.mapThreadError[threadID]);
+        const targetNodeID = currentNodeId
+          ? getNextNodeId(currentNodeId, edges, hasError)
+          : startNodeId;
+
+        // no next node — end of flow
+        if (!targetNodeID) {
+          // check last Node has enough @onSuccess, @onError. Some node like SET_ATTRIBUTE, STOP_NODE, GET_RANDOM_VALUE, ... has undefined value for @onSuccess, @onError
+          let config = flowProfile?.config || ({} as INodeConfig);
+          if (!config?.onSuccess) {
+            config = {
+              ...config,
+              onSuccess: NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE,
+            };
+          }
+          if (!config?.onError) {
+            config = {
+              ...config,
+              onError: NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE,
+            };
+          }
+          flowProfile = { ...flowProfile, config };
+          this.monitor.addFlowProfileToThread({
+            threadID: flowProfile?.threadID,
+            flowProfile,
+          });
+          await this.updateProfileWhenCompleted(flowProfile, threadID);
+          continue;
+        }
+
         const node = _.find(nodes, { id: targetNodeID });
         let nodeConfig = node?.data?.config as INodeConfig;
         if (
@@ -349,9 +389,8 @@ export class Workflow {
           break;
         }
 
-        // if error occur
-        const threadError = this.monitor.mapThreadError[threadID];
-        if (threadError) {
+        // handle thread error lifecycle actions
+        if (hasError) {
           const nodeActionWhenError = flowProfile?.config?.onError || "";
 
           while (
@@ -391,11 +430,10 @@ export class Workflow {
               message: `rerun or Terminate Thread when error, thread ${threadID}, Processor name: ${node?.data?.config?.name}`,
             });
             await this.updateProfileWhenCompleted(flowProfile, threadID);
-            flowPathIndex = initialFlowPathIndex;
             continue;
           }
         } else {
-          // or CHECK_CONDITION Node close thread when success
+          // CHECK_CONDITION Node or onSuccess = TERMINATE_THREAD_AND_MARK_DONE
           if (
             (flowProfile?.config?.workflowType ===
               WORKFLOW_TYPE.CHECK_CONDITION &&
@@ -415,7 +453,6 @@ export class Workflow {
               message: `node mark Thread complete, Processor name: ${node?.data?.config?.name}`,
             });
             await this.updateProfileWhenCompleted(flowProfile, threadID);
-            flowPathIndex = initialFlowPathIndex;
             continue;
           }
         }
@@ -425,7 +462,7 @@ export class Workflow {
           break;
         }
 
-        // get extension ID, enhance for attribute for Profile
+        // get extension ID, enhance config for Profile
         nodeConfig = enhanceConfigWithExtensionID(nodeConfig, mapExtensionID);
         currentTime = new Date().getTime();
         flowProfile = {
@@ -443,7 +480,7 @@ export class Workflow {
           flowProfile.lastRunDuration = 0;
         }
 
-        // Profile choose Node to run
+        // Profile arrives at Node
         logEveryWhere({
           campaignId: this.campaignId,
           workflowId: this.workflowId,
@@ -467,13 +504,26 @@ export class Workflow {
           await this.processResultOfScript(updatedFlowProfile!, err);
         }
       } else {
-        // flow profile is in Node
-        const targetEdgeID =
-          _.find(edges, {
-            source: flowProfile?.nodeID,
-          })?.id || null;
+        // flow profile just finished a node — move to edge state
+        const threadError = this.monitor.mapThreadError[threadID];
+        const hasError =
+          Boolean(threadError) && threadError?.message !== MESSAGE_LOOP_DONE;
+        const outgoingEdges = edges.filter(
+          (edge) => edge.source === flowProfile?.nodeID,
+        );
+        const hasTypedEdges = outgoingEdges.some((edge) => edge.conditionType);
+        let targetEdgeID: string | null = null;
+        if (hasTypedEdges) {
+          const conditionType = hasError
+            ? EdgeConditionType.ON_ERROR
+            : EdgeConditionType.ON_SUCCESS;
+          targetEdgeID =
+            outgoingEdges.find((edge) => edge.conditionType === conditionType)
+              ?.id || null;
+        } else {
+          targetEdgeID = outgoingEdges[0]?.id || null;
+        }
 
-        // Profile choose Edge to run
         currentTime = new Date().getTime();
         flowProfile = {
           ...flowProfile,
@@ -487,36 +537,6 @@ export class Workflow {
           threadID,
           flowProfile,
         });
-      }
-
-      // if Profile arrive to the last Node
-      if (flowPathIndex === flowPath.length - 1) {
-        // check last Node has enough @onSuccess, @onError. Some node like SET_ATTRIBUTE, STOP_NODE, GET_RANDOM_VALUE, ... has undefined value for @onSuccess, @onError
-        let config = flowProfile?.config || ({} as INodeConfig);
-        if (!config?.onSuccess) {
-          config = {
-            ...config,
-            onSuccess: NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE,
-          };
-        }
-        if (!config?.onError) {
-          config = {
-            ...config,
-            onError: NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE,
-          };
-        }
-        flowProfile = {
-          ...flowProfile,
-          config,
-        };
-
-        this.monitor.addFlowProfileToThread({
-          threadID: flowProfile?.threadID,
-          flowProfile,
-        });
-
-        await this.updateProfileWhenCompleted(flowProfile, threadID);
-        flowPathIndex = initialFlowPathIndex;
       }
     }
   };
@@ -543,7 +563,10 @@ export class Workflow {
       this.monitor?.setThreadError(threadIDStr, error);
 
       // send error to telegram
-      if (config?.alertTelegramWhenError) {
+      if (
+        config?.alertTelegramWhenError &&
+        error?.message !== MESSAGE_LOOP_DONE
+      ) {
         let errorMessage = "";
         errorMessage += `<i>${error}</i>\n`;
         errorMessage += `<strong>Current time:</strong> ${dayjs().format(
@@ -732,7 +755,6 @@ export class Workflow {
       : { nodes: [], edges: [] };
     const { nodes, edges } = workflowData;
 
-    const flowPath = getFlowPath(nodes, edges);
     let numberOfThread = workflowRecord?.numberOfThread || 1;
     let numberOfRound = workflowRecord?.numberOfRound || 1;
 
@@ -757,7 +779,9 @@ export class Workflow {
         return errUpdateProfile;
       }
     } else {
-      const firstNode = _.find(nodes, { id: flowPath[0] });
+      const startNodeId = getStartNodeId(nodes);
+      const firstNodeId = getNextNodeId(startNodeId, edges, false);
+      const firstNode = nodes.find((node: INode) => node.id === firstNodeId);
       if (
         firstNode?.data?.config?.workflowType === WORKFLOW_TYPE.GENERATE_PROFILE
       ) {
@@ -804,7 +828,6 @@ export class Workflow {
       mapExtensionID,
       nodes,
       edges,
-      flowPath,
     });
 
     await this.startJob();

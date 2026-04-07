@@ -17,6 +17,8 @@ import { registerOtherHandlers } from "@/electron/simulator/workflowRunner/other
 import { registerAgentHandlers } from "@/electron/simulator/workflowRunner/agent";
 import { registerLaunchTokenHandlers } from "@/electron/simulator/workflowRunner/launchToken";
 import { registerSwapHandlers } from "@/electron/simulator/workflowRunner/swap";
+import { MESSAGE_LOOP_DONE } from "@/electron/simulator/constant";
+import { ILoopNodeConfig } from "@/electron/type";
 import { workflowManager } from "./index";
 
 export class Executor {
@@ -67,6 +69,33 @@ export class Executor {
     workflowType: string,
     flowProfile: IFlowProfile,
   ): Promise<[IFlowProfile | null, Error | null]> => {
+    if (workflowType === WORKFLOW_TYPE.LOOP) {
+      const nodeId = flowProfile?.nodeID || "";
+      const numberOfLoop = (flowProfile?.config as ILoopNodeConfig)?.loop || 0;
+      const currentCount = (flowProfile?.loopCounters?.[nodeId] || 0) + 1;
+
+      if (currentCount < numberOfLoop) {
+        return [
+          {
+            ...flowProfile,
+            loopCounters: {
+              ...flowProfile?.loopCounters,
+              [nodeId]: currentCount,
+            },
+          },
+          null,
+        ];
+      }
+
+      return [
+        {
+          ...flowProfile,
+          loopCounters: { ...flowProfile?.loopCounters, [nodeId]: 0 },
+        },
+        new Error(MESSAGE_LOOP_DONE),
+      ];
+    }
+
     if (workflowType === WORKFLOW_TYPE.STOP_SCRIPT) {
       const { workflowId = 0, campaignId = 0 } =
         flowProfile?.campaignConfig || {};

@@ -3,16 +3,18 @@ import { connect } from "react-redux";
 import {
   actSaveSelectedEdge,
   actSaveSelectedNode,
+  actSetModalQueueOpen,
 } from "@/redux/workflowRunner";
 import { RootState } from "@/redux/store";
 import { ICampaign, IFlowProfile, IWorkflow } from "@/electron/type";
-import { actSetModalQueueOpen } from "@/redux/workflowRunner";
-import { LabelWrapper } from "./style";
+import { QueueWrapper } from "./style";
 import { useTranslation } from "@/hook";
 
-type ILabelProps = {
+type IQueueProps = {
   edgeID: string;
   style?: React.CSSProperties;
+  conditionLabel?: string;
+  conditionColor?: string;
   mapThread: {
     [threadID: string]: IFlowProfile;
   };
@@ -27,7 +29,7 @@ type ILabelProps = {
 
 let previousSelected: any = null;
 
-const Label = (props: ILabelProps) => {
+const Queue = (props: IQueueProps) => {
   const { translate } = useTranslation();
   const {
     style,
@@ -37,6 +39,8 @@ const Label = (props: ILabelProps) => {
     selected,
     selectedCampaign,
     selectedEdgeID,
+    conditionLabel,
+    conditionColor,
   } = props;
 
   useEffect(() => {
@@ -86,13 +90,18 @@ const Label = (props: ILabelProps) => {
   };
 
   return (
-    <LabelWrapper
+    <QueueWrapper
       style={style}
       className={selected ? "selected" : ""}
       onClick={onSetSelectedWhenClick}
       onDoubleClick={onOpenModalQueueData}
     >
       <div className="header">
+        {conditionLabel && (
+          <div className="condition-label" style={{ color: conditionColor }}>
+            {conditionLabel}
+          </div>
+        )}
         <div className="value">{translate("workflow.queue")}</div>
       </div>
 
@@ -109,7 +118,7 @@ const Label = (props: ILabelProps) => {
           />
         </div>
       </div>
-    </LabelWrapper>
+    </QueueWrapper>
   );
 };
 
@@ -121,4 +130,4 @@ export default connect(
     selectedCampaign: state?.Campaign?.selectedCampaign,
   }),
   { actSaveSelectedEdge, actSaveSelectedNode, actSetModalQueueOpen },
-)(Label);
+)(Queue);
