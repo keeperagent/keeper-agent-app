@@ -6,12 +6,12 @@ import {
   AppLogActorType,
 } from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { appLogDB } from "@/electron/database/appLog";
 import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
-import { createRegistryKeeperAgent, ToolContext } from "@/electron/appAgent";
+import { createProfileKeeperAgent, ToolContext } from "@/electron/appAgent";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 
 const DEFAULT_TASK_TIMEOUT_MINUTES = 30;
@@ -57,10 +57,10 @@ class AgentTaskExecutor {
       return;
     }
 
-    const [registry, registryErr] =
-      await agentRegistryDB.getOneAgentRegistry(agentId);
-    if (registryErr || !registry) {
-      await this.failTask(taskId, `Agent registry #${agentId} not found`);
+    const [profile, profileErr] =
+      await agentProfileDB.getOneAgentProfile(agentId);
+    if (profileErr || !profile) {
+      await this.failTask(taskId, `Agent profile #${agentId} not found`);
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       return;
     }
@@ -84,8 +84,8 @@ class AgentTaskExecutor {
     });
 
     const toolContext = new ToolContext();
-    const agentCreator = await createRegistryKeeperAgent({
-      registry,
+    const agentCreator = await createProfileKeeperAgent({
+      profile,
       toolContext,
     });
     const { agent, cleanup } = agentCreator;
@@ -122,7 +122,7 @@ class AgentTaskExecutor {
           taskId,
           actorType: AppLogActorType.AGENT,
           actorId: agentId,
-          actorName: registry.name,
+          actorName: profile.name,
           action: AppLogTaskAction.TASK_COMPLETED,
           status: AgentTaskStatus.DONE,
           message: task.title,
@@ -143,7 +143,7 @@ class AgentTaskExecutor {
           taskId,
           actorType: AppLogActorType.AGENT,
           actorId: agentId,
-          actorName: registry.name,
+          actorName: profile.name,
           action: AppLogTaskAction.TASK_CANCELLED,
           status: AgentTaskStatus.CANCELLED,
           message: task.title,
@@ -171,7 +171,7 @@ class AgentTaskExecutor {
             taskId,
             actorType: AppLogActorType.AGENT,
             actorId: agentId,
-            actorName: registry.name,
+            actorName: profile.name,
             action: AppLogTaskAction.TASK_FAILED,
             status: AgentTaskStatus.FAILED,
             message: task.title,

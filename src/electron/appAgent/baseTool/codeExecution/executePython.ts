@@ -97,7 +97,7 @@ export const executePythonTool = (toolContext?: ToolContext) =>
       await mkdir(workspaceDir, { recursive: true });
       const sitePackagesDir = path.join(workspaceDir, "site-packages");
       await mkdir(sitePackagesDir, { recursive: true });
-      const agentId = toolContext?.agentRegistryId || "main";
+      const agentId = toolContext?.agentProfileId || "main";
       const scriptPath = path.join(workspaceDir, `agent_script_${agentId}.py`);
       const childEnv = await buildSafeEnv(getWorkspaceRoot(), {
         PYTHONPATH: sitePackagesDir,

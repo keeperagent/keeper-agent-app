@@ -3,8 +3,8 @@ import { Button, Tabs, Spin } from "antd";
 import { BackIcon } from "@/component/Icon";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { IAgentRegistry, ICampaign } from "@/electron/type";
-import { agentRegistrySelector } from "@/redux/agentRegistry";
+import { IAgentProfile, ICampaign } from "@/electron/type";
+import { agentProfileSelector } from "@/redux/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
@@ -26,9 +26,9 @@ const TAB = {
 };
 
 type Props = {
-  agentRegistryId: number;
+  agentProfileId: number;
   onBack: () => void;
-  selectedAgentRegistry?: IAgentRegistry | null;
+  selectedAgentProfile?: IAgentProfile | null;
   listCampaign?: ICampaign[];
 };
 
@@ -40,8 +40,7 @@ type ChatMessage = {
 };
 
 const ChatRegistry = (props: Props) => {
-  const { agentRegistryId, onBack, selectedAgentRegistry, listCampaign } =
-    props;
+  const { agentProfileId, onBack, selectedAgentProfile, listCampaign } = props;
   const { translate } = useTranslation();
 
   const [activeTab, setActiveTab] = useState(TAB.CHAT);
@@ -53,48 +52,48 @@ const ChatRegistry = (props: Props) => {
   const streamingContentRef = useRef("");
 
   const provider = LLM_PROVIDERS.find(
-    (item) => item.key === selectedAgentRegistry?.llmProvider,
+    (item) => item.key === selectedAgentProfile?.llmProvider,
   );
   const providerIcon = provider?.icon;
   const providerLabel = provider?.label;
-  const modelLabel = selectedAgentRegistry?.llmModel;
+  const modelLabel = selectedAgentProfile?.llmModel;
 
   const chainConfig = useMemo(() => {
-    if (!selectedAgentRegistry?.chainKey) {
+    if (!selectedAgentProfile?.chainKey) {
       return null;
     }
     return (
       listChainConfig.find(
-        (config) => config.dexscreenerKey === selectedAgentRegistry.chainKey,
+        (config) => config.dexscreenerKey === selectedAgentProfile.chainKey,
       ) || null
     );
-  }, [selectedAgentRegistry?.chainKey]);
+  }, [selectedAgentProfile?.chainKey]);
 
   const campaign = useMemo(() => {
-    if (!selectedAgentRegistry?.campaignId) {
+    if (!selectedAgentProfile?.campaignId) {
       return null;
     }
     return (
       (listCampaign || []).find(
-        (item) => item.id === selectedAgentRegistry.campaignId,
+        (item) => item.id === selectedAgentProfile.campaignId,
       ) || null
     );
-  }, [listCampaign, selectedAgentRegistry?.campaignId]);
+  }, [listCampaign, selectedAgentProfile?.campaignId]);
 
   const walletLabel = useMemo(() => {
-    if (!selectedAgentRegistry?.campaignId) {
+    if (!selectedAgentProfile?.campaignId) {
       return null;
     }
-    if (selectedAgentRegistry?.isAllWallet !== false) {
+    if (selectedAgentProfile?.isAllWallet !== false) {
       return translate("agent.allWallet");
     }
-    const profileCount = (selectedAgentRegistry?.profileIds || []).length;
+    const profileCount = (selectedAgentProfile?.profileIds || []).length;
     return `${profileCount} ${translate("agent.wallets")}`;
-  }, [selectedAgentRegistry]);
+  }, [selectedAgentProfile]);
 
   const { execute: createSession, loading: sessionLoading } = useIpcAction(
-    MESSAGE.REGISTRY_AGENT_CREATE_SESSION,
-    MESSAGE.REGISTRY_AGENT_CREATE_SESSION_RES,
+    MESSAGE.AGENT_PROFILE_CREATE_SESSION,
+    MESSAGE.AGENT_PROFILE_CREATE_SESSION_RES,
     {
       onSuccess: (payload: any) => {
         if (payload?.data) {
@@ -105,8 +104,8 @@ const ChatRegistry = (props: Props) => {
   );
 
   const { execute: runAgent } = useIpcAction(
-    MESSAGE.REGISTRY_AGENT_RUN,
-    MESSAGE.REGISTRY_AGENT_RUN_RES,
+    MESSAGE.AGENT_PROFILE_RUN,
+    MESSAGE.AGENT_PROFILE_RUN_RES,
     {
       onSuccess: (_payload: any) => {
         setIsStreaming(false);
@@ -130,8 +129,8 @@ const ChatRegistry = (props: Props) => {
   );
 
   const { execute: stopAgent } = useIpcAction(
-    MESSAGE.REGISTRY_AGENT_STOP,
-    MESSAGE.REGISTRY_AGENT_STOP_RES,
+    MESSAGE.AGENT_PROFILE_STOP,
+    MESSAGE.AGENT_PROFILE_STOP_RES,
   );
 
   useEffect(() => {
@@ -158,25 +157,23 @@ const ChatRegistry = (props: Props) => {
       setActiveToolName(null);
     };
 
-    window?.electron?.on(MESSAGE.REGISTRY_AGENT_STREAM_CHUNK, handler);
-    window?.electron?.on(MESSAGE.REGISTRY_AGENT_TOOL_START, toolStartHandler);
+    window?.electron?.on(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, handler);
+    window?.electron?.on(MESSAGE.AGENT_PROFILE_TOOL_START, toolStartHandler);
     window?.electron?.on(
-      MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE,
+      MESSAGE.AGENT_PROFILE_TOOL_COMPLETE,
       toolCompleteHandler,
     );
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.REGISTRY_AGENT_STREAM_CHUNK);
-      window?.electron?.removeAllListeners(MESSAGE.REGISTRY_AGENT_TOOL_START);
-      window?.electron?.removeAllListeners(
-        MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE,
-      );
+      window?.electron?.removeAllListeners(MESSAGE.AGENT_PROFILE_STREAM_CHUNK);
+      window?.electron?.removeAllListeners(MESSAGE.AGENT_PROFILE_TOOL_START);
+      window?.electron?.removeAllListeners(MESSAGE.AGENT_PROFILE_TOOL_COMPLETE);
     };
   }, [sessionId]);
 
   useEffect(() => {
-    createSession({ agentRegistryId });
-  }, [agentRegistryId]);
+    createSession({ agentProfileId });
+  }, [agentProfileId]);
 
   const displayedMessages: DisplayMessage[] = useMemo(() => {
     const result: DisplayMessage[] = messages.map((msg) => ({
@@ -243,7 +240,7 @@ const ChatRegistry = (props: Props) => {
     setIsStreaming(false);
     setActiveToolName(null);
     streamingContentRef.current = "";
-    createSession({ agentRegistryId });
+    createSession({ agentProfileId });
   };
 
   const onStop = () => {
@@ -254,7 +251,7 @@ const ChatRegistry = (props: Props) => {
     setActiveToolName(null);
   };
 
-  const agentName = selectedAgentRegistry?.name || `Agent #${agentRegistryId}`;
+  const agentName = selectedAgentProfile?.name || `Agent #${agentProfileId}`;
 
   return (
     <Wrapper>
@@ -277,9 +274,9 @@ const ChatRegistry = (props: Props) => {
 
           <div className="chat-agent-info">
             <span className="chat-agent-name">{agentName}</span>
-            {selectedAgentRegistry?.description && (
+            {selectedAgentProfile?.description && (
               <span className="chat-agent-desc">
-                {selectedAgentRegistry.description}
+                {selectedAgentProfile.description}
               </span>
             )}
           </div>
@@ -367,11 +364,11 @@ const ChatRegistry = (props: Props) => {
         )}
 
         {activeTab === TAB.HISTORY && (
-          <HistoryTab agentRegistryId={agentRegistryId} />
+          <HistoryTab agentProfileId={agentProfileId} />
         )}
 
         {activeTab === TAB.MEMORY && (
-          <MemoryTab agentRegistryId={agentRegistryId} />
+          <MemoryTab agentProfileId={agentProfileId} />
         )}
       </div>
     </Wrapper>
@@ -379,6 +376,6 @@ const ChatRegistry = (props: Props) => {
 };
 
 export default connect((state: RootState) => ({
-  selectedAgentRegistry: agentRegistrySelector(state).selectedAgentRegistry,
+  selectedAgentProfile: agentProfileSelector(state).selectedAgentProfile,
   listCampaign: state?.Campaign?.listCampaign || [],
 }))(ChatRegistry);

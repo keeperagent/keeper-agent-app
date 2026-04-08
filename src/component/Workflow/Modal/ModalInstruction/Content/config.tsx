@@ -31,22 +31,21 @@ const getNodeContent = (workflowType: string, translate?: any) => {
       };
     }
 
-    // Ask agent
-    case WORKFLOW_TYPE.ASK_AGENT: {
-      return {
-        description: (
-          <DescriptionWrapper>
-            <div>{translate("guide.askAgent.desc")}</div>
-          </DescriptionWrapper>
-        ),
-      };
-    }
-
     case WORKFLOW_TYPE.GENERATE_IMAGE: {
       return {
         description: (
           <DescriptionWrapper>
             <div>{translate("guide.generateImage.desc")}</div>
+          </DescriptionWrapper>
+        ),
+      };
+    }
+
+    case WORKFLOW_TYPE.RUN_AGENT: {
+      return {
+        description: (
+          <DescriptionWrapper>
+            <div>{translate("guide.runAgent.desc")}</div>
           </DescriptionWrapper>
         ),
       };

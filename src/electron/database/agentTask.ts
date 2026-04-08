@@ -3,7 +3,7 @@ import { Op, literal } from "sequelize";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { formatAgentTask } from "@/electron/service/formatData";
-import { AgentTaskModel, AgentRegistryModel } from "./index";
+import { AgentTaskModel, AgentProfileModel } from "./index";
 
 const PRIORITY_ORDER = literal(
   `CASE priority WHEN 'URGENT' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 END`,
@@ -31,13 +31,13 @@ class AgentTaskDB {
         order: [["createAt", "DESC"]],
         include: [
           {
-            model: AgentRegistryModel,
+            model: AgentProfileModel,
             as: "assignedAgent",
             attributes: ["id", "name"],
             required: false,
           },
           {
-            model: AgentRegistryModel,
+            model: AgentProfileModel,
             as: "creatorAgent",
             attributes: ["id", "name"],
             required: false,
@@ -59,13 +59,13 @@ class AgentTaskDB {
         where: { id },
         include: [
           {
-            model: AgentRegistryModel,
+            model: AgentProfileModel,
             as: "assignedAgent",
             attributes: ["id", "name"],
             required: false,
           },
           {
-            model: AgentRegistryModel,
+            model: AgentProfileModel,
             as: "creatorAgent",
             attributes: ["id", "name"],
             required: false,
@@ -341,7 +341,7 @@ class AgentTaskDB {
         where: { createAt: { [Op.gte]: fromTimestamp } },
         include: [
           {
-            model: AgentRegistryModel,
+            model: AgentProfileModel,
             as: "assignedAgent",
             attributes: ["id", "name"],
             required: false,

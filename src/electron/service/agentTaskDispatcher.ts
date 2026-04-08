@@ -7,14 +7,14 @@ import {
   AppLogTaskAction,
   AppLogActorType,
   IAgentTask,
-  IAgentRegistry,
+  IAgentProfile,
   IAgentSkill,
   IMcpServer,
   IPreference,
   LLMProvider,
 } from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { appLogDB } from "@/electron/database/appLog";
 import { agentSkillDB } from "@/electron/database/agentSkill";
 import { mcpServerDB } from "@/electron/database/mcpServer";
@@ -28,7 +28,7 @@ const LLM_MATCH_TIMEOUT_MS = 15_000;
 
 interface UnassignedDispatchContext {
   preference: IPreference;
-  activeAgents: IAgentRegistry[];
+  activeAgents: IAgentProfile[];
   allSkills: IAgentSkill[];
   allMcpServers: IMcpServer[];
 }
@@ -166,7 +166,7 @@ class TaskDispatcher {
       }
 
       const [activeAgents, agentsErr] =
-        await agentRegistryDB.getActiveAgentRegistries();
+        await agentProfileDB.getActiveAgentProfiles();
       if (agentsErr || !activeAgents || activeAgents.length === 0) {
         return null;
       }
@@ -251,8 +251,8 @@ class TaskDispatcher {
 
   private textPreFilter = (
     task: IAgentTask,
-    agents: IAgentRegistry[],
-  ): IAgentRegistry[] => {
+    agents: IAgentProfile[],
+  ): IAgentProfile[] => {
     const rawText = `${task.title || ""} ${task.description || ""}`;
     const words = rawText
       .split(/\s+/)
@@ -271,7 +271,7 @@ class TaskDispatcher {
 
   private llmMatchAgent = async (
     task: IAgentTask,
-    agents: IAgentRegistry[],
+    agents: IAgentProfile[],
     allSkills: IAgentSkill[],
     allMcpServers: IMcpServer[],
     preference: IPreference,
@@ -447,7 +447,7 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
   };
 
   private getAgentMaxConcurrent = async (agentId: number): Promise<number> => {
-    const [agent] = await agentRegistryDB.getOneAgentRegistry(agentId);
+    const [agent] = await agentProfileDB.getOneAgentProfile(agentId);
     return agent?.maxConcurrentTasks || 1;
   };
 

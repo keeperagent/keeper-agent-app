@@ -24,7 +24,7 @@ interface IToolContextData {
   approvedPlan?: string;
   requestPlanApproval?: (plan: string) => Promise<boolean>;
   // Set for registry agents so mailbox tools know the sender ID. Undefined for the main agent
-  agentRegistryId?: number;
+  agentProfileId?: number;
 }
 
 /**
@@ -89,8 +89,8 @@ export class ToolContext {
     if (data.requestPlanApproval !== undefined) {
       this.data.requestPlanApproval = data.requestPlanApproval;
     }
-    if (data.agentRegistryId !== undefined) {
-      this.data.agentRegistryId = data.agentRegistryId;
+    if (data.agentProfileId !== undefined) {
+      this.data.agentProfileId = data.agentProfileId;
     }
   }
 
@@ -147,7 +147,7 @@ export class ToolContext {
     return this.data.requestPlanApproval;
   }
 
-  get agentRegistryId(): number | undefined {
-    return this.data.agentRegistryId;
+  get agentProfileId(): number | undefined {
+    return this.data.agentProfileId;
   }
 }

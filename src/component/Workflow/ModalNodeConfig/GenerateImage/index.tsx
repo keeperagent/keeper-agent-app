@@ -4,14 +4,15 @@ import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
   IGenerateImageNodeConfig,
+  LLMProvider,
   OPENAI_IMAGE_SIZE,
   OPENAI_IMAGE_QUALITY,
-  IPreference,
+  GOOGLE_IMAGE_ASPECT_RATIO,
 } from "@/electron/type";
+import LlmProviderPicker from "@/component/LlmProviderPicker";
 import { DEFAULT_TIMEOUT, NODE_ACTION } from "@/electron/simulator/constant";
 import { NODE_STATUS } from "@/electron/constant";
 import { useChooseFolder, useTranslation } from "@/hook";
-import { PasswordInput } from "@/component/Input";
 import { UploadIcon } from "@/component/Icon";
 import { IconWrapper, Wrapper } from "./style";
 import { TAB_NAME_EN, TAB } from "../util";
@@ -21,23 +22,22 @@ import CommonSetting from "../CommonSetting";
 import SkipSetting from "../SkipSetting";
 
 const { TextArea } = Input;
-const { Option } = Select;
+const IMAGE_PROVIDER_BLACKLIST = [LLMProvider.CLAUDE];
 
 type Props = {
   onCloseModal: () => any;
   onSaveNodeConfig: (config: IGenerateImageNodeConfig) => void;
   config: IGenerateImageNodeConfig;
   isModalOpen: boolean;
-  preference: IPreference | null;
 };
 
 const GenerateImage = (props: Props) => {
   const { translate, locale } = useTranslation();
-  const { onCloseModal, onSaveNodeConfig, config, isModalOpen, preference } =
-    props;
+  const { onCloseModal, onSaveNodeConfig, config, isModalOpen } = props;
 
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
+  const [provider, setProvider] = useState<LLMProvider>(LLMProvider.OPENAI);
   const [form] = Form.useForm();
 
   const { chooseFolder } = useChooseFolder();
@@ -47,6 +47,8 @@ const GenerateImage = (props: Props) => {
   }, [locale]);
 
   useEffect(() => {
+    const currentProvider = config?.provider || LLMProvider.OPENAI;
+    setProvider(currentProvider);
     form.setFieldsValue({
       name: config?.name,
       sleep: config?.sleep,
@@ -57,23 +59,34 @@ const GenerateImage = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
-
       variable: config?.variable || "IMAGE_PATH",
       prompt: config?.prompt,
-      model: config?.model || "gpt-4o-mini",
-      folderPath: config?.folderPath || "",
-      fileName: config?.fileName || "",
+      provider: currentProvider,
+      model:
+        config?.model ||
+        (currentProvider === LLMProvider.OPENAI
+          ? "gpt-4o"
+          : "imagen-3.0-generate-001"),
       size: config?.size || OPENAI_IMAGE_SIZE.SIZE_1024_1024,
       quality: config?.quality || OPENAI_IMAGE_QUALITY.MEDIUM,
-      apiKey: config?.apiKey || preference?.openAIApiKey,
+      aspectRatio: config?.aspectRatio || GOOGLE_IMAGE_ASPECT_RATIO.SQUARE,
+      folderPath: config?.folderPath || "",
+      fileName: config?.fileName || "",
       retry: config?.retry || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
   }, [isModalOpen, config, form]);
 
-  const onChange = (key: string) => {
-    setActiveTab(key);
+  const onProviderChange = (value: string) => {
+    const llmProvider = value as LLMProvider;
+    setProvider(llmProvider);
+    form.setFieldsValue({
+      model:
+        llmProvider === LLMProvider.OPENAI
+          ? "gpt-4o"
+          : "imagen-3.0-generate-001",
+    });
   };
 
   const onChooseFolder = async () => {
@@ -81,7 +94,6 @@ const GenerateImage = (props: Props) => {
     if (folderPath === null) {
       return;
     }
-
     form.setFieldValue("folderPath", folderPath);
     try {
       await form.validateFields(["folderPath"]);
@@ -103,11 +115,11 @@ const GenerateImage = (props: Props) => {
         variable,
         prompt,
         model,
-        apiKey,
         folderPath,
         fileName,
         size,
         quality,
+        aspectRatio,
         retry,
       } = await form?.validateFields([
         "sleep",
@@ -121,12 +133,13 @@ const GenerateImage = (props: Props) => {
         "alertTelegramWhenError",
         "variable",
         "prompt",
+        "provider",
         "model",
-        "apiKey",
         "folderPath",
         "fileName",
         "size",
         "quality",
+        "aspectRatio",
         "retry",
       ]);
       onSaveNodeConfig({
@@ -136,46 +149,35 @@ const GenerateImage = (props: Props) => {
         status: NODE_STATUS.RUN,
         onError,
         onSuccess,
-        skipSetting: {
-          leftSide,
-          rightSide,
-          condition,
-          isSkip,
-        },
+        skipSetting: { leftSide, rightSide, condition, isSkip },
         alertTelegramWhenError,
         variable,
         prompt,
+        provider,
         model,
-        apiKey,
         folderPath,
         fileName,
         size,
         quality,
+        aspectRatio,
         retry,
       });
       onCloseModal();
     } catch {}
   };
 
+  const isOpenAI = provider === LLMProvider.OPENAI;
+
   return (
     <Wrapper>
       <Tabs
-        onChange={onChange}
+        onChange={(key) => setActiveTab(key)}
         type="card"
         size="small"
         items={[
-          {
-            label: TAB_NAME[TAB.DETAIL],
-            key: TAB.DETAIL,
-          },
-          {
-            label: TAB_NAME[TAB.SETTING],
-            key: TAB.SETTING,
-          },
-          {
-            label: TAB_NAME[TAB.SKIP],
-            key: TAB.SKIP,
-          },
+          { label: TAB_NAME[TAB.DETAIL], key: TAB.DETAIL },
+          { label: TAB_NAME[TAB.SETTING], key: TAB.SETTING },
+          { label: TAB_NAME[TAB.SKIP], key: TAB.SKIP },
         ]}
         activeKey={activeTab}
       />
@@ -183,14 +185,18 @@ const GenerateImage = (props: Props) => {
       <Form layout="vertical" form={form} initialValues={{ sleep: 0 }}>
         {activeTab === TAB.DETAIL && (
           <Fragment>
+            <Form.Item label="Provider:" name="provider">
+              <LlmProviderPicker
+                listBlackList={IMAGE_PROVIDER_BLACKLIST}
+                onChange={onProviderChange}
+              />
+            </Form.Item>
+
             <Form.Item
               label={`${translate("workflow.variableToSaveResult")}:`}
               name="variable"
               rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
+                { required: true, message: translate("form.requiredField") },
               ]}
             >
               <Input
@@ -199,12 +205,12 @@ const GenerateImage = (props: Props) => {
                 )}
                 className="custom-input"
                 size="large"
-                onInput={(e) =>
-                  ((e.target as HTMLInputElement).value = (
-                    e.target as HTMLInputElement
-                  )?.value
+                onInput={(inputEvent) =>
+                  ((inputEvent.target as HTMLInputElement).value = (
+                    inputEvent.target as HTMLInputElement
+                  ).value
                     .toUpperCase()
-                    ?.replaceAll(" ", ""))
+                    .replaceAll(" ", ""))
                 }
               />
             </Form.Item>
@@ -218,17 +224,14 @@ const GenerateImage = (props: Props) => {
               }
               name="prompt"
               rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
+                { required: true, message: translate("form.requiredField") },
               ]}
             >
               <TextArea
                 placeholder={translate("workflow.enterPromptPlaceholder")}
                 className="custom-input"
                 size="large"
-                rows={9}
+                rows={7}
               />
             </Form.Item>
 
@@ -236,112 +239,97 @@ const GenerateImage = (props: Props) => {
               label={`${translate("workflow.modelName")}:`}
               name="model"
               rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
+                { required: true, message: translate("form.requiredField") },
               ]}
             >
               <Input
-                placeholder={translate("workflow.modelNamePlaceholder")}
+                placeholder={isOpenAI ? "gpt-4o" : "imagen-3.0-generate-001"}
                 className="custom-input"
                 size="large"
               />
             </Form.Item>
 
-            <Form.Item
-              label="OpenAI API key:"
-              name="apiKey"
-              rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
-              ]}
-            >
-              <PasswordInput
-                name="apiKey"
-                placeholder={translate("workflow.enterApiKeyPlaceholder")}
-              />
-            </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  label={`${translate("workflow.imageSize")}:`}
-                  name="size"
-                >
-                  <Select className="custom-select" size="large">
-                    <Option
-                      key={OPENAI_IMAGE_SIZE?.SIZE_1024_1024}
-                      value={OPENAI_IMAGE_SIZE?.SIZE_1024_1024}
-                    >
-                      1024 x 1024
-                    </Option>
-
-                    <Option
-                      key={OPENAI_IMAGE_SIZE?.SIZE_1024_1536}
-                      value={OPENAI_IMAGE_SIZE?.SIZE_1024_1536}
-                    >
-                      1024 x 1536
-                    </Option>
-
-                    <Option
-                      key={OPENAI_IMAGE_SIZE?.SIZE_1536_1024}
-                      value={OPENAI_IMAGE_SIZE?.SIZE_1536_1024}
-                    >
-                      1536 x 1024
-                    </Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item
-                  label={`${translate("workflow.imageQuality")}:`}
-                  name="quality"
-                >
-                  <Select className="custom-select" size="large">
-                    <Option
-                      key={OPENAI_IMAGE_QUALITY?.LOW}
-                      value={OPENAI_IMAGE_QUALITY?.LOW}
-                    >
-                      Low
-                    </Option>
-
-                    <Option
-                      key={OPENAI_IMAGE_QUALITY?.MEDIUM}
-                      value={OPENAI_IMAGE_QUALITY?.MEDIUM}
-                    >
-                      Medium
-                    </Option>
-
-                    <Option
-                      key={OPENAI_IMAGE_QUALITY?.HIGH}
-                      value={OPENAI_IMAGE_QUALITY?.HIGH}
-                    >
-                      High
-                    </Option>
-
-                    <Option
-                      key={OPENAI_IMAGE_QUALITY?.AUTO}
-                      value={OPENAI_IMAGE_QUALITY?.AUTO}
-                    >
-                      Auto
-                    </Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
+            {isOpenAI ? (
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label={`${translate("workflow.imageSize")}:`}
+                    name="size"
+                  >
+                    <Select
+                      className="custom-select"
+                      size="large"
+                      options={[
+                        {
+                          label: "1024 x 1024",
+                          value: OPENAI_IMAGE_SIZE.SIZE_1024_1024,
+                        },
+                        {
+                          label: "1024 x 1536",
+                          value: OPENAI_IMAGE_SIZE.SIZE_1024_1536,
+                        },
+                        {
+                          label: "1536 x 1024",
+                          value: OPENAI_IMAGE_SIZE.SIZE_1536_1024,
+                        },
+                      ]}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label={`${translate("workflow.imageQuality")}:`}
+                    name="quality"
+                  >
+                    <Select
+                      className="custom-select"
+                      size="large"
+                      options={[
+                        { label: "Low", value: OPENAI_IMAGE_QUALITY.LOW },
+                        { label: "Medium", value: OPENAI_IMAGE_QUALITY.MEDIUM },
+                        { label: "High", value: OPENAI_IMAGE_QUALITY.HIGH },
+                        { label: "Auto", value: OPENAI_IMAGE_QUALITY.AUTO },
+                      ]}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            ) : (
+              <Form.Item label="Aspect ratio:" name="aspectRatio">
+                <Select
+                  className="custom-select"
+                  size="large"
+                  options={[
+                    {
+                      label: "1:1 (Square)",
+                      value: GOOGLE_IMAGE_ASPECT_RATIO.SQUARE,
+                    },
+                    {
+                      label: "3:4 (Portrait)",
+                      value: GOOGLE_IMAGE_ASPECT_RATIO.PORTRAIT_3_4,
+                    },
+                    {
+                      label: "4:3 (Landscape)",
+                      value: GOOGLE_IMAGE_ASPECT_RATIO.LANDSCAPE_4_3,
+                    },
+                    {
+                      label: "9:16 (Tall portrait)",
+                      value: GOOGLE_IMAGE_ASPECT_RATIO.PORTRAIT_9_16,
+                    },
+                    {
+                      label: "16:9 (Wide landscape)",
+                      value: GOOGLE_IMAGE_ASPECT_RATIO.LANDSCAPE_16_9,
+                    },
+                  ]}
+                />
+              </Form.Item>
+            )}
 
             <Form.Item
               label="Folder path:"
               name="folderPath"
               rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
+                { required: true, message: translate("form.requiredField") },
               ]}
             >
               <Input
@@ -360,10 +348,7 @@ const GenerateImage = (props: Props) => {
               label="File name:"
               name="fileName"
               rules={[
-                {
-                  required: true,
-                  message: translate("form.requiredField"),
-                },
+                { required: true, message: translate("form.requiredField") },
               ]}
             >
               <Input
@@ -397,9 +382,4 @@ const GenerateImage = (props: Props) => {
   );
 };
 
-export default connect(
-  (state: RootState) => ({
-    preference: state?.Preference?.preference,
-  }),
-  {},
-)(GenerateImage);
+export default connect((_state: RootState) => ({}), {})(GenerateImage);

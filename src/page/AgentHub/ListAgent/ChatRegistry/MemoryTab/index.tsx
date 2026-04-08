@@ -2,36 +2,36 @@ import { useEffect, useMemo, useState } from "react";
 import { Button, Spin, message } from "antd";
 import { connect } from "react-redux";
 import {
-  useGetAgentRegistryMemory,
-  useSaveAgentRegistryMemory,
-} from "@/hook/agentRegistry";
+  useGetAgentProfileMemory,
+  useSaveAgentProfileMemory,
+} from "@/hook/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { RootState } from "@/redux/store";
 import CodeEditor from "@/component/CodeEditor";
 import { MemoryWrapper } from "./style";
 
 type Props = {
-  agentRegistryId: number;
+  agentProfileId: number;
   isLightMode: boolean;
 };
 
-const MemoryTab = ({ agentRegistryId, isLightMode }: Props) => {
+const MemoryTab = ({ agentProfileId, isLightMode }: Props) => {
   const { translate } = useTranslation();
   const [draft, setDraft] = useState("");
   const {
     content,
     loading: loadingGet,
-    getAgentRegistryMemory,
-  } = useGetAgentRegistryMemory();
+    getAgentProfileMemory,
+  } = useGetAgentProfileMemory();
   const {
-    saveAgentRegistryMemory,
+    saveAgentProfileMemory,
     loading: loadingSave,
     isSuccess: isSaveSuccess,
-  } = useSaveAgentRegistryMemory();
+  } = useSaveAgentProfileMemory();
 
   useEffect(() => {
-    getAgentRegistryMemory(agentRegistryId);
-  }, [agentRegistryId]);
+    getAgentProfileMemory(agentProfileId);
+  }, [agentProfileId]);
 
   useEffect(() => {
     setDraft(content || "");
@@ -45,7 +45,7 @@ const MemoryTab = ({ agentRegistryId, isLightMode }: Props) => {
   useEffect(() => {
     if (isSaveSuccess) {
       message.success(translate("agent.memorySaved"));
-      getAgentRegistryMemory(agentRegistryId);
+      getAgentProfileMemory(agentProfileId);
     }
   }, [isSaveSuccess]);
 
@@ -53,7 +53,7 @@ const MemoryTab = ({ agentRegistryId, isLightMode }: Props) => {
     if (loadingSave) {
       return;
     }
-    saveAgentRegistryMemory(agentRegistryId, draft);
+    saveAgentProfileMemory(agentProfileId, draft);
   };
 
   if (loadingGet && !draft) {

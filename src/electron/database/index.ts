@@ -27,7 +27,7 @@ import agentSkillFactory from "./model/agentSkill";
 import agentSettingFactory from "./model/agentSetting";
 import chatHistoryFactory from "./model/chatHistory";
 import nodeSecretFactory from "./model/nodeSecret";
-import agentRegistryFactory from "./model/agentRegistry";
+import agentProfileFactory from "./model/agentProfile";
 import mcpTokenFactory from "./model/mcpToken";
 import agentTaskFactory from "./model/agentTask";
 import agentMailboxFactory from "./model/agentMailbox";
@@ -66,7 +66,7 @@ export const AgentSkillModel = agentSkillFactory(db);
 export const AgentSettingModel = agentSettingFactory(db);
 export const ChatHistoryModel = chatHistoryFactory(db);
 export const NodeSecretModel = nodeSecretFactory(db);
-export const AgentRegistryModel = agentRegistryFactory(db);
+export const AgentProfileModel = agentProfileFactory(db);
 export const McpTokenModel = mcpTokenFactory(db);
 export const AgentTaskModel = agentTaskFactory(db);
 export const AgentMailboxModel = agentMailboxFactory(db);
@@ -318,43 +318,43 @@ JobModel.belongsTo(CampaignModel, {
   constraints: false,
 });
 
-// @JobModel -> @AgentRegistryModel
-JobModel.belongsTo(AgentRegistryModel, {
-  foreignKey: { name: "agentRegistryId", allowNull: true },
-  as: "agentRegistry",
+// @JobModel -> @AgentProfileModel
+JobModel.belongsTo(AgentProfileModel, {
+  foreignKey: { name: "agentProfileId", allowNull: true },
+  as: "agentProfile",
   constraints: false,
 });
 
-// @AgentRegistryModel -> @CampaignModel
-AgentRegistryModel.belongsTo(CampaignModel, {
+// @AgentProfileModel -> @CampaignModel
+AgentProfileModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
   constraints: false,
 });
 
-// @AgentMailboxModel -> @AgentRegistryModel (fromAgent)
-AgentMailboxModel.belongsTo(AgentRegistryModel, {
+// @AgentMailboxModel -> @AgentProfileModel (fromAgent)
+AgentMailboxModel.belongsTo(AgentProfileModel, {
   foreignKey: { name: "fromAgentId", allowNull: true },
   as: "fromAgent",
   constraints: false,
 });
 
-// @AgentMailboxModel -> @AgentRegistryModel (toAgent)
-AgentMailboxModel.belongsTo(AgentRegistryModel, {
+// @AgentMailboxModel -> @AgentProfileModel (toAgent)
+AgentMailboxModel.belongsTo(AgentProfileModel, {
   foreignKey: { name: "toAgentId", allowNull: true },
   as: "toAgent",
   constraints: false,
 });
 
-// @AgentTaskModel -> @AgentRegistryModel (assignedAgent)
-AgentTaskModel.belongsTo(AgentRegistryModel, {
+// @AgentTaskModel -> @AgentProfileModel (assignedAgent)
+AgentTaskModel.belongsTo(AgentProfileModel, {
   foreignKey: { name: "assignedAgentId", allowNull: true },
   as: "assignedAgent",
   constraints: false,
 });
 
-// @AgentTaskModel -> @AgentRegistryModel (creatorAgent)
-AgentTaskModel.belongsTo(AgentRegistryModel, {
+// @AgentTaskModel -> @AgentProfileModel (creatorAgent)
+AgentTaskModel.belongsTo(AgentProfileModel, {
   foreignKey: { name: "creatorAgentId", allowNull: true },
   as: "creatorAgent",
   constraints: false,

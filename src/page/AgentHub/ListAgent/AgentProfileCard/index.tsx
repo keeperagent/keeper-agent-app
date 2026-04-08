@@ -1,5 +1,5 @@
 import { Popconfirm } from "antd";
-import { IAgentRegistry } from "@/electron/type";
+import { IAgentProfile } from "@/electron/type";
 import { TrashIcon } from "@/component/Icon";
 import { trimText, formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
@@ -10,33 +10,33 @@ import Status from "@/component/Status";
 import { Wrapper, ProviderBadge } from "./style";
 
 type Props = {
-  registry: IAgentRegistry;
-  onEdit: (registry: IAgentRegistry) => void;
-  onDelete: (registry: IAgentRegistry) => void;
-  onOpenChat: (registry: IAgentRegistry) => void;
+  profile: IAgentProfile;
+  onEdit: (profile: IAgentProfile) => void;
+  onDelete: (profile: IAgentProfile) => void;
+  onOpenChat: (profile: IAgentProfile) => void;
 };
 
-const AgentRegistryCard = (props: Props) => {
-  const { registry, onEdit, onDelete, onOpenChat } = props;
+const AgentProfileCard = (props: Props) => {
+  const { profile, onEdit, onDelete, onOpenChat } = props;
   const { translate, locale } = useTranslation();
 
   const provider = LLM_PROVIDERS.find(
-    (item) => item.key === registry?.llmProvider,
+    (item) => item.key === profile?.llmProvider,
   );
   const providerLabel = provider?.label || EMPTY_STRING;
   const providerIcon = provider?.icon || EMPTY_STRING;
-  const modelLabel = registry.llmModel
-    ? trimText(registry.llmModel, 24)
+  const modelLabel = profile.llmModel
+    ? trimText(profile.llmModel, 24)
     : EMPTY_STRING;
 
-  const chainConfig = registry.chainKey
+  const chainConfig = profile.chainKey
     ? listChainConfig.find(
-        (config) => config.dexscreenerKey === registry.chainKey,
+        (config) => config.dexscreenerKey === profile.chainKey,
       ) || null
     : null;
 
-  const allowedToolCount = registry.allowedBaseTools?.length || 0;
-  const allowedSkillCount = registry.allowedSkillIds?.length || 0;
+  const allowedToolCount = profile.allowedBaseTools?.length || 0;
+  const allowedSkillCount = profile.allowedSkillIds?.length || 0;
 
   return (
     <Wrapper>
@@ -52,7 +52,7 @@ const AgentRegistryCard = (props: Props) => {
         className="item-top-bar"
         role="button"
         tabIndex={0}
-        onClick={() => onEdit(registry)}
+        onClick={() => onEdit(profile)}
       >
         {chainConfig && (
           <img
@@ -62,12 +62,12 @@ const AgentRegistryCard = (props: Props) => {
           />
         )}
 
-        <span className="item-name">{registry.name}</span>
+        <span className="item-name">{profile.name}</span>
         <Status
           content={
-            registry.isActive ? translate("active") : translate("inActive")
+            profile.isActive ? translate("active") : translate("inActive")
           }
-          isSuccess={Boolean(registry.isActive)}
+          isSuccess={Boolean(profile.isActive)}
           style={{ flexShrink: 0 }}
         />
       </div>
@@ -76,7 +76,7 @@ const AgentRegistryCard = (props: Props) => {
         className="item-center"
         role="button"
         tabIndex={0}
-        onClick={() => onEdit(registry)}
+        onClick={() => onEdit(profile)}
       >
         <div className="item-center-row">
           <ProviderBadge>
@@ -89,7 +89,7 @@ const AgentRegistryCard = (props: Props) => {
         <div className="item-center-row">
           <span className="item-label">{translate("description")}</span>
           <span className="item-description">
-            {registry.description || EMPTY_STRING}
+            {profile.description || EMPTY_STRING}
           </span>
         </div>
 
@@ -118,7 +118,7 @@ const AgentRegistryCard = (props: Props) => {
                 {translate("sidebar.campaign")}
               </span>
               <span className="item-value">
-                {registry.campaign?.name || EMPTY_STRING}
+                {profile.campaign?.name || EMPTY_STRING}
               </span>
             </div>
           </div>
@@ -128,15 +128,15 @@ const AgentRegistryCard = (props: Props) => {
       <div className="item-bottom-bar">
         <span className="item-updated">
           {translate("updatedAt")}:{" "}
-          {registry.updateAt != null
-            ? formatTime(Number(registry.updateAt), locale)
+          {profile.updateAt != null
+            ? formatTime(Number(profile.updateAt), locale)
             : EMPTY_STRING}
         </span>
 
         <div className="item-actions">
           <Popconfirm
             title={translate("confirmDelete")}
-            onConfirm={() => onDelete(registry)}
+            onConfirm={() => onDelete(profile)}
             okText={translate("yes")}
             cancelText={translate("no")}
           >
@@ -152,7 +152,7 @@ const AgentRegistryCard = (props: Props) => {
             className="btn-chat"
             onClick={(e) => {
               e.stopPropagation();
-              onOpenChat(registry);
+              onOpenChat(profile);
             }}
           >
             {translate("agent.openChat")}
@@ -163,4 +163,4 @@ const AgentRegistryCard = (props: Props) => {
   );
 };
 
-export default AgentRegistryCard;
+export default AgentProfileCard;

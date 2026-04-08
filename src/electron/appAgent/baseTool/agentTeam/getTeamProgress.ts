@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentTeamStore } from "@/electron/appAgent/agentTeam/store";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { AgentTaskStatus } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
@@ -24,7 +24,7 @@ export const getTeamProgressTool = () =>
 
       const agentDetails = await Promise.all(
         team.agentIds.map(async (agentId) => {
-          const [agent] = await agentRegistryDB.getOneAgentRegistry(agentId);
+          const [agent] = await agentProfileDB.getOneAgentProfile(agentId);
           return agent;
         }),
       );

@@ -88,7 +88,7 @@ import {
   getGoogleGeminiBackgroundModel,
 } from "./utils";
 import { preferenceDB } from "@/electron/database/preference";
-import { IAgentRegistry, LLMProvider } from "@/electron/type";
+import { IAgentProfile, LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext } from "./toolContext";
@@ -609,8 +609,8 @@ type CreateAgentOptions = {
   memoryFile?: string;
 };
 
-type CreateRegistryAgentOptions = {
-  registry: IAgentRegistry;
+type CreateProfileAgentOptions = {
+  profile: IAgentProfile;
   checkpointer?: MemorySaver;
   toolContext?: ToolContext;
 };
@@ -832,31 +832,31 @@ const createKeeperAgent = async (
 };
 
 /**
- * Creates a KeeperAgent scoped to an AgentRegistry config.
+ * Creates a KeeperAgent scoped to an agent profile config.
  * Respects allowedBaseTools whitelist, custom systemPrompt, llmProvider/model overrides,
- * and uses an isolated memory file keyed by registry ID.
+ * and uses an isolated memory file keyed by profile ID.
  */
-const createRegistryKeeperAgent = async (
-  options: CreateRegistryAgentOptions,
+const createProfileKeeperAgent = async (
+  options: CreateProfileAgentOptions,
 ): Promise<KeeperAgent> => {
-  const { registry, checkpointer, toolContext: providedToolContext } = options;
+  const { profile, checkpointer, toolContext: providedToolContext } = options;
 
-  const provider = (registry.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
-  const llm = await createLLM(provider, 0, registry.llmModel || undefined);
+  const provider = (profile.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
+  const llm = await createLLM(provider, 0, profile.llmModel || undefined);
 
-  const memoryFile = `AGENT_REGISTRY_${registry.id}.md`;
+  const memoryFile = `AGENT_PROFILE_${profile.id}.md`;
   const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
 
   const toolContext = providedToolContext || new ToolContext();
-  toolContext.update({ llmProvider: provider, agentRegistryId: registry.id });
+  toolContext.update({ llmProvider: provider, agentProfileId: profile.id });
 
   // Parse whitelist — empty array = allow all base tools (same as default agent)
   let allowedBaseToolsSet: Set<string> | null = null;
   if (
-    Array.isArray(registry.allowedBaseTools) &&
-    registry.allowedBaseTools.length > 0
+    Array.isArray(profile.allowedBaseTools) &&
+    profile.allowedBaseTools.length > 0
   ) {
-    allowedBaseToolsSet = new Set(registry.allowedBaseTools);
+    allowedBaseToolsSet = new Set(profile.allowedBaseTools);
   }
 
   const isEnabled = (key: string): boolean =>
@@ -877,9 +877,8 @@ const createRegistryKeeperAgent = async (
 
   // Load only allowed MCP servers
   let allowedMcpServerIds: Set<number> | null = null;
-  if (registry.allowedMcpServerIds !== undefined) {
-    // Empty array = no MCP servers (same behavior as previous JSON-parse logic)
-    allowedMcpServerIds = new Set<number>(registry.allowedMcpServerIds || []);
+  if (profile.allowedMcpServerIds !== undefined) {
+    allowedMcpServerIds = new Set<number>(profile.allowedMcpServerIds || []);
   }
 
   const { subAgents: mcpSubAgentInfos, closeClients } =
@@ -910,9 +909,8 @@ const createRegistryKeeperAgent = async (
   // Treat `[]` as "no restriction" (allow all), matching the existing behavior
   // pattern used for other whitelists in this app.
   const allowedSkillIdSet: Set<number> | null =
-    Array.isArray(registry.allowedSkillIds) &&
-    registry.allowedSkillIds.length > 0
-      ? new Set<number>(registry.allowedSkillIds)
+    Array.isArray(profile.allowedSkillIds) && profile.allowedSkillIds.length > 0
+      ? new Set<number>(profile.allowedSkillIds)
       : null;
 
   const [enabledSkillsResult] = await agentSkillDB.getEnabledAgentSkills();
@@ -965,9 +963,9 @@ const createRegistryKeeperAgent = async (
   const secretRestoreMiddleware = createSecretRestoreMiddleware(toolContext);
 
   const systemPrompt =
-    registry.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
+    profile.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
 
-  const registryPlanningTools = [
+  const profilePlanningTools = [
     draftPlanTool(toolContext),
     submitPlanTool(toolContext),
   ];
@@ -976,7 +974,7 @@ const createRegistryKeeperAgent = async (
     model: llm,
     systemPrompt,
     backend,
-    tools: registryPlanningTools as any,
+    tools: profilePlanningTools as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,
@@ -1026,7 +1024,7 @@ const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
 
 export {
   createKeeperAgent,
-  createRegistryKeeperAgent,
+  createProfileKeeperAgent,
   createLLM,
   createBackgroundLLM,
   hasApiKey,

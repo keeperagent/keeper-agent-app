@@ -88,8 +88,8 @@ import SwapJupiter from "./SwapJupiter";
 import StopWorkflow from "./StopWorkflow";
 import LaunchTokenPumpfun from "./LaunchTokenPumpfun";
 import LaunchTokenBonkfun from "./LaunchTokenBonkfun";
-import AskAgent from "./AskAgent";
 import GenerateImage from "./GenerateImage";
+import RunAgent from "./RunAgent";
 import ClickExtension from "./ClickExtension";
 import UploadFile from "./UploadFile";
 
@@ -168,11 +168,11 @@ const ModalNodeConfig = (props: IModalProps) => {
       case WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN:
         return <LaunchTokenBonkfun {...propsNodeConfig} />;
 
-      case WORKFLOW_TYPE.ASK_AGENT:
-        return <AskAgent {...propsNodeConfig} />;
-
       case WORKFLOW_TYPE.GENERATE_IMAGE:
         return <GenerateImage {...propsNodeConfig} />;
+
+      case WORKFLOW_TYPE.RUN_AGENT:
+        return <RunAgent {...propsNodeConfig} />;
 
       case WORKFLOW_TYPE.CLICK_EXTENSION:
         return <ClickExtension {...propsNodeConfig} />;

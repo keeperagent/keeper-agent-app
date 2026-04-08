@@ -658,8 +658,8 @@ export type INodeConfig =
   | IStopWorkflowNodeConfig
   | ILaunchTokenPumpfunNodeConfig
   | ILaunchTokenBonkfunNodeConfig
-  | IAskAgentNodeConfig
-  | IGenerateImageNodeConfig;
+  | IGenerateImageNodeConfig
+  | IRunAgentNodeConfig;
 
 export type ISkipSetting = {
   isSkip: boolean;
@@ -2314,23 +2314,10 @@ export type ILaunchTokenBonkfunNodeConfig = {
   variableTokenAddress?: string; // variable name to store the token address
 };
 
-export type IAskAgentNodeConfig = {
-  workflowType?: WORKFLOW_TYPE; // workflow type to launch token pumpfun
-  status?: NODE_STATUS; // status of the node
-  name: string; // name of the node
-  onError?: NODE_ACTION; // action to perform when error occurs
-  onSuccess?: NODE_ACTION; // action to perform when success
-  sleep: number; // sleep time between each node
-  timeout?: number; // timeout for the node
-  retry?: number; // number of retries on failure
-  skipSetting?: ISkipSetting; // skip setting for the node
-  alertTelegramWhenError?: boolean; // alert telegram when error occurs
-  variable?: string; // variable name to store the result
-
-  prompt: string; // prompt to use
-  model?: string; // model to use
-  apiKey?: string; // api key to use
-};
+export enum RUN_AGENT_OUTPUT_FORMAT {
+  TEXT = "text",
+  JSON = "json",
+}
 
 export enum OPENAI_IMAGE_SIZE {
   SIZE_1024_1024 = "1024x1024",
@@ -2343,6 +2330,15 @@ export enum OPENAI_IMAGE_QUALITY {
   HIGH = "high",
   AUTO = "auto",
 }
+
+export enum GOOGLE_IMAGE_ASPECT_RATIO {
+  SQUARE = "1:1",
+  PORTRAIT_3_4 = "3:4",
+  LANDSCAPE_4_3 = "4:3",
+  PORTRAIT_9_16 = "9:16",
+  LANDSCAPE_16_9 = "16:9",
+}
+
 export type IGenerateImageNodeConfig = {
   workflowType?: WORKFLOW_TYPE; // workflow type to launch token pumpfun
   status?: NODE_STATUS; // status of the node
@@ -2358,11 +2354,31 @@ export type IGenerateImageNodeConfig = {
 
   prompt: string; // prompt to use
   model?: string; // model to use
-  apiKey?: string; // api key to use
   folderPath: string; // folder path to save the image
   fileName: string; // file name to save the image
+  provider?: LLMProvider; // image provider (openai or gemini)
+  // OpenAI-specific
   size?: OPENAI_IMAGE_SIZE; // size of the image
   quality?: OPENAI_IMAGE_QUALITY; // quality of the image
+  // Google-specific
+  aspectRatio?: GOOGLE_IMAGE_ASPECT_RATIO; // aspect ratio of the image
+};
+
+export type IRunAgentNodeConfig = {
+  workflowType?: WORKFLOW_TYPE; // workflow type to run agent
+  status?: NODE_STATUS; // status of the node
+  name: string; // name of the node
+  onError?: NODE_ACTION; // action to perform when error occurs
+  onSuccess?: NODE_ACTION; // action to perform when success
+  sleep: number; // sleep time between each node
+  timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
+  skipSetting?: ISkipSetting; // skip setting for the node
+  alertTelegramWhenError?: boolean; // alert telegram when error occurs
+  variable: string; // variable name to store the result
+  agentProfileId?: number; // agent profile id to use
+  promptTemplate: string; // prompt template to use
+  outputFormat?: RUN_AGENT_OUTPUT_FORMAT; // output format to use
 };
 
 export type IFakeProfile = IWorkflowVariable[];
@@ -2533,7 +2549,7 @@ export type IJob = {
   maxRetries?: number;
   retryDelayMinutes?: number;
   llmProvider?: string; // LLM provider to use when running this job (defaults to CLAUDE)
-  agentRegistryId?: number | null; // If set, this agent job runs using the named registry agent config
+  agentProfileId?: number | null; // If set, this agent job runs using the named agent profile config
 
   // virtual — not stored in DB, merged at read time
   lastLog?: IAppLog;
@@ -2736,10 +2752,10 @@ export type IAgentTask = {
   priority?: AgentTaskPriority;
   source?: AgentTaskSource;
   assignedAgentId?: number;
-  assignedAgent?: IAgentRegistry;
+  assignedAgent?: IAgentProfile;
   creatorType?: AgentTaskCreatorType;
   creatorAgentId?: number;
-  creatorAgent?: IAgentRegistry;
+  creatorAgent?: IAgentProfile;
   scheduledAt?: number;
   dueAt?: number;
   ttlSeconds?: number;
@@ -2758,7 +2774,7 @@ export type IAgentTask = {
   updateAt?: number;
 };
 
-export type IAgentRegistry = {
+export type IAgentProfile = {
   id?: number;
   name: string;
   description?: string;

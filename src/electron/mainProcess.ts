@@ -41,7 +41,7 @@ import { chatHistoryController } from "./controller/chatHistory";
 import { nodeSecretController } from "./controller/nodeSecret";
 import { authStorageController } from "./controller/authStorage";
 import { whatsappController } from "./controller/whatsapp";
-import { agentRegistryController } from "./controller/agentRegistry";
+import { agentProfileController } from "./controller/agentProfile";
 import { mcpTokenController } from "./controller/mcpToken";
 import { agentTaskController } from "./controller/agentTask";
 import { appLogController } from "./controller/appLog";
@@ -85,7 +85,7 @@ const runMainProcess = () => {
   nodeSecretController();
   authStorageController();
   whatsappController();
-  agentRegistryController();
+  agentProfileController();
   mcpTokenController();
   agentTaskController();
   appLogController();

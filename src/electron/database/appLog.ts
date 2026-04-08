@@ -163,14 +163,14 @@ class AppLogDB {
     }
   }
 
-  async getListAppLogByAgentRegistryId(
-    agentRegistryId: number,
+  async getListAppLogByAgentProfileId(
+    agentProfileId: number,
     page: number,
     pageSize: number,
   ): Promise<[IGetListResponse<IAppLog> | null, Error | null]> {
     try {
       const jobs: any[] = await JobModel.findAll({
-        where: { agentRegistryId } as any,
+        where: { agentProfileId },
         attributes: ["id"],
         raw: true,
       });
@@ -200,7 +200,7 @@ class AppLogDB {
       return [{ data, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
       logEveryWhere({
-        message: `getListAppLogByAgentRegistryId() error: ${err?.message}`,
+        message: `getListAppLogByAgentProfileId() error: ${err?.message}`,
       });
       return [null, err];
     }

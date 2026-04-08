@@ -31,7 +31,7 @@ import agentReducer from "./agent";
 import mcpServerReducer from "./mcpServer";
 import agentSkillReducer from "./agentSkill";
 import agentSettingReducer from "./agentSetting";
-import agentRegistryReducer from "./agentRegistry";
+import agentProfileReducer from "./agentProfile";
 import agentTaskReducer from "./agentTask";
 import appLogReducer from "./appLog";
 
@@ -65,7 +65,7 @@ const reducers = combineReducers({
   McpServer: mcpServerReducer,
   AgentSkill: agentSkillReducer,
   AgentSetting: agentSettingReducer,
-  AgentRegistry: agentRegistryReducer,
+  AgentProfile: agentProfileReducer,
   AgentTask: agentTaskReducer,
   AppLog: appLogReducer,
 });
@@ -98,7 +98,7 @@ const persistedReducer = persistReducer(
       "NodeEndpointGroup",
       "StaticProxy",
       "StaticProxyGroup",
-      "AgentRegistry",
+      "AgentProfile",
       "AppLog",
     ],
     migrate: createMigrate(migration, { debug: true }),

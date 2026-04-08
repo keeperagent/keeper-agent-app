@@ -3,15 +3,15 @@ import { connect } from "react-redux";
 import { Button, Pagination, Spin } from "antd";
 import { SearchInput } from "@/component/Input";
 import {
-  useGetListAgentRegistry,
-  useDeleteAgentRegistry,
-} from "@/hook/agentRegistry";
-import { actSaveSelectedAgentRegistry } from "@/redux/agentRegistry";
+  useGetListAgentProfile,
+  useDeleteAgentProfile,
+} from "@/hook/agentProfile";
+import { actSaveSelectedAgentProfile } from "@/redux/agentProfile";
 import { RootState } from "@/redux/store";
-import { IAgentRegistry } from "@/electron/type";
+import { IAgentProfile } from "@/electron/type";
 import { useTranslation } from "@/hook/useTranslation";
-import AgentRegistryCard from "./AgentRegistryCard";
-import ModalAgentRegistry from "./ModalAgentRegistry";
+import AgentProfileCard from "./AgentProfileCard";
+import ModalAgentProfile from "./ModalAgentProfile";
 import ChatRegistry from "./ChatRegistry";
 import { ChatRegistryPage } from "../style";
 
@@ -19,30 +19,30 @@ const PAGE_SIZE = 12;
 
 const ListAgent = (props: any) => {
   const {
-    listAgentRegistry,
+    listAgentProfile,
     totalData,
     page,
-    selectedAgentRegistry,
-    actSaveSelectedAgentRegistry,
+    selectedAgentProfile,
+    actSaveSelectedAgentProfile,
     onChatRegistryOpenChange,
   } = props;
   const { translate } = useTranslation();
 
-  const { loading, getListAgentRegistry } = useGetListAgentRegistry();
-  const { deleteAgentRegistry } = useDeleteAgentRegistry();
+  const { loading, getListAgentProfile } = useGetListAgentProfile();
+  const { deleteAgentProfile } = useDeleteAgentProfile();
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [searchText, setSearchText] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [chatRegistryId, setChatRegistryId] = useState<number | null>(null);
+  const [chatProfileId, setChatProfileId] = useState<number | null>(null);
 
   useEffect(() => {
-    getListAgentRegistry({ page: 1, pageSize: PAGE_SIZE });
+    getListAgentProfile({ page: 1, pageSize: PAGE_SIZE });
   }, []);
 
   useEffect(() => {
-    onChatRegistryOpenChange?.(Boolean(chatRegistryId));
-  }, [chatRegistryId]);
+    onChatRegistryOpenChange?.(Boolean(chatProfileId));
+  }, [chatProfileId]);
 
   const onSearch = (value: string) => {
     setSearchText(value);
@@ -50,7 +50,7 @@ const ListAgent = (props: any) => {
       clearTimeout(searchTimeoutRef.current);
     }
     searchTimeoutRef.current = setTimeout(() => {
-      getListAgentRegistry({
+      getListAgentProfile({
         page: 1,
         pageSize: PAGE_SIZE,
         searchText: value || undefined,
@@ -59,48 +59,48 @@ const ListAgent = (props: any) => {
   };
 
   const onOpenCreate = () => {
-    actSaveSelectedAgentRegistry(null);
+    actSaveSelectedAgentProfile(null);
     setModalOpen(true);
   };
 
-  const onOpenEdit = (registry: IAgentRegistry) => {
-    actSaveSelectedAgentRegistry(registry);
+  const onOpenEdit = (profile: IAgentProfile) => {
+    actSaveSelectedAgentProfile(profile);
     setModalOpen(true);
   };
 
   const onCloseModal = () => {
     setModalOpen(false);
     setTimeout(() => {
-      actSaveSelectedAgentRegistry(null);
+      actSaveSelectedAgentProfile(null);
     }, 300);
   };
 
-  const onDelete = (registry: IAgentRegistry) => {
-    deleteAgentRegistry(registry.id!);
+  const onDelete = (profile: IAgentProfile) => {
+    deleteAgentProfile(profile.id!);
   };
 
-  const onOpenChat = (registry: IAgentRegistry) => {
-    actSaveSelectedAgentRegistry(registry);
-    setChatRegistryId(registry.id!);
+  const onOpenChat = (profile: IAgentProfile) => {
+    actSaveSelectedAgentProfile(profile);
+    setChatProfileId(profile.id!);
   };
 
   const onCloseChat = () => {
-    setChatRegistryId(null);
-    actSaveSelectedAgentRegistry(null);
+    setChatProfileId(null);
+    actSaveSelectedAgentProfile(null);
   };
 
   const onPageChange = (newPage: number) => {
-    getListAgentRegistry({
+    getListAgentProfile({
       page: newPage,
       pageSize: PAGE_SIZE,
       searchText,
     });
   };
 
-  if (chatRegistryId) {
+  if (chatProfileId) {
     return (
       <ChatRegistryPage>
-        <ChatRegistry agentRegistryId={chatRegistryId} onBack={onCloseChat} />
+        <ChatRegistry agentProfileId={chatProfileId} onBack={onCloseChat} />
       </ChatRegistryPage>
     );
   }
@@ -117,28 +117,28 @@ const ListAgent = (props: any) => {
           />
         </div>
 
-        {listAgentRegistry.length > 0 && (
+        {listAgentProfile.length > 0 && (
           <Button
             className="header-add-btn"
             type="primary"
             onClick={onOpenCreate}
           >
-            {translate("agent.addRegistry")}
+            {translate("agent.addProfile")}
           </Button>
         )}
       </div>
 
-      {loading && listAgentRegistry.length === 0 ? (
+      {loading && listAgentProfile.length === 0 ? (
         <div className="loading-center">
           <Spin />
         </div>
       ) : (
         <Fragment>
           <div className="card-grid">
-            {listAgentRegistry.map((registry: IAgentRegistry) => (
-              <AgentRegistryCard
-                key={registry.id}
-                registry={registry}
+            {listAgentProfile.map((profile: IAgentProfile) => (
+              <AgentProfileCard
+                key={profile.id}
+                profile={profile}
                 onEdit={onOpenEdit}
                 onDelete={onDelete}
                 onOpenChat={onOpenChat}
@@ -146,13 +146,13 @@ const ListAgent = (props: any) => {
             ))}
           </div>
 
-          {listAgentRegistry.length === 0 && (
+          {listAgentProfile.length === 0 && (
             <div className="empty-state">
               <div className="empty-state__title">
-                {translate("agent.noRegistryAgents")}
+                {translate("agent.noProfileAgents")}
               </div>
               <div className="empty-state__desc">
-                {translate("agent.addRegistryDesc")}
+                {translate("agent.addProfileDesc")}
               </div>
 
               <Button
@@ -160,7 +160,7 @@ const ListAgent = (props: any) => {
                 type="primary"
                 onClick={onOpenCreate}
               >
-                {translate("agent.addRegistry")}
+                {translate("agent.addProfile")}
               </Button>
             </div>
           )}
@@ -180,9 +180,9 @@ const ListAgent = (props: any) => {
         </Fragment>
       )}
 
-      <ModalAgentRegistry
+      <ModalAgentProfile
         open={modalOpen}
-        registry={selectedAgentRegistry}
+        profile={selectedAgentProfile}
         onClose={onCloseModal}
       />
     </Fragment>
@@ -191,10 +191,10 @@ const ListAgent = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    listAgentRegistry: state?.AgentRegistry?.listAgentRegistry || [],
-    totalData: state?.AgentRegistry?.totalData || 0,
-    page: state?.AgentRegistry?.page || 1,
-    selectedAgentRegistry: state?.AgentRegistry?.selectedAgentRegistry || null,
+    listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
+    totalData: state?.AgentProfile?.totalData || 0,
+    page: state?.AgentProfile?.page || 1,
+    selectedAgentProfile: state?.AgentProfile?.selectedAgentProfile || null,
   }),
-  { actSaveSelectedAgentRegistry },
+  { actSaveSelectedAgentProfile },
 )(ListAgent);

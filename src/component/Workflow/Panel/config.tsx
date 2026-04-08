@@ -93,7 +93,7 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
     </NodeIconWrapper>
   ),
 
-  [WORKFLOW_TYPE.ASK_AGENT]: <AgentIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.RUN_AGENT]: <AgentIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.GENERATE_IMAGE]: <ImageIcon color="var(--color-primary)" />,
 
   [WORKFLOW_TYPE.SWAP_UNISWAP]: (
@@ -396,14 +396,14 @@ export const getListNode = (): INodeGroup[] => {
       children: [
         {
           type: NODE_TYPE.CUSTOM_NODE,
-          icon: mapNodeIcon[WORKFLOW_TYPE.ASK_AGENT],
+          icon: mapNodeIcon[WORKFLOW_TYPE.RUN_AGENT],
           config: {
             ...commonNodeConfig,
             sleep: DEFAULT_SLEEP_TIME,
-            name: SCRIPT_NAME[WORKFLOW_TYPE.ASK_AGENT],
-            workflowType: WORKFLOW_TYPE.ASK_AGENT,
+            name: SCRIPT_NAME[WORKFLOW_TYPE.RUN_AGENT],
+            workflowType: WORKFLOW_TYPE.RUN_AGENT,
             status: NODE_STATUS.INVALID,
-            timeout: (DEFAULT_EXTENSION_TIMEOUT * 2) / 1000,
+            timeout: (DEFAULT_EXTENSION_TIMEOUT * 4) / 1000,
           },
           version: "v1.1",
         },

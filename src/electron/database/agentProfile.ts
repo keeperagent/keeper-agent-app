@@ -1,27 +1,27 @@
 import _ from "lodash";
-import { IAgentRegistry, IGetListResponse } from "@/electron/type";
+import { IAgentProfile, IGetListResponse } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import {
   formatDBResponse,
-  formatAgentRegistry,
+  formatAgentProfile,
 } from "@/electron/service/formatData";
 import { encryptionService } from "@/electron/service/encrypt";
-import { AgentRegistryModel, CampaignModel, JobModel } from "./index";
+import { AgentProfileModel, CampaignModel, JobModel } from "./index";
 
-class AgentRegistryDB {
-  async getListAgentRegistry(
+class AgentProfileDB {
+  async getListAgentProfile(
     page: number,
     pageSize: number,
     searchText?: string,
-  ): Promise<[IGetListResponse<IAgentRegistry> | null, Error | null]> {
+  ): Promise<[IGetListResponse<IAgentProfile> | null, Error | null]> {
     try {
       const { Op } = await import("sequelize");
       const condition = searchText
         ? { name: { [Op.like]: `%${searchText}%` } }
         : {};
 
-      const totalDataAwait = AgentRegistryModel.count({ where: condition });
-      const listDataAwait = AgentRegistryModel.findAll({
+      const totalDataAwait = AgentProfileModel.count({ where: condition });
+      const listDataAwait = AgentProfileModel.findAll({
         order: [["createAt", "DESC"]],
         ...(searchText
           ? {}
@@ -41,7 +41,7 @@ class AgentRegistryDB {
 
       return [
         {
-          data: listData?.map((item: any) => formatAgentRegistry(item)) || [],
+          data: listData?.map((item: any) => formatAgentProfile(item)) || [],
           totalData,
           page,
           pageSize,
@@ -51,17 +51,17 @@ class AgentRegistryDB {
       ];
     } catch (err: any) {
       logEveryWhere({
-        message: `getListAgentRegistry() error: ${err?.message}`,
+        message: `getListAgentProfile() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async getOneAgentRegistry(
+  async getOneAgentProfile(
     id: number,
-  ): Promise<[IAgentRegistry | null, Error | null]> {
+  ): Promise<[IAgentProfile | null, Error | null]> {
     try {
-      const data = await AgentRegistryModel.findOne({
+      const data = await AgentProfileModel.findOne({
         where: { id },
         include: [
           { model: CampaignModel, as: "campaign", attributes: ["id", "name"] },
@@ -71,22 +71,22 @@ class AgentRegistryDB {
       if (!data) {
         return [null, null];
       }
-      const formatted: any = formatAgentRegistry(data?.toJSON());
+      const formatted: any = formatAgentProfile(data?.toJSON());
 
-      return [formatted as IAgentRegistry, null];
+      return [formatted as IAgentProfile, null];
     } catch (err: any) {
       logEveryWhere({
-        message: `getOneAgentRegistry() error: ${err?.message}`,
+        message: `getOneAgentProfile() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async createAgentRegistry(
-    data: Partial<IAgentRegistry>,
-  ): Promise<[IAgentRegistry | null, Error | null]> {
+  async createAgentProfile(
+    data: Partial<IAgentProfile>,
+  ): Promise<[IAgentProfile | null, Error | null]> {
     try {
-      const registry = await AgentRegistryModel.create(
+      const row = await AgentProfileModel.create(
         {
           ...data,
           allowedBaseTools: JSON.stringify(data?.allowedBaseTools || []),
@@ -103,18 +103,18 @@ class AgentRegistryDB {
         { raw: false },
       );
 
-      return [formatAgentRegistry(registry?.toJSON()), null];
+      return [formatAgentProfile(row?.toJSON()), null];
     } catch (err: any) {
       logEveryWhere({
-        message: `createAgentRegistry() error: ${err?.message}`,
+        message: `createAgentProfile() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async updateAgentRegistry(
-    data: IAgentRegistry,
-  ): Promise<[IAgentRegistry | null, Error | null]> {
+  async updateAgentProfile(
+    data: IAgentProfile,
+  ): Promise<[IAgentProfile | null, Error | null]> {
     try {
       const updateData: any = _.omit(
         {
@@ -129,38 +129,34 @@ class AgentRegistryDB {
         ["id", "encryptKey", "hasEncryptKey"],
       );
 
-      // Only update encryptKey when explicitly provided
       if (data?.encryptKey !== undefined) {
         updateData.encryptKey = data.encryptKey
           ? encryptionService.encryptData(data.encryptKey)
           : "";
       }
 
-      await AgentRegistryModel.update(updateData, {
+      await AgentProfileModel.update(updateData, {
         where: { id: data?.id },
       });
 
-      return await this.getOneAgentRegistry(data?.id!);
+      return await this.getOneAgentProfile(data?.id!);
     } catch (err: any) {
       logEveryWhere({
-        message: `updateAgentRegistry() error: ${err?.message}`,
+        message: `updateAgentProfile() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async getActiveAgentRegistries(): Promise<[IAgentRegistry[], Error | null]> {
+  async getActiveAgentProfiles(): Promise<[IAgentProfile[], Error | null]> {
     try {
-      const list = await AgentRegistryModel.findAll({
+      const list = await AgentProfileModel.findAll({
         where: { isActive: true },
       });
-      return [
-        list.map((item: any) => formatAgentRegistry(item.toJSON())),
-        null,
-      ];
+      return [list.map((item: any) => formatAgentProfile(item.toJSON())), null];
     } catch (err: any) {
       logEveryWhere({
-        message: `getActiveAgentRegistries() error: ${err?.message}`,
+        message: `getActiveAgentProfiles() error: ${err?.message}`,
       });
       return [[], err];
     }
@@ -168,7 +164,7 @@ class AgentRegistryDB {
 
   async getEncryptKey(id: number): Promise<[string | null, Error | null]> {
     try {
-      const data = await AgentRegistryModel.findOne({
+      const data = await AgentProfileModel.findOne({
         where: { id },
         attributes: ["encryptKey"],
         raw: false,
@@ -186,24 +182,24 @@ class AgentRegistryDB {
     }
   }
 
-  async deleteAgentRegistry(
+  async deleteAgentProfile(
     listId: number[],
   ): Promise<[number | null, Error | null]> {
     try {
       await JobModel.update(
-        { agentRegistryId: null },
-        { where: { agentRegistryId: listId } },
+        { agentProfileId: null },
+        { where: { agentProfileId: listId } },
       );
-      const count = await AgentRegistryModel.destroy({ where: { id: listId } });
+      const count = await AgentProfileModel.destroy({ where: { id: listId } });
       return [count, null];
     } catch (err: any) {
       logEveryWhere({
-        message: `deleteAgentRegistry() error: ${err?.message}`,
+        message: `deleteAgentProfile() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 }
 
-const agentRegistryDB = new AgentRegistryDB();
-export { agentRegistryDB };
+const agentProfileDB = new AgentProfileDB();
+export { agentProfileDB };

@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentTeamStore } from "@/electron/appAgent/agentTeam/store";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
 import { sendToRenderer } from "@/electron/main";
@@ -79,7 +79,7 @@ export const delegateTaskTool = (toolContext: ToolContext) =>
 
       let assignedAgentId = preferredAgentId;
       if (assignedAgentId === undefined) {
-        const [activeAgents] = await agentRegistryDB.getActiveAgentRegistries();
+        const [activeAgents] = await agentProfileDB.getActiveAgentProfiles();
         const teamActiveAgents = (activeAgents || []).filter((agent) =>
           team.agentIds.includes(agent.id!),
         );
@@ -106,7 +106,7 @@ export const delegateTaskTool = (toolContext: ToolContext) =>
         dueAt: dueDate,
         status: AgentTaskStatus.INIT,
         creatorType: AgentTaskCreatorType.AGENT,
-        creatorAgentId: toolContext.agentRegistryId,
+        creatorAgentId: toolContext.agentProfileId,
         source: AgentTaskSource.INTERNAL,
         retryCount: 0,
         metadata: { teamId },

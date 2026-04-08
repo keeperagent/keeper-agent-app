@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentMailboxDB } from "@/electron/database/agentMailbox";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { safeStringify } from "@/electron/appAgent/utils";
@@ -36,15 +36,14 @@ export const sendMessageTool = (toolContext: ToolContext) =>
       const toAgentId = isBroadcast ? undefined : (to as number);
 
       if (toAgentId !== undefined) {
-        const [recipient] =
-          await agentRegistryDB.getOneAgentRegistry(toAgentId);
+        const [recipient] = await agentProfileDB.getOneAgentProfile(toAgentId);
         if (!recipient) {
           throw new Error(`Recipient agent not found: ${toAgentId}`);
         }
       }
 
       const [message, err] = await agentMailboxDB.createMessage({
-        fromAgentId: toolContext.agentRegistryId,
+        fromAgentId: toolContext.agentProfileId,
         toAgentId,
         subject,
         body,
