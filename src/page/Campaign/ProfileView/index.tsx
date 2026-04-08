@@ -339,7 +339,7 @@ const renderColumns = (
         );
       },
     },
-    listAdditionalColumn?.length == 0 && listAdditionalColumn?.length == 0
+    listAdditionalColumn?.length == 0 && listResourceColumn?.length == 0
       ? {
           title: "",
           dataIndex: "empty",
