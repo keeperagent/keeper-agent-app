@@ -20,7 +20,12 @@ import {
 } from "@/redux/workflowRunner";
 import { formatTime, trimText } from "@/service/util";
 import { INodeData } from "@/types/interface";
-import { ILoopNodeConfig, ISkipSetting } from "@/electron/type";
+import {
+  IGenerateImageNodeConfig,
+  ILoopNodeConfig,
+  ISkipSetting,
+} from "@/electron/type";
+import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { useTranslation } from "@/hook";
 import {
   NODE_ACTION,
@@ -59,11 +64,6 @@ const WORKFLOW_TYPE_RABBY_WALLET = [
   WORKFLOW_TYPE.CANCEL_RABBY_WALLET,
   WORKFLOW_TYPE.SIGN_RABBY_WALLET,
   WORKFLOW_TYPE.ADD_NETWORK_RABBY_WALLET,
-];
-
-const WORKFLOW_TYPE_OPEN_AI = [
-  WORKFLOW_TYPE.GENERATE_IMAGE,
-  WORKFLOW_TYPE.ASK_AGENT,
 ];
 
 let previousSelected: any = null;
@@ -213,15 +213,19 @@ const CustomNode = (props: any) => {
       return NODE_STATUS.INVALID;
     }
 
-    if (
-      WORKFLOW_TYPE_OPEN_AI.includes(
-        nodeData?.config?.workflowType as WORKFLOW_TYPE,
-      ) &&
-      !preference?.openAIApiKey
-    ) {
-      // set invalid status
-      setWarning(translate("workflow.openAIApiKeyNotFound"));
-      return NODE_STATUS.INVALID;
+    if (nodeData?.config?.workflowType === WORKFLOW_TYPE.GENERATE_IMAGE) {
+      const providerConfig = LLM_PROVIDERS.find(
+        (config) =>
+          config.key ===
+          (nodeData?.config as IGenerateImageNodeConfig)?.provider,
+      );
+      const apiKey = providerConfig
+        ? preference?.[providerConfig?.apiKeyField]
+        : null;
+      if (!apiKey) {
+        setWarning(translate("workflow.imageProviderApiKeyNotFound"));
+        return NODE_STATUS.INVALID;
+      }
     }
 
     if (

@@ -1,15 +1,22 @@
 import { Page } from "playwright-core";
+import { HumanMessage } from "@langchain/core/messages";
 import {
-  IAskAgentNodeConfig,
+  IRunAgentNodeConfig,
   IFlowProfile,
   IGenerateImageNodeConfig,
   IWorkflowVariable,
+  LLMProvider,
   OPENAI_IMAGE_QUALITY,
   OPENAI_IMAGE_SIZE,
+  GOOGLE_IMAGE_ASPECT_RATIO,
 } from "@/electron/type";
 import { WORKFLOW_TYPE } from "@/electron/constant";
 import { SimpleAgent } from "@/electron/simulator/category/agent";
-import { logEveryWhere } from "@/electron/service/util";
+import { createProfileKeeperAgent, ToolContext } from "@/electron/appAgent";
+import { agentProfileDB } from "@/electron/database/agentProfile";
+import { preferenceDB } from "@/electron/database/preference";
+import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import {
   getActualValue,
   processSkipSetting,
@@ -25,70 +32,12 @@ export class AgentWorkflow {
     this.threadManager = threadManager;
   }
 
-  askAgent = async (
-    flowProfile: IFlowProfile,
-  ): Promise<[IFlowProfile | null, Error | null]> => {
-    try {
-      const script = async (
-        page: Page,
-        config: IAskAgentNodeConfig,
-        listVariable: IWorkflowVariable[],
-      ): Promise<IFlowProfile> => {
-        if (processSkipSetting(config, listVariable)) {
-          return flowProfile;
-        }
-
-        const prompt = getActualValue(config?.prompt || "", listVariable);
-        const agent = new SimpleAgent({
-          model: config?.model,
-        });
-
-        const [response, err] = await agent.askAgent(prompt);
-        if (err) {
-          throw err;
-        }
-        logEveryWhere({
-          message: `askAgent() response: ${response}`,
-          campaignId: flowProfile.campaignConfig?.campaignId,
-          workflowId: flowProfile.campaignConfig?.workflowId,
-        });
-        const newListVariable = updateVariable(listVariable, {
-          variable: config?.variable || "",
-          value: response,
-        });
-
-        const updatedProfile: IFlowProfile = {
-          ...flowProfile,
-          listVariable: newListVariable,
-        };
-
-        return updatedProfile;
-      };
-
-      return this.threadManager.runNormalTask<IAskAgentNodeConfig>({
-        flowProfile,
-        taskFn: script,
-        timeout:
-          ((flowProfile?.config as IAskAgentNodeConfig)?.timeout || 0) * 1000,
-        taskName: "askAgent",
-        withoutBrowser: true,
-      });
-    } catch (err: any) {
-      logEveryWhere({
-        message: `askAgent() error: ${err?.message}`,
-        campaignId: flowProfile.campaignConfig?.campaignId,
-        workflowId: flowProfile.campaignConfig?.workflowId,
-      });
-      return [flowProfile, err];
-    }
-  };
-
   generateImage = async (
     flowProfile: IFlowProfile,
   ): Promise<[IFlowProfile | null, Error | null]> => {
     try {
       const script = async (
-        page: Page,
+        _page: Page,
         config: IGenerateImageNodeConfig,
         listVariable: IWorkflowVariable[],
       ): Promise<IFlowProfile> => {
@@ -96,37 +45,39 @@ export class AgentWorkflow {
           return flowProfile;
         }
 
+        const provider = config?.provider || LLMProvider.OPENAI;
+        const providerConfig = LLM_PROVIDERS.find((p) => p.key === provider);
+        const [preference] = await preferenceDB.getOnePreference();
+        const apiKey = providerConfig
+          ? (preference?.[providerConfig?.apiKeyField] as string)
+          : "";
+
+        if (!apiKey) {
+          throw new Error(`API key for ${provider} not found in preferences`);
+        }
+
         const prompt = getActualValue(config?.prompt || "", listVariable);
-        const agent = new SimpleAgent({
-          model: config?.model,
-        });
+        const agent = new SimpleAgent({ model: config?.model });
 
         const [response, err] = await agent.generateImage(
           prompt,
           config?.folderPath || "",
           config?.fileName || "",
+          provider,
+          apiKey,
           config?.size || OPENAI_IMAGE_SIZE.SIZE_1024_1024,
           config?.quality || OPENAI_IMAGE_QUALITY.MEDIUM,
+          config?.aspectRatio || GOOGLE_IMAGE_ASPECT_RATIO.SQUARE,
         );
         if (err) {
           throw err;
         }
-        logEveryWhere({
-          message: `generateImage() image path: ${response}`,
-          campaignId: flowProfile.campaignConfig?.campaignId,
-          workflowId: flowProfile.campaignConfig?.workflowId,
-        });
         const newListVariable = updateVariable(listVariable, {
           variable: config?.variable!,
           value: response,
         });
 
-        const updatedProfile: IFlowProfile = {
-          ...flowProfile,
-          listVariable: newListVariable,
-        };
-
-        return updatedProfile;
+        return { ...flowProfile, listVariable: newListVariable };
       };
 
       return this.threadManager.runNormalTask<IGenerateImageNodeConfig>({
@@ -139,11 +90,81 @@ export class AgentWorkflow {
         withoutBrowser: true,
       });
     } catch (err: any) {
-      logEveryWhere({
-        message: `generateImage() error: ${err?.message}`,
-        campaignId: flowProfile.campaignConfig?.campaignId,
-        workflowId: flowProfile.campaignConfig?.workflowId,
+      return [flowProfile, err];
+    }
+  };
+
+  runAgent = async (
+    flowProfile: IFlowProfile,
+  ): Promise<[IFlowProfile | null, Error | null]> => {
+    try {
+      const script = async (
+        _page: Page,
+        config: IRunAgentNodeConfig,
+        listVariable: IWorkflowVariable[],
+      ): Promise<IFlowProfile> => {
+        if (processSkipSetting(config, listVariable)) {
+          return flowProfile;
+        }
+
+        const agentProfileId = config?.agentProfileId;
+        if (!agentProfileId) {
+          throw new Error("No agent profile selected");
+        }
+
+        const [profile, profileErr] =
+          await agentProfileDB.getOneAgentProfile(agentProfileId);
+        if (profileErr || !profile) {
+          throw (
+            profileErr ||
+            new Error(`Agent profile #${agentProfileId} not found`)
+          );
+        }
+
+        const prompt = getActualValue(
+          config?.promptTemplate || "",
+          listVariable,
+        );
+        const toolContext = new ToolContext();
+        const { agent, cleanup } = await createProfileKeeperAgent({
+          profile,
+          toolContext,
+        });
+
+        let resultText = "";
+        try {
+          const response = await (agent as any).invoke(
+            { messages: [new HumanMessage(prompt)] },
+            {
+              configurable: {
+                thread_id: `workflow_agent_profile_${agentProfileId}_${Date.now()}`,
+              },
+            },
+          );
+          const lastMessage =
+            response?.messages?.[response.messages.length - 1];
+          resultText = normalizeAgentMessageContent(lastMessage?.content);
+        } finally {
+          cleanup().catch(() => {});
+        }
+
+        const newListVariable = updateVariable(listVariable, {
+          variable: config?.variable || "",
+          value: resultText,
+        });
+
+        return { ...flowProfile, listVariable: newListVariable };
+      };
+
+      return this.threadManager.runNormalTask<IRunAgentNodeConfig>({
+        flowProfile,
+        taskFn: script,
+        timeout:
+          ((flowProfile?.config as IRunAgentNodeConfig)?.timeout || 0) * 1000,
+        taskName: "runAgent",
+        withoutBrowser: true,
       });
+    } catch (err: any) {
       return [flowProfile, err];
     }
   };
@@ -153,7 +174,7 @@ export const registerAgentHandlers = (
   handlers: Map<string, NodeHandler>,
   args: WorkflowRunnerArgs,
 ) => {
-  const s = new AgentWorkflow(args);
-  handlers.set(WORKFLOW_TYPE.ASK_AGENT, s.askAgent);
-  handlers.set(WORKFLOW_TYPE.GENERATE_IMAGE, s.generateImage);
+  const agentWorkflow = new AgentWorkflow(args);
+  handlers.set(WORKFLOW_TYPE.GENERATE_IMAGE, agentWorkflow.generateImage);
+  handlers.set(WORKFLOW_TYPE.RUN_AGENT, agentWorkflow.runAgent);
 };

@@ -24,6 +24,10 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      agentProfileId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       isRunWithSchedule: {
         type: DataTypes.BOOLEAN,
         allowNull: true,

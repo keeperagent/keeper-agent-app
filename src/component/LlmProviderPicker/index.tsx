@@ -4,12 +4,17 @@ import { ProviderRow, ProviderItem } from "./style";
 type Props = {
   value?: string;
   onChange?: (value: string) => void;
+  listBlackList?: string[];
 };
 
-const LlmProviderPicker = ({ value, onChange }: Props) => {
+const LlmProviderPicker = ({ value, onChange, listBlackList }: Props) => {
+  const providers = listBlackList?.length
+    ? LLM_PROVIDERS.filter((provider) => !listBlackList.includes(provider.key))
+    : LLM_PROVIDERS;
+
   return (
     <ProviderRow>
-      {LLM_PROVIDERS.map((provider) => (
+      {providers.map((provider) => (
         <ProviderItem
           key={provider.key}
           className={value === provider.key ? "active" : ""}
