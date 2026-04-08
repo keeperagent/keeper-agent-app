@@ -49,7 +49,7 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "5%",
+    width: 60,
   },
   ...listColumn?.map((config: ColumnConfig) => ({
     title: config?.title!,
@@ -68,7 +68,6 @@ const renderColumns = (
   })),
   {
     title: "",
-    width: "10%",
     render: (text: any, record: any) => (
       <div className="list-icon">
         <EditIcon onClick={() => onOpenModalResource(record)} />
@@ -213,6 +212,7 @@ const ManageResource = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const expandedRowRender = (record: IResource) => {
@@ -376,6 +376,7 @@ const ManageResource = (props: any) => {
       </div>
 
       <Table
+        virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
@@ -398,11 +399,13 @@ const ManageResource = (props: any) => {
         expandable={{
           expandedRowRender,
           expandIcon: renderExpandIcon,
+          columnWidth: 30,
         }}
-        scroll={{ x: 700, y: "63vh" }}
+        scroll={{ x: 700, y: 600 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"
+        bordered
       />
 
       <ModalImportResource

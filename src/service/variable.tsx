@@ -10,7 +10,7 @@ import { getMoneyString } from "./util";
 
 export type GroupColumnConfig = {
   title: string | null | undefined;
-  width?: string;
+  width?: number;
   children: ColumnConfig[];
 };
 export const RESOURCE_COLUMN_WIDTH = 250;
@@ -29,7 +29,7 @@ const getResourceGroupColumn = (
     let childColumn = getResourceColumn(resourceGroup);
     childColumn = childColumn?.map((config: ColumnConfig) => ({
       ...config,
-      width: `${RESOURCE_COLUMN_WIDTH}px`,
+      width: RESOURCE_COLUMN_WIDTH,
       render: (value: any, record: any) => {
         const text = record?.listResource?.[index]?.[config?.dataIndex as any];
         return text ? <TrimText text={text} maxLength={25} /> : EMPTY_STRING;
@@ -56,7 +56,7 @@ const getCampaignProfileAdditionalColumn = (
   let listColumn = getCampaignAdditionalColumn(campaign);
   listColumn = listColumn?.map((config: ColumnConfig) => ({
     ...config,
-    width: `${RESOURCE_COLUMN_WIDTH}px`,
+    width: PROFILE_COLUMN_WIDTH,
     render: (value: any, record: any) => {
       let text = record?.[config?.dataIndex as any];
       if (isNaN(Number(text)) || !/^\d+$/.test(text)) {

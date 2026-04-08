@@ -48,7 +48,6 @@ const PageWrapper = styled.div`
       }
     }
 
-    /* fix for <PasswordInput /> */
     .ant-form-item {
       margin-bottom: 0 !important;
     }

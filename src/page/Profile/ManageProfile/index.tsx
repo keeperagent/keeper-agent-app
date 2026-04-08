@@ -70,12 +70,12 @@ const renderColumns = (
     {
       title: translate("indexTable"),
       dataIndex: "index",
-      width: "7rem",
+      width: 60,
     },
     {
       title: translate("profile.profileName"),
       dataIndex: "name",
-      width: "15rem",
+      width: 150,
       render: (value: string, record: IProfile) => (
         <ProfileNameWrapper onClick={() => onOpenModalProfileName(record)}>
           <div className="name">{value || EMPTY_STRING}</div>
@@ -89,7 +89,7 @@ const renderColumns = (
       ? {
           title: translate("wallet.walletAddress"),
           dataIndex: "address",
-          width: "55rem",
+          width: 550,
           render: (value: string, record: any) =>
             record?.wallet?.address ? (
               <WalletAddress
@@ -254,6 +254,7 @@ const ManageProfile = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const expandedRowRender = (record: IProfile) => {
@@ -500,6 +501,7 @@ const ManageProfile = (props: any) => {
       </div>
 
       <Table
+        virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
@@ -524,8 +526,9 @@ const ManageProfile = (props: any) => {
           expandedRowRender,
           expandIcon: renderExpandIcon,
           expandedRowKeys,
+          columnWidth: 30,
         }}
-        scroll={{ x: tableWidth, y: "63vh" }}
+        scroll={{ x: tableWidth, y: 600 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

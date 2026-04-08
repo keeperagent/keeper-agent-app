@@ -345,26 +345,25 @@ const ActivityLogPage = (props: any) => {
     {
       title: translate("activityLog.actor"),
       dataIndex: "actorName",
-      width: "20%",
+      width: 180,
       render: (_: any, record: IAppLog) => renderActorWithType(record),
     },
     {
       title: translate("activityLog.details"),
       dataIndex: "message",
-      width: "48%",
+      width: 430,
       render: (_: any, record: IAppLog) => renderDetails(record, searchText),
     },
     {
       title: translate("activityLog.status"),
       dataIndex: "status",
-      width: "12%",
+      width: 110,
       align: "center",
       render: (_: any, record: IAppLog) => renderLogStatus(record),
     },
     {
       title: translate("createdAt"),
       dataIndex: "createAt",
-      width: "20%",
       render: (_: any, record: IAppLog) => renderTimeCell(record),
     },
   ];
@@ -417,10 +416,11 @@ const ActivityLogPage = (props: any) => {
         </div>
 
         <Table
-          tableLayout="fixed"
+          virtual
           rowSelection={{
             selectedRowKeys,
             onChange: (keys: any) => onSetSelectedRowKeys(keys),
+            columnWidth: 50,
           }}
           rowKey={(record: IAppLog) => record?.id?.toString() || ""}
           dataSource={dataSource}
@@ -435,7 +435,7 @@ const ActivityLogPage = (props: any) => {
             showTotal: onShowTotalData,
             locale: { items_per_page: `/ ${translate("page")}` },
           }}
-          scroll={{ x: 900, y: "75vh" }}
+          scroll={{ x: 900, y: 700 }}
           loading={getDataLoading}
           onChange={onTableChange}
           size="small"

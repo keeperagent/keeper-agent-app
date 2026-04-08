@@ -197,13 +197,13 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "5%",
+    width: 60,
     fixed: "left",
   },
   {
     title: translate("sidebar.schedule"),
     dataIndex: "schedule",
-    width: "27%",
+    width: 270,
     render: (schedule: ISchedule, record: IAppLog) => {
       const typeStyled = renderScheduleLogType(record.action, translate);
 
@@ -232,7 +232,7 @@ const renderColumns = (
   {
     title: translate("scheduleLog.status"),
     dataIndex: "status",
-    width: "8%",
+    width: 80,
     align: "center",
     render: (status: string | undefined) => {
       const styled = renderAgentStatus(status, translate);
@@ -257,7 +257,7 @@ const renderColumns = (
   {
     title: `${translate("scheduleLog.result")} / ${translate("scheduleLog.error")}`,
     dataIndex: "result",
-    width: "30%",
+    width: 300,
     ellipsis: true,
     render: (result: string, record: IAppLog) => {
       if (result) {
@@ -314,7 +314,6 @@ const renderColumns = (
   {
     title: `${translate("sidebar.campaign")} / ${translate("sidebar.workflow")}`,
     dataIndex: "campaign",
-    width: "30%",
     render: (campaign: ICampaign, record: IAppLog) => {
       const hasCampaign = Boolean(campaign?.id);
       const hasWorkflow = Boolean(
@@ -445,6 +444,7 @@ const ManageLog = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const onTableChange = (pagination?: PaginationProps) => {
@@ -618,7 +618,7 @@ const ManageLog = (props: any) => {
       </div>
 
       <Table
-        tableLayout="fixed"
+        virtual
         rowSelection={rowSelection}
         rowKey={(data: IAppLog) => data?.id?.toString() || ""}
         dataSource={dataSource}
@@ -639,7 +639,7 @@ const ManageLog = (props: any) => {
           showTotal: onShowTotalData,
           locale: { items_per_page: `/ ${translate("page")}` },
         }}
-        scroll={{ x: 1000, y: "70vh" }}
+        scroll={{ x: 1000, y: 650 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

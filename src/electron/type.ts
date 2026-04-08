@@ -2613,7 +2613,7 @@ export type ColumnConfig = {
   variable: string | null | undefined;
   dataIndex: string | null | undefined;
   title: string | null | undefined;
-  width?: string;
+  width?: number;
 };
 
 export type IRunningWorkflow = {
