@@ -338,11 +338,7 @@ const Debate = (props: Props) => {
                     placeholder={translate("workflow.debate.judgeProfile")}
                     options={agentProfileOptions}
                     showSearch
-                    filterOption={(input, option) =>
-                      String(option?.label || "")
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
+                    filterOption={false}
                   />
                 </Form.Item>
 
