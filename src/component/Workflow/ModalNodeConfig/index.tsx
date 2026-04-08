@@ -92,6 +92,7 @@ import GenerateImage from "./GenerateImage";
 import RunAgent from "./RunAgent";
 import ClickExtension from "./ClickExtension";
 import UploadFile from "./UploadFile";
+import Debate from "./Debate";
 
 type IModalProps = {
   isModalOpen: boolean;
@@ -173,6 +174,9 @@ const ModalNodeConfig = (props: IModalProps) => {
 
       case WORKFLOW_TYPE.RUN_AGENT:
         return <RunAgent {...propsNodeConfig} />;
+
+      case WORKFLOW_TYPE.DEBATE:
+        return <Debate {...propsNodeConfig} />;
 
       case WORKFLOW_TYPE.CLICK_EXTENSION:
         return <ClickExtension {...propsNodeConfig} />;

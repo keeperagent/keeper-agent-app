@@ -51,6 +51,16 @@ const getNodeContent = (workflowType: string, translate?: any) => {
       };
     }
 
+    case WORKFLOW_TYPE.DEBATE: {
+      return {
+        description: (
+          <DescriptionWrapper>
+            <div>{translate("guide.debate.desc")}</div>
+          </DescriptionWrapper>
+        ),
+      };
+    }
+
     // Swap token
     case WORKFLOW_TYPE.SWAP_JUPITER: {
       return {

@@ -1,9 +1,10 @@
 import { Page } from "playwright-core";
-import { HumanMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import {
   IRunAgentNodeConfig,
   IFlowProfile,
   IGenerateImageNodeConfig,
+  IDebateNodeConfig,
   IWorkflowVariable,
   LLMProvider,
   OPENAI_IMAGE_QUALITY,
@@ -13,7 +14,11 @@ import {
 } from "@/electron/type";
 import { WORKFLOW_TYPE } from "@/electron/constant";
 import { SimpleAgent } from "@/electron/simulator/category/agent";
-import { createProfileKeeperAgent, ToolContext } from "@/electron/appAgent";
+import {
+  createProfileKeeperAgent,
+  createLLM,
+  ToolContext,
+} from "@/electron/appAgent";
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { preferenceDB } from "@/electron/database/preference";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
@@ -179,6 +184,119 @@ export class AgentWorkflow {
       return [flowProfile, err];
     }
   };
+
+  runDebate = async (
+    flowProfile: IFlowProfile,
+  ): Promise<[IFlowProfile | null, Error | null]> => {
+    try {
+      const script = async (
+        _page: Page,
+        config: IDebateNodeConfig,
+        listVariable: IWorkflowVariable[],
+      ): Promise<IFlowProfile> => {
+        if (processSkipSetting(config, listVariable)) {
+          return flowProfile;
+        }
+
+        const topic = getActualValue(config?.topic || "", listVariable);
+        const personaA = getActualValue(
+          config?.agentAPersona || "",
+          listVariable,
+        );
+        const personaB = getActualValue(
+          config?.agentBPersona || "",
+          listVariable,
+        );
+        const judgePrompt = getActualValue(
+          config?.judgePrompt || "",
+          listVariable,
+        );
+        const rounds = config?.rounds || 3;
+
+        const createDebateLLM = async (profileId?: number) => {
+          if (profileId) {
+            const [profile, profileErr] =
+              await agentProfileDB.getOneAgentProfile(profileId);
+            if (profileErr || !profile) {
+              throw (
+                profileErr || new Error(`Agent profile #${profileId} not found`)
+              );
+            }
+            const provider =
+              (profile.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
+            return createLLM(provider, 0, profile.llmModel || undefined);
+          }
+          return createLLM(LLMProvider.CLAUDE);
+        };
+
+        const agentALlm = await createDebateLLM(config?.agentAProfileId);
+        const agentBLlm = await createDebateLLM(config?.agentBProfileId);
+        const judgeLlm = await createDebateLLM(config?.judgeAgentProfileId);
+
+        const transcript: string[] = [];
+
+        for (let round = 1; round <= rounds; round++) {
+          const debateHistoryText =
+            transcript.length > 0
+              ? `\n\nDebate so far:\n${transcript.join("\n\n")}`
+              : "";
+
+          const agentAContext = `Topic: ${topic}${debateHistoryText}\n\nRound ${round}: Make your argument.`;
+          const agentAResponse = await agentALlm.invoke([
+            new SystemMessage(personaA),
+            new HumanMessage(agentAContext),
+          ]);
+          const agentAText = normalizeAgentMessageContent(
+            agentAResponse.content,
+          );
+          transcript.push(`[Agent A - Round ${round}]: ${agentAText}`);
+
+          const updatedHistoryText = `\n\nDebate so far:\n${transcript.join("\n\n")}`;
+          const agentBContext = `Topic: ${topic}${updatedHistoryText}\n\nRound ${round}: Make your argument.`;
+          const agentBResponse = await agentBLlm.invoke([
+            new SystemMessage(personaB),
+            new HumanMessage(agentBContext),
+          ]);
+          const agentBText = normalizeAgentMessageContent(
+            agentBResponse.content,
+          );
+          transcript.push(`[Agent B - Round ${round}]: ${agentBText}`);
+        }
+
+        const fullTranscript = transcript.join("\n\n");
+        const judgeInput = `Topic: ${topic}\n\n${fullTranscript}\n\n${judgePrompt}`;
+        const judgeResponse = await judgeLlm.invoke([
+          new HumanMessage(judgeInput),
+        ]);
+        const verdict = normalizeAgentMessageContent(judgeResponse.content);
+
+        let output: string;
+        if (config?.includeTranscript) {
+          output = `${fullTranscript}\n\n=== VERDICT ===\n${verdict}`;
+        } else {
+          output = verdict;
+        }
+
+        const newListVariable = updateVariable(listVariable, {
+          variable: config?.variable || "",
+          value: output,
+        });
+
+        return { ...flowProfile, listVariable: newListVariable };
+      };
+
+      return this.threadManager.runNormalTask<IDebateNodeConfig>({
+        flowProfile,
+        taskFn: script,
+        timeout:
+          ((flowProfile?.config as IDebateNodeConfig)?.timeout || 0) * 1000,
+        taskName: "runDebate",
+        withoutBrowser: true,
+      });
+    } catch (err: any) {
+      return [flowProfile, err];
+    }
+  };
 }
 
 export const registerAgentHandlers = (
@@ -188,4 +306,5 @@ export const registerAgentHandlers = (
   const agentWorkflow = new AgentWorkflow(args);
   handlers.set(WORKFLOW_TYPE.GENERATE_IMAGE, agentWorkflow.generateImage);
   handlers.set(WORKFLOW_TYPE.RUN_AGENT, agentWorkflow.runAgent);
+  handlers.set(WORKFLOW_TYPE.DEBATE, agentWorkflow.runDebate);
 };
