@@ -114,6 +114,7 @@ export { default as SettingWindowIcon } from "./SettingWindow";
 export { default as CalendarIcon } from "./Calendar";
 export { default as SpiderIcon } from "./Spider";
 export { default as DistributeIcon } from "./Distribute";
+export { default as SpeakIcon } from "./Speak";
 
 export interface IIconProps {
   color?: string;

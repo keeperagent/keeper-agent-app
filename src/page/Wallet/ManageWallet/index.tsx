@@ -81,12 +81,12 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "7%",
+    width: 60,
   },
   {
     title: "",
     dataIndex: "color",
-    width: "5%",
+    width: 50,
     align: "center",
     render: (color: string, record: IWallet) => (
       <ColorPicker
@@ -99,7 +99,7 @@ const renderColumns = (
   {
     title: translate("address"),
     dataIndex: "address",
-    width: "70%",
+    width: 500,
     render: (address: string) =>
       address ? (
         <WalletAddress address={address} searchText={searchText} />
@@ -110,13 +110,13 @@ const renderColumns = (
   {
     title: translate("wallet.walletGroup"),
     dataIndex: "group",
-    width: "25%",
+    width: 170,
     render: (value: any, record: IWallet) => record.group?.name,
   },
   {
     title: translate("portfolio"),
     dataIndex: "portfolioApp",
-    width: "17%",
+    width: 120,
     align: "left",
     render: (value: any, record: IWallet) => {
       if (!portfolioApp || !record?.address) {
@@ -142,7 +142,6 @@ const renderColumns = (
   },
   {
     title: "",
-    width: "10%",
     render: (text: any, record: any) => (
       <div className="list-icon">
         <EditIcon onClick={() => onEditWallet(record)} />
@@ -324,6 +323,7 @@ const ManageWallet = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const expandedRowRender = (record: IWallet) => {
@@ -564,6 +564,7 @@ const ManageWallet = (props: any) => {
       </div>
 
       <Table
+        virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
@@ -592,11 +593,13 @@ const ManageWallet = (props: any) => {
           expandedRowRender,
           expandIcon: renderExpandIcon,
           expandedRowKeys,
+          columnWidth: 30,
         }}
-        scroll={{ x: 700, y: "63vh" }}
+        scroll={{ x: 700, y: 600 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"
+        bordered
       />
 
       <ModalImportWallet

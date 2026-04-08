@@ -154,13 +154,13 @@ const renderColumns = (
     {
       title: translate("indexTable"),
       dataIndex: "index",
-      width: "6rem",
+      width: 60,
       align: "right",
     },
     {
       title: translate("profile.profileName"),
       dataIndex: "name",
-      width: "20rem",
+      width: 200,
       render: (value: string, record: ICampaignProfile) => (
         <ProfileNameWrapper>
           <div className="name">{trimText(value, 18) || EMPTY_STRING}</div>
@@ -183,13 +183,13 @@ const renderColumns = (
     {
       title: translate("campaign.round"),
       dataIndex: "round",
-      width: "8rem",
+      width: 80,
       align: "right",
     },
     {
       title: translate("status"),
       dataIndex: "isRunning",
-      width: "10rem",
+      width: 100,
       align: "center",
       render: (isRunning: boolean, record: ICampaignProfile) => {
         const { round } = record;
@@ -214,7 +214,7 @@ const renderColumns = (
       ? {
           title: translate("wallet.walletAddress"),
           dataIndex: "address",
-          width: "50rem",
+          width: 500,
           render: (value: string, record: any) =>
             record?.wallet?.address ? (
               <WalletAddress
@@ -230,7 +230,7 @@ const renderColumns = (
       ? {
           title: translate("portfolio"),
           dataIndex: "portfolioApp",
-          width: "12rem",
+          width: 120,
           align: "left",
           render: (value: any, record: ICampaignProfile) => {
             const portfolioApp = record?.walletGroup?.portfolioApp;
@@ -268,7 +268,7 @@ const renderColumns = (
       ? {
           title: "Proxy",
           dataIndex: "proxy",
-          width: "25rem",
+          width: 250,
           render: (value: IStaticProxy) => {
             const protocol =
               _.find(LIST_NETWORK_PROTOCOL, { value: value?.protocol })
@@ -283,7 +283,7 @@ const renderColumns = (
     {
       title: "Active?",
       dataIndex: "isActive",
-      width: "8rem",
+      width: 80,
       align: "center",
       fixed: "right",
       render: (isActive: boolean, record: ICampaignProfile) => (
@@ -309,7 +309,7 @@ const renderColumns = (
         </Fragment>
       ),
       dataIndex: "action",
-      width: "11rem",
+      width: 110,
       align: "center",
       fixed: "right",
       render: (value: any, record: ICampaignProfile) => {
@@ -339,6 +339,12 @@ const renderColumns = (
         );
       },
     },
+    listAdditionalColumn?.length == 0 && listAdditionalColumn?.length == 0
+      ? {
+          title: "",
+          dataIndex: "empty",
+        }
+      : null,
   ]?.filter((column: any) => column !== null);
 
 type IProps = {
@@ -685,6 +691,7 @@ const ManageCampaignProfile = (props: IProps) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const onOpenProfileFolder = (campaignProfile: ICampaignProfile) => {
@@ -1167,6 +1174,7 @@ const ManageCampaignProfile = (props: IProps) => {
       </StatisticWrapper>
 
       <Table
+        virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
@@ -1200,8 +1208,9 @@ const ManageCampaignProfile = (props: IProps) => {
           expandedRowRender,
           expandIcon: renderExpandIcon,
           expandedRowKeys,
+          columnWidth: 30,
         }}
-        scroll={{ x: tableWidth, y: "65vh" }}
+        scroll={{ x: tableWidth, y: 650 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"
