@@ -1,61 +1,59 @@
 /*
-  AgentRegistryBridge — Chat bridge for named registry agents.
-  Each registry agent gets its own isolated session (checkpointer + memory file).
-  Sessions are keyed by "registry:<agentRegistryId>" so one session per agent is maintained.
+  AgentProfileBridge — Chat bridge for named agent profiles.
+  Each profile gets its own isolated session (checkpointer + memory file).
+  Sessions are keyed by "profile:<agentProfileId>" so one session per agent is maintained.
 */
 
 import { randomUUID } from "crypto";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { redact } from "@keeperagent/crypto-key-guard";
-import { createRegistryKeeperAgent } from "@/electron/appAgent";
+import { createProfileKeeperAgent } from "@/electron/appAgent";
 import type { KeeperAgent } from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { logEveryWhere } from "@/electron/service/util";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
-import type { IAgentRegistry } from "@/electron/type";
+import type { IAgentProfile } from "@/electron/type";
 import { LLMProvider } from "@/electron/type";
 import { extractMemoryFromConversation } from "./memoryExtraction";
 import { ChatRole } from "./types";
 
-type RegistrySession = {
-  agentRegistryId: number;
-  registry: IAgentRegistry;
+type ProfileSession = {
+  agentProfileId: number;
+  profile: IAgentProfile;
   checkpointer: MemorySaver;
   threadId: string;
   keeper: KeeperAgent | null;
   initPromise: Promise<void> | null;
   toolContext: ToolContext;
-  // Conversation buffer for memory extraction — accumulates messages since last extraction
   conversationHistory: Array<{ role: ChatRole; content: string }>;
 };
 
-class AgentRegistryBridge {
-  private sessions = new Map<string, RegistrySession>();
+class AgentProfileBridge {
+  private sessions = new Map<string, ProfileSession>();
   private abortControllers = new Map<string, AbortController>();
   private activeRuns = new Set<string>();
 
-  private sessionKey = (agentRegistryId: number): string =>
-    `registry:${agentRegistryId}`;
+  private sessionKey = (agentProfileId: number): string =>
+    `profile:${agentProfileId}`;
 
-  createSession = async (agentRegistryId: number): Promise<string> => {
-    const sessionKey = this.sessionKey(agentRegistryId);
+  createSession = async (agentProfileId: number): Promise<string> => {
+    const sessionKey = this.sessionKey(agentProfileId);
 
     if (this.sessions.has(sessionKey)) {
       return sessionKey;
     }
 
-    const [registry] =
-      await agentRegistryDB.getOneAgentRegistry(agentRegistryId);
-    if (!registry) {
-      throw new Error(`AgentRegistry #${agentRegistryId} not found`);
+    const [profile] = await agentProfileDB.getOneAgentProfile(agentProfileId);
+    if (!profile) {
+      throw new Error(`AgentProfile #${agentProfileId} not found`);
     }
 
-    const session: RegistrySession = {
-      agentRegistryId,
-      registry,
+    const session: ProfileSession = {
+      agentProfileId,
+      profile,
       checkpointer: new MemorySaver(),
       threadId: randomUUID(),
       keeper: null,
@@ -71,11 +69,11 @@ class AgentRegistryBridge {
 
   private initAgentInBackground = (
     sessionKey: string,
-    session: RegistrySession,
+    session: ProfileSession,
   ) => {
     session.initPromise = (async () => {
-      const keeper = await createRegistryKeeperAgent({
-        registry: session.registry,
+      const keeper = await createProfileKeeperAgent({
+        profile: session.profile,
         checkpointer: session.checkpointer,
         toolContext: session.toolContext,
       });
@@ -85,13 +83,13 @@ class AgentRegistryBridge {
         this.sessions.get(sessionKey) === session
       ) {
         session.keeper = keeper;
-        mainWindow?.webContents?.send(MESSAGE.REGISTRY_AGENT_READY, {
+        mainWindow?.webContents?.send(MESSAGE.AGENT_PROFILE_READY, {
           sessionId: sessionKey,
-          agentRegistryId: session.agentRegistryId,
+          agentProfileId: session.agentProfileId,
           ready: true,
         });
         logEveryWhere({
-          message: `[AgentRegistryBridge] Agent initialized for ${sessionKey}`,
+          message: `[AgentProfileBridge] Agent initialized for ${sessionKey}`,
         });
       } else {
         keeper.cleanup().catch(() => {});
@@ -99,11 +97,11 @@ class AgentRegistryBridge {
     })()
       .catch((err: any) => {
         logEveryWhere({
-          message: `[AgentRegistryBridge] Init failed for ${sessionKey}: ${err?.message}`,
+          message: `[AgentProfileBridge] Init failed for ${sessionKey}: ${err?.message}`,
         });
-        mainWindow?.webContents?.send(MESSAGE.REGISTRY_AGENT_READY, {
+        mainWindow?.webContents?.send(MESSAGE.AGENT_PROFILE_READY, {
           sessionId: sessionKey,
-          agentRegistryId: session.agentRegistryId,
+          agentProfileId: session.agentProfileId,
           ready: false,
         });
       })
@@ -113,7 +111,7 @@ class AgentRegistryBridge {
   };
 
   private getOrCreateKeeper = async (
-    session: RegistrySession,
+    session: ProfileSession,
   ): Promise<KeeperAgent> => {
     if (session.initPromise) {
       await session.initPromise;
@@ -123,8 +121,8 @@ class AgentRegistryBridge {
       return session.keeper;
     }
 
-    const keeper = await createRegistryKeeperAgent({
-      registry: session.registry,
+    const keeper = await createProfileKeeperAgent({
+      profile: session.profile,
       checkpointer: session.checkpointer,
       toolContext: session.toolContext,
     });
@@ -207,7 +205,7 @@ class AgentRegistryBridge {
           }
           if (text) {
             finalOutput += text;
-            ipcEvent.reply(MESSAGE.REGISTRY_AGENT_STREAM_CHUNK, {
+            ipcEvent.reply(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, {
               sessionId,
               chunk: text,
             });
@@ -231,7 +229,7 @@ class AgentRegistryBridge {
                 : raw;
             subagentType = parsed?.subagent_type as string | undefined;
           }
-          ipcEvent.reply(MESSAGE.REGISTRY_AGENT_TOOL_START, {
+          ipcEvent.reply(MESSAGE.AGENT_PROFILE_TOOL_START, {
             sessionId,
             toolName,
             subagentType,
@@ -240,7 +238,7 @@ class AgentRegistryBridge {
 
         if (evt.event === "on_tool_end") {
           const toolName = evt.name || "unknown";
-          ipcEvent.reply(MESSAGE.REGISTRY_AGENT_TOOL_COMPLETE, {
+          ipcEvent.reply(MESSAGE.AGENT_PROFILE_TOOL_COMPLETE, {
             sessionId,
             toolName,
           });
@@ -251,7 +249,6 @@ class AgentRegistryBridge {
         return { output: finalOutput, stopped: true };
       }
 
-      // Buffer this exchange for memory extraction on reset/quit
       if (finalOutput) {
         session.conversationHistory.push(
           { role: ChatRole.HUMAN, content: redactedInput },
@@ -266,7 +263,7 @@ class AgentRegistryBridge {
       }
       const errorMsg = err?.message || "Failed to run agent";
       logEveryWhere({
-        message: `[AgentRegistryBridge] Run error for ${sessionId}: ${errorMsg}`,
+        message: `[AgentProfileBridge] Run error for ${sessionId}: ${errorMsg}`,
       });
       return {
         output: finalOutput || `Error: ${errorMsg}`,
@@ -280,14 +277,14 @@ class AgentRegistryBridge {
   };
 
   private runMemoryExtractionForSession = async (
-    session: RegistrySession,
+    session: ProfileSession,
   ): Promise<void> => {
     if (session.conversationHistory.length === 0) {
       return;
     }
     const provider =
-      (session.registry.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
-    const memoryFile = `AGENT_REGISTRY_${session.agentRegistryId}.md`;
+      (session.profile.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
+    const memoryFile = `AGENT_PROFILE_${session.agentProfileId}.md`;
     await extractMemoryFromConversation(
       provider,
       session.conversationHistory,
@@ -321,9 +318,8 @@ class AgentRegistryBridge {
     this.initAgentInBackground(sessionId, session);
   };
 
-  // Called when a registry config changes — recreate the session so new config applies
-  invalidateSession = async (agentRegistryId: number): Promise<void> => {
-    const sessionKey = this.sessionKey(agentRegistryId);
+  invalidateSession = async (agentProfileId: number): Promise<void> => {
+    const sessionKey = this.sessionKey(agentProfileId);
     const session = this.sessions.get(sessionKey);
     if (!session) {
       return;
@@ -334,13 +330,12 @@ class AgentRegistryBridge {
     }
     session.initPromise = null;
 
-    const [registry] =
-      await agentRegistryDB.getOneAgentRegistry(agentRegistryId);
-    if (!registry) {
+    const [profile] = await agentProfileDB.getOneAgentProfile(agentProfileId);
+    if (!profile) {
       this.sessions.delete(sessionKey);
       return;
     }
-    session.registry = registry;
+    session.profile = profile;
     session.threadId = randomUUID();
     session.checkpointer = new MemorySaver();
     this.initAgentInBackground(sessionKey, session);
@@ -357,4 +352,4 @@ class AgentRegistryBridge {
   };
 }
 
-export const agentRegistryChatBridge = new AgentRegistryBridge();
+export const agentProfileChatBridge = new AgentProfileBridge();

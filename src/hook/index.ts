@@ -161,7 +161,10 @@ export {
   useCheckJobExisted,
 } from "./job";
 export { useSaveNodeSecret, useGetNodeSecret } from "./nodeSecret";
-export { useGetCacheEncryptKey, useSetCacheEncryptKey } from "./encryptKeyCache";
+export {
+  useGetCacheEncryptKey,
+  useSetCacheEncryptKey,
+} from "./encryptKeyCache";
 export { useGlobalSearch } from "./search";
 export {
   useCheckMasterPasswordExists,
@@ -182,15 +185,15 @@ export {
   useDeleteAgentSetting,
 } from "./agentSetting";
 export {
-  useGetListAgentRegistry,
-  useGetOneAgentRegistry,
-  useCreateAgentRegistry,
-  useUpdateAgentRegistry,
-  useDeleteAgentRegistry,
-  useGetAgentRegistryMemory,
-  useSaveAgentRegistryMemory,
-  useGetListAgentRegistryLog,
-} from "./agentRegistry";
+  useGetListAgentProfile,
+  useGetOneAgentProfile,
+  useCreateAgentProfile,
+  useUpdateAgentProfile,
+  useDeleteAgentProfile,
+  useGetAgentProfileMemory,
+  useSaveAgentProfileMemory,
+  useGetListAgentProfileLog,
+} from "./agentProfile";
 export {
   useGetListMcpToken,
   useCreateMcpToken,

@@ -2533,7 +2533,7 @@ export type IJob = {
   maxRetries?: number;
   retryDelayMinutes?: number;
   llmProvider?: string; // LLM provider to use when running this job (defaults to CLAUDE)
-  agentRegistryId?: number | null; // If set, this agent job runs using the named registry agent config
+  agentProfileId?: number | null; // If set, this agent job runs using the named agent profile config
 
   // virtual — not stored in DB, merged at read time
   lastLog?: IAppLog;
@@ -2736,10 +2736,10 @@ export type IAgentTask = {
   priority?: AgentTaskPriority;
   source?: AgentTaskSource;
   assignedAgentId?: number;
-  assignedAgent?: IAgentRegistry;
+  assignedAgent?: IAgentProfile;
   creatorType?: AgentTaskCreatorType;
   creatorAgentId?: number;
-  creatorAgent?: IAgentRegistry;
+  creatorAgent?: IAgentProfile;
   scheduledAt?: number;
   dueAt?: number;
   ttlSeconds?: number;
@@ -2758,7 +2758,7 @@ export type IAgentTask = {
   updateAt?: number;
 };
 
-export type IAgentRegistry = {
+export type IAgentProfile = {
   id?: number;
   name: string;
   description?: string;

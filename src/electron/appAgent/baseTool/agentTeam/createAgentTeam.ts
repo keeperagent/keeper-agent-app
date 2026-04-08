@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentTeamStore } from "@/electron/appAgent/agentTeam/store";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { safeStringify } from "@/electron/appAgent/utils";
 
 const schema = z.object({
@@ -10,7 +10,7 @@ const schema = z.object({
   agentIds: z
     .array(z.number())
     .min(1)
-    .describe("Registry agent IDs to include in the team"),
+    .describe("Agent profile IDs to include in the team"),
 });
 
 export const createAgentTeamTool = () =>
@@ -30,7 +30,7 @@ export const createAgentTeamTool = () =>
     }) => {
       const agentInfos: { id: number; name: string }[] = [];
       for (const agentId of agentIds) {
-        const [agent, err] = await agentRegistryDB.getOneAgentRegistry(agentId);
+        const [agent, err] = await agentProfileDB.getOneAgentProfile(agentId);
         if (err) {
           throw new Error(`Failed to load agent ${agentId}: ${err.message}`);
         }

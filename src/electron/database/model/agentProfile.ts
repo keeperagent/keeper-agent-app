@@ -2,7 +2,7 @@ import { DataTypes, Sequelize } from "sequelize";
 
 export default (db: Sequelize) =>
   db.define(
-    "AgentRegistry",
+    "AgentProfile",
     {
       id: {
         type: DataTypes.INTEGER,

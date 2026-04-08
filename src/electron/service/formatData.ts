@@ -4,7 +4,7 @@ import {
   ICampaign,
   ICampaignProfile,
   IMcpServer,
-  IAgentRegistry,
+  IAgentProfile,
   IAgentMailbox,
   IPreference,
   IProfile,
@@ -258,7 +258,7 @@ const formatMcpServer = (data: any): IMcpServer => {
   };
 };
 
-const formatAgentRegistry = (data: any): IAgentRegistry => {
+const formatAgentProfile = (data: any): IAgentProfile => {
   let formatedData = formatDBResponse(data);
   const hasEncryptKey = Boolean(formatedData?.encryptKey);
   formatedData = _.omit(formatedData, ["encryptKey"]);
@@ -344,6 +344,12 @@ const formatAgentTask = (raw: any): IAgentTask => {
     ...raw,
     metadata: raw.metadata ? JSON.parse(raw.metadata) : {},
     result: raw.result ? JSON.parse(raw.result) : null,
+    assignedAgent: raw.assignedAgent
+      ? formatAgentProfile(raw.assignedAgent)
+      : undefined,
+    creatorAgent: raw.creatorAgent
+      ? formatAgentProfile(raw.creatorAgent)
+      : undefined,
   };
 };
 
@@ -352,7 +358,7 @@ const formatAgentMailbox = (raw: any): IAgentMailbox => {
   return {
     ...formatedData,
     fromAgent: formatedData?.fromAgent
-      ? formatAgentRegistry(formatedData?.fromAgent)
+      ? formatAgentProfile(formatedData?.fromAgent)
       : undefined,
   };
 };
@@ -366,7 +372,7 @@ export {
   formatProfile,
   formatPreference,
   formatMcpServer,
-  formatAgentRegistry,
+  formatAgentProfile,
   formatWorkflow,
   formatSchedule,
   formatJob,

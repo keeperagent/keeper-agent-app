@@ -24,7 +24,7 @@ export const readMessagesTool = (toolContext: ToolContext) =>
     }: {
       includeAcknowledged?: boolean;
     }) => {
-      const agentId = toolContext.agentRegistryId;
+      const agentId = toolContext.agentProfileId;
       if (!agentId) {
         throw new Error("read_messages is only available for registry agents");
       }

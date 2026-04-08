@@ -87,7 +87,7 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
       }
       const workspaceDir = getJsWorkspaceDir();
       await mkdir(workspaceDir, { recursive: true });
-      const agentId = toolContext?.agentRegistryId || "main";
+      const agentId = toolContext?.agentProfileId || "main";
       const scriptPath = path.join(workspaceDir, `agent_script_${agentId}.cjs`);
       const childEnv = await buildSafeEnv(getWorkspaceRoot(), {
         NODE_PATH: getNodePath(),

@@ -6,4 +6,4 @@ export const migration: any = {
   },
 };
 
-export const CURRENT_REDUX_PERSIST_VERSION = 1;
+export const CURRENT_REDUX_PERSIST_VERSION = 2;

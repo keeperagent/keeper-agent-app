@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pagination, Spin, Empty } from "antd";
 import { IAppLog } from "@/electron/type";
-import { useGetListAgentRegistryLog } from "@/hook/agentRegistry";
+import { useGetListAgentProfileLog } from "@/hook/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { HistoryWrapper } from "./style";
 import HistoryItem from "./HistoryItem";
@@ -9,19 +9,18 @@ import HistoryItem from "./HistoryItem";
 const PAGE_SIZE = 10;
 
 type Props = {
-  agentRegistryId: number;
+  agentProfileId: number;
 };
 
-const HistoryTab = ({ agentRegistryId }: Props) => {
+const HistoryTab = ({ agentProfileId }: Props) => {
   const { translate } = useTranslation();
   const [page, setPage] = useState(1);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const { data, loading, getListAgentRegistryLog } =
-    useGetListAgentRegistryLog();
+  const { data, loading, getListAgentProfileLog } = useGetListAgentProfileLog();
 
   useEffect(() => {
-    getListAgentRegistryLog(agentRegistryId, page, PAGE_SIZE);
-  }, [agentRegistryId, page]);
+    getListAgentProfileLog(agentProfileId, page, PAGE_SIZE);
+  }, [agentProfileId, page]);
 
   const toggleExpand = (logId: number) => {
     setExpandedIds((prev) => {

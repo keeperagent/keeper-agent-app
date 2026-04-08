@@ -15,7 +15,7 @@ import _ from "lodash";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
-  IAgentRegistry,
+  IAgentProfile,
   ICampaign,
   IAgentSkill,
   IPreference,
@@ -25,9 +25,9 @@ import {
 } from "@/electron/type";
 import { DEFAULT_LLM_MODELS, CHAIN_TYPE } from "@/electron/constant";
 import {
-  useCreateAgentRegistry,
-  useUpdateAgentRegistry,
-} from "@/hook/agentRegistry";
+  useCreateAgentProfile,
+  useUpdateAgentProfile,
+} from "@/hook/agentProfile";
 import { useGetListAgentSkill } from "@/hook/agentSkill";
 import {
   useGetListNodeEndpointGroup,
@@ -45,7 +45,7 @@ const { Option } = Select;
 
 type Props = {
   open: boolean;
-  registry: IAgentRegistry | null;
+  profile: IAgentProfile | null;
   onClose: () => void;
   listCampaign?: ICampaign[];
   listAgentSkill?: IAgentSkill[];
@@ -71,10 +71,10 @@ const getDefaultModelForProvider = (
   return preference?.anthropicModel || DEFAULT_LLM_MODELS[LLMProvider.CLAUDE];
 };
 
-const ModalAgentRegistry = (props: Props) => {
+const ModalAgentProfile = (props: Props) => {
   const {
     open,
-    registry,
+    profile,
     onClose,
 
     listCampaign,
@@ -89,10 +89,10 @@ const ModalAgentRegistry = (props: Props) => {
 
   const { translate, locale } = useTranslation();
   const [form] = Form.useForm();
-  const { createAgentRegistry, loading: createLoading } =
-    useCreateAgentRegistry();
-  const { updateAgentRegistry, loading: updateLoading } =
-    useUpdateAgentRegistry();
+  const { createAgentProfile, loading: createLoading } =
+    useCreateAgentProfile();
+  const { updateAgentProfile, loading: updateLoading } =
+    useUpdateAgentProfile();
   const { getListAgentSkill } = useGetListAgentSkill();
   const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
   const { getListCampaignProfile } = useGetListCampaignProfile();
@@ -101,7 +101,7 @@ const ModalAgentRegistry = (props: Props) => {
   const watchedIsAllWallet = Form.useWatch("isAllWallet", form);
   const chainKey = Form.useWatch("chainKey", form) || "";
 
-  const isEdit = Boolean(registry?.id);
+  const isEdit = Boolean(profile?.id);
   const loading = createLoading || updateLoading;
 
   useEffect(() => {
@@ -112,35 +112,35 @@ const ModalAgentRegistry = (props: Props) => {
   }, [open]);
 
   useEffect(() => {
-    const allowedBaseTools = registry?.allowedBaseTools || [];
-    const allowedSkillIds = registry?.allowedSkillIds || [];
-    const provider = registry?.llmProvider || LLMProvider.CLAUDE;
+    const allowedBaseTools = profile?.allowedBaseTools || [];
+    const allowedSkillIds = profile?.allowedSkillIds || [];
+    const provider = profile?.llmProvider || LLMProvider.CLAUDE;
     const llmModel =
-      registry?.llmModel || getDefaultModelForProvider(provider, preference);
+      profile?.llmModel || getDefaultModelForProvider(provider, preference);
     setLlmProvider(provider);
 
     setEncryptKeyValue("");
     form.setFieldsValue({
-      name: registry?.name,
-      description: registry?.description || "",
+      name: profile?.name,
+      description: profile?.description || "",
       llmModel,
-      systemPrompt: registry?.systemPrompt || "",
+      systemPrompt: profile?.systemPrompt || "",
       allowedBaseTools,
       allowedSkillIds,
-      isAgentInteractionEnabled: Boolean(registry?.isAgentInteractionEnabled),
-      isActive: Boolean(registry?.isActive),
-      chainKey: registry?.chainKey,
-      nodeEndpointGroupId: registry?.nodeEndpointGroupId,
-      campaignId: registry?.campaignId,
-      profileIds: registry?.profileIds || [],
-      isAllWallet: Boolean(registry?.isAllWallet),
-      maxConcurrentTasks: registry?.maxConcurrentTasks || 3,
+      isAgentInteractionEnabled: Boolean(profile?.isAgentInteractionEnabled),
+      isActive: Boolean(profile?.isActive),
+      chainKey: profile?.chainKey,
+      nodeEndpointGroupId: profile?.nodeEndpointGroupId,
+      campaignId: profile?.campaignId,
+      profileIds: profile?.profileIds || [],
+      isAllWallet: Boolean(profile?.isAllWallet),
+      maxConcurrentTasks: profile?.maxConcurrentTasks || 3,
     });
-  }, [registry]);
+  }, [profile]);
 
   useEffect(() => {
     if (watchedCampaignId) {
-      if (watchedCampaignId !== registry?.campaignId) {
+      if (watchedCampaignId !== profile?.campaignId) {
         form.setFieldValue("profileIds", []);
       }
       getListCampaignProfile({
@@ -179,7 +179,7 @@ const ModalAgentRegistry = (props: Props) => {
     try {
       const values = await form.validateFields();
 
-      const data: Partial<IAgentRegistry> = {
+      const data: Partial<IAgentProfile> = {
         name: values.name,
         description: values.description || "",
         llmProvider,
@@ -198,13 +198,13 @@ const ModalAgentRegistry = (props: Props) => {
         encryptKey: encryptKeyValue || undefined,
       };
 
-      if (isEdit && registry?.id) {
-        updateAgentRegistry({
+      if (isEdit && profile?.id) {
+        updateAgentProfile({
           ...data,
-          id: registry.id,
-        } as IAgentRegistry);
+          id: profile.id,
+        } as IAgentProfile);
       } else {
-        createAgentRegistry(data);
+        createAgentProfile(data);
       }
 
       onClose();
@@ -215,8 +215,8 @@ const ModalAgentRegistry = (props: Props) => {
     <Modal
       title={
         isEdit
-          ? translate("agent.editRegistry")
-          : translate("agent.createRegistry")
+          ? translate("agent.editProfile")
+          : translate("agent.createProfile")
       }
       open={open}
       onCancel={onClose}
@@ -232,14 +232,14 @@ const ModalAgentRegistry = (props: Props) => {
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item
-              label={`${translate("agent.registryName")}:`}
+              label={`${translate("agent.profileName")}:`}
               name="name"
               rules={[
                 { required: true, message: translate("form.requiredField") },
               ]}
             >
               <Input
-                placeholder={translate("agent.enterRegistryName")}
+                placeholder={translate("agent.enterProfileName")}
                 className="custom-input"
                 size="large"
               />
@@ -250,7 +250,7 @@ const ModalAgentRegistry = (props: Props) => {
               name="description"
             >
               <TextArea
-                placeholder={translate("agent.enterRegistryDesc")}
+                placeholder={translate("agent.enterProfileDesc")}
                 rows={3}
                 className="custom-input"
               />
@@ -476,7 +476,7 @@ const ModalAgentRegistry = (props: Props) => {
                 }
                 extendClass="agentEncryptKey"
                 onChange={setEncryptKeyValue}
-                initialValue={registry?.hasEncryptKey ? "•" : ""}
+                initialValue={profile?.hasEncryptKey ? "•" : ""}
                 shouldHideValue={true}
               />
             </Form.Item>
@@ -595,4 +595,4 @@ export default connect((state: RootState) => ({
   listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup || [],
   listCampaignProfile: state?.CampaignProfile?.listCampaignProfile || [],
   preference: state?.Preference?.preference || null,
-}))(ModalAgentRegistry);
+}))(ModalAgentProfile);

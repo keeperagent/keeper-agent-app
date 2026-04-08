@@ -3,7 +3,7 @@ import { onIpc } from "./helpers";
 import { MESSAGE } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { agentChatBridge } from "@/electron/chatGateway/bridge";
-import { agentRegistryChatBridge } from "@/electron/chatGateway/agentRegistryBridge";
+import { agentProfileChatBridge } from "@/electron/chatGateway/agentProfileBridge";
 import { LLMProvider } from "@/electron/type";
 import type { IAttachedFileContext } from "@/electron/appAgent";
 import type {
@@ -107,7 +107,7 @@ export const recreateAllAgents = () => {
 
 export const cleanupAllAgentSessions = async () => {
   await agentChatBridge.cleanupAll();
-  await agentRegistryChatBridge.cleanupAll();
+  await agentProfileChatBridge.cleanupAll();
 };
 
 export const agentController = () => {

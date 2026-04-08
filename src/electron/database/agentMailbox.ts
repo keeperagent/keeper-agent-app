@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import { IAgentMailbox, AgentMailboxStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { formatAgentMailbox } from "@/electron/service/formatData";
-import { AgentMailboxModel, AgentRegistryModel } from "./index";
+import { AgentMailboxModel, AgentProfileModel } from "./index";
 
 class AgentMailboxDB {
   async createMessage(
@@ -40,7 +40,7 @@ class AgentMailboxDB {
         },
         include: [
           {
-            model: AgentRegistryModel,
+            model: AgentProfileModel,
             as: "fromAgent",
             attributes: ["id", "name"],
             required: false,

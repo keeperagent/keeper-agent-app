@@ -1,5 +1,5 @@
 import type {
-  IAgentRegistry,
+  IAgentProfile,
   IAgentSetting,
   IAgentSkill,
   IAgentTask,
@@ -477,39 +477,39 @@ export type IpcUpdateAgentSettingPayload = {
   data: IAgentSetting;
 };
 
-// AgentRegistry
-export type IpcGetListAgentRegistryPayload = IpcPagePayload;
-export type IpcGetOneAgentRegistryPayload = {
+// Agent profile
+export type IpcGetListAgentProfilePayload = IpcPagePayload;
+export type IpcGetOneAgentProfilePayload = {
   id: number;
 };
-export type IpcCreateAgentRegistryPayload = {
-  data: Partial<IAgentRegistry>;
+export type IpcCreateAgentProfilePayload = {
+  data: Partial<IAgentProfile>;
 };
-export type IpcUpdateAgentRegistryPayload = {
-  data: IAgentRegistry;
+export type IpcUpdateAgentProfilePayload = {
+  data: IAgentProfile;
 };
-export type IpcGetAgentRegistryMemoryPayload = {
-  agentRegistryId: number;
+export type IpcGetAgentProfileMemoryPayload = {
+  agentProfileId: number;
 };
-export type IpcSaveAgentRegistryMemoryPayload = {
-  agentRegistryId: number;
+export type IpcSaveAgentProfileMemoryPayload = {
+  agentProfileId: number;
   content: string;
 };
-export type IpcGetListAgentRegistryLogPayload = IpcPagePayload & {
-  agentRegistryId: number;
+export type IpcGetListAgentProfileLogPayload = IpcPagePayload & {
+  agentProfileId: number;
 };
-export type IpcRegistryAgentCreateSessionPayload = {
-  agentRegistryId: number;
+export type IpcAgentProfileCreateSessionPayload = {
+  agentProfileId: number;
 };
-export type IpcRegistryAgentRunPayload = {
+export type IpcAgentProfileRunPayload = {
   sessionId: string;
   input: string;
   encryptKey?: string;
 };
-export type IpcRegistryAgentStopPayload = {
+export type IpcAgentProfileStopPayload = {
   sessionId: string;
 };
-export type IpcRegistryAgentResetSessionPayload = {
+export type IpcAgentProfileResetSessionPayload = {
   sessionId: string;
 };
 

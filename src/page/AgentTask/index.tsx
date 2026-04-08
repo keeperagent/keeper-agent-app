@@ -15,7 +15,7 @@ import {
 import { useDroppable } from "@dnd-kit/core";
 import { actSetPageName } from "@/redux/layout";
 import { agentTaskSelector } from "@/redux/agentTask";
-import { agentRegistrySelector } from "@/redux/agentRegistry";
+import { agentProfileSelector } from "@/redux/agentProfile";
 import { preferenceSelector } from "@/redux/preference";
 import { RootState } from "@/redux/store";
 import {
@@ -31,7 +31,7 @@ import {
   useDeleteAgentTask,
   useAgentTaskRealtime,
 } from "@/hook/agentTask";
-import { useGetListAgentRegistry } from "@/hook/agentRegistry";
+import { useGetListAgentProfile } from "@/hook/agentProfile";
 import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { SearchInput } from "@/component";
@@ -196,12 +196,11 @@ const isLLMConfigured = (preference: IPreference | null): boolean => {
 };
 
 const AgentTaskPage = (props: any) => {
-  const { listAgentTask, listAgentRegistry, preference, actSetPageName } =
-    props;
+  const { listAgentTask, listAgentProfile, preference, actSetPageName } = props;
   const { translate } = useTranslation();
 
   const { getListAgentTask } = useGetListAgentTask();
-  const { getListAgentRegistry } = useGetListAgentRegistry();
+  const { getListAgentProfile } = useGetListAgentProfile();
   const { updateAgentTask } = useUpdateAgentTask();
   const { deleteAgentTask } = useDeleteAgentTask();
 
@@ -226,7 +225,7 @@ const AgentTaskPage = (props: any) => {
 
   useEffect(() => {
     getListAgentTask();
-    getListAgentRegistry({ page: 1, pageSize: 200 });
+    getListAgentProfile({ page: 1, pageSize: 200 });
   }, []);
 
   useEffect(() => {
@@ -349,7 +348,7 @@ const AgentTaskPage = (props: any) => {
         )
       : null;
 
-  const agentOptions = (listAgentRegistry || []).map((agent: any) => {
+  const agentOptions = (listAgentProfile || []).map((agent: any) => {
     const activeCount = (listAgentTask || []).filter(
       (task: IAgentTask) =>
         task.assignedAgentId === agent.id &&
@@ -471,7 +470,7 @@ const AgentTaskPage = (props: any) => {
 export default connect(
   (state: RootState) => ({
     listAgentTask: agentTaskSelector(state).listAgentTask,
-    listAgentRegistry: agentRegistrySelector(state).listAgentRegistry,
+    listAgentProfile: agentProfileSelector(state).listAgentProfile,
     preference: preferenceSelector(state).preference,
   }),
   { actSetPageName },

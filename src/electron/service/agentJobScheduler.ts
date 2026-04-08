@@ -3,14 +3,14 @@ import _ from "lodash";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import {
   createKeeperAgent,
-  createRegistryKeeperAgent,
+  createProfileKeeperAgent,
   createLLM,
 } from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { scheduleDB } from "@/electron/database/schedule";
 import { appLogDB } from "@/electron/database/appLog";
-import { agentRegistryDB } from "@/electron/database/agentRegistry";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { jobDB } from "@/electron/database/job";
 import { preferenceDB } from "@/electron/database/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
@@ -409,19 +409,19 @@ class AgentTaskScheduler {
 
     const [preference] = await preferenceDB.getOnePreference();
 
-    // If the job has agentRegistryId, run it using that registry agent's config
+    // If the job has agentProfileId, run it using that agent profile's config
     let agentCreator: { agent: any; cleanup: () => Promise<void> };
-    if (job.agentRegistryId) {
-      const [registry] = await agentRegistryDB.getOneAgentRegistry(
-        job.agentRegistryId,
+    if (job.agentProfileId) {
+      const [profile] = await agentProfileDB.getOneAgentProfile(
+        job.agentProfileId,
       );
-      if (!registry) {
+      if (!profile) {
         throw new Error(
-          `AgentRegistry #${job.agentRegistryId} not found for job ${job.id}`,
+          `AgentProfile #${job.agentProfileId} not found for job ${job.id}`,
         );
       }
-      agentCreator = await createRegistryKeeperAgent({
-        registry,
+      agentCreator = await createProfileKeeperAgent({
+        profile,
         toolContext,
       });
     } else {
