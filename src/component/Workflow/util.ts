@@ -235,13 +235,17 @@ const getNodeDimensions = (node: Node) => {
   return { width, height };
 };
 
+const MAX_NODES_PER_LINE = 5;
+
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
   direction: LayoutDirection,
 ) => {
-  const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   const isHorizontal = direction === LayoutDirection.HORIZONTAL;
+
+  // Step 1: run dagre to get topology-aware ranks and branch offsets
+  const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({
     rankdir: direction,
     ranksep:
@@ -252,38 +256,157 @@ const getLayoutedElements = (
   });
 
   const dimensionMap = new Map<string, { width: number; height: number }>();
-
   nodes.forEach((node) => {
     const dimensions = getNodeDimensions(node);
     dimensionMap.set(node.id, dimensions);
     dagreGraph.setNode(node.id, dimensions);
   });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
+  edges.forEach((edge) => dagreGraph.setEdge(edge.source, edge.target));
   dagre.layout(dagreGraph);
 
-  const newNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const dimensions = dimensionMap.get(node.id) || {
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-    };
-    const newNode = {
-      ...node,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
-      // We are shifting the dagre node position (anchor=center center) to the top left
-      // so it matches the React Flow node anchor point (top left).
-      position: {
-        x: nodeWithPosition.x - dimensions.width / 2,
-        y: nodeWithPosition.y - dimensions.height / 2,
-      },
-    };
+  // dagre gives center-based coordinates
+  const dagreNodePos = new Map<string, { x: number; y: number }>(
+    nodes.map((node) => [node.id, dagreGraph.node(node.id)]),
+  );
 
-    return newNode;
+  // main axis = x for horizontal, y for vertical
+  // cross axis = y for horizontal, x for vertical
+  const getMain = (nodeId: string) =>
+    isHorizontal ? dagreNodePos.get(nodeId)!.x : dagreNodePos.get(nodeId)!.y;
+  const getCross = (nodeId: string) =>
+    isHorizontal ? dagreNodePos.get(nodeId)!.y : dagreNodePos.get(nodeId)!.x;
+
+  // Step 2: collect unique dagre ranks sorted ascending — each rank = one column/row slot
+  const uniqueMainVals = [
+    ...new Set(nodes.map((node) => getMain(node.id))),
+  ].sort((rankA, rankB) => rankA - rankB);
+
+  const rankIndexMap = new Map<number, number>(
+    uniqueMainVals.map((mainVal, index) => [mainVal, index]),
+  );
+
+  // No wrapping needed — return dagre output as-is (handles branches correctly)
+  if (uniqueMainVals.length <= MAX_NODES_PER_LINE) {
+    const newNodes = nodes.map((node) => {
+      const pos = dagreNodePos.get(node.id)!;
+      const dim = dimensionMap.get(node.id)!;
+      return {
+        ...node,
+        targetPosition: isHorizontal ? Position.Left : Position.Top,
+        sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+        position: { x: pos.x - dim.width / 2, y: pos.y - dim.height / 2 },
+      };
+    });
+    return { nodes: newNodes, edges };
+  }
+
+  // Step 3: group nodes by rank, compute cross-axis extent per rank
+  // (branches at the same rank share a column — preserve dagre's relative offsets)
+  const rankToNodes = new Map<number, Node[]>();
+  uniqueMainVals.forEach((mainVal) => rankToNodes.set(mainVal, []));
+  nodes.forEach((node) => rankToNodes.get(getMain(node.id))!.push(node));
+
+  const rankMinTopEdge = new Map<number, number>();
+  const rankCrossExtent = new Map<number, number>();
+  uniqueMainVals.forEach((mainVal) => {
+    const rankNodes = rankToNodes.get(mainVal)!;
+    let minTopEdge = Infinity;
+    let maxBottomEdge = -Infinity;
+    rankNodes.forEach((node) => {
+      const dim = dimensionMap.get(node.id)!;
+      const crossCenter = getCross(node.id);
+      const crossHalf = isHorizontal ? dim.height / 2 : dim.width / 2;
+      minTopEdge = Math.min(minTopEdge, crossCenter - crossHalf);
+      maxBottomEdge = Math.max(maxBottomEdge, crossCenter + crossHalf);
+    });
+    rankMinTopEdge.set(mainVal, minTopEdge);
+    rankCrossExtent.set(mainVal, maxBottomEdge - minTopEdge);
+  });
+
+  // Step 4: compute cross-axis height per display line (max rank extent in that line)
+  const lineCount = Math.ceil(uniqueMainVals.length / MAX_NODES_PER_LINE);
+  const lineCrossHeight = new Array<number>(lineCount).fill(0);
+  uniqueMainVals.forEach((mainVal) => {
+    const rankIdx = rankIndexMap.get(mainVal)!;
+    const lineIdx = Math.floor(rankIdx / MAX_NODES_PER_LINE);
+    lineCrossHeight[lineIdx] = Math.max(
+      lineCrossHeight[lineIdx],
+      rankCrossExtent.get(mainVal)!,
+    );
+  });
+
+  // Cumulative cross-axis start position for each display line
+  const crossLineGap = BASE_NODE_SEPARATION_Y * 2;
+  const lineCrossStart: number[] = [0];
+  for (let lineIdx = 1; lineIdx < lineCount; lineIdx++) {
+    lineCrossStart.push(
+      lineCrossStart[lineIdx - 1] + lineCrossHeight[lineIdx - 1] + crossLineGap,
+    );
+  }
+
+  // Step 5: compute snake main-axis position per rank
+  let maxMainNodeSize = 0;
+  nodes.forEach((node) => {
+    const dim = dimensionMap.get(node.id)!;
+    maxMainNodeSize = Math.max(
+      maxMainNodeSize,
+      isHorizontal ? dim.width : dim.height,
+    );
+  });
+  const mainGap =
+    BASE_NODE_SEPARATION_X +
+    (isHorizontal ? EXTRA_HORIZONTAL_GAP : EXTRA_VERTICAL_GAP);
+
+  const rankDisplayMainStart = new Map<number, number>();
+  uniqueMainVals.forEach((mainVal) => {
+    const rankIdx = rankIndexMap.get(mainVal)!;
+    const lineIdx = Math.floor(rankIdx / MAX_NODES_PER_LINE);
+    const posInLine = rankIdx % MAX_NODES_PER_LINE;
+    const isLineReverse = lineIdx % 2 === 1;
+    const displayPos = isLineReverse
+      ? MAX_NODES_PER_LINE - 1 - posInLine
+      : posInLine;
+    rankDisplayMainStart.set(mainVal, displayPos * (maxMainNodeSize + mainGap));
+  });
+
+  // Step 6: apply final positions
+  const newNodes = nodes.map((node) => {
+    const mainVal = getMain(node.id);
+    const rankIdx = rankIndexMap.get(mainVal)!;
+    const lineIdx = Math.floor(rankIdx / MAX_NODES_PER_LINE);
+    const isLineReverse = lineIdx % 2 === 1;
+
+    const dim = dimensionMap.get(node.id)!;
+    const nodeMainSize = isHorizontal ? dim.width : dim.height;
+    const crossCenter = getCross(node.id);
+    const crossHalf = isHorizontal ? dim.height / 2 : dim.width / 2;
+
+    // Center the node within its column/row slot on the main axis
+    const mainStart =
+      rankDisplayMainStart.get(mainVal)! + (maxMainNodeSize - nodeMainSize) / 2;
+
+    // Center the rank group within the line height on the cross axis
+    const rankExtent = rankCrossExtent.get(mainVal)!;
+    const crossAlignOffset = (lineCrossHeight[lineIdx] - rankExtent) / 2;
+    const normTopEdge = crossCenter - crossHalf - rankMinTopEdge.get(mainVal)!;
+    const finalCrossTopEdge =
+      lineCrossStart[lineIdx] + crossAlignOffset + normTopEdge;
+
+    let position: { x: number; y: number };
+    let targetPosition: Position;
+    let sourcePosition: Position;
+
+    if (isHorizontal) {
+      position = { x: mainStart, y: finalCrossTopEdge };
+      targetPosition = isLineReverse ? Position.Right : Position.Left;
+      sourcePosition = isLineReverse ? Position.Left : Position.Right;
+    } else {
+      position = { x: finalCrossTopEdge, y: mainStart };
+      targetPosition = isLineReverse ? Position.Bottom : Position.Top;
+      sourcePosition = isLineReverse ? Position.Top : Position.Bottom;
+    }
+
+    return { ...node, position, targetPosition, sourcePosition };
   });
 
   return { nodes: newNodes, edges };
