@@ -9,6 +9,7 @@ import {
   OPENAI_IMAGE_QUALITY,
   OPENAI_IMAGE_SIZE,
   GOOGLE_IMAGE_ASPECT_RATIO,
+  RUN_AGENT_OUTPUT_FORMAT,
 } from "@/electron/type";
 import { WORKFLOW_TYPE } from "@/electron/constant";
 import { SimpleAgent } from "@/electron/simulator/category/agent";
@@ -131,7 +132,7 @@ export class AgentWorkflow {
           toolContext,
         });
 
-        let resultText = "";
+        let resultValue: any = "";
         try {
           const response = await (agent as any).invoke(
             { messages: [new HumanMessage(prompt)] },
@@ -143,14 +144,24 @@ export class AgentWorkflow {
           );
           const lastMessage =
             response?.messages?.[response.messages.length - 1];
-          resultText = normalizeAgentMessageContent(lastMessage?.content);
+
+          if (config?.outputFormat === RUN_AGENT_OUTPUT_FORMAT.JSON) {
+            const rawText = normalizeAgentMessageContent(lastMessage?.content);
+            try {
+              resultValue = JSON.parse(rawText);
+            } catch {
+              resultValue = rawText;
+            }
+          } else {
+            resultValue = normalizeAgentMessageContent(lastMessage?.content);
+          }
         } finally {
           cleanup().catch(() => {});
         }
 
         const newListVariable = updateVariable(listVariable, {
           variable: config?.variable || "",
-          value: resultText,
+          value: resultValue,
         });
 
         return { ...flowProfile, listVariable: newListVariable };

@@ -54,13 +54,19 @@ export class SimpleAgent {
         );
       }
 
-      return this.generateImageWithOpenAI(
-        prompt,
-        folderPath,
-        fileName,
-        apiKey,
-        size,
-        quality,
+      if (provider === LLMProvider.OPENAI) {
+        return this.generateImageWithOpenAI(
+          prompt,
+          folderPath,
+          fileName,
+          apiKey,
+          size,
+          quality,
+        );
+      }
+
+      throw new Error(
+        `Image generation is not supported for provider: ${provider}`,
       );
     } catch (err: any) {
       return [null, err];
@@ -78,7 +84,7 @@ export class SimpleAgent {
     try {
       const model = new ChatOpenAI({
         apiKey,
-        modelName: this.config.model || "gpt-4o-mini",
+        modelName: this.config.model || "gpt-4o",
         temperature: 0.35,
         maxTokens: 3000,
       });

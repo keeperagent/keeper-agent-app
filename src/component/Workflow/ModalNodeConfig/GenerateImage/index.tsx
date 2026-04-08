@@ -65,7 +65,7 @@ const GenerateImage = (props: Props) => {
       model:
         config?.model ||
         (currentProvider === LLMProvider.OPENAI
-          ? "gpt-4o-mini"
+          ? "gpt-4o"
           : "imagen-3.0-generate-001"),
       size: config?.size || OPENAI_IMAGE_SIZE.SIZE_1024_1024,
       quality: config?.quality || OPENAI_IMAGE_QUALITY.MEDIUM,
@@ -84,7 +84,7 @@ const GenerateImage = (props: Props) => {
     form.setFieldsValue({
       model:
         llmProvider === LLMProvider.OPENAI
-          ? "gpt-4o-mini"
+          ? "gpt-4o"
           : "imagen-3.0-generate-001",
     });
   };
@@ -243,9 +243,7 @@ const GenerateImage = (props: Props) => {
               ]}
             >
               <Input
-                placeholder={
-                  isOpenAI ? "gpt-4o-mini" : "imagen-3.0-generate-001"
-                }
+                placeholder={isOpenAI ? "gpt-4o" : "imagen-3.0-generate-001"}
                 className="custom-input"
                 size="large"
               />
@@ -384,7 +382,4 @@ const GenerateImage = (props: Props) => {
   );
 };
 
-export default connect(
-  (_state: RootState) => ({}),
-  {},
-)(GenerateImage);
+export default connect((_state: RootState) => ({}), {})(GenerateImage);
