@@ -659,7 +659,8 @@ export type INodeConfig =
   | ILaunchTokenPumpfunNodeConfig
   | ILaunchTokenBonkfunNodeConfig
   | IGenerateImageNodeConfig
-  | IRunAgentNodeConfig;
+  | IRunAgentNodeConfig
+  | IDebateNodeConfig;
 
 export type ISkipSetting = {
   isSkip: boolean;
@@ -2379,6 +2380,29 @@ export type IRunAgentNodeConfig = {
   agentProfileId?: number; // agent profile id to use
   promptTemplate: string; // prompt template to use
   outputFormat?: RUN_AGENT_OUTPUT_FORMAT; // output format to use
+};
+
+export type IDebateNodeConfig = {
+  workflowType?: WORKFLOW_TYPE;
+  status?: NODE_STATUS;
+  name: string;
+  onError?: NODE_ACTION;
+  onSuccess?: NODE_ACTION;
+  sleep: number;
+  timeout?: number;
+  retry?: number;
+  skipSetting?: ISkipSetting;
+  alertTelegramWhenError?: boolean;
+  variable: string;
+  topic: string;
+  rounds: number;
+  agentAProfileId?: number;
+  agentAPersona: string;
+  agentBProfileId?: number;
+  agentBPersona: string;
+  judgeAgentProfileId?: number;
+  judgePrompt: string;
+  includeTranscript?: boolean;
 };
 
 export type IFakeProfile = IWorkflowVariable[];

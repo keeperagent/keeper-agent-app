@@ -179,7 +179,7 @@ const Panel = (props: IProps) => {
           </Tooltip>
         </div>
 
-        <Tooltip title={translate("sidebar.preference")}>
+        <Tooltip title={translate("preference")}>
           <div className="setting" onClick={onOpenModalPreference}>
             <span>
               <FlameIcon />

@@ -94,6 +94,7 @@ const PasswordInputWrapper = styled(Form.Item)`
 
       &::placeholder {
         color: var(--color-text-secondary);
+        font-size: 1.2rem;
         transition: color 0.25s;
       }
 

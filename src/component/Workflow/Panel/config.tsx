@@ -51,6 +51,7 @@ import {
   ImageIcon,
   SettingWindowIcon,
   UploadIcon,
+  SpeakIcon,
 } from "@/component/Icon";
 import metamaskImg from "@/asset/metamask.png";
 import twitterImg from "@/asset/twitter.png";
@@ -95,6 +96,7 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
 
   [WORKFLOW_TYPE.RUN_AGENT]: <AgentIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.GENERATE_IMAGE]: <ImageIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.DEBATE]: <SpeakIcon color="var(--color-primary)" />,
 
   [WORKFLOW_TYPE.SWAP_UNISWAP]: (
     <NodeIconWrapper className="large">
@@ -406,6 +408,19 @@ export const getListNode = (): INodeGroup[] => {
             timeout: (DEFAULT_EXTENSION_TIMEOUT * 4) / 1000,
           },
           version: "v1.1",
+        },
+        {
+          type: NODE_TYPE.CUSTOM_NODE,
+          icon: mapNodeIcon[WORKFLOW_TYPE.DEBATE],
+          config: {
+            ...commonNodeConfig,
+            sleep: DEFAULT_SLEEP_TIME,
+            name: SCRIPT_NAME[WORKFLOW_TYPE.DEBATE],
+            workflowType: WORKFLOW_TYPE.DEBATE,
+            status: NODE_STATUS.INVALID,
+            timeout: (DEFAULT_EXTENSION_TIMEOUT * 6) / 1000,
+          },
+          version: "v1.0",
         },
         {
           type: NODE_TYPE.CUSTOM_NODE,

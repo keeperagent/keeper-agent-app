@@ -60,6 +60,7 @@ export const EDGE_HANDLE = {
 export const SCRIPT_NAME_EN = {
   [WORKFLOW_TYPE.GENERATE_IMAGE]: "Generate image",
   [WORKFLOW_TYPE.RUN_AGENT]: "Run agent",
+  [WORKFLOW_TYPE.DEBATE]: "Debate",
 
   [WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]: "Pump Fun",
   [WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]: "Bonk Fun",
