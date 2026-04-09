@@ -181,7 +181,15 @@ class WhatsAppService {
               message:
                 "[WhatsApp] Reconnecting with fresh credentials after stream restart",
             });
-            await this.initSocket();
+            try {
+              await this.initSocket();
+            } catch (reconnectError: any) {
+              logEveryWhere({
+                message: `[WhatsApp] Reconnect after stream restart failed: ${reconnectError?.message}`,
+              });
+              this.hasReceivedCreds = false;
+              this.notifyStatus(WhatsAppStatus.DISCONNECTED);
+            }
             return;
           } else {
             // No credentials — stale session, clear auth so next connect gets a fresh QR
