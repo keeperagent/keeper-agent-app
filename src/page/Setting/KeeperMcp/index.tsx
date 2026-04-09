@@ -144,7 +144,12 @@ const KeeperMcp = ({ preference, isLightMode }: IProps) => {
                 size="large"
               />
 
-              <Button onClick={onSavePort} loading={updatingPreference}>
+              <Button
+                onClick={onSavePort}
+                loading={updatingPreference}
+                type="primary"
+                size="medium"
+              >
                 {translate("save")}
               </Button>
             </div>

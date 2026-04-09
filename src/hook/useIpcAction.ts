@@ -1,4 +1,4 @@
-import { useEffect, useState, DependencyList } from "react";
+import { useCallback, useEffect, useState, DependencyList } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/redux/store";
 
@@ -46,11 +46,14 @@ const useIpcAction = <TReq = any, TRes = any>(
     };
   }, deps);
 
-  const execute = (payload?: TReq) => {
-    setLoading(true);
-    setIsSuccess(false);
-    window?.electron?.send(channel, payload);
-  };
+  const execute = useCallback(
+    (payload?: TReq) => {
+      setLoading(true);
+      setIsSuccess(false);
+      window?.electron?.send(channel, payload);
+    },
+    [channel],
+  );
 
   return { execute, loading, isSuccess };
 };

@@ -43,6 +43,7 @@ class WhatsAppService {
   private socket: WASocket | null = null;
   private chatAdapter: WhatsAppChatAdapter | null = null;
   private isStarting = false;
+  private hasReceivedCreds = false;
   // Track recent message IDs sent by the agent to avoid processing them as user input
   private sentMessageIds: string[] = [];
   private readonly maxSentIds = 50;
@@ -129,7 +130,11 @@ class WhatsAppService {
 
     this.socket = socket;
 
-    socket.ev.on("creds.update", saveCreds);
+    this.hasReceivedCreds = false;
+    socket.ev.on("creds.update", () => {
+      this.hasReceivedCreds = true;
+      saveCreds();
+    });
 
     socket.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect, qr } = update;
@@ -168,6 +173,25 @@ class WhatsAppService {
         this.isStarting = false;
         this.socket = null;
         this.chatAdapter = null;
+
+        if (statusCode === 515) {
+          if (this.hasReceivedCreds) {
+            // Fresh credentials just saved after QR scan — WhatsApp requires a reconnect
+            logEveryWhere({
+              message:
+                "[WhatsApp] Reconnecting with fresh credentials after stream restart",
+            });
+            await this.initSocket();
+            return;
+          } else {
+            // No credentials — stale session, clear auth so next connect gets a fresh QR
+            await preferenceDB.clearWhatsAppAuthState();
+            logEveryWhere({
+              message: "[WhatsApp] Cleared stale auth state after stream error",
+            });
+          }
+        }
+
         this.notifyStatus(WhatsAppStatus.DISCONNECTED);
       }
     });
