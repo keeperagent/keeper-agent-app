@@ -895,7 +895,7 @@
   "mcp.enableServer": "Enable MCP Server",
   "mcp.serverStatus": "Server status",
   "mcp.serverPort": "Server port",
-  "mcp.serverPortPlaceholder": "e.g. 55555",
+  "mcp.serverPortPlaceholder": "e.g. 53535",
   "mcp.serverRunning": "Running",
   "mcp.serverStopped": "Stopped",
   "mcp.authTokens": "Auth tokens",

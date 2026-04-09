@@ -8,7 +8,7 @@ export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
 
 // Maximum number of extra columns for campaigns, campaign profiles, resources, and resource groups.
 export const NUMBER_OF_COLUMN = 30;
-export const DEFAULT_MCP_PORT = 55555;
+export const DEFAULT_MCP_PORT = 53535;
 
 /** Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users. */
 export const FILE_KEY = "67keeperA@";

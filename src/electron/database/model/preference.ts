@@ -1,4 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
+import { DEFAULT_MCP_PORT } from "@/electron/constant";
 
 export default (db: Sequelize) =>
   db.define(
@@ -153,12 +154,12 @@ export default (db: Sequelize) =>
       mcpServerPort: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: 55555,
+        defaultValue: DEFAULT_MCP_PORT,
       },
       isScreenCaptureProtectionOn: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: 0,
+        defaultValue: 1,
       },
       llmProvider: {
         type: DataTypes.STRING,

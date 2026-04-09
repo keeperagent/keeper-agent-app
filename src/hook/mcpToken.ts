@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { IMcpToken, IMcpConnection } from "@/electron/type";
 import type {
@@ -22,7 +22,7 @@ const useGetListMcpToken = () => {
     },
   );
 
-  const getListMcpToken = () => execute({});
+  const getListMcpToken = useCallback(() => execute({}), [execute]);
 
   // Listen for live connection updates pushed from main process
   useEffect(() => {

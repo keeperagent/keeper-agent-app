@@ -78,6 +78,12 @@ export const ListConnectedAgentRoot = styled.div`
         color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
         margin-bottom: 0.5rem;
         transition: color 0.15s ease;
+
+        .session-count {
+          font-size: 1rem;
+          font-weight: 400;
+          color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+        }
       }
 
       .connection-time {
