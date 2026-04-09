@@ -424,6 +424,7 @@ const ActivityLogPage = (props: any) => {
           }}
           rowKey={(record: IAppLog) => record?.id?.toString() || ""}
           dataSource={dataSource}
+          // @ts-ignore
           columns={columns}
           pagination={{
             total: totalData,

@@ -658,6 +658,7 @@ export enum WORKFLOW_TYPE {
   SAVE_LOG = "SAVE_LOG",
   LOOP = "LOOP",
   DEBATE = "DEBATE",
+  CHECKPOINT = "CHECKPOINT",
 }
 
 export const RESPONSE_CODE = {

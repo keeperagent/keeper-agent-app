@@ -146,6 +146,7 @@ export const ListAuthToken = () => {
                         type="primary"
                         size="small"
                         loading={deletingToken}
+                        danger
                       >
                         {translate("button.delete")}
                       </Button>

@@ -555,6 +555,20 @@ const getNodeContent = (workflowType: string, translate?: any) => {
       };
     }
 
+    case WORKFLOW_TYPE.CHECKPOINT: {
+      return {
+        description: (
+          <DescriptionWrapper>
+            <div>{translate("guide.checkpoint.title")}</div>
+
+            <div className="example">
+              {translate("guide.checkpoint.example")}
+            </div>
+          </DescriptionWrapper>
+        ),
+      };
+    }
+
     case WORKFLOW_TYPE.HTTP_REQUEST: {
       return {
         description: (

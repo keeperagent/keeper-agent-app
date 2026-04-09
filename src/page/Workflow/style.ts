@@ -27,10 +27,10 @@ const PageWrapper = styled.div`
     height: 1.7rem;
 
     svg {
-      width: 1.9rem;
-      height: 1.9rem;
-      min-width: 1.9rem;
-      min-height: 1.9rem;
+      width: 1.7rem;
+      height: 1.7rem;
+      min-width: 1.7rem;
+      min-height: 1.7rem;
       cursor: pointer;
       padding: 0.2rem;
       fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
@@ -53,7 +53,7 @@ const IconHighlightWrapper = styled.div`
   cursor: pointer;
 
   & > * {
-    transform: scale(0.8);
+    transform: scale(0.95);
   }
 `;
 
@@ -107,14 +107,14 @@ const ExpandIconWrapper = styled.div`
   justify-content: center;
   align-items: center;
   height: 2rem;
-  width: 1.5rem;
+  width: 100%;
   overflow: hidden;
 
   svg {
-    height: 2rem;
-    width: 2rem;
-    min-width: 2rem;
-    min-height: 2rem;
+    height: 1.5rem;
+    width: 1.5rem;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
   }
 `;
 

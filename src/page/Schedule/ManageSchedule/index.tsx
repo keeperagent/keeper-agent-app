@@ -163,12 +163,12 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "5%",
+    width: 70,
   },
   {
     title: translate("name"),
     dataIndex: "name",
-    width: "35%",
+    width: 450,
     render: (_: any, schedule: ISchedule) => {
       return (
         <ScheduleNameWrapper onClick={() => onEditSchedule(schedule)}>
@@ -196,7 +196,7 @@ const renderColumns = (
   {
     title: translate("schedule.type"),
     dataIndex: "type",
-    width: "8%",
+    width: 120,
     render: (type: string) => {
       const bgMap: Record<string, string> = {
         workflow: "var(--background-pink)",
@@ -228,7 +228,7 @@ const renderColumns = (
   {
     title: translate("schedule.scheduleColumn"),
     dataIndex: "schedule",
-    width: "17%",
+    width: 210,
     render: (_: any, record: ISchedule) => {
       if (record.type === ScheduleType.AGENT) {
         if (!record.cronExpr) {
@@ -271,7 +271,7 @@ const renderColumns = (
   {
     title: translate("schedule.lastStatus"),
     dataIndex: "lastStatus",
-    width: "13%",
+    width: 180,
     align: "center",
     render: (_: any, record: ISchedule) => {
       const isWorkflowRunning = Boolean(
@@ -335,7 +335,7 @@ const renderColumns = (
   {
     title: translate("schedule.active"),
     dataIndex: "isPaused",
-    width: "8%",
+    width: 110,
     align: "center",
     render: (isPaused: boolean, record: ISchedule) => (
       <Switch
@@ -352,6 +352,7 @@ const renderColumns = (
     render: (_: any, record: ISchedule) => {
       const isAgentSchedule = record.type === ScheduleType.AGENT;
       const isRunning = runningAgentScheduleIds.includes(record?.id!);
+
       return (
         <div className="list-icon">
           {isAgentSchedule && isRunning && (
@@ -524,6 +525,7 @@ const ManageSchedule = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const onTableChange = (pagination?: PaginationProps) => {
@@ -925,7 +927,8 @@ const ManageSchedule = (props: any) => {
             showTotal: onShowTotalData,
             locale: { items_per_page: `/ ${translate("page")}` },
           }}
-          scroll={{ x: 900, y: "70vh" }}
+          virtual
+          scroll={{ x: 1400, y: "70vh" }}
           loading={false}
           onChange={onTableChange}
           size="middle"
@@ -933,6 +936,7 @@ const ManageSchedule = (props: any) => {
             expandedRowRender,
             expandIcon: renderExpandIcon,
             expandedRowKeys,
+            columnWidth: 30,
           }}
         />
       )}

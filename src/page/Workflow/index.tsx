@@ -71,12 +71,12 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "5%",
+    width: 70,
   },
   {
     title: "",
     dataIndex: "color",
-    width: "3%",
+    width: 60,
     align: "center",
     render: (color: string, record: IWorkflow) => (
       <ColorPicker
@@ -88,7 +88,7 @@ const renderColumns = (
   {
     title: translate("workflow.name"),
     dataIndex: "name",
-    width: "43%",
+    width: 500,
     render: (value: string, record: IWorkflow) => (
       <LinkHoverWrapper onClick={() => onEditWorkflow(record)}>
         <div className="name">
@@ -112,7 +112,7 @@ const renderColumns = (
   {
     title: translate("usedBy"),
     dataIndex: "totalUsed",
-    width: "13%",
+    width: 210,
     render: (value: any, record: IWorkflow) => {
       const listCampaign = record?.listCampaign || [];
       const element = (
@@ -159,7 +159,7 @@ const renderColumns = (
   {
     title: translate("updatedAt"),
     dataIndex: "updateAt",
-    width: "15%",
+    width: 210,
     render: (value: number) => formatTime(Number(value), locale),
   },
   {
@@ -294,6 +294,7 @@ const ManageWorkflow = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const onTableChange = (pagination?: PaginationProps) => {
@@ -516,6 +517,7 @@ const ManageWorkflow = (props: any) => {
       </div>
 
       <Table
+        virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
@@ -542,8 +544,9 @@ const ManageWorkflow = (props: any) => {
         expandable={{
           expandedRowRender,
           expandIcon: renderExpandIcon,
+          columnWidth: 30,
         }}
-        scroll={{ x: 900, y: "70vh" }}
+        scroll={{ x: 1350, y: "70vh" }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

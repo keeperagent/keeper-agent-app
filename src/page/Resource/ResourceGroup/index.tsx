@@ -61,12 +61,12 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "5%",
+    width: "6%",
   },
   {
     title: translate("resourceGroup.name"),
     dataIndex: "name",
-    width: "50%",
+    width: "45%",
     render: (value: string, record: IResourceGroup) => (
       <LinkHoverWrapper onClick={() => onViewGroup(record?.id!)}>
         <div className="name">

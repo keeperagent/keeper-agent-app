@@ -52,6 +52,7 @@ import {
   SettingWindowIcon,
   UploadIcon,
   SpeakIcon,
+  SaveIcon,
 } from "@/component/Icon";
 import metamaskImg from "@/asset/metamask.png";
 import twitterImg from "@/asset/twitter.png";
@@ -342,6 +343,7 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
   ),
   [WORKFLOW_TYPE.STOP_SCRIPT]: <StopCircle color="var(--color-primary)" />,
   [WORKFLOW_TYPE.SAVE_LOG]: <LookupIcon color="var(--color-primary)" />,
+  [WORKFLOW_TYPE.CHECKPOINT]: <SaveIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.UPDATE_PROFILE]: <RocketIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.LOOP]: <ShuffleIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.SOLVE_CAPTCHA]: (
@@ -894,7 +896,6 @@ export const getListNode = (): INodeGroup[] => {
           },
           version: "v1.1",
         },
-
         {
           type: NODE_TYPE.CUSTOM_NODE,
           icon: mapNodeIcon[WORKFLOW_TYPE.CHECK_CONDITION],
@@ -939,6 +940,18 @@ export const getListNode = (): INodeGroup[] => {
             status: NODE_STATUS.INVALID,
           },
           version: "v1.1",
+        },
+        {
+          type: NODE_TYPE.CUSTOM_NODE,
+          icon: mapNodeIcon[WORKFLOW_TYPE.CHECKPOINT],
+          config: {
+            ...commonNodeConfig,
+            sleep: DEFAULT_SLEEP_TIME,
+            name: SCRIPT_NAME[WORKFLOW_TYPE.CHECKPOINT],
+            workflowType: WORKFLOW_TYPE.CHECKPOINT,
+            status: NODE_STATUS.INVALID,
+          },
+          version: "v1.0",
         },
         {
           type: NODE_TYPE.CUSTOM_NODE,
