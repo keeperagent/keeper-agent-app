@@ -2411,8 +2411,8 @@ export type ICheckpointNodeConfig = {
   workflowType?: WORKFLOW_TYPE;
   status?: NODE_STATUS;
   name: string;
-  onError?: string;
-  onSuccess?: string;
+  onError?: NODE_ACTION;
+  onSuccess?: NODE_ACTION;
   sleep: number;
   timeout?: number;
   retry?: number;

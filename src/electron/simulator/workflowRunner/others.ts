@@ -1181,10 +1181,13 @@ export class OtherWorkflow {
               variable: variableName,
               value: resolvedValue,
             });
-            await workflowDB.updateWorkflow({
+            const [, err] = await workflowDB.updateWorkflow({
               ...workflowRecord,
               listVariable: workflowVariables,
             });
+            if (err) {
+              throw err;
+            }
           }
         }
 

@@ -80,6 +80,7 @@ const Checkpoint = (props: Props) => {
         onSuccess,
         onError,
         retry,
+        timeout,
         leftSide,
         condition,
         rightSide,
@@ -92,6 +93,7 @@ const Checkpoint = (props: Props) => {
         "onSuccess",
         "onError",
         "retry",
+        "timeout",
         "leftSide",
         "condition",
         "rightSide",
@@ -106,6 +108,7 @@ const Checkpoint = (props: Props) => {
         onSuccess,
         onError,
         retry,
+        timeout,
         skipSetting: {
           leftSide,
           rightSide,
