@@ -235,7 +235,7 @@ const getNodeDimensions = (node: Node) => {
   return { width, height };
 };
 
-const MAX_NODES_PER_LINE = 5;
+const MAX_NODES_PER_LINE = 6;
 
 const getLayoutedElements = (
   nodes: Node[],

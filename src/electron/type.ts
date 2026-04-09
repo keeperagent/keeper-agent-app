@@ -660,7 +660,8 @@ export type INodeConfig =
   | ILaunchTokenBonkfunNodeConfig
   | IGenerateImageNodeConfig
   | IRunAgentNodeConfig
-  | IDebateNodeConfig;
+  | IDebateNodeConfig
+  | ICheckpointNodeConfig;
 
 export type ISkipSetting = {
   isSkip: boolean;
@@ -2403,6 +2404,22 @@ export type IDebateNodeConfig = {
   judgeAgentProfileId?: number;
   judgePrompt: string;
   includeTranscript?: boolean;
+};
+
+// CHECKPOINT @workflowType
+export type ICheckpointNodeConfig = {
+  workflowType?: WORKFLOW_TYPE;
+  status?: NODE_STATUS;
+  name: string;
+  onError?: string;
+  onSuccess?: string;
+  sleep: number;
+  timeout?: number;
+  retry?: number;
+  skipSetting?: ISkipSetting;
+  alertTelegramWhenError?: boolean;
+  variableName: string; // existing variable key to update
+  value: string; // value to write
 };
 
 export type IFakeProfile = IWorkflowVariable[];

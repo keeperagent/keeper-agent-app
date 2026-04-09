@@ -98,12 +98,12 @@ const renderColumns = (
   {
     title: translate("indexTable"),
     dataIndex: "index",
-    width: "5%",
+    width: 70,
   },
   {
     title: "",
     dataIndex: "color",
-    width: "3%",
+    width: 60,
     align: "center",
     render: (color: string, record: IWorkflow) => (
       <ColorPicker
@@ -115,7 +115,7 @@ const renderColumns = (
   {
     title: translate("campaign.name"),
     dataIndex: "name",
-    width: "42%",
+    width: 550,
     render: (value: string, record: ICampaign) => (
       <LinkHoverWrapper onClick={() => onViewProfile(record)}>
         <div className="name">
@@ -147,12 +147,12 @@ const renderColumns = (
   {
     title: translate("campaign.numberOfProfile"),
     dataIndex: "totalProfile",
-    width: "11%",
+    width: 200,
   },
   {
     title: translate("updatedAt"),
     dataIndex: "updateAt",
-    width: "16%",
+    width: 230,
     render: (value: number) => formatTime(Number(value), locale),
   },
   {
@@ -303,6 +303,7 @@ const ManageCampaign = (props: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onRowSelectionChange,
+    columnWidth: 50,
   };
 
   const onTableChange = (pagination?: PaginationProps) => {
@@ -620,6 +621,7 @@ const ManageCampaign = (props: any) => {
       </div>
 
       <Table
+        virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
         dataSource={dataSource}
@@ -648,8 +650,9 @@ const ManageCampaign = (props: any) => {
           expandedRowRender,
           expandIcon: renderExpandIcon,
           expandedRowKeys,
+          columnWidth: 30,
         }}
-        scroll={{ x: 900, y: "70vh" }}
+        scroll={{ x: 1350, y: "70vh" }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

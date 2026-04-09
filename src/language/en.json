@@ -1032,6 +1032,8 @@
   "guide.addNetworkRabby.title": "Adds a custom network to Rabby wallet. This processor is used to add network configuration for blockchains that Rabby does not yet support.",
   "guide.calculate.title": "Performs mathematical calculations: addition, subtraction, multiplication, and division.",
   "guide.calculate.example": "For example: In your wallet you have 1ETH, you want to swap all ETH into USDT but still want to keep 0.003ETH to pay gas fees. You can use this processor to calculate the amount of ETH you want to swap = 1 - 0.003 = 0.997 ETH.",
+  "guide.checkpoint.title": "Persists a workflow variable to storage so its value is retained across workflow runs.",
+  "guide.checkpoint.example": "For example: your workflow swaps ETH across 100 wallets. Place a Checkpoint node on the success path to save TOTAL_SWAP_SUCCESS = {{TOTAL_SWAP_SUCCESS}} + 1, and another on the error path to save TOTAL_SWAP_ERROR = {{TOTAL_SWAP_ERROR}} + 1. After every run, TOTAL_SWAP_SUCCESS and TOTAL_SWAP_ERROR accumulate across runs — giving you a live count of how many swaps succeeded or failed over time without needing to read logs.",
   "guide.toolShape": "Tool icon:",
   "guide.exampleImage": "Image:",
   "guide.desc": "Description:",

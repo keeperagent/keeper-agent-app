@@ -93,6 +93,7 @@ import RunAgent from "./RunAgent";
 import ClickExtension from "./ClickExtension";
 import UploadFile from "./UploadFile";
 import Debate from "./Debate";
+import Checkpoint from "./Checkpoint";
 
 type IModalProps = {
   isModalOpen: boolean;
@@ -417,6 +418,9 @@ const ModalNodeConfig = (props: IModalProps) => {
 
       case WORKFLOW_TYPE.STOP_SCRIPT:
         return <StopWorkflow {...propsNodeConfig} />;
+
+      case WORKFLOW_TYPE.CHECKPOINT:
+        return <Checkpoint {...propsNodeConfig} />;
 
       default:
         return null;

@@ -58,7 +58,7 @@ const IconHighlightWrapper = styled.span`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.3rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   background-color: var(--color-bg-primary);
   border-radius: var(--border-radius);
   cursor: pointer;
@@ -211,13 +211,13 @@ const ExpandIconWrapper = styled.div`
   justify-content: center;
   align-items: center;
   height: 2rem;
-  width: 1.5rem;
+  width: 100%;
   overflow: hidden;
 
   svg {
-    height: 2rem;
+    height: 1.5rem;
     width: 1.5rem;
-    min-width: 2rem;
+    min-width: 1.5rem;
     min-height: 1.5rem;
   }
 `;

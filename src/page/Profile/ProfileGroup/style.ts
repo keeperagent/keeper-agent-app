@@ -88,14 +88,14 @@ const ExpandIconWrapper = styled.div`
   justify-content: center;
   align-items: center;
   height: 2rem;
-  width: 1.5rem;
+  width: 100%;
   overflow: hidden;
 
   svg {
-    height: 2rem;
-    width: 2rem;
-    min-width: 2rem;
-    min-height: 2rem;
+    height: 1.5rem;
+    width: 1.5rem;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
   }
 `;
 

@@ -106,7 +106,7 @@ const renderColumns = (
   {
     title: translate("usedBy"),
     dataIndex: "totalUsed",
-    width: "13%",
+    width: "15%",
     render: (value: any, record: IProfileGroup) => {
       const listCampaign = record?.listCampaign || [];
       const element = (
@@ -461,7 +461,7 @@ const ProfileGroup = (props: any) => {
       </div>
 
       {viewMode === GROUP_VIEW_MODE.CHART ? (
-        <ProfileGroupChart showEmptyIcon={true} />
+        <ProfileGroupChart />
       ) : (
         <Table
           rowSelection={{

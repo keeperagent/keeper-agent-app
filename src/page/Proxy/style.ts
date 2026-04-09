@@ -8,12 +8,7 @@ const PageWrapper = styled.div`
   justify-content: flex-start;
   align-items: center;
   font-size: 1.6rem;
-
-  .tab {
-    display: flex;
-    justify-content: flex-start;
-    width: 100%;
-  }
+  margin-top: var(--margin-top);
 `;
 
 export { PageWrapper };

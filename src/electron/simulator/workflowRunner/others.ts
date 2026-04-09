@@ -32,6 +32,7 @@ import {
   ISelectWalletNodeConfig,
   IHttpRequestNodeConfig,
   IKeyValue,
+  ICheckpointNodeConfig,
 } from "@/electron/type";
 import {
   COMPARISION_EXPRESSION,
@@ -46,6 +47,7 @@ import {
   IS_RESOURCE_EXIST,
   NUMBER_OF_COLUMN,
 } from "@/electron/constant";
+import { workflowDB } from "@/electron/database/workflow";
 import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { walletDB } from "@/electron/database/wallet";
 import { appLogDB } from "@/electron/database/appLog";
@@ -1144,6 +1146,71 @@ export class OtherWorkflow {
       withoutBrowser: true,
     });
   };
+
+  checkpoint = async (
+    flowProfile: IFlowProfile,
+  ): Promise<[IFlowProfile | null, Error | null]> => {
+    try {
+      const script = async (
+        _page: Page,
+        config: ICheckpointNodeConfig,
+        listVariable: IWorkflowVariable[],
+      ): Promise<IFlowProfile> => {
+        if (processSkipSetting(config, listVariable)) {
+          return flowProfile;
+        }
+
+        const variableName = config?.variableName || "";
+        const resolvedValue = getActualValue(config?.value || "", listVariable);
+
+        const newListVariable = updateVariable(listVariable, {
+          variable: variableName,
+          value: resolvedValue,
+        });
+
+        const workflowId = flowProfile?.campaignConfig?.workflowId;
+        if (workflowId && variableName) {
+          const [workflowRecord, err] =
+            await workflowDB.getOneWorkflow(workflowId);
+          if (err) {
+            throw err;
+          }
+          if (workflowRecord) {
+            let workflowVariables = workflowRecord?.listVariable || [];
+            workflowVariables = updateVariable(workflowVariables, {
+              variable: variableName,
+              value: resolvedValue,
+            });
+            await workflowDB.updateWorkflow({
+              ...workflowRecord,
+              listVariable: workflowVariables,
+            });
+          }
+        }
+
+        return {
+          ...flowProfile,
+          listVariable: newListVariable,
+        };
+      };
+
+      return this.threadManager.runNormalTask<ICheckpointNodeConfig>({
+        flowProfile,
+        taskFn: script,
+        timeout:
+          ((flowProfile?.config as ICheckpointNodeConfig)?.timeout || 0) * 1000,
+        taskName: "checkpoint",
+        withoutBrowser: true,
+      });
+    } catch (err: any) {
+      logEveryWhere({
+        message: `checkpoint() error: ${err?.message}`,
+        campaignId: flowProfile?.campaignConfig?.campaignId,
+        workflowId: flowProfile?.campaignConfig?.workflowId,
+      });
+      return [flowProfile, err];
+    }
+  };
 }
 
 export const registerOtherHandlers = (
@@ -1165,4 +1232,5 @@ export const registerOtherHandlers = (
   handlers.set(WORKFLOW_TYPE.SAVE_LOG, s.saveLog);
   handlers.set(WORKFLOW_TYPE.HTTP_REQUEST, s.httpRequest);
   handlers.set(WORKFLOW_TYPE.EXECUTE_CODE, s.executeCode);
+  handlers.set(WORKFLOW_TYPE.CHECKPOINT, s.checkpoint);
 };
