@@ -33,6 +33,7 @@ const Wrapper = styled.div`
 
 const ListVariableWrapper = styled.div`
   max-height: 70vh;
+  padding: 0 0.5rem;
   overflow-y: auto;
 `;
 

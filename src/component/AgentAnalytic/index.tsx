@@ -118,7 +118,7 @@ const AgentAnalytic = ({
 
     return {
       backgroundColor: "transparent",
-      grid: { top: 20, right: 10, bottom: 10, left: 30, containLabel: true },
+      grid: { top: 20, right: 10, bottom: 10, left: 35, containLabel: true },
       xAxis: { type: "category", data: categories, ...axisBase },
       yAxis: {
         type: "value",

@@ -236,6 +236,27 @@ export class SwapOnKyberswap {
     return [approvalTxHash, null];
   }
 
+  private resolvePriceImpact = async (
+    input: ISwapKyberswapInput,
+    routeSummary: any,
+    priceImpactFromUsd: number | null,
+    proxy?: AxiosProxyConfig,
+  ): Promise<[number | null, Error | null]> => {
+    if (priceImpactFromUsd !== null) {
+      return [priceImpactFromUsd, null];
+    }
+    const [spotPriceImpact, spotErr] =
+      await this.kyberswapClient.getPriceImpactFromSpotRate(
+        input,
+        routeSummary,
+        proxy,
+      );
+    if ((spotErr || spotPriceImpact === null) && input.priceImpact) {
+      return [null, spotErr || Error("can not calculate price impact")];
+    }
+    return [spotPriceImpact, null];
+  };
+
   // return [txHash, error]
   private async executeSwap(
     input: ISwapKyberswapInput,
@@ -245,33 +266,42 @@ export class SwapOnKyberswap {
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> {
-    const [routeSummary, priceImpact, err] =
+    const [routeSummary, priceImpactFromUsd, err] =
       await this.kyberswapClient.getSwapRoute(input, proxy);
     if (err) {
       return [null, err];
-    }
-    if (!priceImpact) {
-      return [null, Error("can not get price impact")];
     }
     if (!routeSummary) {
       return [null, Error("can not get swap route")];
     }
 
+    const [priceImpact, priceImpactErr] = await this.resolvePriceImpact(
+      input,
+      routeSummary,
+      priceImpactFromUsd,
+      proxy,
+    );
+    if (priceImpactErr) {
+      return [null, priceImpactErr];
+    }
+
+    const priceImpactDisplay =
+      priceImpact !== null ? `${priceImpact.toFixed(2)}%` : "unknown";
     logEveryWhere({
       campaignId: logInfo.campaignId,
       workflowId: logInfo.workflowId,
-      message: `Executing Kyberswap trade with price impact: ${priceImpact?.toFixed(
-        2,
-      )}%, slippage: ${input.slippage}%`,
+      message: `Executing Kyberswap trade with token input ${input.inputTokenAddress}, token output ${input.outputTokenAddress}, price impact: ${priceImpactDisplay}, slippage: ${input.slippage}%`,
     });
 
-    if (input.priceImpact && priceImpact > input.priceImpact) {
+    if (
+      input.priceImpact &&
+      priceImpact !== null &&
+      priceImpact > input.priceImpact
+    ) {
       return [
         null,
         Error(
-          `Kyberswap trade error, price impact is too high, max is ${
-            input.priceImpact
-          }%, current is ${priceImpact?.toFixed(2)}%`,
+          `Kyberswap trade error, price impact is too high, max is ${input.priceImpact}%, current is ${priceImpact.toFixed(2)}%`,
         ),
       ];
     }

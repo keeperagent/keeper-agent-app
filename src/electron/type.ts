@@ -1562,7 +1562,7 @@ export type ISwapUniswapNodeConfig = {
 };
 export type ISwapEVMInput = {
   chainId: number; // chain id to swap the token
-  poolAddress: string; // pool address to swap the token
+  poolAddress: string; // pool address or pool ID (bytes32 for Infinity CL/Bin pools)
   inputTokenAddress: string; // input token address to swap the token
   isInputNativeToken: boolean; // is input native token to swap the token
   inputTokenDecimal: number; // input token decimal to swap the token
