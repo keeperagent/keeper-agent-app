@@ -23,7 +23,7 @@ import {
   type IAttachedFileContext,
 } from "@/electron/appAgent";
 import { extractMemoryFromConversation } from "./memoryExtraction";
-import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
+import { looksLikeEncryptKey } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { LLMProvider } from "@/electron/type";

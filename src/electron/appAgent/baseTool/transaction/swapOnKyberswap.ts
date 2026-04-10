@@ -730,4 +730,4 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
           }),
       };
     },
-  }) as DynamicStructuredTool;
+  });

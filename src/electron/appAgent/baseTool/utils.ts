@@ -1,6 +1,26 @@
 import { app } from "electron";
 import path from "path";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import type { DynamicStructuredTool } from "@langchain/core/tools";
 import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
+
+export const toClaudeToolsWithCache = (
+  tools: DynamicStructuredTool[],
+): any[] => {
+  if (!tools || tools.length === 0) {
+    return [];
+  }
+  const converted: any[] = tools.map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    input_schema: zodToJsonSchema(tool.schema as any) as any,
+  }));
+  converted[converted.length - 1] = {
+    ...converted[converted.length - 1],
+    cache_control: { type: "ephemeral" },
+  };
+  return converted;
+};
 
 // Patterns that indicate code is trying to access sensitive files outside the sandbox.
 // These are blocked regardless of how the path is constructed.

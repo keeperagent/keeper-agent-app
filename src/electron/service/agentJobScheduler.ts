@@ -3,7 +3,7 @@ import _ from "lodash";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import {
   createKeeperAgent,
-  createProfileKeeperAgent,
+  createAgentFromProfile,
   createLLM,
 } from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
@@ -420,7 +420,7 @@ class AgentTaskScheduler {
           `AgentProfile #${job.agentProfileId} not found for job ${job.id}`,
         );
       }
-      agentCreator = await createProfileKeeperAgent({
+      agentCreator = await createAgentFromProfile({
         profile,
         toolContext,
       });
