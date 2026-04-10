@@ -7,8 +7,24 @@ import {
   agentSelector,
   LLMProvider,
 } from "@/redux/agent";
-import { looksLikeEncryptKey } from "@/electron/appAgent/redactRules";
 import { ChatRole } from "@/electron/chatGateway/types";
+
+const looksLikeEncryptKey = (text: string): boolean => {
+  if (text.length > 128) {
+    return false;
+  }
+  if (text.includes("?")) {
+    return false;
+  }
+  if (/[.!]\s+[A-Z]/.test(text)) {
+    return false;
+  }
+  const wordCount = text.trim().split(/\s+/).length;
+  if (wordCount > 5) {
+    return false;
+  }
+  return true;
+};
 
 type AgentToolStep = {
   toolName: string;
@@ -244,7 +260,6 @@ const useDashboardAgent = () => {
       setOutput("");
       setError(null);
     };
-
 
     const handleStreamChunk = (_event: any, payload: any) => {
       const { sessionId: payloadSessionId, chunk } = payload || {};

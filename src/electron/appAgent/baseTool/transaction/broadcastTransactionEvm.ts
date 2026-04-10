@@ -255,4 +255,4 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
           failedEntries.length > 0 && { failures: failedEntries }),
       });
     },
-  }) as DynamicStructuredTool;
+  });

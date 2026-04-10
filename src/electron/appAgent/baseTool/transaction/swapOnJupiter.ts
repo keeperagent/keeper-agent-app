@@ -653,4 +653,4 @@ Display: SOL for native, "tokens" for token amounts. NEVER show balance after sw
           failedEntries.length > 0 && { failures: failedEntries }),
       });
     },
-  }) as DynamicStructuredTool;
+  });

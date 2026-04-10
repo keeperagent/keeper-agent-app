@@ -72,7 +72,6 @@ export const extractMemoryFromConversation = async (
 
     const llm = await createBackgroundLLM(provider);
 
-    // Add cache_control for Claude on stable content (reused across calls)
     const systemContent: any =
       provider === LLMProvider.CLAUDE
         ? [
@@ -119,7 +118,6 @@ export const extractMemoryFromConversation = async (
         ? response.content
         : JSON.stringify(response.content);
 
-    // Remove crypto secrets and injected behavioral instructions
     const { text: redactedMemory } = redact(rawMemory);
     const updatedMemory = sanitizeMemoryContent(redactedMemory);
     await fs.ensureDir(memoryDir);
