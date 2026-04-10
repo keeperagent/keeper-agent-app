@@ -247,6 +247,11 @@ export class PoolProvider {
       const clManagerAddress = (
         INFI_CL_POOL_MANAGER_ADDRESSES as Record<string, string>
       )[chainId];
+      if (!clManagerAddress) {
+        throw new Error(
+          `PancakeSwap Infinity CL manager address is not configured for chainId ${chainId}`,
+        );
+      }
 
       const clManagerContract = new ethers.Contract(
         clManagerAddress,
@@ -329,6 +334,11 @@ export class PoolProvider {
       const binManagerAddress = (
         INFI_BIN_POOL_MANAGER_ADDRESSES as Record<string, string>
       )[chainId];
+      if (!binManagerAddress) {
+        throw new Error(
+          `PancakeSwap Infinity BIN manager address is not configured for chainId ${chainId}`,
+        );
+      }
 
       const binManagerContract = new ethers.Contract(
         binManagerAddress,

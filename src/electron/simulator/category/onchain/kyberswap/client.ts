@@ -22,11 +22,13 @@ export class KyberSwapClient {
   private platformFeeBps: number;
   private platformFeeWalletAddress: string;
   private spotRateCache: TimeoutCache<number>;
+  private spotRateInFlight: Map<string, Promise<Big>>;
 
   constructor(platformFeeBps: number, platformFeeWalletAddress: string) {
     this.platformFeeBps = platformFeeBps;
     this.platformFeeWalletAddress = platformFeeWalletAddress;
     this.spotRateCache = new TimeoutCache<number>(1000); // 1 second TTL
+    this.spotRateInFlight = new Map();
   }
 
   getSwapRoute = async (
@@ -115,57 +117,107 @@ export class KyberSwapClient {
     }
   };
 
+  private buildSpotRateCacheKey = (input: ISwapKyberswapInput): string => {
+    const feeKeyPart =
+      this.platformFeeBps > 0 && this.platformFeeWalletAddress
+        ? `-fee${this.platformFeeBps}-${this.platformFeeWalletAddress}`
+        : "";
+    return `${input.chainKey}-${input.inputTokenAddress}-${input.outputTokenAddress}-${input.includedSources}-${input.excludedSources}${feeKeyPart}`;
+  };
+
+  private buildSpotRateRouteParams = (
+    input: ISwapKyberswapInput,
+    amountIn: string,
+  ): Record<string, unknown> => {
+    const params: Record<string, unknown> = {
+      tokenIn: input.inputTokenAddress,
+      tokenOut: input.outputTokenAddress,
+      amountIn,
+      includedSources: input.includedSources,
+      excludedSources: input.excludedSources,
+    };
+    if (this.platformFeeBps > 0 && this.platformFeeWalletAddress) {
+      return {
+        ...params,
+        isInBps: true,
+        feeAmount: this.platformFeeBps,
+        feeReceiver: this.platformFeeWalletAddress,
+        chargeFeeBy: input.isOutputNativeToken ? "currency_out" : "currency_in",
+      };
+    }
+    return params;
+  };
+
+  // Call the Kyber /routes endpoint with a 1-unit reference amount to obtain
+  // the spot rate (near-zero price impact)
+  private callSpotRateApi = async (
+    input: ISwapKyberswapInput,
+    cacheKey: string,
+    proxy?: AxiosProxyConfig,
+  ): Promise<Big> => {
+    try {
+      const referenceAmountIn = ethers.utils
+        .parseUnits("1", input.inputTokenDecimal)
+        .toString();
+
+      const { data } = await axios.get(
+        `${KYBER_BASE_URL}/${input.chainKey}/api/v1/routes`,
+        {
+          params: this.buildSpotRateRouteParams(input, referenceAmountIn),
+          timeout: 10000,
+          headers: { "x-client-id": "KeeperAgent" },
+          proxy,
+        },
+      );
+
+      const refSummary = data?.data?.routeSummary;
+      if (!refSummary?.amountIn || !refSummary?.amountOut) {
+        throw new Error("can not get reference route for price impact");
+      }
+
+      const spotRate = new Big(refSummary.amountOut)
+        .div(new Big(10).pow(input.outputTokenDecimal))
+        .div(
+          new Big(refSummary.amountIn).div(
+            new Big(10).pow(input.inputTokenDecimal),
+          ),
+        );
+
+      this.spotRateCache.set(cacheKey, spotRate.toNumber());
+      return spotRate;
+    } finally {
+      this.spotRateInFlight.delete(cacheKey);
+    }
+  };
+
+  // Return the cached spot rate, or start/join a single in-flight request so
+  // concurrent callers with the same cacheKey share one API call
+  private resolveSpotRate = (
+    input: ISwapKyberswapInput,
+    cacheKey: string,
+    proxy?: AxiosProxyConfig,
+  ): Promise<Big> => {
+    const cached = this.spotRateCache.get(cacheKey);
+    if (cached !== null) {
+      return Promise.resolve(new Big(cached));
+    }
+
+    let inFlightPromise = this.spotRateInFlight.get(cacheKey);
+    if (!inFlightPromise) {
+      inFlightPromise = this.callSpotRateApi(input, cacheKey, proxy);
+      this.spotRateInFlight.set(cacheKey, inFlightPromise);
+    }
+    return inFlightPromise;
+  };
+
   getPriceImpactFromSpotRate = async (
     input: ISwapKyberswapInput,
     routeSummary: any,
     proxy?: AxiosProxyConfig,
   ): Promise<[number | null, Error | null]> => {
     try {
-      // Cache the spot rate for 1 second to avoid spamming the API
-      // when many workflow threads swap the same token pair simultaneously
-      const cacheKey = `${input.chainKey}-${input.inputTokenAddress}-${input.outputTokenAddress}`;
-      let spotRate: Big;
-      const cachedSpotRate = this.spotRateCache.get(cacheKey);
-      if (cachedSpotRate !== null) {
-        spotRate = new Big(cachedSpotRate);
-      } else {
-        // Query a 1-unit reference amount to get the spot rate (near-zero price impact)
-        const referenceAmountIn = ethers.utils
-          .parseUnits("1", input.inputTokenDecimal)
-          .toString();
-
-        const { data } = await axios.get(
-          `${KYBER_BASE_URL}/${input.chainKey}/api/v1/routes`,
-          {
-            params: {
-              tokenIn: input.inputTokenAddress,
-              tokenOut: input.outputTokenAddress,
-              amountIn: referenceAmountIn,
-            },
-            timeout: 10000,
-            headers: { "x-client-id": "KeeperAgent" },
-            proxy,
-          },
-        );
-
-        const refSummary = data?.data?.routeSummary;
-        if (!refSummary?.amountIn || !refSummary?.amountOut) {
-          return [
-            null,
-            new Error("can not get reference route for price impact"),
-          ];
-        }
-
-        spotRate = new Big(refSummary.amountOut)
-          .div(new Big(10).pow(input.outputTokenDecimal))
-          .div(
-            new Big(refSummary.amountIn).div(
-              new Big(10).pow(input.inputTokenDecimal),
-            ),
-          );
-
-        this.spotRateCache.set(cacheKey, spotRate.toNumber());
-      }
+      const cacheKey = this.buildSpotRateCacheKey(input);
+      const spotRate = await this.resolveSpotRate(input, cacheKey, proxy);
 
       const executionRate = new Big(routeSummary.amountOut)
         .div(new Big(10).pow(input.outputTokenDecimal))
