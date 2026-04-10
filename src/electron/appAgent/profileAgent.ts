@@ -28,8 +28,7 @@ import {
   createMemoryWriteGuardMiddleware,
 } from "./middleware";
 
-// Creates an agent from profile config.
-export const createProfileKeeperAgent = async (
+export const createAgentFromProfile = async (
   options: CreateProfileAgentOptions,
 ): Promise<KeeperAgent> => {
   const { profile, checkpointer, toolContext: providedToolContext } = options;
@@ -56,13 +55,23 @@ export const createProfileKeeperAgent = async (
     allowedBaseToolsSet === null || allowedBaseToolsSet.has(key);
 
   const baseSubAgents = buildBaseSubAgents(toolContext, new Set<string>());
-  const filteredSubAgents = baseSubAgents.filter((subagent) => {
-    if (allowedBaseToolsSet === null) {
-      return true;
-    }
-    const tools = (subagent.tools || []) as any[];
-    return tools.some((tool) => isToolEnabled(tool?.name || ""));
-  });
+  const filteredSubAgents = baseSubAgents
+    .filter((subagent) => {
+      if (allowedBaseToolsSet === null) {
+        return true;
+      }
+      const tools = subagent.tools || [];
+      return tools.some((tool) => isToolEnabled(tool?.name || ""));
+    })
+    .map((subagent) => {
+      if (allowedBaseToolsSet === null) {
+        return subagent;
+      }
+      const prunedTools = (subagent.tools || []).filter((tool) =>
+        isToolEnabled(tool?.name || ""),
+      );
+      return { ...subagent, tools: prunedTools };
+    });
 
   // Load only allowed MCP servers
   let allowedMcpServerIds: Set<number> | null = null;

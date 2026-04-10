@@ -15,7 +15,7 @@ import {
 import { WORKFLOW_TYPE } from "@/electron/constant";
 import { SimpleAgent } from "@/electron/simulator/category/agent";
 import {
-  createProfileKeeperAgent,
+  createAgentFromProfile,
   createLLM,
   ToolContext,
 } from "@/electron/appAgent";
@@ -132,7 +132,7 @@ export class AgentWorkflow {
           listVariable,
         );
         const toolContext = new ToolContext();
-        const { agent, cleanup } = await createProfileKeeperAgent({
+        const { agent, cleanup } = await createAgentFromProfile({
           profile,
           toolContext,
         });

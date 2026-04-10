@@ -8,7 +8,7 @@ import { randomUUID } from "crypto";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { redact } from "@keeperagent/crypto-key-guard";
-import { createProfileKeeperAgent } from "@/electron/appAgent";
+import { createAgentFromProfile } from "@/electron/appAgent";
 import type { KeeperAgent } from "@/electron/appAgent";
 import { ToolContext } from "@/electron/appAgent/toolContext";
 import { agentProfileDB } from "@/electron/database/agentProfile";
@@ -72,7 +72,7 @@ class AgentProfileBridge {
     session: ProfileSession,
   ) => {
     session.initPromise = (async () => {
-      const keeper = await createProfileKeeperAgent({
+      const keeper = await createAgentFromProfile({
         profile: session.profile,
         checkpointer: session.checkpointer,
         toolContext: session.toolContext,
@@ -121,7 +121,7 @@ class AgentProfileBridge {
       return session.keeper;
     }
 
-    const keeper = await createProfileKeeperAgent({
+    const keeper = await createAgentFromProfile({
       profile: session.profile,
       checkpointer: session.checkpointer,
       toolContext: session.toolContext,

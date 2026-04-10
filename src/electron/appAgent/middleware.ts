@@ -23,8 +23,9 @@ export const createTaskSkillRedirectMiddleware = (
         return handler(request);
       }
 
-      const args =
-        (request as any).toolCall?.args || (request as any).toolCall?.kwargs;
+      const toolCall = (request as any).toolCall;
+      const argsKey = toolCall?.args != null ? "args" : "kwargs";
+      const args = toolCall?.args || toolCall?.kwargs;
       const requestedType = args?.subagent_type;
       if (typeof requestedType !== "string") {
         return handler(request);
@@ -45,8 +46,8 @@ export const createTaskSkillRedirectMiddleware = (
       return handler({
         ...request,
         toolCall: {
-          ...(request as any).toolCall,
-          args: { ...args, subagent_type: codeExecutionAgent },
+          ...toolCall,
+          [argsKey]: { ...args, subagent_type: codeExecutionAgent },
         },
       });
     },
@@ -66,6 +67,7 @@ export const createSecretRestoreMiddleware = (toolContext: ToolContext) =>
         return handler(request);
       }
 
+      const argsKey = request?.toolCall?.args != null ? "args" : "kwargs";
       const args = request?.toolCall?.args || request?.toolCall?.kwargs || {};
       if (!args) {
         return handler(request);
@@ -90,7 +92,7 @@ export const createSecretRestoreMiddleware = (toolContext: ToolContext) =>
         const restoredArgs = JSON.parse(restored);
         return handler({
           ...request,
-          toolCall: { ...request?.toolCall, args: restoredArgs },
+          toolCall: { ...request?.toolCall, [argsKey]: restoredArgs },
         });
       } catch {
         return handler(request);
@@ -112,6 +114,7 @@ export const createMemoryWriteGuardMiddleware = () =>
         return handler(request);
       }
 
+      const argsKey = request?.toolCall?.args != null ? "args" : "kwargs";
       const args = request?.toolCall?.args || request?.toolCall?.kwargs || {};
       const filePath: string = args?.path || "";
 
@@ -132,7 +135,7 @@ export const createMemoryWriteGuardMiddleware = () =>
         ...request,
         toolCall: {
           ...request.toolCall,
-          args: { ...args, content: sanitizedContent },
+          [argsKey]: { ...args, content: sanitizedContent },
         },
       });
     },

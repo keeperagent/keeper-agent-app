@@ -11,7 +11,7 @@ import { appLogDB } from "@/electron/database/appLog";
 import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
-import { createProfileKeeperAgent, ToolContext } from "@/electron/appAgent";
+import { createAgentFromProfile, ToolContext } from "@/electron/appAgent";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 
 const DEFAULT_TASK_TIMEOUT_MINUTES = 30;
@@ -84,7 +84,7 @@ class AgentTaskExecutor {
     });
 
     const toolContext = new ToolContext();
-    const agentCreator = await createProfileKeeperAgent({
+    const agentCreator = await createAgentFromProfile({
       profile,
       toolContext,
     });

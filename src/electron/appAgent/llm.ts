@@ -71,7 +71,10 @@ export const createLLM = async (
   modelOverride?: string,
 ) => {
   const config = getProviderConfig(provider);
-  const [apiKey] = await config.getKey();
+  const [apiKey, keyErr] = await config.getKey();
+  if (keyErr) {
+    throw keyErr;
+  }
   if (!apiKey) {
     throw new Error(config.keyError);
   }
@@ -88,6 +91,9 @@ export const createBackgroundLLM = async (provider: LLMProvider) => {
 
 export const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   const config = getProviderConfig(provider);
-  const [apiKey] = await config.getKey();
+  const [apiKey, keyErr] = await config.getKey();
+  if (keyErr) {
+    throw keyErr;
+  }
   return !!apiKey;
 };
