@@ -86,7 +86,7 @@ const renderColumns = (
 
           <div className="note">
             <Highlighter
-              textToHighlight={trimText(record?.note || "Hello", 80)}
+              textToHighlight={trimText(record?.note || "", 80)}
               searchWords={[searchText]}
               highlightClassName="highlight"
             />
