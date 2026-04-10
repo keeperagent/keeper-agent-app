@@ -11,11 +11,8 @@ import path from "path";
 import fs from "fs-extra";
 import { getWorkspaceDir, getMemoryDir } from "@/electron/service/agentSkill";
 import {
-  createCampaignForProfileGroupTool,
-  createProfileGroupWithProfilesTool,
   createWalletGroupTool,
   generateWalletsForGroupTool,
-  createNodeProviderGroupTool,
   getSolanaTokenBalanceTool,
   getEvmTokenBalanceTool,
   swapOnJupiterTool,
@@ -37,6 +34,11 @@ import {
   runWorkflowTool,
   stopWorkflowTool,
   checkWorkflowStatusTool,
+  createResourceGroupTool,
+  listResourceGroupsTool,
+  bulkAddResourcesTool,
+  bulkUpdateResourcesTool,
+  queryResourcesTool,
 } from "./baseTool";
 import {
   createAgentScheduleTool,
@@ -292,18 +294,6 @@ export const buildBaseSubAgents = (
 ): SubAgent[] => {
   const isEnabled = (key: string) => !disabledTools.has(key);
 
-  const appManagementTools = [
-    isEnabled(BASE_TOOL_KEYS.CREATE_WALLET_GROUP) && createWalletGroupTool(),
-    isEnabled(BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP) &&
-      generateWalletsForGroupTool(),
-    isEnabled(BASE_TOOL_KEYS.CREATE_PROFILE_GROUP_WITH_PROFILES) &&
-      createProfileGroupWithProfilesTool(),
-    isEnabled(BASE_TOOL_KEYS.CREATE_CAMPAIGN_FOR_PROFILE_GROUP) &&
-      createCampaignForProfileGroupTool(),
-    isEnabled(BASE_TOOL_KEYS.CREATE_NODE_PROVIDER_GROUP) &&
-      createNodeProviderGroupTool(),
-  ].filter((tool): any => Boolean(tool));
-
   const transactionTools = [
     isEnabled(BASE_TOOL_KEYS.GET_EVM_TOKEN_BALANCE) &&
       getEvmTokenBalanceTool(toolContext),
@@ -332,20 +322,6 @@ export const buildBaseSubAgents = (
   ].filter((tool): any => Boolean(tool));
 
   const agents = [];
-
-  if (appManagementTools.length > 0) {
-    agents.push({
-      name: "app_management_agent",
-      description:
-        "Creates new Campaigns, Profiles, Wallets, and Node Providers. Use this only for creating new resources, NOT for listing or searching.",
-      systemPrompt:
-        "You are a subagent for managing application resources: Campaigns, Profiles, Wallets, and Node Providers.\n\n" +
-        "## Rules\n" +
-        "- Use the available tools to complete the task and return results directly.\n" +
-        "- Keep responses concise.",
-      tools: appManagementTools as any,
-    });
-  }
 
   if (transactionTools.length > 0) {
     agents.push({
@@ -447,6 +423,44 @@ export const buildBaseSubAgents = (
         "- If multiple campaigns or multiple workflows match, return the full list — never pick one yourself.\n" +
         "- Never include encryptKey in response text.",
       tools: workflowTools as any,
+    });
+  }
+
+  const dataManagementTools = [
+    isEnabled(BASE_TOOL_KEYS.CREATE_WALLET_GROUP) && createWalletGroupTool(),
+    isEnabled(BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP) &&
+      generateWalletsForGroupTool(),
+    isEnabled(BASE_TOOL_KEYS.CREATE_RESOURCE_GROUP) &&
+      createResourceGroupTool(),
+    isEnabled(BASE_TOOL_KEYS.LIST_RESOURCE_GROUPS) && listResourceGroupsTool(),
+    isEnabled(BASE_TOOL_KEYS.BULK_ADD_RESOURCES) && bulkAddResourcesTool(),
+    isEnabled(BASE_TOOL_KEYS.BULK_UPDATE_RESOURCES) &&
+      bulkUpdateResourcesTool(),
+    isEnabled(BASE_TOOL_KEYS.QUERY_RESOURCES) && queryResourcesTool(),
+  ].filter((tool): any => Boolean(tool));
+
+  if (dataManagementTools.length > 0) {
+    agents.push({
+      name: "data_management_agent",
+      description:
+        "Creates and manages wallet groups and resource groups. Use this to generate wallets, " +
+        "create resource groups with custom schemas, and store or query structured data (e.g. top token holders, KOL lists).",
+      systemPrompt:
+        "You are a subagent for managing wallets and structured data.\n\n" +
+        "## Tools\n" +
+        "- **create_wallet_group**: create a new wallet group\n" +
+        "- **generate_wallets_for_group**: generate wallets inside a wallet group\n" +
+        "- **create_resource_group**: define a new resource group with a column schema\n" +
+        "- **list_resource_groups**: discover existing resource groups and their schemas\n" +
+        "- **bulk_add_resources**: insert rows into an agent-created resource group; duplicate rows are skipped\n" +
+        "- **bulk_update_resources**: partially update existing rows by id (from query_resources); untouched columns are preserved\n" +
+        "- **query_resources**: read rows from any resource group (agent or user created)\n\n" +
+        "## Rules\n" +
+        "- Always call list_resource_groups first to check if a suitable group already exists before creating a new one.\n" +
+        "- Column names must be snake_case (e.g. wallet_address, token_balance).\n" +
+        "- bulk_add_resources only works on agent-created groups (source=agent).\n" +
+        "- Keep responses concise.",
+      tools: dataManagementTools as any,
     });
   }
 

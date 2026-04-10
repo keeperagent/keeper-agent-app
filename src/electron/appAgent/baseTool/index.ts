@@ -1,10 +1,12 @@
 export {
   createWalletGroupTool,
   generateWalletsForGroupTool,
-  createProfileGroupWithProfilesTool,
-  createCampaignForProfileGroupTool,
-  createNodeProviderGroupTool,
-} from "./appManagement";
+  createResourceGroupTool,
+  listResourceGroupsTool,
+  bulkAddResourcesTool,
+  bulkUpdateResourcesTool,
+  queryResourcesTool,
+} from "./dataManagement";
 export {
   getSolanaTokenBalanceTool,
   getEvmTokenBalanceTool,

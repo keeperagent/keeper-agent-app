@@ -27,7 +27,7 @@ export const generateWalletsForGroupTool = () =>
         (value) => Boolean(value.walletGroupId || value.walletGroupName),
         {
           message: "walletGroupId or walletGroupName is required",
-        }
+        },
       ),
     func: async ({
       walletGroupId,
@@ -42,7 +42,7 @@ export const generateWalletsForGroupTool = () =>
       });
       const resolvedChainType = resolveChainTypeForGroup(
         chainType,
-        walletGroup
+        walletGroup,
       );
       const targetBatchSize = batchSize || 1;
       const trimmedEncryptKey = encryptKey?.trim();
@@ -52,14 +52,7 @@ export const generateWalletsForGroupTool = () =>
         batchSize: targetBatchSize,
         groupId: walletGroup.id!,
         encryptKey: trimmedEncryptKey,
-        chainType:
-          resolvedChainType === "EVM"
-            ? CHAIN_TYPE.EVM
-            : resolvedChainType === "APTOS"
-            ? CHAIN_TYPE.APTOS
-            : resolvedChainType === "SUI"
-            ? CHAIN_TYPE.SUI
-            : CHAIN_TYPE.SOLANA,
+        chainType: CHAIN_TYPE[resolvedChainType] || CHAIN_TYPE.SOLANA,
       });
       if (!success) {
         throw new Error("Failed to generate wallets");

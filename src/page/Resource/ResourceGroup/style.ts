@@ -101,9 +101,8 @@ const ExpandRowWrapper = styled.div`
 const LinkHoverWrapper = styled.span`
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
 
   &:hover {
     .name {

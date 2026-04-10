@@ -145,11 +145,16 @@ export type IWorkflow = {
   listVariable?: IWorkflowVariable[];
 };
 
-// resource
+export enum ResourceGroupSource {
+  AGENT = "agent",
+  USER = "user",
+}
+
 export type IResourceGroup = {
   id?: number;
   name?: string;
   note?: string;
+  source?: ResourceGroupSource;
   createAt?: number;
   updateAt?: number;
   col1Variable?: string;

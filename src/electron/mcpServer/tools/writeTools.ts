@@ -7,9 +7,6 @@ import { ToolContext } from "@/electron/appAgent/toolContext";
 import {
   createWalletGroupTool,
   generateWalletsForGroupTool,
-  createProfileGroupWithProfilesTool,
-  createCampaignForProfileGroupTool,
-  createNodeProviderGroupTool,
   stopWorkflowTool,
   runWorkflowTool,
   executeJavaScriptTool,
@@ -146,79 +143,6 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         return DENIED_RESPONSE;
       }
       return wrapText((await generateWalletsInstance.invoke(args)).toString());
-    },
-  );
-
-  const createProfileGroupInstance = createProfileGroupWithProfilesTool();
-  server.registerTool(
-    "create_profile_group_with_profiles",
-    {
-      description: createProfileGroupInstance.description,
-      inputSchema: createProfileGroupInstance.schema._def.schema.shape,
-    },
-    async (args: any) => {
-      const approval = await showApprovalDialog(
-        displayName,
-        "create_profile_group_with_profiles",
-        createProfileGroupInstance.description,
-        formatArgs(args),
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      return wrapText(
-        (await createProfileGroupInstance.invoke(args)).toString(),
-      );
-    },
-  );
-
-  const createCampaignInstance = createCampaignForProfileGroupTool();
-  server.registerTool(
-    "create_campaign_for_profile_group",
-    {
-      description: createCampaignInstance.description,
-      inputSchema: createCampaignInstance.schema._def.schema.shape,
-    },
-    async (args: any) => {
-      const approval = await showApprovalDialog(
-        displayName,
-        "create_campaign_for_profile_group",
-        createCampaignInstance.description,
-        formatArgs(args),
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      return wrapText((await createCampaignInstance.invoke(args)).toString());
-    },
-  );
-
-  const createNodeProviderGroupInstance = createNodeProviderGroupTool();
-  server.registerTool(
-    "create_node_provider_group",
-    {
-      description: createNodeProviderGroupInstance.description,
-      inputSchema: {
-        groupName: z.string().describe("Node provider group name"),
-        chainType: z.string().describe("Chain type: EVM, SOLANA, APTOS, SUI"),
-        endpoints: z
-          .string()
-          .describe("Comma-separated list of RPC endpoint URLs"),
-      },
-    },
-    async (args) => {
-      const approval = await showApprovalDialog(
-        displayName,
-        "create_node_provider_group",
-        createNodeProviderGroupInstance.description,
-        formatArgs(args),
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      return wrapText(
-        (await createNodeProviderGroupInstance.invoke(args)).toString(),
-      );
     },
   );
 
