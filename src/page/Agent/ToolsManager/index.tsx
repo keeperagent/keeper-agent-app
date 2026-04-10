@@ -18,7 +18,7 @@ const GROUPS: BaseToolGroup[] = [
   BaseToolGroup.WORKFLOW,
   BaseToolGroup.SCHEDULER,
   BaseToolGroup.RESEARCH,
-  BaseToolGroup.APP_MANAGEMENT,
+  BaseToolGroup.DATA_MANAGEMENT,
 ];
 
 const ToolsManager = (props: { preference: IPreference | null }) => {

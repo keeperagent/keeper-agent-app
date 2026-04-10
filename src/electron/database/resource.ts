@@ -1,6 +1,6 @@
 import { Op, Sequelize } from "sequelize";
 import _ from "lodash";
-import { ResourceGroupModel, ResourceModel } from "./index";
+import { ResourceGroupModel, ResourceModel, db } from "./index";
 import { IResource, IGetListResponse } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { decryptResource } from "@/electron/service/resource";
@@ -221,6 +221,33 @@ class ResourceDB {
         message: `deleteResourceInGroup() error: ${err?.message}`,
       });
       return [null, err];
+    }
+  }
+
+  async bulkUpdateResourceByKey(
+    groupId: number,
+    rows: Array<{
+      id: number;
+      update: Record<string, string | null>;
+    }>,
+  ): Promise<Error | null> {
+    const transaction = await db.transaction();
+    try {
+      const now = new Date().getTime();
+      for (const row of rows) {
+        await ResourceModel.update(
+          { ...row.update, updateAt: now },
+          { where: { id: row.id, groupId }, transaction },
+        );
+      }
+      await transaction.commit();
+      return null;
+    } catch (err: any) {
+      await transaction.rollback();
+      logEveryWhere({
+        message: `bulkUpdateResourceByKey() error: ${err?.message}`,
+      });
+      return err;
     }
   }
 

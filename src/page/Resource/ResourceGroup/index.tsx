@@ -7,6 +7,7 @@ import {
   Popconfirm,
   Select,
   Dropdown,
+  Tag,
 } from "antd";
 import { connect } from "react-redux";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
@@ -33,7 +34,12 @@ import {
   actSetPageSize,
 } from "@/redux/resourceGroup";
 import { actSaveGetListResource } from "@/redux/resource";
-import { IProfileGroup, IResourceGroup, ISorter } from "@/electron/type";
+import {
+  IProfileGroup,
+  IResourceGroup,
+  ISorter,
+  ResourceGroupSource,
+} from "@/electron/type";
 import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
 import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
@@ -67,23 +73,31 @@ const renderColumns = (
     title: translate("resourceGroup.name"),
     dataIndex: "name",
     width: "45%",
-    render: (value: string, record: IResourceGroup) => (
+    render: (_value: string, record: IResourceGroup) => (
       <LinkHoverWrapper onClick={() => onViewGroup(record?.id!)}>
-        <div className="name">
-          <Highlighter
-            textToHighlight={record?.name || EMPTY_STRING}
-            searchWords={[searchText]}
-            highlightClassName="highlight"
-          />
+        <div className="main">
+          <div className="name">
+            <Highlighter
+              textToHighlight={record?.name || EMPTY_STRING}
+              searchWords={[searchText]}
+              highlightClassName="highlight"
+            />
+          </div>
+
+          <div className="note">
+            <Highlighter
+              textToHighlight={trimText(record?.note || "Hello", 80)}
+              searchWords={[searchText]}
+              highlightClassName="highlight"
+            />
+          </div>
         </div>
 
-        <div className="note">
-          <Highlighter
-            textToHighlight={trimText(record?.note || "", 80)}
-            searchWords={[searchText]}
-            highlightClassName="highlight"
-          />
-        </div>
+        {record?.source === ResourceGroupSource.AGENT && (
+          <Tag color="gold" style={{ margin: 0 }}>
+            Agent
+          </Tag>
+        )}
       </LinkHoverWrapper>
     ),
   },

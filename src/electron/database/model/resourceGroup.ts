@@ -1,4 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
+import { ResourceGroupSource } from "@/electron/type";
 
 export default (db: Sequelize) =>
   db.define(
@@ -17,6 +18,11 @@ export default (db: Sequelize) =>
       },
       note: {
         type: DataTypes.STRING,
+      },
+      source: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: ResourceGroupSource.USER,
       },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
