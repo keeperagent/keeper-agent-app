@@ -20,6 +20,7 @@ import {
   V3Pool,
   SmartRouter,
 } from "@pancakeswap/smart-router";
+import { getBinPoolTokenPrice } from "@pancakeswap/infinity-sdk";
 import {
   PermitSingle,
   AllowanceTransfer,
@@ -33,6 +34,8 @@ import {
   PancakeSwapUniversalRouter,
 } from "@pancakeswap/universal-router-sdk";
 import { PoolProvider } from "./poolProvider";
+import type { InfinityClPoolData } from "./poolProvider";
+import type { InfinityBinPool as SmartRouterInfinityBinPool } from "@pancakeswap/smart-router";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import {
   TOKEN_TYPE,
@@ -63,7 +66,7 @@ export class SwapOnPancakeswap {
 
   private async getNonce(
     walletAddress: string,
-    provider: ethers.providers.JsonRpcProvider
+    provider: ethers.providers.JsonRpcProvider,
   ): Promise<number> {
     const currentNonce = await provider?.getTransactionCount(walletAddress);
     return currentNonce;
@@ -74,13 +77,13 @@ export class SwapOnPancakeswap {
     privateKey: string,
     numberOfTransaction: number,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<Error | null> {
     const startTime = new Date().getTime();
     const listResult: Promise<any>[] = [];
 
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!provider) {
       return Error("can not get provider " + errProvider?.message);
@@ -91,7 +94,7 @@ export class SwapOnPancakeswap {
       wallet,
       provider,
       timeout,
-      logInfo
+      logInfo,
     );
     const currentNonce = await this.getNonce(wallet?.address, provider);
 
@@ -104,7 +107,7 @@ export class SwapOnPancakeswap {
         provider,
         timeout,
         i,
-        logInfo
+        logInfo,
       );
       listResult.push(resultPromise);
     }
@@ -129,10 +132,10 @@ export class SwapOnPancakeswap {
     input: ISwapEVMInput,
     privateKey: string,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> {
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
       return [null, Error("can not get provider " + errProvider?.message)];
@@ -144,7 +147,7 @@ export class SwapOnPancakeswap {
       wallet,
       provider,
       timeout,
-      logInfo
+      logInfo,
     );
     const nonce = await this.getNonce(wallet?.address, provider);
     return this.swap(input, wallet, nonce, provider, timeout, 0, logInfo);
@@ -152,7 +155,7 @@ export class SwapOnPancakeswap {
 
   private async validateSwap(
     input: ISwapEVMInput,
-    wallet: ethers.Wallet
+    wallet: ethers.Wallet,
   ): Promise<Error | null> {
     if (isNaN(Number(input.amount)) || Number(input.amount) <= 0) {
       return Error("amount must greater or equal to 0");
@@ -165,7 +168,7 @@ export class SwapOnPancakeswap {
         : TOKEN_TYPE.EVM_ERC20_TOKEN,
       wallet?.address,
       input.inputTokenAddress,
-      15000
+      15000,
     );
     if (err) {
       return err;
@@ -185,12 +188,12 @@ export class SwapOnPancakeswap {
     provider: ethers.providers.JsonRpcProvider,
     timeout: number,
     txIndex: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> {
     try {
       const [poolType, poolTypeErr] = await this.poolProvider.getPoolType(
         input.poolAddress,
-        provider
+        provider,
       );
       if (poolTypeErr) {
         return [null, poolTypeErr];
@@ -211,7 +214,7 @@ export class SwapOnPancakeswap {
 
       const [inputTokenContract] = await this.evmProvider.getTokenContract(
         [provider.connection.url],
-        input.inputTokenAddress
+        input.inputTokenAddress,
       );
       input.inputTokenDecimal = inputTokenContract?.decimal || 0;
       if (input.isInputNativeToken) {
@@ -220,7 +223,7 @@ export class SwapOnPancakeswap {
 
       const [outputTokenContract] = await this.evmProvider.getTokenContract(
         [provider.connection.url],
-        input.outputTokenAddress
+        input.outputTokenAddress,
       );
       input.outputTokenDecimal = outputTokenContract?.decimal || 0;
       if (input.isOutputNativeToken) {
@@ -231,7 +234,7 @@ export class SwapOnPancakeswap {
         input,
         wallet,
         provider,
-        txIndex
+        txIndex,
       );
       if (err) {
         return [null, err];
@@ -243,7 +246,7 @@ export class SwapOnPancakeswap {
         inputTokenPermit,
         nonce,
         timeout,
-        logInfo
+        logInfo,
       );
     } catch (err: any) {
       return [null, err];
@@ -255,12 +258,12 @@ export class SwapOnPancakeswap {
     input: ISwapEVMInput,
     wallet: Wallet,
     provider: ethers.providers.JsonRpcProvider,
-    txIndex: number
+    txIndex: number,
   ): Promise<[Permit2Signature | undefined, Error | null]> {
     if (input.isInputNativeToken) {
       return [undefined, null];
     }
-    const permit2Address = getPermit2Address(this.chainId);
+    const permit2Address = getPermit2Address(this.chainId as any);
     if (!permit2Address) {
       return [undefined, Error("can not get permit2 address")];
     }
@@ -275,14 +278,14 @@ export class SwapOnPancakeswap {
     } = await allowanceProvider.getAllowanceData(
       input.inputTokenAddress,
       wallet?.address,
-      getUniversalRouterAddress(this.chainId)
+      getUniversalRouterAddress(this.chainId as any),
     );
 
     if (permitAmount.eq(0) || new Date().getTime() / 1000 > expiration) {
       const maxValue = ethers.constants.MaxUint256;
       let approvalAmount = this.getAmountIn(
         input.amount,
-        input.inputTokenDecimal
+        input.inputTokenDecimal,
       );
       if (maxValue.lt(approvalAmount)) {
         approvalAmount = maxValue;
@@ -295,19 +298,19 @@ export class SwapOnPancakeswap {
           expiration: this.toDeadline(input.dealineInSecond),
           nonce: nonce + txIndex, // use with @txIndex to prevent duplicate @nonce in permit approval
         },
-        spender: getUniversalRouterAddress(this.chainId),
+        spender: getUniversalRouterAddress(this.chainId as any),
         sigDeadline: this.toDeadline(input.dealineInSecond),
       };
 
       const { domain, types, values } = AllowanceTransfer.getPermitData(
         permitSingle,
-        getPermit2Address(this.chainId),
-        this.chainId
+        getPermit2Address(this.chainId as any),
+        this.chainId,
       );
       const permitSignature = await wallet._signTypedData(
         domain,
         types,
-        values
+        values,
       );
       inputTokenPermit = {
         ...permitSingle,
@@ -323,22 +326,22 @@ export class SwapOnPancakeswap {
     wallet: ethers.Wallet,
     provider: ethers.providers.JsonRpcProvider,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> {
     // do not need approval if input is native token
     if (input.isInputNativeToken) {
       return [null, null];
     }
 
-    const permit2Address = getPermit2Address(this.chainId);
+    const permit2Address = getPermit2Address(this.chainId as any);
     const inputTokenContract = new ethers.Contract(
       input.inputTokenAddress,
       ERC20_ABI,
-      wallet
+      wallet,
     );
     const approvalAmount = await inputTokenContract?.allowance(
       wallet?.address,
-      permit2Address
+      permit2Address,
     );
     let approvalTxHash: string | null = null;
     let gasPrice = input?.gasPrice || ethers.BigNumber.from(0);
@@ -349,14 +352,14 @@ export class SwapOnPancakeswap {
 
     if (
       !ethers.constants.MaxUint256.eq(
-        ethers.BigNumber.from(approvalAmount?.toString())
+        ethers.BigNumber.from(approvalAmount?.toString()),
       )
     ) {
       // approve unlimit amount for Permit2 contract
       const approvalTx = await inputTokenContract.approve(
         permit2Address,
         ethers.constants.MaxUint256,
-        { gasPrice }
+        { gasPrice },
       );
       await sendWithTimeout(approvalTx.wait(), timeout);
       approvalTxHash = approvalTx.hash;
@@ -375,14 +378,14 @@ export class SwapOnPancakeswap {
       this.chainId,
       input.inputTokenAddress as AddressType,
       input.inputTokenDecimal,
-      ""
+      "",
     );
 
     const outputToken = new ERC20Token(
       this.chainId,
       input.outputTokenAddress as AddressType,
       input.outputTokenDecimal,
-      ""
+      "",
     );
 
     return [inputToken, outputToken];
@@ -395,7 +398,7 @@ export class SwapOnPancakeswap {
     inputTokenPermit: Permit2Signature | undefined,
     nonce: number,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<[string | null, Error | null]> {
     const [inputToken, outputToken] = this.getSwapToken(input);
     const amountIn = this.getAmountIn(input.amount, input.inputTokenDecimal);
@@ -410,7 +413,7 @@ export class SwapOnPancakeswap {
 
     const options: PancakeSwapOptions = {
       slippageTolerance: this.createPercentFromString(
-        input.slippage?.toString()
+        input.slippage?.toString(),
       ),
       deadlineOrPreviousBlockhash: this.toDeadline(input.dealineInSecond),
       recipient: wallet?.address as AddressType,
@@ -418,7 +421,7 @@ export class SwapOnPancakeswap {
     };
 
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
       return [null, Error("can not get provider " + errProvider?.message)];
@@ -430,7 +433,7 @@ export class SwapOnPancakeswap {
         inputToken,
         outputToken,
         input.poolAddress,
-        provider
+        provider,
       );
       if (v3PoolErr || !pool) {
         return [null, v3PoolErr];
@@ -440,14 +443,14 @@ export class SwapOnPancakeswap {
         tokenUsedAsInput,
         tokenUsedAsOutput,
         pool,
-        amountIn
+        amountIn,
       );
     } else if (input.poolType === POOL_TYPE.PANCAKESWAP_V2_POOL) {
       const [pool, v2PoolErr] = await this.poolProvider.getPancakeV2Pool(
         inputToken,
         outputToken,
         input.poolAddress,
-        provider
+        provider,
       );
       if (v2PoolErr || !pool) {
         return [null, v2PoolErr];
@@ -457,7 +460,39 @@ export class SwapOnPancakeswap {
         tokenUsedAsInput,
         tokenUsedAsOutput,
         pool,
-        amountIn
+        amountIn,
+      );
+    } else if (input.poolType === POOL_TYPE.PANCAKESWAP_INFINITY_CL_POOL) {
+      const [clPool, clPoolErr] = await this.poolProvider.getInfinityClPool(
+        input.poolAddress,
+        inputToken,
+        outputToken,
+        provider,
+      );
+      if (clPoolErr || !clPool) {
+        return [null, clPoolErr];
+      }
+      tradeCommand = await this.getInfinityClTradeCommand(
+        tokenUsedAsInput,
+        tokenUsedAsOutput,
+        clPool,
+        amountIn,
+      );
+    } else if (input.poolType === POOL_TYPE.PANCAKESWAP_INFINITY_BIN_POOL) {
+      const [binPool, binPoolErr] = await this.poolProvider.getInfinityBinPool(
+        input.poolAddress,
+        inputToken,
+        outputToken,
+        provider,
+      );
+      if (binPoolErr || !binPool) {
+        return [null, binPoolErr];
+      }
+      tradeCommand = this.getInfinityBinTradeCommand(
+        tokenUsedAsInput,
+        tokenUsedAsOutput,
+        binPool,
+        amountIn,
       );
     }
     if (tradeCommand === null) {
@@ -465,7 +500,7 @@ export class SwapOnPancakeswap {
     }
 
     const priceImpact = Math.abs(
-      Number(SmartRouter.getPriceImpact(tradeCommand)?.toSignificant(2))
+      Number(SmartRouter.getPriceImpact(tradeCommand)?.toSignificant(2)),
     );
     logEveryWhere({
       campaignId: logInfo.campaignId,
@@ -476,17 +511,17 @@ export class SwapOnPancakeswap {
       return [
         null,
         Error(
-          `Pancakeswap trade error, price impact is too high, max is ${input.priceImpact}%, current is ${priceImpact}%`
+          `Pancakeswap trade error, price impact is too high, max is ${input.priceImpact}%, current is ${priceImpact}%`,
         ),
       ];
     }
 
     const params = PancakeSwapUniversalRouter.swapERC20CallParameters(
       tradeCommand,
-      options
+      options,
     );
 
-    const toAddress = getUniversalRouterAddress(this.chainId);
+    const toAddress = getUniversalRouterAddress(this.chainId as any);
     let gasLimit = input.gasLimit;
     const transactionValue = input.isInputNativeToken ? amountIn : zero;
     const [estimatedGasLimit, errGasLimit] = await this.getGasLimit(
@@ -494,7 +529,7 @@ export class SwapOnPancakeswap {
       wallet?.address,
       toAddress,
       transactionValue.toString(),
-      provider
+      provider,
     );
     if (errGasLimit) {
       return [null, errGasLimit];
@@ -558,13 +593,13 @@ export class SwapOnPancakeswap {
     inputToken: ERC20Token | Native,
     outputToken: ERC20Token | Native,
     pair: Pair,
-    amountIn: ethers.BigNumber
+    amountIn: ethers.BigNumber,
   ): SmartRouterTrade<TradeType> {
     const swapRoute = new V2Route([pair], inputToken, outputToken);
     const trade = new V2Trade(
       swapRoute,
       CurrencyAmount.fromRawAmount(inputToken, amountIn.toString()),
-      TradeType.EXACT_INPUT
+      TradeType.EXACT_INPUT,
     );
 
     const v2Pool: V2Pool = {
@@ -597,13 +632,13 @@ export class SwapOnPancakeswap {
     inputToken: ERC20Token | Native,
     outputToken: ERC20Token | Native,
     pool: Pool,
-    amountIn: ethers.BigNumber
+    amountIn: ethers.BigNumber,
   ): Promise<SmartRouterTrade<TradeType>> {
     const swapRoute = new V3Route([pool], inputToken, outputToken);
     const trade = await V3Trade.fromRoute(
       swapRoute,
       CurrencyAmount.fromRawAmount(inputToken, amountIn.toString()),
-      TradeType.EXACT_INPUT
+      TradeType.EXACT_INPUT,
     );
 
     const v3Pool: V3Pool = {
@@ -639,12 +674,97 @@ export class SwapOnPancakeswap {
     return routerTrade;
   }
 
+  private async getInfinityClTradeCommand(
+    inputToken: ERC20Token | Native,
+    outputToken: ERC20Token | Native,
+    clPool: InfinityClPoolData,
+    amountIn: ethers.BigNumber,
+  ): Promise<SmartRouterTrade<TradeType>> {
+    const inputCurrencyAmount = CurrencyAmount.fromRawAmount(
+      inputToken,
+      amountIn.toString(),
+    );
+    const inputTokenForPool = inputToken.isNative
+      ? inputToken.wrapped
+      : (inputToken as ERC20Token);
+    const inputAmountForPool = CurrencyAmount.fromRawAmount(
+      inputTokenForPool,
+      amountIn.toString(),
+    );
+    const [outputCurrencyAmount] = await clPool.sdkPool.getOutputAmount(
+      inputAmountForPool as any,
+    );
+
+    const routerTrade: SmartRouterTrade<TradeType> = {
+      tradeType: TradeType.EXACT_INPUT,
+      inputAmount: inputCurrencyAmount,
+      outputAmount: outputCurrencyAmount,
+      routes: [
+        {
+          type: RouteType.InfinityCL,
+          path: [inputToken, outputToken],
+          inputAmount: inputCurrencyAmount,
+          outputAmount: outputCurrencyAmount,
+          percent: 100,
+          pools: [clPool],
+        },
+      ],
+      gasEstimate: BigInt(0),
+      gasEstimateInUSD: CurrencyAmount.fromRawAmount(inputToken, 0),
+    };
+    return routerTrade;
+  }
+
+  private getInfinityBinTradeCommand(
+    inputToken: ERC20Token | Native,
+    outputToken: ERC20Token | Native,
+    binPool: SmartRouterInfinityBinPool,
+    amountIn: ethers.BigNumber,
+  ): SmartRouterTrade<TradeType> {
+    const inputCurrencyAmount = CurrencyAmount.fromRawAmount(
+      inputToken,
+      amountIn.toString(),
+    );
+
+    const price = getBinPoolTokenPrice(
+      {
+        currencyX: binPool.currency0,
+        currencyY: binPool.currency1,
+        binStep: BigInt(binPool.binStep),
+        activeId: BigInt(binPool.activeId),
+      },
+      inputToken,
+    );
+    const outputCurrencyAmount = price.quote(
+      inputCurrencyAmount as any,
+    ) as typeof inputCurrencyAmount;
+
+    const routerTrade: SmartRouterTrade<TradeType> = {
+      tradeType: TradeType.EXACT_INPUT,
+      inputAmount: inputCurrencyAmount,
+      outputAmount: outputCurrencyAmount,
+      routes: [
+        {
+          type: RouteType.InfinityBIN,
+          path: [inputToken, outputToken],
+          inputAmount: inputCurrencyAmount,
+          outputAmount: outputCurrencyAmount,
+          percent: 100,
+          pools: [binPool],
+        },
+      ],
+      gasEstimate: BigInt(0),
+      gasEstimateInUSD: CurrencyAmount.fromRawAmount(inputToken, 0),
+    };
+    return routerTrade;
+  }
+
   private async getGasLimit(
     transactionData: any,
     from: string,
     to: string,
     value: string,
-    provider: ethers.providers.JsonRpcProvider
+    provider: ethers.providers.JsonRpcProvider,
   ): Promise<[ethers.BigNumber | null, Error | null]> {
     try {
       const gasEstimate = await provider?.estimateGas({
