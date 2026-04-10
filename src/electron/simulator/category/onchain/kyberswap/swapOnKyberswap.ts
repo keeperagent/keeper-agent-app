@@ -245,22 +245,42 @@ export class SwapOnKyberswap {
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
   ): Promise<[string | null, Error | null]> {
-    const [routeSummary, priceImpact, err] =
+    const [routeSummary, priceImpactFromUsd, err] =
       await this.kyberswapClient.getSwapRoute(input, proxy);
     if (err) {
       return [null, err];
-    }
-    if (!priceImpact) {
-      return [null, Error("can not get price impact")];
     }
     if (!routeSummary) {
       return [null, Error("can not get swap route")];
     }
 
+    let priceImpact: number;
+    if (priceImpactFromUsd !== null) {
+      priceImpact = priceImpactFromUsd;
+    } else {
+      const [spotPriceImpact, spotErr] =
+        await this.kyberswapClient.getPriceImpactFromSpotRate(
+          input,
+          routeSummary,
+          proxy,
+        );
+      if (spotErr || spotPriceImpact === null) {
+        return [null, spotErr || Error("can not calculate price impact")];
+      }
+      logEveryWhere({
+        message: `Kyberswap getPriceImpactFromSpotRate for chain ${input.chainKey}, input token ${input.inputTokenAddress}, output token ${input.outputTokenAddress} price impact: ${JSON.stringify(
+          spotPriceImpact,
+          null,
+          2,
+        )}`,
+      });
+      priceImpact = spotPriceImpact;
+    }
+
     logEveryWhere({
       campaignId: logInfo.campaignId,
       workflowId: logInfo.workflowId,
-      message: `Executing Kyberswap trade with price impact: ${priceImpact?.toFixed(
+      message: `Executing Kyberswap trade with price impact: ${priceImpact.toFixed(
         2,
       )}%, slippage: ${input.slippage}%`,
     });
@@ -271,7 +291,7 @@ export class SwapOnKyberswap {
         Error(
           `Kyberswap trade error, price impact is too high, max is ${
             input.priceImpact
-          }%, current is ${priceImpact?.toFixed(2)}%`,
+          }%, current is ${priceImpact.toFixed(2)}%`,
         ),
       ];
     }

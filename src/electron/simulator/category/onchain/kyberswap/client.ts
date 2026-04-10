@@ -3,6 +3,7 @@ import axios, { AxiosProxyConfig } from "axios";
 import Big from "big.js";
 import { ISwapKyberswapInput } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
+import { TimeoutCache } from "@/electron/service/timeoutCache";
 
 const KYBER_BASE_URL = "https://aggregator-api.kyberswap.com";
 
@@ -20,10 +21,12 @@ type ISwapTxData = {
 export class KyberSwapClient {
   private platformFeeBps: number;
   private platformFeeWalletAddress: string;
+  private spotRateCache: TimeoutCache<number>;
 
   constructor(platformFeeBps: number, platformFeeWalletAddress: string) {
     this.platformFeeBps = platformFeeBps;
     this.platformFeeWalletAddress = platformFeeWalletAddress;
+    this.spotRateCache = new TimeoutCache<number>(1000); // 1 second TTL
   }
 
   getSwapRoute = async (
@@ -88,17 +91,16 @@ export class KyberSwapClient {
         )}`,
       });
 
-      if (routeSummary?.amountInUsd === 0) {
-        return [null, null, new Error("Invalid amountInUsd")];
+      // KyberSwap public API sometimes returns amountOutUsd=0 when it can't price
+      // the output token — this makes the USD-based formula produce 100% impact.
+      // Fall back to spot rate calculation in that case.
+      let priceImpact: number | null = null;
+      if (routeSummary?.amountInUsd > 0 && routeSummary?.amountOutUsd > 0) {
+        priceImpact = Math.abs(
+          ((routeSummary.amountInUsd - routeSummary.amountOutUsd) * 100) /
+            routeSummary.amountInUsd,
+        );
       }
-      let priceImpact = 100;
-      if (routeSummary?.amountInUsd > 0) {
-        priceImpact =
-          ((routeSummary?.amountInUsd - routeSummary?.amountOutUsd) * 100) /
-          routeSummary?.amountInUsd;
-      }
-
-      priceImpact = Math.abs(priceImpact);
 
       return [routeSummary, priceImpact, null];
     } catch (error: any) {
@@ -110,6 +112,78 @@ export class KyberSwapClient {
         )}`,
       });
       return [null, null, new Error(error?.message)];
+    }
+  };
+
+  getPriceImpactFromSpotRate = async (
+    input: ISwapKyberswapInput,
+    routeSummary: any,
+    proxy?: AxiosProxyConfig,
+  ): Promise<[number | null, Error | null]> => {
+    try {
+      // Cache the spot rate for 1 second to avoid spamming the API
+      // when many workflow threads swap the same token pair simultaneously
+      const cacheKey = `${input.chainKey}-${input.inputTokenAddress}-${input.outputTokenAddress}`;
+      let spotRate: Big;
+      const cachedSpotRate = this.spotRateCache.get(cacheKey);
+      if (cachedSpotRate !== null) {
+        spotRate = new Big(cachedSpotRate);
+      } else {
+        // Query a 1-unit reference amount to get the spot rate (near-zero price impact)
+        const referenceAmountIn = ethers.utils
+          .parseUnits("1", input.inputTokenDecimal)
+          .toString();
+
+        const { data } = await axios.get(
+          `${KYBER_BASE_URL}/${input.chainKey}/api/v1/routes`,
+          {
+            params: {
+              tokenIn: input.inputTokenAddress,
+              tokenOut: input.outputTokenAddress,
+              amountIn: referenceAmountIn,
+            },
+            timeout: 10000,
+            headers: { "x-client-id": "KeeperAgent" },
+            proxy,
+          },
+        );
+
+        const refSummary = data?.data?.routeSummary;
+        if (!refSummary?.amountIn || !refSummary?.amountOut) {
+          return [
+            null,
+            new Error("can not get reference route for price impact"),
+          ];
+        }
+
+        spotRate = new Big(refSummary.amountOut)
+          .div(new Big(10).pow(input.outputTokenDecimal))
+          .div(
+            new Big(refSummary.amountIn).div(
+              new Big(10).pow(input.inputTokenDecimal),
+            ),
+          );
+
+        this.spotRateCache.set(cacheKey, spotRate.toNumber());
+      }
+
+      const executionRate = new Big(routeSummary.amountOut)
+        .div(new Big(10).pow(input.outputTokenDecimal))
+        .div(
+          new Big(routeSummary.amountIn).div(
+            new Big(10).pow(input.inputTokenDecimal),
+          ),
+        );
+
+      const priceImpact = spotRate
+        .minus(executionRate)
+        .div(spotRate)
+        .times(100)
+        .toNumber();
+
+      return [Math.abs(priceImpact), null];
+    } catch (error: any) {
+      return [null, new Error(error?.message)];
     }
   };
 
