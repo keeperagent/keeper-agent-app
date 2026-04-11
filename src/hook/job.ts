@@ -65,7 +65,9 @@ const useCheckJobExisted = () => {
     execute({ workflowId, campaignId });
   };
 
-  return { checkJobExisted, loading, isSuccess, existedJob };
+  const clearExistedJob = () => setExistedJob(null);
+
+  return { checkJobExisted, clearExistedJob, loading, isSuccess, existedJob };
 };
 
 export { useUpdateJob, useDeleteJob, useMarkJobCompleted, useCheckJobExisted };

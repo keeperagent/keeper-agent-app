@@ -90,20 +90,31 @@ const getMoneyString = (amount: string | number) => {
     return amount;
   }
 
-  amount = Number(amount);
-  if (amount > 10000) {
-    amount = amount?.toFixed(0);
-  } else if (amount > 1000) {
-    amount = amount?.toFixed(1);
-  } else if (amount > 100) {
-    amount = amount?.toFixed(2);
-  } else if (amount > 10) {
-    amount = amount?.toFixed(3);
-  } else if (amount > 1) {
-    amount = amount?.toFixed(5);
+  let num = Number(amount);
+  let formatted: string;
+  if (num > 10000) {
+    formatted = num.toFixed(0);
+  } else if (num > 1000) {
+    formatted = num.toFixed(1);
+  } else if (num > 100) {
+    formatted = num.toFixed(2);
+  } else if (num > 10) {
+    formatted = num.toFixed(3);
+  } else if (num > 1) {
+    formatted = num.toFixed(5);
+  } else {
+    formatted = num.toString();
   }
 
-  return amount?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  // strip trailing zeros after decimal point
+  if (formatted.includes(".")) {
+    formatted = formatted.replace(/\.?0+$/, "");
+  }
+
+  // apply thousands separator to integer part only
+  const [intPart, decPart] = formatted.split(".");
+  const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart ? `${intFormatted}.${decPart}` : intFormatted;
 };
 
 const updateItemInList = (indexOfData: number, listData: any[], data?: any) => {

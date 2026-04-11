@@ -110,6 +110,8 @@ const ResultMarkdownTooltip = styled.div`
   font-size: 1.3rem;
   line-height: 1.5;
   max-width: 48rem;
+  max-height: 40rem;
+  overflow-y: auto;
   color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
 
   table {
@@ -143,12 +145,13 @@ const ResultMarkdownTooltip = styled.div`
 `;
 
 const ResultCellPreview = styled.span`
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   width: 100%;
   max-width: 100%;
+  font-size: 1.2rem;
 `;
 
 export {

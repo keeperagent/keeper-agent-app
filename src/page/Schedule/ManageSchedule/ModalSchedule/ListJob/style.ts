@@ -11,7 +11,6 @@ const Wrapper = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 3rem;
 
     .icon {
       border: 1px dashed

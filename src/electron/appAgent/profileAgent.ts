@@ -15,10 +15,8 @@ import {
   CreateProfileAgentOptions,
   buildBaseSubAgents,
   buildSystemPrompt,
-  buildCachedSystemPrompt,
   buildSkillsBackend,
   buildAgentBackend,
-  applyToolCaching,
   ensureAgentMemoryFile,
   createDeepAgent,
 } from "./agentBuilder";
@@ -95,10 +93,7 @@ export const createAgentFromProfile = async (
       tools: info.tools as any,
     }));
 
-  const subagents: SubAgent[] = [
-    ...applyToolCaching(filteredSubAgents, provider),
-    ...mcpSubAgents,
-  ];
+  const subagents: SubAgent[] = [...filteredSubAgents, ...mcpSubAgents];
 
   const skillRootDir = getSkillRootDir();
   const workspaceDir = getWorkspaceDir();
@@ -133,10 +128,8 @@ export const createAgentFromProfile = async (
   const subagentNames = subagents.map((subagent) => subagent.name);
   const allowedTaskTypes = ["general-purpose", ...subagentNames];
 
-  const systemPrompt = buildCachedSystemPrompt(
-    profile.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
-    provider,
-  );
+  const systemPrompt =
+    profile.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
 
   const agent = createDeepAgent({
     model: llm,

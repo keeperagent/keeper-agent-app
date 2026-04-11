@@ -245,7 +245,7 @@ const LanguageModel = (props: IProps) => {
           type="primary"
           onClick={onSubmitForm}
           loading={loading}
-          style={{ marginTop: 0 }}
+          style={{ marginTop: 0, marginBottom: "var(--margin-bottom)" }}
         >
           {translate("save")}
         </Button>

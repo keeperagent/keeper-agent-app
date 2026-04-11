@@ -7,7 +7,7 @@ export const appLogController = () => {
     MESSAGE.GET_LIST_APP_LOG,
     MESSAGE.GET_LIST_APP_LOG_RES,
     async (event: any, payload: any) => {
-      const { page, pageSize, searchText, logType, scheduleId, taskId } =
+      const { page, pageSize, searchText, logType, scheduleId, taskId, jobType } =
         payload || {};
       const [result] = await appLogDB.getListAppLog({
         page: page || 1,
@@ -16,6 +16,7 @@ export const appLogController = () => {
         logType,
         scheduleId,
         taskId,
+        jobType,
       });
       event.reply(MESSAGE.GET_LIST_APP_LOG_RES, { data: result });
     },

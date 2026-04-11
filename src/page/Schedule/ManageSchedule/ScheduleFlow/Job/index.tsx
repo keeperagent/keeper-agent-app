@@ -7,6 +7,7 @@ import { RootState } from "@/redux/store";
 import { useTranslation, useGetOneSchedule } from "@/hook";
 import {
   AgentScheduleStatus,
+  IAgentProfile,
   IJob,
   IRunningWorkflow,
   ISchedule,
@@ -29,11 +30,19 @@ type IProps = {
   schedule: ISchedule;
   index: number;
   listRunningWorkflow: IRunningWorkflow[];
+  listAgentProfile: IAgentProfile[];
   onOpenEdit: (job: IJob) => void;
 };
 
 const Job = (props: IProps) => {
-  const { job, schedule, index, listRunningWorkflow, onOpenEdit } = props;
+  const {
+    job,
+    schedule,
+    index,
+    listRunningWorkflow,
+    listAgentProfile,
+    onOpenEdit,
+  } = props;
   const [isMarkJobCompleted, setIsMarkJobCompleted] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
 
@@ -210,6 +219,12 @@ const Job = (props: IProps) => {
     LLM_PROVIDERS.find((provider) => provider.key === job?.llmProvider) ||
     LLM_PROVIDERS[0];
 
+  const currentAgentProfile = job.agentProfileId
+    ? listAgentProfile?.find(
+        (agentProfile) => agentProfile.id === job.agentProfileId,
+      ) || null
+    : null;
+
   return (
     <Wrapper onClick={isAgentJob ? () => onOpenEdit(job) : undefined}>
       <div className="header" onClick={(e) => e.stopPropagation()}>
@@ -278,13 +293,30 @@ const Job = (props: IProps) => {
             )}
           </div>
 
-          <div className="item provider-row">
-            <div className="label">{`${translate("schedule.llmProvider")}:`}</div>
-            <ProviderBadge>
-              <img src={currentProvider.icon} alt={currentProvider.label} />
-              <span>{currentProvider.label}</span>
-            </ProviderBadge>
-          </div>
+          {currentAgentProfile ? (
+            <div className="item provider-row">
+              <div className="label">{`${translate("schedule.agentProfile")}:`}</div>
+              <ProviderBadge>
+                <img
+                  src={
+                    LLM_PROVIDERS.find(
+                      (provider) =>
+                        provider.key === currentAgentProfile.llmProvider,
+                    )?.icon
+                  }
+                />
+                <span>{currentAgentProfile.name || EMPTY_STRING}</span>
+              </ProviderBadge>
+            </div>
+          ) : (
+            <div className="item provider-row">
+              <div className="label">{`${translate("schedule.llmProvider")}:`}</div>
+              <ProviderBadge>
+                <img src={currentProvider.icon} alt={currentProvider.label} />
+                <span>{currentProvider.label}</span>
+              </ProviderBadge>
+            </div>
+          )}
         </Fragment>
       ) : (
         <Fragment>
@@ -310,6 +342,7 @@ const Job = (props: IProps) => {
 export default connect(
   (state: RootState) => ({
     listRunningWorkflow: state?.WorkflowRunner?.listRunningWorkflow || [],
+    listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
   }),
   {},
 )(Job);

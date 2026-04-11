@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Form, Input, Modal } from "antd";
+import { Form, Input, Modal, Select } from "antd";
+import { connect } from "react-redux";
+import { RootState } from "@/redux/store";
 import { useTranslation, useGetOneSchedule, useUpdateJob } from "@/hook";
-import { IJob, ISchedule, LLMProvider } from "@/electron/type";
+import { useGetListAgentProfile } from "@/hook/agentProfile";
+import { IAgentProfile, IJob, ISchedule, LLMProvider } from "@/electron/type";
 import { LlmProviderPicker } from "@/component";
 
 type IProps = {
@@ -9,19 +12,37 @@ type IProps = {
   job: IJob | null;
   schedule: ISchedule;
   onClose: () => void;
+  listAgentProfile: IAgentProfile[];
 };
 
-const EditJobModal = ({ open, job, schedule, onClose }: IProps) => {
+const EditJobModal = ({
+  open,
+  job,
+  schedule,
+  onClose,
+  listAgentProfile,
+}: IProps) => {
   const [editProvider, setEditProvider] = useState<string>(LLMProvider.CLAUDE);
+  const [editAgentProfileId, setEditAgentProfileId] = useState<number | null>(
+    null,
+  );
   const [form] = Form.useForm();
   const { translate } = useTranslation();
   const { updateJob, loading, isSuccess } = useUpdateJob();
   const { getOneSchedule } = useGetOneSchedule();
+  const { getListAgentProfile } = useGetListAgentProfile();
+
+  useEffect(() => {
+    getListAgentProfile({ page: 1, pageSize: 999 });
+  }, []);
 
   useEffect(() => {
     if (open && job) {
-      form.setFieldsValue({ prompt: job.prompt || "" });
+      form.setFieldsValue({
+        prompt: job.prompt || "",
+      });
       setEditProvider(job.llmProvider || LLMProvider.CLAUDE);
+      setEditAgentProfileId(job.agentProfileId || null);
     }
   }, [open, job]);
 
@@ -36,9 +57,14 @@ const EditJobModal = ({ open, job, schedule, onClose }: IProps) => {
     const values = await form.validateFields();
     updateJob({
       id: job!.id!,
-      llmProvider: editProvider,
+      llmProvider: editAgentProfileId ? undefined : editProvider,
       prompt: values.prompt,
+      agentProfileId: editAgentProfileId,
     });
+  };
+
+  const onChangeAgentProfile = (value: number | undefined) => {
+    setEditAgentProfileId(value || null);
   };
 
   return (
@@ -65,12 +91,39 @@ const EditJobModal = ({ open, job, schedule, onClose }: IProps) => {
           />
         </Form.Item>
 
-        <Form.Item label={`${translate("schedule.llmProvider")}:`}>
-          <LlmProviderPicker value={editProvider} onChange={setEditProvider} />
+        <Form.Item
+          label={`${translate("schedule.agentProfile")}:`}
+        >
+          <Select
+            size="large"
+            className="custom-select"
+            allowClear
+            placeholder={translate("schedule.agentProfileDefault")}
+            value={editAgentProfileId || undefined}
+            onChange={onChangeAgentProfile}
+            options={listAgentProfile?.map((agentProfile) => ({
+              label: agentProfile.name,
+              value: agentProfile.id,
+            }))}
+          />
         </Form.Item>
+
+        {!editAgentProfileId && (
+          <Form.Item label={`${translate("schedule.llmProvider")}:`}>
+            <LlmProviderPicker
+              value={editProvider}
+              onChange={setEditProvider}
+            />
+          </Form.Item>
+        )}
       </Form>
     </Modal>
   );
 };
 
-export default EditJobModal;
+export default connect(
+  (state: RootState) => ({
+    listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
+  }),
+  {},
+)(EditJobModal);

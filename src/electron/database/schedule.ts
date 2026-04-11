@@ -195,19 +195,11 @@ class ScheduleDB {
 
       for (let i = 0; i < listJob.length; i++) {
         const job = listJob[i];
-        const [existedJob] = await jobDB.findOneJob({
-          workflowId: job?.workflowId,
-          campaignId: job?.campaignId,
+        await jobDB.createJob({
+          ...job,
+          scheduleId: createdSchedule?.id,
           isRunWithSchedule: true,
         });
-        // do not allow create duplicated job
-        if (!existedJob) {
-          await jobDB.createJob({
-            ...job,
-            scheduleId: createdSchedule?.id,
-            isRunWithSchedule: true,
-          });
-        }
       }
 
       const [scheduleInfo] = await this.getOneSchedule(createdSchedule?.id);
@@ -244,15 +236,7 @@ class ScheduleDB {
           if (job?.id) {
             listJobToUpdate.push({ ...job, scheduleId: schedule?.id! });
           } else {
-            const [existedJob] = await jobDB.findOneJob({
-              workflowId: job?.workflowId,
-              campaignId: job?.campaignId,
-              isRunWithSchedule: true,
-            });
-            // do not allow create duplicated job
-            if (!existedJob) {
-              listNewJob.push(job);
-            }
+            listNewJob.push(job);
           }
         }
 

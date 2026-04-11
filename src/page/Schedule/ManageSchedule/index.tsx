@@ -850,7 +850,13 @@ const ManageSchedule = (props: any) => {
           loading={false}
         />
 
-        <Tooltip title={translate("schedule.globalScheduleLabel")}>
+        <Tooltip
+          title={
+            preference?.isStopAllSchedule
+              ? translate("schedule.schedulesPaused")
+              : translate("schedule.schedulesActive")
+          }
+        >
           <Switch
             style={{ marginRight: "auto", marginLeft: "var(--margin-left)" }}
             checkedChildren={translate("schedule.switchOn")}

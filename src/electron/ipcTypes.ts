@@ -329,6 +329,7 @@ export type IpcUpdateJobPayload = {
   id: number;
   llmProvider?: string;
   prompt?: string;
+  agentProfileId?: number | null;
 };
 
 export type IpcMarkJobCompletedPayload = {
@@ -345,6 +346,7 @@ export type IpcGetListAppLogPayload = IpcPagePayload & {
   logType?: AppLogType;
   scheduleId?: number;
   taskId?: number;
+  jobType?: string;
 };
 
 // Extension
