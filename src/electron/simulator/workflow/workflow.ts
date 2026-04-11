@@ -106,9 +106,11 @@ export class Workflow {
     handoffToNext?: boolean,
   ) => {
     this.session = session || null;
-    this.handoffToNext = handoffToNext || false;
+    this.handoffToNext = Boolean(this.session && handoffToNext);
     // give ThreadManager access to session so it can reuse open browsers from previous job
-    this.executor.threadManager.setSession(this.session);
+    if (this.session) {
+      this.executor.threadManager.setSession(this.session);
+    }
     if (this.monitor.isRunning) {
       logEveryWhere({
         campaignId: this.campaignId,
@@ -227,7 +229,8 @@ export class Workflow {
     } else if (this.session) {
       // collect live simulators (browser + pages) into session keyed by profileId
       // Job 2's ThreadManager will reuse them via getSimulator() in getOrCreateThread
-      const simulators = this.executor.threadManager.collectSimulatorsForHandoff();
+      const simulators =
+        this.executor.threadManager.collectSimulatorsForHandoff();
       for (const [profileId, simulator] of simulators.entries()) {
         (this.session as ExecutionSession).saveSimulator(profileId, simulator);
       }
@@ -999,7 +1002,7 @@ export class Workflow {
     const { numberOfRound = 1 } = this.monitor.getWorkflowState();
 
     // if session has FlowProfiles from previous job — pick from session
-    if (this.session && this.session.flowProfiles.size > 0) {
+    if (this.session) {
       let flowProfile: IFlowProfile | null = null;
       await this.lock.acquire(this.lockKey, async () => {
         flowProfile = await this.monitor.pickFlowProfileFromSession(
@@ -1007,20 +1010,25 @@ export class Workflow {
         );
       });
 
-      if (!flowProfile) {
-        return null;
+      if (flowProfile) {
+        const { profile, isSaveProfile, campaignConfig } =
+          flowProfile as IFlowProfile;
+        const initialTimestamp = new Date().getTime();
+        return {
+          profile,
+          isSaveProfile,
+          campaignConfig: {
+            ...campaignConfig,
+            workflowId: this.workflowId,
+            campaignId: this.campaignId,
+          },
+          threadID,
+          initialTimestamp,
+          nextRunTimestamp: initialTimestamp,
+          listVariable: [],
+          loopCounters: {},
+        };
       }
-
-      return {
-        ...(flowProfile as IFlowProfile),
-        threadID,
-        initialTimestamp: new Date().getTime(),
-        campaignConfig: {
-          ...(flowProfile as IFlowProfile).campaignConfig,
-          workflowId: this.workflowId,
-          campaignId: this.campaignId,
-        },
-      };
     }
 
     // if Workflow run inside a Campaign

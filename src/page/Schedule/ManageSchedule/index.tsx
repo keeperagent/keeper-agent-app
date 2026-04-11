@@ -44,7 +44,6 @@ import {
   IRunningWorkflow,
   ISchedule,
 } from "@/electron/type";
-import { SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import {
   SettingIcon,
   DownArrowIcon,
@@ -120,24 +119,6 @@ const historyColorMap: Record<string, string> = {
   [AgentScheduleStatus.RETRYING]: "var(--color-yellow)",
 };
 
-const deriveJobStatus = (job: IJob): AgentScheduleStatus | null => {
-  if (job.lastLog?.status) {
-    return job.lastLog.status as AgentScheduleStatus;
-  }
-
-  // workflow jobs using ScheduleRunner store outcome in action, not status
-  switch (job.lastLog?.action) {
-    case SCHEDULE_LOG_ACTION.JOB_COMPLETED:
-      return AgentScheduleStatus.SUCCESS;
-    case SCHEDULE_LOG_ACTION.JOB_TIMEOUT:
-      return AgentScheduleStatus.ERROR;
-    case SCHEDULE_LOG_ACTION.JOB_START:
-      return AgentScheduleStatus.RUNNING;
-    default:
-      return null;
-  }
-};
-
 const deriveScheduleLastRunTime = (listJob: IJob[]): number | null => {
   const timestamps = listJob
     .map((job) => job.lastLog?.createAt)
@@ -150,7 +131,7 @@ const deriveScheduleLastRunStatus = (
   listJob: IJob[],
 ): AgentScheduleStatus | null => {
   const statuses = listJob
-    .map((job) => deriveJobStatus(job))
+    .map((job) => job.lastLog?.status as AgentScheduleStatus)
     .filter(Boolean) as AgentScheduleStatus[];
 
   if (!statuses.length) {
@@ -320,11 +301,11 @@ const renderColumns = (
                   }
                 />
 
-                {lastRunTime && (
-                  <span className="last-run-time">
-                    {formatTime(lastRunTime, locale)}
-                  </span>
-                )}
+                <span className="last-run-time">
+                  {lastRunTime
+                    ? formatTime(lastRunTime, locale)
+                    : translate("running")}
+                </span>
               </div>
             </Tooltip>
           )}
@@ -334,7 +315,7 @@ const renderColumns = (
               {(record.recentLogs || []).map((log: IAppLog, i: number) => (
                 <Tooltip
                   key={i}
-                  title={`${log.status}${log.createAt ? ` · ${formatTime(log.createAt, locale)}` : ""}`}
+                  title={`${log.status || ""}${log.createAt ? ` · ${formatTime(log.createAt, locale)}` : ""}`}
                 >
                   <span
                     className="history-dot"

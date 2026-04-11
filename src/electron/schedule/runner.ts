@@ -98,15 +98,6 @@ class ScheduleRunner {
       this.schedule?.id!,
     );
 
-    await appLogDB.createAppLog({
-      logType: AppLogType.SCHEDULE,
-      jobId: job?.id,
-      campaignId: job?.campaignId || undefined,
-      workflowId: job?.workflowId || undefined,
-      scheduleId: this.schedule?.id!,
-      action: SCHEDULE_LOG_ACTION.JOB_START,
-      status: AgentScheduleStatus.RUNNING,
-    });
     if (shouldResetRound) {
       await CampaignProfileModel.update(
         {
@@ -116,6 +107,11 @@ class ScheduleRunner {
       );
     }
 
+    const [jobEncryptKey, encryptKeyErr] = await jobDB.getEncryptKey(job.id!);
+    if (encryptKeyErr) {
+      return;
+    }
+
     logEveryWhere({
       workflowId: job?.workflowId || undefined,
       campaignId: job?.campaignId || undefined,
@@ -123,13 +119,15 @@ class ScheduleRunner {
       workflowName: job?.workflow?.name,
       message: `job trigger, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
     });
-    const [jobEncryptKey, encryptKeyErr] = await jobDB.getEncryptKey(job.id!);
-    if (encryptKeyErr) {
-      logEveryWhere({
-        message: `ScheduleRunner failed to get encrypt key for job ${job.id}: ${encryptKeyErr?.message}`,
-      });
-      return;
-    }
+    await appLogDB.createAppLog({
+      logType: AppLogType.SCHEDULE,
+      jobId: job?.id,
+      campaignId: job?.campaignId || undefined,
+      workflowId: job?.workflowId || undefined,
+      scheduleId: this.schedule?.id!,
+      action: SCHEDULE_LOG_ACTION.JOB_START,
+      status: AgentScheduleStatus.RUNNING,
+    });
     workflow.runWorkflow(jobEncryptKey || "");
 
     const checkTimeoutInterval = setInterval(async () => {
