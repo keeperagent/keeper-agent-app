@@ -2596,10 +2596,18 @@ export type IJob = {
   retryDelayMinutes?: number;
   llmProvider?: string; // LLM provider to use when running this job (defaults to CLAUDE)
   agentProfileId?: number | null; // If set, this agent job runs using the named agent profile config
+  handoffToNext?: boolean; // If true, session (FlowProfiles + browsers) is passed to the next job instead of being destroyed
 
   // virtual — not stored in DB, merged at read time
   lastLog?: IAppLog;
 };
+
+export interface IExecutionSession {
+  flowProfiles: Map<number, IFlowProfile>; // profileId → FlowProfile surviving from previous job
+  browsers: Map<number, any>; // profileId → open browser instance
+  handoffFlowProfile: (profileId: number, flowProfile: IFlowProfile) => void;
+  destroy: () => Promise<void>; // closes browsers, increments rounds, cleans up
+}
 
 export enum AppLogType {
   WORKFLOW = "WORKFLOW",

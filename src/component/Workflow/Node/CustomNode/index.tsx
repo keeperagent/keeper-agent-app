@@ -453,12 +453,20 @@ const CustomNode = (props: any) => {
 
       {nodeError?.timestamp && (
         <Tooltip
+          overlayInnerStyle={{ minWidth: "30rem" }}
           title={
-            <div>
+            <div
+              style={{
+                fontSize: "1.2rem",
+                maxHeight: "25rem",
+                overflowY: "auto",
+              }}
+            >
               <div>
                 {`${translate("time")}:`}{" "}
                 {formatTime(nodeError?.timestamp, locale)}
               </div>
+
               <div>
                 <span>{`${translate("encounterError")}:`} </span>
                 <span style={{ fontSize: "1.2rem" }}>{nodeError?.message}</span>

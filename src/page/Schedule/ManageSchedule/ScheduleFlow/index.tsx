@@ -31,6 +31,10 @@ const ScheduleFlow = ({ schedule }: IProps) => {
         job={editingJob}
         schedule={schedule}
         onClose={() => setEditingJob(null)}
+        isLastJob={
+          listJob.findIndex((job) => job.id === editingJob?.id) ===
+          listJob.length - 1
+        }
       />
     </Wrapper>
   );

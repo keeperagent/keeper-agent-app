@@ -18,11 +18,13 @@ import { logEveryWhere, sleep } from "@/electron/service/util";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import { JobModel } from "@/electron/database/index";
 import { workflowManager } from "@/electron/simulator/workflow";
+import { ExecutionSession } from "@/electron/simulator/workflow/executionSession";
 import type {
   ISchedule,
   IJob,
   IAppLog,
   IWorkflowVariable,
+  IExecutionSession,
 } from "@/electron/type";
 import {
   LLMProvider,
@@ -182,19 +184,36 @@ class AgentTaskScheduler {
 
     this.runningScheduleIds.add(scheduleId);
     await scheduleDB.setLastStartedAt(scheduleId, Date.now());
+
+    const session = new ExecutionSession();
     try {
       let prevLog: IAppLog | null = null;
+      let prevHandoffToNext = false; // did the previous job hand off its session?
 
-      for (const job of jobs) {
+      for (let jobIndex = 0; jobIndex < jobs.length; jobIndex++) {
+        const job = jobs[jobIndex];
+        const isLastJob = jobIndex === jobs.length - 1;
+        const currentHandoffToNext = !isLastJob && Boolean(job.handoffToNext);
+
+        // receive session from previous job if it had handoffToNext=true
+        const sessionForThisJob = prevHandoffToNext ? session : undefined;
+
         logEveryWhere({
           message: `AgentTaskScheduler: running job ${job.id} (type=${job.type}) for schedule ${scheduleId}`,
         });
+
         if (job.type === JobType.WORKFLOW) {
-          prevLog = await this.executeWorkflowJob(schedule, job);
+          prevLog = await this.executeWorkflowJob(
+            schedule,
+            job,
+            sessionForThisJob,
+            currentHandoffToNext,
+          );
         } else {
           prevLog = await this.executeAgentJob(schedule, job, prevLog);
         }
 
+        prevHandoffToNext = currentHandoffToNext;
         if (
           prevLog?.status === AgentScheduleStatus.ERROR ||
           prevLog?.status === AgentScheduleStatus.SKIPPED
@@ -208,6 +227,8 @@ class AgentTaskScheduler {
         );
       }
     } finally {
+      // destroy session — closes browsers, increments rounds
+      await session.destroy();
       this.runningScheduleIds.delete(scheduleId);
       logEveryWhere({
         message: `AgentTaskScheduler: schedule ${scheduleId} finished`,
@@ -218,6 +239,8 @@ class AgentTaskScheduler {
   private executeWorkflowJob = async (
     schedule: ISchedule,
     job: IJob,
+    session?: IExecutionSession,
+    handoffToNext?: boolean,
   ): Promise<IAppLog> => {
     if (!job.workflowId || !job.campaignId) {
       const [log] = await appLogDB.createAppLog({
@@ -267,7 +290,12 @@ class AgentTaskScheduler {
       if (encryptKeyErr) {
         throw encryptKeyErr;
       }
-      workflow.runWorkflow(jobEncryptKey || "", overrideListVariable);
+      workflow.runWorkflow(
+        jobEncryptKey || "",
+        overrideListVariable,
+        session,
+        handoffToNext,
+      );
 
       while (workflow.monitor.isRunning) {
         await sleep(1000);

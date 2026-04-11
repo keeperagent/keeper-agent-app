@@ -28,6 +28,11 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      handoffToNext: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
       isRunWithSchedule: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
@@ -68,7 +73,7 @@ export default (db: Sequelize) =>
       onlyRunOnce: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
-        defaultValue: 0,
+        defaultValue: false,
       },
       prompt: {
         type: DataTypes.TEXT,

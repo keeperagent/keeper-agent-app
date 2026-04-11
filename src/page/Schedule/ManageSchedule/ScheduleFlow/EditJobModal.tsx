@@ -6,6 +6,7 @@ import { useTranslation, useGetOneSchedule, useUpdateJob } from "@/hook";
 import { useGetListAgentProfile } from "@/hook/agentProfile";
 import { IAgentProfile, IJob, ISchedule, LLMProvider } from "@/electron/type";
 import { LlmProviderPicker } from "@/component";
+import HandoffToNextToggle from "@/page/Schedule/ManageSchedule/HandoffToNextToggle";
 
 type IProps = {
   open: boolean;
@@ -13,6 +14,7 @@ type IProps = {
   schedule: ISchedule;
   onClose: () => void;
   listAgentProfile: IAgentProfile[];
+  isLastJob: boolean;
 };
 
 const EditJobModal = ({
@@ -21,11 +23,13 @@ const EditJobModal = ({
   schedule,
   onClose,
   listAgentProfile,
+  isLastJob,
 }: IProps) => {
   const [editProvider, setEditProvider] = useState<string>(LLMProvider.CLAUDE);
   const [editAgentProfileId, setEditAgentProfileId] = useState<number | null>(
     null,
   );
+  const [editHandoffToNext, setEditHandoffToNext] = useState<boolean>(false);
   const [form] = Form.useForm();
   const { translate } = useTranslation();
   const { updateJob, loading, isSuccess } = useUpdateJob();
@@ -43,6 +47,7 @@ const EditJobModal = ({
       });
       setEditProvider(job.llmProvider || LLMProvider.CLAUDE);
       setEditAgentProfileId(job.agentProfileId || null);
+      setEditHandoffToNext(Boolean(job.handoffToNext));
     }
   }, [open, job]);
 
@@ -60,6 +65,7 @@ const EditJobModal = ({
       llmProvider: editAgentProfileId ? undefined : editProvider,
       prompt: values.prompt,
       agentProfileId: editAgentProfileId,
+      handoffToNext: !isLastJob && editHandoffToNext,
     });
   };
 
@@ -91,9 +97,7 @@ const EditJobModal = ({
           />
         </Form.Item>
 
-        <Form.Item
-          label={`${translate("schedule.agentProfile")}:`}
-        >
+        <Form.Item label={`${translate("schedule.agentProfile")}:`}>
           <Select
             size="large"
             className="custom-select"
@@ -115,6 +119,13 @@ const EditJobModal = ({
               onChange={setEditProvider}
             />
           </Form.Item>
+        )}
+
+        {!isLastJob && (
+          <HandoffToNextToggle
+            checked={editHandoffToNext}
+            onChange={setEditHandoffToNext}
+          />
         )}
       </Form>
     </Modal>

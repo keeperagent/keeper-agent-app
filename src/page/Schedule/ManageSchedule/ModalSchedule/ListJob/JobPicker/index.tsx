@@ -21,6 +21,7 @@ import {
   JobType,
 } from "@/electron/type";
 import { TrashBoldIcon } from "@/component/Icon";
+import HandoffToNextToggle from "@/page/Schedule/ManageSchedule/HandoffToNextToggle";
 import { LlmProviderPicker } from "@/component";
 import { PasswordInput } from "@/component/Input";
 import { EMPTY_STRING } from "@/config/constant";
@@ -35,6 +36,7 @@ type IProps = {
   onChangeJob: (job: IJob, index: number) => void;
   onRemoveJob: (index: number) => void;
   index: number;
+  isLastJob: boolean;
   isModalOpen: boolean;
 };
 
@@ -53,6 +55,7 @@ const JobPicker = (props: IProps) => {
     onChangeJob,
     onRemoveJob,
     index,
+    isLastJob,
     isModalOpen,
   } = props;
 
@@ -176,6 +179,10 @@ const JobPicker = (props: IProps) => {
 
   const onChangeAgentProfile = (value: number | undefined) => {
     onChangeJob({ ...job, agentProfileId: value || null }, index);
+  };
+
+  const onChangeHandoffToNext = (checked: boolean) => {
+    onChangeJob({ ...job, handoffToNext: checked }, index);
   };
 
   const onChangeViewMode = (key: string) => {
@@ -378,6 +385,13 @@ const JobPicker = (props: IProps) => {
             </Form.Item>
           )}
         </Form>
+      )}
+
+      {!isLastJob && (
+        <HandoffToNextToggle
+          checked={Boolean(job.handoffToNext)}
+          onChange={onChangeHandoffToNext}
+        />
       )}
 
       <div className="tool">

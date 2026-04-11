@@ -33,6 +33,7 @@ const ListJob = (props: IProps) => {
           key={`${job?.id}-${index}`}
           index={index}
           job={job}
+          isLastJob={index === listJob.length - 1}
           onChangeJob={onChangeJob}
           onRemoveJob={onRemoveJob}
         />
