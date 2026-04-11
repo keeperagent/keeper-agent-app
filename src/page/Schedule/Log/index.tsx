@@ -5,7 +5,15 @@ import {
   ComponentType,
   type ReactNode,
 } from "react";
-import { PaginationProps, Table, Popconfirm, Select, Tooltip } from "antd";
+import {
+  PaginationProps,
+  Table,
+  Popconfirm,
+  Select,
+  Tooltip,
+  Popover,
+  Segmented,
+} from "antd";
 import qs from "qs";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import { connect } from "react-redux";
@@ -16,13 +24,11 @@ import {
   ICampaign,
   ISchedule,
   IAppLog,
+  JobType,
   ScheduleType,
 } from "@/electron/type";
 import { formatTimeToDate } from "@/service/util";
-import {
-  collapseResultToOneLine,
-  normalizeAgentMessageContent,
-} from "@/service/agentMessageContent";
+import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { DeleteButton } from "@/component/Button";
@@ -203,7 +209,7 @@ const renderColumns = (
   {
     title: translate("sidebar.schedule"),
     dataIndex: "schedule",
-    width: 270,
+    width: 300,
     render: (schedule: ISchedule, record: IAppLog) => {
       const typeStyled = renderScheduleLogType(record.action, translate);
 
@@ -230,9 +236,67 @@ const renderColumns = (
     },
   },
   {
+    title: `${translate("scheduleLog.result")} / ${translate("scheduleLog.error")}`,
+    dataIndex: "result",
+    width: 450,
+    render: (result: string, record: IAppLog) => {
+      if (result) {
+        const normalized = normalizeAgentMessageContent(result);
+
+        return (
+          <Popover
+            overlayStyle={{ maxWidth: "50vw" }}
+            content={
+              <ResultMarkdownTooltip>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={resultMarkdownComponents}
+                >
+                  {normalized}
+                </ReactMarkdown>
+              </ResultMarkdownTooltip>
+            }
+          >
+            <ResultCellPreview style={{ cursor: "pointer" }}>
+              {normalized}
+            </ResultCellPreview>
+          </Popover>
+        );
+      }
+
+      if (record?.errorMessage) {
+        return (
+          <Popover
+            overlayStyle={{ maxWidth: "50vw" }}
+            trigger="click"
+            content={
+              <ResultMarkdownTooltip>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {record?.errorMessage}
+                </ReactMarkdown>
+              </ResultMarkdownTooltip>
+            }
+          >
+            <ResultCellPreview
+              style={{ color: "var(--color-error)", cursor: "pointer" }}
+            >
+              {record?.errorMessage}
+            </ResultCellPreview>
+          </Popover>
+        );
+      }
+
+      return (
+        <span style={{ color: "var(--color-text-secondary)" }}>
+          {EMPTY_STRING}
+        </span>
+      );
+    },
+  },
+  {
     title: translate("scheduleLog.status"),
     dataIndex: "status",
-    width: 80,
+    width: 100,
     align: "center",
     render: (status: string | undefined) => {
       const styled = renderAgentStatus(status, translate);
@@ -250,63 +314,6 @@ const renderColumns = (
             content={styled.content}
             style={{ background: styled.bg, color: styled.color }}
           />
-        </span>
-      );
-    },
-  },
-  {
-    title: `${translate("scheduleLog.result")} / ${translate("scheduleLog.error")}`,
-    dataIndex: "result",
-    width: 300,
-    ellipsis: true,
-    render: (result: string, record: IAppLog) => {
-      if (result) {
-        const normalized = normalizeAgentMessageContent(result);
-        const preview = collapseResultToOneLine(normalized);
-
-        return (
-          <Tooltip
-            overlayStyle={{ maxWidth: "50vw" }}
-            title={
-              <ResultMarkdownTooltip>
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={resultMarkdownComponents}
-                >
-                  {normalized}
-                </ReactMarkdown>
-              </ResultMarkdownTooltip>
-            }
-          >
-            <ResultCellPreview>{preview}</ResultCellPreview>
-          </Tooltip>
-        );
-      }
-
-      if (record?.errorMessage) {
-        const preview = collapseResultToOneLine(record?.errorMessage);
-
-        return (
-          <Tooltip
-            overlayStyle={{ maxWidth: "50vw" }}
-            title={
-              <ResultMarkdownTooltip>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {record?.errorMessage}
-                </ReactMarkdown>
-              </ResultMarkdownTooltip>
-            }
-          >
-            <ResultCellPreview style={{ color: "var(--color-error)" }}>
-              {preview}
-            </ResultCellPreview>
-          </Tooltip>
-        );
-      }
-
-      return (
-        <span style={{ color: "var(--color-text-secondary)" }}>
-          {EMPTY_STRING}
         </span>
       );
     },
@@ -397,6 +404,7 @@ const ManageLog = (props: any) => {
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [scheduleId, setScheduleId] = useState<null | number>(null);
+  const [jobTypeFilter, setJobTypeFilter] = useState<string>("all");
   const navigate = useNavigate();
   const location = useLocation();
   const { search } = location;
@@ -458,6 +466,8 @@ const ManageLog = (props: any) => {
     deleteAppLog(selectedRowKeys);
   };
 
+  const resolvedJobType = jobTypeFilter === "all" ? undefined : jobTypeFilter;
+
   useEffect(() => {
     clearTimeout(searchTimeOut);
     searchTimeOut = setTimeout(() => {
@@ -467,6 +477,7 @@ const ManageLog = (props: any) => {
         searchText,
         logType: AppLogType.SCHEDULE,
         scheduleId: scheduleId || undefined,
+        jobType: resolvedJobType,
       });
     }, 200);
 
@@ -478,6 +489,7 @@ const ManageLog = (props: any) => {
         searchText,
         logType: AppLogType.SCHEDULE,
         scheduleId: scheduleId || undefined,
+        jobType: resolvedJobType,
       });
     }, 60000);
 
@@ -485,7 +497,7 @@ const ManageLog = (props: any) => {
       clearTimeout(searchTimeOut);
       clearInterval(getDataInterval);
     };
-  }, [searchText, page, pageSize, scheduleId]);
+  }, [searchText, page, pageSize, scheduleId, resolvedJobType]);
 
   useEffect(() => {
     if (getDataLoading && shouldRefetch) {
@@ -501,9 +513,10 @@ const ManageLog = (props: any) => {
         searchText,
         logType: AppLogType.SCHEDULE,
         scheduleId: scheduleId || undefined,
+        jobType: resolvedJobType,
       });
     }
-  }, [page, pageSize, searchText, shouldRefetch, scheduleId]);
+  }, [page, pageSize, searchText, shouldRefetch, scheduleId, resolvedJobType]);
 
   useEffect(() => {
     if (!isDeleteLoading && isSuccess) {
@@ -582,6 +595,24 @@ const ManageLog = (props: any) => {
             </Option>
           ))}
         </Select>
+
+        <Segmented
+          style={{ marginLeft: "var(--margin-left)" }}
+          options={[
+            { label: translate("schedule.filterAll"), value: "all" },
+            {
+              label: translate("schedule.typeWorkflow"),
+              value: JobType.WORKFLOW,
+            },
+            { label: translate("schedule.typeAgent"), value: JobType.AGENT },
+          ]}
+          value={jobTypeFilter}
+          onChange={(value) => {
+            setJobTypeFilter(value);
+            onSetPage(1);
+          }}
+          size="large"
+        />
 
         <Tooltip title={translate("workflow.setting")}>
           <div

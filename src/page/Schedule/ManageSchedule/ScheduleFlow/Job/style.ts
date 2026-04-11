@@ -8,7 +8,7 @@ const Wrapper = styled.div`
   border-radius: var(--border-radius);
   position: relative;
   min-height: 12rem;
-  min-width: 27rem;
+  width: 27rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

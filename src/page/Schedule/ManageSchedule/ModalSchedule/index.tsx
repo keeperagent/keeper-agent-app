@@ -62,6 +62,7 @@ const ModalSchedule = (props: IProps) => {
     useGetListRunningWorkflow();
   const {
     checkJobExisted,
+    clearExistedJob,
     loading: isCheckJobExistedLoading,
     existedJob,
   } = useCheckJobExisted();
@@ -80,6 +81,8 @@ const ModalSchedule = (props: IProps) => {
   useEffect(() => {
     if (isModalOpen) {
       getListRunningWorkflow();
+    } else {
+      clearExistedJob();
     }
   }, [isModalOpen]);
 
@@ -232,7 +235,7 @@ const ModalSchedule = (props: IProps) => {
     setCurrentStep(currentStep - 1);
   };
 
-  const isAgentSchedule = selectedSchedule?.type === ScheduleType.AGENT;
+  const isAgentSchedule = listJob.some((job) => job.type === JobType.AGENT);
 
   const goNextStep = async () => {
     try {
@@ -319,7 +322,7 @@ const ModalSchedule = (props: IProps) => {
                 isGetListRunningWorkflowLoading ||
                 isCheckJobExistedLoading
               }
-              disabled={(isScheduleRunning && !isCreateJob) || isJobExisted}
+              disabled={isScheduleRunning && !isCreateJob}
             >
               {selectedSchedule
                 ? translate("button.update")
@@ -367,14 +370,13 @@ const ModalSchedule = (props: IProps) => {
 
         {isJobExisted && (
           <Alert
-            type="error"
+            type="warning"
             title={
               <span>
-                Each Campaign - Workflow pair can only be used in a single
-                Schedule. Campaign '<strong>{existedJob?.campaignName}</strong>'
-                and Workflow '<strong>{existedJob?.workflowName}</strong>' have
-                been used in Schedule '
-                <strong>{existedJob?.scheduleName}</strong>'
+                Campaign '<strong>{existedJob?.campaignName}</strong>' and
+                Workflow '<strong>{existedJob?.workflowName}</strong>' are
+                already in Schedule '<strong>{existedJob?.scheduleName}</strong>
+                ', simultaneous runs may conflict.
               </span>
             }
           />

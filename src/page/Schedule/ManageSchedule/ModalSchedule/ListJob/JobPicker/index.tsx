@@ -11,8 +11,10 @@ import {
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useTranslation, useGetListCampaign } from "@/hook";
+import { useGetListAgentProfile } from "@/hook/agentProfile";
 import {
   ICampaign,
+  IAgentProfile,
   IWorkflow,
   IJob,
   LLMProvider,
@@ -28,6 +30,7 @@ const { Option } = Select;
 
 type IProps = {
   listCampaign: ICampaign[];
+  listAgentProfile: IAgentProfile[];
   job: IJob;
   onChangeJob: (job: IJob, index: number) => void;
   onRemoveJob: (index: number) => void;
@@ -43,8 +46,15 @@ const VIEW_MODE = {
 let searchCampaignTimeOut: any = null;
 
 const JobPicker = (props: IProps) => {
-  const { listCampaign, job, onChangeJob, onRemoveJob, index, isModalOpen } =
-    props;
+  const {
+    listCampaign,
+    listAgentProfile,
+    job,
+    onChangeJob,
+    onRemoveJob,
+    index,
+    isModalOpen,
+  } = props;
 
   const [viewMode, setViewMode] = useState(VIEW_MODE.DETAIL);
   const [campaign, setCampaign] = useState<ICampaign | null>(null);
@@ -55,6 +65,11 @@ const JobPicker = (props: IProps) => {
   const { translate } = useTranslation();
   const { getListCampaign, loading: getListCampaignLoading } =
     useGetListCampaign();
+  const { getListAgentProfile } = useGetListAgentProfile();
+
+  useEffect(() => {
+    getListAgentProfile({ page: 1, pageSize: 999 });
+  }, []);
 
   const jobType = job.type || JobType.WORKFLOW;
 
@@ -73,13 +88,15 @@ const JobPicker = (props: IProps) => {
       previousJob?.workflowId !== job?.workflowId ||
       previousJob?.timeout !== job?.timeout ||
       previousJob?.hasEncryptKey !== job?.hasEncryptKey ||
-      previousJob?.prompt !== job?.prompt
+      previousJob?.prompt !== job?.prompt ||
+      previousJob?.agentProfileId !== job?.agentProfileId
     ) {
       form.setFieldsValue({
         campaignId: job?.campaignId,
         workflowId: job?.workflowId,
         timeout: job?.timeout || 0,
         prompt: job?.prompt || "",
+        agentProfileId: job?.agentProfileId || undefined,
       });
     }
 
@@ -122,6 +139,7 @@ const JobPicker = (props: IProps) => {
           type: JobType.WORKFLOW,
           prompt: undefined,
           llmProvider: undefined,
+          agentProfileId: null,
         },
         index,
       );
@@ -154,6 +172,10 @@ const JobPicker = (props: IProps) => {
 
   const onChangeProvider = (providerKey: string) => {
     onChangeJob({ ...job, llmProvider: providerKey }, index);
+  };
+
+  const onChangeAgentProfile = (value: number | undefined) => {
+    onChangeJob({ ...job, agentProfileId: value || null }, index);
   };
 
   const onChangeViewMode = (key: string) => {
@@ -325,15 +347,36 @@ const JobPicker = (props: IProps) => {
               rows={4}
               placeholder={translate("schedule.agentPrompt")}
               onChange={onChangePrompt}
+              className="custom-input"
             />
           </Form.Item>
 
-          <Form.Item label={`${translate("schedule.llmProvider")}:`}>
-            <LlmProviderPicker
-              value={currentProvider}
-              onChange={onChangeProvider}
+          <Form.Item
+            label={`${translate("schedule.agentProfile")}:`}
+            name="agentProfileId"
+          >
+            <Select
+              size="large"
+              className="custom-select"
+              allowClear
+              placeholder={translate("schedule.agentProfileDefault")}
+              value={job?.agentProfileId || undefined}
+              onChange={onChangeAgentProfile}
+              options={listAgentProfile?.map((agentProfile) => ({
+                label: agentProfile.name,
+                value: agentProfile.id,
+              }))}
             />
           </Form.Item>
+
+          {!job.agentProfileId && (
+            <Form.Item label={`${translate("schedule.llmProvider")}:`}>
+              <LlmProviderPicker
+                value={currentProvider}
+                onChange={onChangeProvider}
+              />
+            </Form.Item>
+          )}
         </Form>
       )}
 
@@ -357,6 +400,7 @@ const JobPicker = (props: IProps) => {
 export default connect(
   (state: RootState) => ({
     listCampaign: state?.Campaign?.listCampaign,
+    listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
     isModalOpen: state?.Schedule?.isModalOpen,
   }),
   {},

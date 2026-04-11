@@ -5,7 +5,9 @@ import {
   IGetListResponse,
   AppLogType,
   AgentScheduleStatus,
+  JobType,
 } from "@/electron/type";
+import { SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import {
   AppLogModel,
@@ -23,6 +25,7 @@ class AppLogDB {
     logType,
     scheduleId,
     taskId,
+    jobType,
   }: {
     page: number;
     pageSize: number;
@@ -30,6 +33,7 @@ class AppLogDB {
     logType?: AppLogType;
     scheduleId?: number;
     taskId?: number;
+    jobType?: string;
   }): Promise<[IGetListResponse<IAppLog> | null, Error | null]> {
     try {
       const conditions: any[] = [];
@@ -42,6 +46,20 @@ class AppLogDB {
       }
       if (taskId) {
         conditions.push({ taskId });
+      }
+      if (jobType === JobType.AGENT) {
+        conditions.push({ action: JobType.AGENT });
+      } else if (jobType === JobType.WORKFLOW) {
+        conditions.push({
+          action: {
+            [Op.in]: [
+              JobType.WORKFLOW,
+              SCHEDULE_LOG_ACTION.JOB_START,
+              SCHEDULE_LOG_ACTION.JOB_COMPLETED,
+              SCHEDULE_LOG_ACTION.JOB_TIMEOUT,
+            ],
+          },
+        });
       }
       if (searchText) {
         conditions.push({

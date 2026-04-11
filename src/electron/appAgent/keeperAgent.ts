@@ -23,10 +23,8 @@ import {
   CreateAgentOptions,
   buildBaseSubAgents,
   buildSystemPrompt,
-  buildCachedSystemPrompt,
   buildSkillsBackend,
   buildAgentBackend,
-  applyToolCaching,
   ensureAgentMemoryFile,
   createDeepAgent,
 } from "./agentBuilder";
@@ -62,10 +60,7 @@ export const createKeeperAgent = async (
     tools: info.tools as any,
   }));
 
-  const subagents: SubAgent[] = [
-    ...applyToolCaching(baseSubAgents, provider),
-    ...mcpSubAgents,
-  ];
+  const subagents: SubAgent[] = [...baseSubAgents, ...mcpSubAgents];
 
   const skillRootDir = getSkillRootDir();
   const workspaceDir = getWorkspaceDir();
@@ -105,10 +100,7 @@ export const createKeeperAgent = async (
 
   const agent = createDeepAgent({
     model: llm,
-    systemPrompt: buildCachedSystemPrompt(
-      buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
-      provider,
-    ),
+    systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
     backend,
     tools: [...planningTools, ...teamCoordinationTools] as any,
     skills: ["/skills/"],

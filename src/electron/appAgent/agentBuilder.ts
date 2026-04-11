@@ -1,6 +1,4 @@
 import { MemorySaver } from "@langchain/langgraph";
-import { SystemMessage } from "@langchain/core/messages";
-import { DynamicStructuredTool } from "langchain";
 import {
   createDeepAgent,
   FilesystemBackend,
@@ -63,7 +61,6 @@ import {
 } from "./baseTool/agentMailbox";
 
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
-import { toClaudeToolsWithCache } from "./baseTool/utils";
 import { LLMProvider, IAgentProfile } from "@/electron/type";
 import { ToolContext } from "./toolContext";
 
@@ -212,40 +209,6 @@ Adapt output based on the "platformId" field in the CURRENT CONTEXT of each mess
 CRITICAL: When delegating to ANY subagent via \`task\`, you MUST append the following to the task description:
 "Output format: [TELEGRAM=HTML | WHATSAPP=WhatsApp formatting | KEEPER=Markdown tables]. Use tables instead of bullet lists for structured data."
 This ensures all subagents format their responses correctly for the current platform.`;
-};
-
-export const buildCachedSystemPrompt = (
-  text: string,
-  provider: LLMProvider,
-): string | SystemMessage => {
-  if (provider !== LLMProvider.CLAUDE) {
-    return text;
-  }
-  return new SystemMessage({
-    content: [{ type: "text", text, cache_control: { type: "ephemeral" } }],
-  });
-};
-
-export const applyToolCaching = (
-  subagents: SubAgent[],
-  provider: LLMProvider,
-): SubAgent[] => {
-  if (provider !== LLMProvider.CLAUDE) {
-    return subagents;
-  }
-  return subagents.map((subagent) => ({
-    ...subagent,
-    tools: toClaudeToolsWithCache(subagent.tools as DynamicStructuredTool[]),
-    systemPrompt: new SystemMessage({
-      content: [
-        {
-          type: "text",
-          text: subagent.systemPrompt,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-    }) as any,
-  }));
 };
 
 export const buildSkillsBackend = (

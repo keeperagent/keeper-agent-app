@@ -1105,13 +1105,25 @@ export enum KYBERSWAP_CHAIN_KEY {
 
 export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   // Subagent names
-  app_management_agent: "App Management subagent",
   transaction_agent: "Transaction subagent",
   code_execution_agent: "Code Execution subagent",
   workflow_agent: "Workflow subagent",
   research_agent: "Research subagent",
+  scheduler_agent: "Scheduler subagent",
+  task_management_agent: "Task management subagent",
+  team_mailbox_agent: "Mailbox subagent",
+  data_management_agent: "Data management subagent",
 
-  // Tool names
+  // Deepagents built-in tools
+  ls: "Browse files",
+  read_file: "Read file",
+  write_file: "Write file",
+  grep: "Search files",
+  find: "Find files",
+  execute: "Run command",
+  task: "Run subagent",
+
+  // Transaction tools
   swap_on_jupiter: "Swap on Jupiter",
   swap_on_kyberswap: "Swap on KyberSwap",
   transfer_solana_token: "Transfer Solana token",
@@ -1120,24 +1132,64 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   get_token_price: "Get token price",
   launch_pumpfun_token: "Launch Pump.fun token",
   launch_bonkfun_token: "Launch Bonk.fun token",
+  broadcast_transaction_evm: "Broadcast EVM transaction",
+  broadcast_transaction_solana: "Broadcast Solana transaction",
+
+  // Wallet & data tools
   create_wallet_group: "Create wallet group",
   generate_wallets_for_group: "Generate wallets",
-  create_profile_group_with_profiles: "Create profile group",
-  create_campaign_for_profile_group: "Create campaign",
-  create_node_provider_group: "Create node provider group",
+  create_resource_group: "Create resource group",
+  list_resource_groups: "List resource groups",
+  bulk_add_resources: "Add resources",
+  bulk_update_resources: "Update resources",
+  query_resources: "Query resources",
+
+  // Code execution
   execute_javascript: "Execute JavaScript",
   execute_python: "Execute Python",
-  read_file: "Read file",
-  write_file: "Write file",
+
+  // Workflow tools
   search_campaigns: "Search campaigns",
   search_workflows: "Search workflows",
   run_workflow: "Run workflow",
   stop_workflow: "Stop workflow",
   check_workflow_status: "Check workflow status",
+
+  // Research tools
   web_search_tavily: "Web search (Tavily)",
   web_search_exa: "Web search (Exa)",
   web_extract_tavily: "Web extract (Tavily)",
   find_similar_exa: "Find similar (Exa)",
+
+  // Scheduler tools
+  create_agent_schedule: "Create schedule",
+  list_agent_schedules: "List schedules",
+  update_agent_schedule: "Update schedule",
+  delete_agent_schedule: "Delete schedule",
+  pause_agent_schedule: "Pause schedule",
+  resume_agent_schedule: "Resume schedule",
+  run_agent_schedule_now: "Run schedule now",
+
+  // Agent task tools
+  list_agent_tasks: "List tasks",
+  get_agent_task: "Get task",
+  create_agent_task: "Create task",
+  update_agent_task: "Update task",
+  delete_agent_task: "Delete task",
+
+  // Mailbox tools
+  send_message: "Send message",
+  read_messages: "Read messages",
+  acknowledge_message: "Acknowledge message",
+
+  // Planning tools
+  draft_plan: "Draft plan",
+  submit_plan: "Submit plan",
+
+  // Team tools
+  create_agent_team: "Create agent team",
+  get_team_progress: "Get team progress",
+  delegate_task: "Delegate task",
 };
 
 export const getToolDisplayName = (toolName: string): string =>
