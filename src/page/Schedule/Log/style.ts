@@ -46,13 +46,6 @@ const NameWrapper = styled.div`
     }
   }
 
-  .color {
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 0.3rem;
-    margin-right: 1rem;
-  }
-
   .name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -95,14 +88,12 @@ const CampaignWorkflowWrapper = styled.div`
   gap: 0.3rem;
 
   .campaign-name {
-    font-size: 1.1rem;
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
-    font-weight: 400;
+    font-size: 1.3rem;
+    font-weight: 600;
   }
 
   .workflow-name {
-    font-size: 1.3rem;
-    font-weight: 500;
+    font-size: 1.2rem;
   }
 `;
 

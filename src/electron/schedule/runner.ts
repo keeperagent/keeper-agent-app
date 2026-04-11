@@ -1,5 +1,10 @@
 import _ from "lodash";
-import { IJob, ISchedule, AppLogType } from "@/electron/type";
+import {
+  IJob,
+  ISchedule,
+  AppLogType,
+  AgentScheduleStatus,
+} from "@/electron/type";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { jobDB } from "@/electron/database/job";
 import { sleep } from "@/electron/service/util";
@@ -68,10 +73,12 @@ class ScheduleRunner {
       });
       await appLogDB.createAppLog({
         logType: AppLogType.SCHEDULE,
+        jobId: job?.id,
         campaignId: job?.campaignId || undefined,
         workflowId: job?.workflowId || undefined,
         scheduleId: this.schedule?.id!,
         action: SCHEDULE_LOG_ACTION.JOB_TIMEOUT,
+        status: AgentScheduleStatus.ERROR,
       });
       return;
     }
@@ -91,13 +98,6 @@ class ScheduleRunner {
       this.schedule?.id!,
     );
 
-    await appLogDB.createAppLog({
-      logType: AppLogType.SCHEDULE,
-      campaignId: job?.campaignId || undefined,
-      workflowId: job?.workflowId || undefined,
-      scheduleId: this.schedule?.id!,
-      action: SCHEDULE_LOG_ACTION.JOB_START,
-    });
     if (shouldResetRound) {
       await CampaignProfileModel.update(
         {
@@ -107,6 +107,11 @@ class ScheduleRunner {
       );
     }
 
+    const [jobEncryptKey, encryptKeyErr] = await jobDB.getEncryptKey(job.id!);
+    if (encryptKeyErr) {
+      return;
+    }
+
     logEveryWhere({
       workflowId: job?.workflowId || undefined,
       campaignId: job?.campaignId || undefined,
@@ -114,13 +119,15 @@ class ScheduleRunner {
       workflowName: job?.workflow?.name,
       message: `job trigger, schedule: ${this.schedule?.name} - jobId: ${job?.id} - campaign: ${job?.campaign?.name} - workflow: ${job?.workflow?.name}`,
     });
-    const [jobEncryptKey, encryptKeyErr] = await jobDB.getEncryptKey(job.id!);
-    if (encryptKeyErr) {
-      logEveryWhere({
-        message: `ScheduleRunner failed to get encrypt key for job ${job.id}: ${encryptKeyErr?.message}`,
-      });
-      return;
-    }
+    await appLogDB.createAppLog({
+      logType: AppLogType.SCHEDULE,
+      jobId: job?.id,
+      campaignId: job?.campaignId || undefined,
+      workflowId: job?.workflowId || undefined,
+      scheduleId: this.schedule?.id!,
+      action: SCHEDULE_LOG_ACTION.JOB_START,
+      status: AgentScheduleStatus.RUNNING,
+    });
     workflow.runWorkflow(jobEncryptKey || "");
 
     const checkTimeoutInterval = setInterval(async () => {
@@ -141,10 +148,12 @@ class ScheduleRunner {
         });
         await appLogDB.createAppLog({
           logType: AppLogType.SCHEDULE,
+          jobId: job?.id,
           campaignId: job?.campaignId || undefined,
           workflowId: job?.workflowId || undefined,
           scheduleId: this.schedule?.id!,
           action: SCHEDULE_LOG_ACTION.JOB_TIMEOUT,
+          status: AgentScheduleStatus.ERROR,
         });
         return;
       }
@@ -158,10 +167,12 @@ class ScheduleRunner {
     if (!isJobTimeout) {
       await appLogDB.createAppLog({
         logType: AppLogType.SCHEDULE,
+        jobId: job?.id,
         campaignId: job?.campaignId || undefined,
         workflowId: job?.workflowId || undefined,
         scheduleId: this.schedule?.id!,
         action: SCHEDULE_LOG_ACTION.JOB_COMPLETED,
+        status: AgentScheduleStatus.SUCCESS,
       });
       logEveryWhere({
         workflowId: job?.workflowId || undefined,

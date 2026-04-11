@@ -67,6 +67,8 @@ import {
   formatDurationBetween,
   formatTimeToDate,
 } from "@/service/util";
+import { TABLE_PAGE_OPTION } from "@/config/constant";
+import { ScheduleType } from "@/electron/type";
 import ModalSchedule from "./ModalSchedule";
 import ScheduleFlow from "./ScheduleFlow";
 import CalendarView from "./CalendarView";
@@ -78,8 +80,6 @@ import {
   ExpandRowWrapper,
 } from "./style";
 import { VIEW_MODE } from "../index";
-import { TABLE_PAGE_OPTION } from "@/config/constant";
-import { ScheduleType } from "@/electron/type";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -131,7 +131,7 @@ const deriveScheduleLastRunStatus = (
   listJob: IJob[],
 ): AgentScheduleStatus | null => {
   const statuses = listJob
-    .map((job) => job.lastLog?.status)
+    .map((job) => job.lastLog?.status as AgentScheduleStatus)
     .filter(Boolean) as AgentScheduleStatus[];
 
   if (!statuses.length) {
@@ -154,6 +154,7 @@ const renderColumns = (
   onToggleActiveStatus: (scheduleId: number, isPaused: boolean) => void,
   onEditSchedule: (scheduleJob: ISchedule) => void,
   translate: any,
+  locale: string,
   listRunningWorkflow: IRunningWorkflow[],
   onViewLog: (scheduleId: number) => void,
   searchText: string,
@@ -300,11 +301,11 @@ const renderColumns = (
                   }
                 />
 
-                {lastRunTime && !isWorkflowRunning && (
-                  <span className="last-run-time">
-                    {dayjs(lastRunTime).fromNow()}
-                  </span>
-                )}
+                <span className="last-run-time">
+                  {lastRunTime
+                    ? formatTime(lastRunTime, locale)
+                    : translate("running")}
+                </span>
               </div>
             </Tooltip>
           )}
@@ -314,7 +315,7 @@ const renderColumns = (
               {(record.recentLogs || []).map((log: IAppLog, i: number) => (
                 <Tooltip
                   key={i}
-                  title={`${log.status}${log.createAt ? ` · ${dayjs(log.createAt).fromNow()}` : ""}`}
+                  title={`${log.status || ""}${log.createAt ? ` · ${formatTime(log.createAt, locale)}` : ""}`}
                 >
                   <span
                     className="history-dot"
@@ -917,6 +918,7 @@ const ManageSchedule = (props: any) => {
             onToggleActiveStatus,
             onEditSchedule,
             translate,
+            locale,
             listRunningWorkflow,
             onViewLog,
             searchText,

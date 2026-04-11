@@ -330,6 +330,7 @@ export type IpcUpdateJobPayload = {
   llmProvider?: string;
   prompt?: string;
   agentProfileId?: number | null;
+  handoffToNext?: boolean;
 };
 
 export type IpcMarkJobCompletedPayload = {

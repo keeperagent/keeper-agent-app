@@ -64,7 +64,7 @@ const ActorCellWrapper = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 1.2rem;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .log-type-tag {
@@ -126,6 +126,8 @@ const ResultTooltip = styled.div`
   font-size: 1.3rem;
   line-height: 1.5;
   max-width: 48rem;
+  max-height: 30rem;
+  overflow-y: auto;
   color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
 
   table {

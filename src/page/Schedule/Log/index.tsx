@@ -42,11 +42,7 @@ import {
   useGetListSchedule,
   useTranslation,
 } from "@/hook";
-import {
-  DEFAULT_COLOR_PICKER,
-  EMPTY_STRING,
-  TABLE_PAGE_OPTION,
-} from "@/config/constant";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { MESSAGE, SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import {
   PageWrapper,
@@ -108,25 +104,15 @@ const renderScheduleLogType = (
   const workflowLabel = translate("schedule.typeWorkflow");
   const agentLabel = translate("schedule.typeAgent");
 
-  if (logType === SCHEDULE_LOG_ACTION.JOB_START) {
+  if (
+    logType === SCHEDULE_LOG_ACTION.JOB_START ||
+    logType === SCHEDULE_LOG_ACTION.JOB_COMPLETED ||
+    logType === SCHEDULE_LOG_ACTION.JOB_TIMEOUT
+  ) {
     return {
-      content: `${workflowLabel} - ${translate("scheduleLog.eventStart")}`,
-      backgroundColor: "var(--background-success)",
-      textColor: "var(--color-success)",
-    };
-  }
-  if (logType === SCHEDULE_LOG_ACTION.JOB_COMPLETED) {
-    return {
-      content: `${workflowLabel} - ${translate("scheduleLog.eventCompleted")}`,
-      backgroundColor: "var(--background-blue)",
-      textColor: "var(--color-blue)",
-    };
-  }
-  if (logType === SCHEDULE_LOG_ACTION.JOB_TIMEOUT) {
-    return {
-      content: `${workflowLabel} - ${translate("scheduleLog.eventTimeout")}`,
-      backgroundColor: "var(--background-error)",
-      textColor: "var(--color-error)",
+      content: workflowLabel,
+      backgroundColor: "var(--background-pink)",
+      textColor: "var(--color-pink)",
     };
   }
   if (logType === ScheduleType.AGENT) {
@@ -150,7 +136,7 @@ const renderScheduleLogType = (
   };
 };
 
-const renderAgentStatus = (
+const renderStatus = (
   status: AgentScheduleStatus | string | undefined,
   translate: (key: string) => string,
 ): IStatusCell => {
@@ -183,7 +169,6 @@ const renderAgentStatus = (
   };
 
   const row = map[status || ""];
-
   if (!status || !row) {
     return {
       content: EMPTY_STRING,
@@ -299,7 +284,7 @@ const renderColumns = (
     width: 100,
     align: "center",
     render: (status: string | undefined) => {
-      const styled = renderAgentStatus(status, translate);
+      const styled = renderStatus(status, translate);
       if (!styled.bg) {
         return (
           <span style={{ color: "var(--color-text-secondary)" }}>
@@ -342,13 +327,6 @@ const renderColumns = (
               className="link campaign-row"
               onClick={() => onViewCampaign(campaign.id!)}
             >
-              <div
-                className="color"
-                style={{
-                  backgroundColor: campaign?.color || DEFAULT_COLOR_PICKER,
-                }}
-              />
-
               <div className="name campaign-name">
                 <Highlighter
                   textToHighlight={campaign?.name || EMPTY_STRING}
@@ -366,13 +344,6 @@ const renderColumns = (
                 onViewWorkflow(record.campaignId!, record.workflowId!)
               }
             >
-              <div
-                className="color"
-                style={{
-                  backgroundColor:
-                    record.workflow?.color || DEFAULT_COLOR_PICKER,
-                }}
-              />
               <div className="name workflow-name">
                 <Highlighter
                   textToHighlight={record.workflow?.name || EMPTY_STRING}
@@ -670,7 +641,7 @@ const ManageLog = (props: any) => {
           showTotal: onShowTotalData,
           locale: { items_per_page: `/ ${translate("page")}` },
         }}
-        scroll={{ x: 1000, y: 650 }}
+        scroll={{ x: 1250, y: 650 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

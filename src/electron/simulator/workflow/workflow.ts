@@ -24,6 +24,7 @@ import { Monitor } from "./monitor";
 import {
   ICampaign,
   ICampaignProfile,
+  IExecutionSession,
   IFlowProfile,
   IGenerateProfileNodeConfig,
   INodeConfig,
@@ -46,6 +47,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { mainWindow } from "@/electron/main";
 import { jobDB } from "@/electron/database/job";
 import { CurrentInstance } from "./currentInstance";
+import { ExecutionSession } from "./executionSession";
 
 const EMPTY_STRING = "--";
 
@@ -67,6 +69,8 @@ export class Workflow {
   private campaign: ICampaign | null;
   private encryptKey: string;
   private currentInstance: CurrentInstance;
+  private session: IExecutionSession | null;
+  private handoffToNext: boolean;
 
   constructor(
     workflowId: number,
@@ -91,12 +95,22 @@ export class Workflow {
     this.scheduleId = scheduleId;
     this.currentInstance = currentInstance;
     this.encryptKey = "";
+    this.session = null;
+    this.handoffToNext = false;
   }
 
   runWorkflow = async (
     encryptKey: string,
     overrideListVariable?: IWorkflowVariable[],
+    session?: IExecutionSession,
+    handoffToNext?: boolean,
   ) => {
+    this.session = session || null;
+    this.handoffToNext = Boolean(this.session && handoffToNext);
+    // give ThreadManager access to session so it can reuse open browsers from previous job
+    if (this.session) {
+      this.executor.threadManager.setSession(this.session);
+    }
     if (this.monitor.isRunning) {
       logEveryWhere({
         campaignId: this.campaignId,
@@ -183,7 +197,12 @@ export class Workflow {
     }
 
     await Promise.all(threadPromises);
-    await this.checkCampaignProcess(this.campaignId);
+
+    if (this.handoffToNext) {
+      await this.stopWorkflow();
+    } else {
+      await this.checkCampaignProcess(this.campaignId);
+    }
   };
 
   stopWorkflow = async (hideLog?: boolean) => {
@@ -199,23 +218,41 @@ export class Workflow {
     }
 
     this.monitor.stopAllThread();
-    await this.executor.threadManager.stopThread(
-      !this.campaign?.isSaveProfile,
-      undefined,
-      this.campaignId,
-      this.workflowId,
-    );
+
+    if (!this.handoffToNext) {
+      await this.executor.threadManager.stopThread(
+        !this.campaign?.isSaveProfile,
+        undefined,
+        this.campaignId,
+        this.workflowId,
+      );
+    } else if (this.session) {
+      // collect live simulators (browser + pages) into session keyed by profileId
+      // Job 2's ThreadManager will reuse them via getSimulator() in getOrCreateThread
+      const simulators =
+        this.executor.threadManager.collectSimulatorsForHandoff();
+      for (const [profileId, simulator] of simulators.entries()) {
+        (this.session as ExecutionSession).saveSimulator(profileId, simulator);
+      }
+      // clear thread entries WITHOUT closing browsers — browsers now owned by session
+      this.executor.threadManager.clearThreadsWithoutClosing();
+    }
+
     await this.stopJob();
   };
 
   stopThread = async (threadID?: string) => {
     this.monitor.cleanUpThread(threadID);
-    await this.executor.threadManager.stopThread(
-      !this.campaign?.isSaveProfile,
-      threadID,
-      this.campaignId,
-      this.workflowId,
-    );
+    // when handoffToNext=true, keep individual browsers alive
+    // collectSimulatorsForHandoff() in stopWorkflow() will pass them to the next job
+    if (!this.handoffToNext) {
+      await this.executor.threadManager.stopThread(
+        !this.campaign?.isSaveProfile,
+        threadID,
+        this.campaignId,
+        this.workflowId,
+      );
+    }
   };
 
   syncDataToUI = async () => {
@@ -680,7 +717,10 @@ export class Workflow {
   ) => {
     const { profile, config } = flowProfile;
     const errorMessage = this.monitor?.mapThreadError[threadID];
-    if (errorMessage && errorMessage?.message !== MESSAGE_TURN_OFF_PROFILE) {
+    const hasError =
+      errorMessage && errorMessage?.message !== MESSAGE_TURN_OFF_PROFILE;
+
+    if (hasError) {
       if (config?.onError === NODE_ACTION.TERMINATE_THREAD_AND_MARK_DONE) {
         logEveryWhere({
           campaignId: this.campaignId,
@@ -691,11 +731,12 @@ export class Workflow {
           type: LOG_TYPE.WARNING,
           message: `profile ${profile?.name || EMPTY_STRING} ignore thread when previous Processor has error, Processor name: ${flowProfile?.config?.name}`,
         });
+        // failed profile — never saved to session, always increment round immediately
         await this.updateProfile({
           id: profile?.id,
           campaignId: profile?.campaignId,
           isRunning: false,
-          round: (profile?.round || 0) + 1, // update round after completed running
+          round: (profile?.round || 0) + 1,
         });
       } else if (config?.onError === NODE_ACTION.RERUN_THREAD) {
         logEveryWhere({
@@ -707,7 +748,6 @@ export class Workflow {
           type: LOG_TYPE.WARNING,
           message: `profile ${profile?.name || EMPTY_STRING} stop thread and rerun when previous Processor has error, Processor name:  ${flowProfile?.config?.name}`,
         });
-        // do not increase round
         await this.updateProfile({
           id: profile?.id,
           campaignId: profile?.campaignId,
@@ -729,12 +769,27 @@ export class Workflow {
         type: LOG_TYPE.SUCCESS,
         message: `profile ${profile?.name || EMPTY_STRING} complete, clean up thread`,
       });
-      await this.updateProfile({
-        id: profile?.id,
-        campaignId: profile?.campaignId,
-        isRunning: false,
-        round: (profile?.round || 0) + 1, // update round after completed running
-      });
+
+      if (this.handoffToNext && this.session && profile?.id) {
+        // save surviving FlowProfile to session — defer round increment to session.destroy()
+        this.session.handoffFlowProfile(profile.id, {
+          ...flowProfile,
+          profile: { ...profile, isRunning: false },
+        });
+        await this.updateProfile({
+          id: profile?.id,
+          campaignId: profile?.campaignId,
+          isRunning: false,
+          round: profile?.round, // round NOT incremented here — deferred to session.destroy()
+        });
+      } else {
+        await this.updateProfile({
+          id: profile?.id,
+          campaignId: profile?.campaignId,
+          isRunning: false,
+          round: (profile?.round || 0) + 1, // // update round after completed
+        });
+      }
     }
 
     await this.stopThread(threadID); // need to be run at the end
@@ -945,6 +1000,36 @@ export class Workflow {
     threadID: string,
   ): Promise<IFlowProfile | null> => {
     const { numberOfRound = 1 } = this.monitor.getWorkflowState();
+
+    // if session has FlowProfiles from previous job — pick from session
+    if (this.session) {
+      let flowProfile: IFlowProfile | null = null;
+      await this.lock.acquire(this.lockKey, async () => {
+        flowProfile = await this.monitor.pickFlowProfileFromSession(
+          this.session!,
+        );
+      });
+
+      if (flowProfile) {
+        const { profile, isSaveProfile, campaignConfig } =
+          flowProfile as IFlowProfile;
+        const initialTimestamp = new Date().getTime();
+        return {
+          profile,
+          isSaveProfile,
+          campaignConfig: {
+            ...campaignConfig,
+            workflowId: this.workflowId,
+            campaignId: this.campaignId,
+          },
+          threadID,
+          initialTimestamp,
+          nextRunTimestamp: initialTimestamp,
+          listVariable: [],
+          loopCounters: {},
+        };
+      }
+    }
 
     // if Workflow run inside a Campaign
     if (this.campaign) {

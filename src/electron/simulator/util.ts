@@ -1,3 +1,5 @@
+import { exec } from "child_process";
+import { promisify } from "util";
 import { Page, BrowserContext } from "playwright-core";
 import { executeInSandbox } from "@/electron/simulator/sandbox";
 import { app, screen } from "electron";
@@ -23,6 +25,28 @@ export interface ISimulator {
   isCreateNewFolder: boolean; // is profile is created with new folder
   browserProcessId: number | null;
 }
+
+export const safeCloseSimulator = async (
+  simulator: ISimulator,
+): Promise<void> => {
+  try {
+    if (!simulator.browser && !simulator.browserProcessId) {
+      return;
+    }
+    await simulator.browser?.close();
+  } catch {
+    if (simulator.browserProcessId) {
+      try {
+        const execAsync = promisify(exec);
+        const killCommand =
+          process.platform === "win32"
+            ? `taskkill /F /PID ${simulator.browserProcessId}`
+            : `kill -9 ${simulator.browserProcessId}`;
+        await execAsync(killCommand);
+      } catch {}
+    }
+  }
+};
 
 export const getProfilePath = (profileName: string) =>
   `${app.getPath("userData")}/${PROFILE_FOLDER}/${profileName}`;

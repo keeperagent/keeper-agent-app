@@ -106,6 +106,7 @@ const CustomNodeWrapper = styled.div`
     justify-content: center;
     align-items: center;
     border-radius: 1px;
+    z-index: 2;
 
     svg {
       height: 5px;

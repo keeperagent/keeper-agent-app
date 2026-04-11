@@ -3,6 +3,7 @@ import {
   IFlowProfile,
   IFakeProfile,
   ICampaignProfile,
+  IExecutionSession,
   ISorter,
   INodeConfig,
 } from "@/electron/type";
@@ -510,6 +511,35 @@ export class Monitor {
 
     await this.waitForSleep();
     return listUpdatedProfile;
+  };
+
+  pickFlowProfileFromSession = async (
+    session: IExecutionSession,
+  ): Promise<IFlowProfile | null> => {
+    for (const [profileId, flowProfile] of session.flowProfiles.entries()) {
+      const profile = flowProfile.profile;
+      if (!profile || profile.isRunning) {
+        continue;
+      }
+
+      // consume from session — the previous job passed this profile here via handoffToNext=true
+      // this job now owns it and removes it from session to prevent double-incrementing by session.destroy()
+      session.flowProfiles.delete(profileId);
+
+      // mark as running in DB using profile's own campaignId
+      await campaignProfileDB.updateCampaignProfile({
+        id: profile.id,
+        campaignId: profile.campaignId!,
+        isRunning: true,
+      });
+
+      return {
+        ...flowProfile,
+        profile: { ...profile, isRunning: true },
+      };
+    }
+
+    return null;
   };
 
   getFakeFlowProfileToRun = async (

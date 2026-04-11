@@ -1,6 +1,4 @@
 import fs from "fs-extra";
-import { exec } from "child_process";
-import { promisify } from "util";
 import { BrowserContext, Page } from "playwright-core";
 import UserAgent from "user-agents";
 import { BaseBrowser } from "./baseBrowser";
@@ -11,6 +9,7 @@ import {
   sleep,
   processSkipSetting,
   sendWithTimeout,
+  safeCloseSimulator,
 } from "@/electron/simulator/util";
 import { DEFAULT_TIMEOUT } from "@/electron/simulator/constant";
 import {
@@ -31,6 +30,8 @@ import {
 } from "@/electron/constant";
 import { StopSignal } from "@/electron/simulator/stopSignal";
 import { logEveryWhere } from "@/electron/service/util";
+import { ExecutionSession } from "@/electron/simulator/workflow/executionSession";
+import { IExecutionSession } from "@/electron/type";
 import { workflowDB } from "@/electron/database/workflow";
 import { EVMContractSnipperManager } from "@/electron/simulator/category/onchain/evmContractSniper";
 import {
@@ -62,6 +63,7 @@ export class ThreadManager {
   private evmContractSnipperManager: EVMContractSnipperManager;
   private solanaVanityAddressManager: SolanaVanityAddressManager;
   private telegramSniperManager: TelegramSniperManager;
+  private session: ExecutionSession | null = null;
 
   constructor({
     baseBrowser,
@@ -83,6 +85,27 @@ export class ThreadManager {
     this.solanaVanityAddressManager = solanaVanityAddressManager;
     this.telegramSniperManager = telegramSniperManager;
   }
+
+  setSession = (session: IExecutionSession | null): void => {
+    this.session = session as ExecutionSession | null;
+  };
+
+  // collect profileId → simulator map for handoffToNext — called before skipping browser close
+  collectSimulatorsForHandoff = (): Map<number, ISimulator> => {
+    const result = new Map<number, ISimulator>();
+    for (const thread of Object.values(this.mapThread)) {
+      const profileId = thread.flowProfile?.profile?.id;
+      if (profileId && thread.simulator?.browser) {
+        result.set(profileId, thread.simulator);
+      }
+    }
+    return result;
+  };
+
+  // clear thread entries WITHOUT closing browsers — used when handing off to next job
+  clearThreadsWithoutClosing = (): void => {
+    this.mapThread = {};
+  };
 
   // return [@profileName, @profileKey]
   private getProfileKey(
@@ -132,60 +155,74 @@ export class ThreadManager {
       const thread = this.mapThread?.[threadID];
 
       if (thread?.simulator?.browser === null && openBrowser) {
-        const [profileName, profileKey] = this.getProfileKey(
-          threadID,
-          flowProfile,
-        );
+        // check session for an existing open browser from previous job (handoffToNext)
+        const sessionSimulator = profile?.id
+          ? this.session?.getSimulator(profile.id) || null
+          : null;
 
-        // set user agent
-        let userAgent = "";
-        if (campaignConfig?.isUseRandomUserAgent) {
-          if (campaignConfig?.userAgentCategory === USER_AGENT_CATEGORY.MACOS) {
-            userAgent = new UserAgent([
-              /Chrome/,
-              {
-                platform: "MacIntel",
-              },
-            ])
-              ?.random()
-              ?.toString();
-          } else if (
-            campaignConfig?.userAgentCategory === USER_AGENT_CATEGORY.WINDOW
-          ) {
-            userAgent = new UserAgent([
-              /Chrome/,
-              {
-                platform: "Win32",
-              },
-            ])
-              ?.random()
-              .toString();
+        if (sessionSimulator) {
+          // reuse existing browser, page state preserved
+          if (this.mapThread[threadID] !== undefined) {
+            this.mapThread[threadID].simulator = sessionSimulator;
           }
-        }
+        } else {
+          const [profileName, profileKey] = this.getProfileKey(
+            threadID,
+            flowProfile,
+          );
 
-        const profileProxy: IProfileProxy = {
-          isUseProxy: Boolean(campaignConfig?.isUseProxy),
-          proxy: profile?.proxy,
-        };
+          // set user agent
+          let userAgent = "";
+          if (campaignConfig?.isUseRandomUserAgent) {
+            if (
+              campaignConfig?.userAgentCategory === USER_AGENT_CATEGORY.MACOS
+            ) {
+              userAgent = new UserAgent([
+                /Chrome/,
+                {
+                  platform: "MacIntel",
+                },
+              ])
+                ?.random()
+                ?.toString();
+            } else if (
+              campaignConfig?.userAgentCategory === USER_AGENT_CATEGORY.WINDOW
+            ) {
+              userAgent = new UserAgent([
+                /Chrome/,
+                {
+                  platform: "Win32",
+                },
+              ])
+                ?.random()
+                .toString();
+            }
+          }
 
-        const [newSimulator, err] = await this.baseBrowser.createBrowser({
-          profileName,
-          profileKey,
-          threadID,
-          profileProxy,
-          userAgent,
-          windowWidth: campaignConfig?.windowWidth,
-          windowHeight: campaignConfig?.windowHeight,
-          isFullScreen: campaignConfig?.isFullScreen,
-          totalScreen: campaignConfig?.totalScreen,
-          defaultOpenUrl: campaignConfig?.defaultOpenUrl,
-        });
-        if (newSimulator === null || err) {
-          return [flowProfile, err];
-        }
+          const profileProxy: IProfileProxy = {
+            isUseProxy: Boolean(campaignConfig?.isUseProxy),
+            proxy: profile?.proxy,
+          };
 
-        if (this.mapThread[threadID] !== undefined) {
-          this.mapThread[threadID].simulator = newSimulator;
+          const [newSimulator, err] = await this.baseBrowser.createBrowser({
+            profileName,
+            profileKey,
+            threadID,
+            profileProxy,
+            userAgent,
+            windowWidth: campaignConfig?.windowWidth,
+            windowHeight: campaignConfig?.windowHeight,
+            isFullScreen: campaignConfig?.isFullScreen,
+            totalScreen: campaignConfig?.totalScreen,
+            defaultOpenUrl: campaignConfig?.defaultOpenUrl,
+          });
+          if (newSimulator === null || err) {
+            return [flowProfile, err];
+          }
+
+          if (this.mapThread[threadID] !== undefined) {
+            this.mapThread[threadID].simulator = newSimulator;
+          }
         }
       }
 
@@ -195,44 +232,6 @@ export class ThreadManager {
         message: `getOrCreateThread() error: ${err?.message}, threadID: ${threadID}`,
       });
       return err;
-    }
-  };
-
-  private killBrowserProcess = async (
-    processId: number,
-    threadID: string,
-  ): Promise<void> => {
-    try {
-      const execAsync = promisify(exec);
-      const platform = process.platform;
-      let killCommand: string;
-      if (platform === "win32") {
-        killCommand = `taskkill /F /PID ${processId}`;
-      } else {
-        killCommand = `kill -9 ${processId}`;
-      }
-      await execAsync(killCommand);
-      logEveryWhere({
-        message: `Browser process ${processId} killed for thread ${threadID}`,
-      });
-    } catch {}
-  };
-
-  private safeCloseBrowser = async (
-    browser: BrowserContext | null,
-    browserProcessId: number | null,
-    threadID: string,
-  ): Promise<void> => {
-    if (!browser && !browserProcessId) {
-      return;
-    }
-
-    try {
-      await browser?.close();
-    } catch {
-      if (browserProcessId) {
-        await this.killBrowserProcess(browserProcessId, threadID);
-      }
     }
   };
 
@@ -256,11 +255,7 @@ export class ThreadManager {
       }
 
       if (simulator?.browser || simulator?.browserProcessId) {
-        await this.safeCloseBrowser(
-          simulator.browser,
-          simulator.browserProcessId,
-          threadID,
-        );
+        await safeCloseSimulator(simulator);
         simulator.browser = null;
         simulator.browserProcessId = null;
       }
