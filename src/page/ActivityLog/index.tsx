@@ -1,5 +1,13 @@
 import { Fragment, useEffect, useState, ComponentType, ReactNode } from "react";
-import { PaginationProps, Table, Popconfirm, Select, Tag, Tooltip } from "antd";
+import {
+  PaginationProps,
+  Table,
+  Popconfirm,
+  Select,
+  Tag,
+  Tooltip,
+  Popover,
+} from "antd";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -19,6 +27,7 @@ import { DeleteButton } from "@/component/Button";
 import { SearchInput, TotalData } from "@/component";
 import { SettingIcon } from "@/component/Icon";
 import { RootState } from "@/redux/store";
+import { actSetPageName } from "@/redux/layout";
 import { actSetAppLogPageSize } from "@/redux/appLog";
 import { useGetListAppLog, useDeleteAppLog, useTranslation } from "@/hook";
 import { TABLE_PAGE_OPTION, EMPTY_STRING } from "@/config/constant";
@@ -157,14 +166,18 @@ const renderDetails = (log: IAppLog, searchText: string) => {
       .join(" › ");
     fullContent = normalizeAgentMessageContent(log.message || "");
   } else if (log.logType === AppLogType.SCHEDULE) {
-    primary = log.schedule?.name || `Schedule #${log.scheduleId}`;
+    const campaignWorkflow = [log.campaign?.name, log.workflow?.name]
+      .filter(Boolean)
+      .join(" › ");
     const resultText = log.result
       ? normalizeAgentMessageContent(log.result)
       : null;
     fullContent = resultText || log.errorMessage || "";
-    secondary = fullContent
+    primary = fullContent
       ? collapseResultToOneLine(fullContent)
-      : EMPTY_STRING;
+      : campaignWorkflow || EMPTY_STRING;
+    secondary =
+      fullContent && campaignWorkflow ? campaignWorkflow : EMPTY_STRING;
   } else if (log.logType === AppLogType.TASK) {
     primary = log.action || "task_event";
     secondary = log.message || EMPTY_STRING;
@@ -203,9 +216,8 @@ const renderDetails = (log: IAppLog, searchText: string) => {
   }
 
   return (
-    <Tooltip
-      overlayStyle={{ maxWidth: "35vw" }}
-      title={
+    <Popover
+      content={
         <ResultTooltip>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -215,21 +227,36 @@ const renderDetails = (log: IAppLog, searchText: string) => {
           </ReactMarkdown>
         </ResultTooltip>
       }
+      trigger="hover"
+      placement="bottomRight"
     >
       {cell}
-    </Tooltip>
+    </Popover>
   );
 };
 
+const resolveActorName = (log: IAppLog): string => {
+  if (log.actorName || log.actorType) {
+    return log.actorName || log.actorType || EMPTY_STRING;
+  }
+  if (log.logType === AppLogType.SCHEDULE) {
+    return log.schedule?.name || `Schedule #${log.scheduleId}`;
+  }
+  if (log.logType === AppLogType.WORKFLOW) {
+    return log.campaign?.name || log.workflow?.name || EMPTY_STRING;
+  }
+  return EMPTY_STRING;
+};
+
 const renderActorWithType = (log: IAppLog) => {
-  const name = log.actorName || log.actorType;
+  const name = resolveActorName(log);
   const tagColor = LOG_TYPE_TAG_COLOR[log.logType];
   const tagLabel = LOG_TYPE_TAG_LABEL[log.logType] || log.logType;
 
   return (
     <ActorCellWrapper>
       <div className="actor-row">
-        <span className="actor-name">{name || EMPTY_STRING}</span>
+        <span className="actor-name">{name}</span>
       </div>
 
       <Tag color={tagColor} bordered={false} className="log-type-tag">
@@ -270,6 +297,10 @@ const ActivityLogPage = (props: any) => {
   const [selectedRowKeys, onSetSelectedRowKeys] = useState<number[]>([]);
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    props?.actSetPageName(translate("sidebar.activityLog"));
+  }, [translate]);
 
   const { getListAppLog, loading: getDataLoading } = useGetListAppLog();
   const {
@@ -345,13 +376,13 @@ const ActivityLogPage = (props: any) => {
     {
       title: translate("activityLog.actor"),
       dataIndex: "actorName",
-      width: 180,
+      width: 250,
       render: (_: any, record: IAppLog) => renderActorWithType(record),
     },
     {
       title: translate("activityLog.details"),
       dataIndex: "message",
-      width: 430,
+      width: 500,
       render: (_: any, record: IAppLog) => renderDetails(record, searchText),
     },
     {
@@ -436,7 +467,7 @@ const ActivityLogPage = (props: any) => {
             showTotal: onShowTotalData,
             locale: { items_per_page: `/ ${translate("page")}` },
           }}
-          scroll={{ x: 900, y: 700 }}
+          scroll={{ x: 1150, y: 700 }}
           loading={getDataLoading}
           onChange={onTableChange}
           size="small"
@@ -454,5 +485,5 @@ export default connect(
     totalData: state?.AppLog?.totalData,
     pageSize: state?.AppLog?.pageSize,
   }),
-  { actSetAppLogPageSize },
+  { actSetAppLogPageSize, actSetPageName },
 )(ActivityLogPage);
