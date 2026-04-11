@@ -373,10 +373,13 @@ const ModalSchedule = (props: IProps) => {
             type="warning"
             title={
               <span>
-                Campaign '<strong>{existedJob?.campaignName}</strong>' and
-                Workflow '<strong>{existedJob?.workflowName}</strong>' are
-                already in Schedule '<strong>{existedJob?.scheduleName}</strong>
-                ', simultaneous runs may conflict.
+                {translate("sidebar.campaign")} '
+                <strong>{existedJob?.campaignName}</strong>' and{" "}
+                {translate("sidebar.workflow")} '
+                <strong>{existedJob?.workflowName}</strong>'{" "}
+                {translate("schedule.jobExistedWarningMiddle")} '
+                <strong>{existedJob?.scheduleName}</strong>',{" "}
+                {translate("schedule.jobExistedWarningEnd")}
               </span>
             }
           />

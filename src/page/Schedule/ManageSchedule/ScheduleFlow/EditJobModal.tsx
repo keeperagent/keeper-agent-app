@@ -40,7 +40,6 @@ const EditJobModal = ({
     if (open && job) {
       form.setFieldsValue({
         prompt: job.prompt || "",
-        agentProfileId: job.agentProfileId || undefined,
       });
       setEditProvider(job.llmProvider || LLMProvider.CLAUDE);
       setEditAgentProfileId(job.agentProfileId || null);
@@ -94,7 +93,6 @@ const EditJobModal = ({
 
         <Form.Item
           label={`${translate("schedule.agentProfile")}:`}
-          name="agentProfileId"
         >
           <Select
             size="large"

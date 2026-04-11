@@ -225,8 +225,6 @@ const Job = (props: IProps) => {
       ) || null
     : null;
 
-  console.log("== currentAgentProfile", currentAgentProfile);
-
   return (
     <Wrapper onClick={isAgentJob ? () => onOpenEdit(job) : undefined}>
       <div className="header" onClick={(e) => e.stopPropagation()}>
