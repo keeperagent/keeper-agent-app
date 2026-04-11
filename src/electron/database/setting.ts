@@ -1,18 +1,18 @@
 import { Op } from "sequelize";
 import _ from "lodash";
-import { IAgentSetting, IGetListResponse, ISorter } from "@/electron/type";
+import { ISetting, IGetListResponse, ISorter } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { SORT_ORDER } from "@/electron/constant";
-import { AgentSettingModel } from "./index";
+import { SettingModel } from "./index";
 
-class AgentSettingDB {
-  async getListAgentSetting(
+class SettingDB {
+  async getListSetting(
     page: number,
     pageSize: number,
     searchText?: string,
     sortField?: ISorter,
     type?: string,
-  ): Promise<[IGetListResponse<IAgentSetting> | null, Error | null]> {
+  ): Promise<[IGetListResponse<ISetting> | null, Error | null]> {
     try {
       const condition = {
         [Op.and]: [
@@ -35,10 +35,10 @@ class AgentSettingDB {
           ? orderPairs
           : ([["createAt", "DESC"]] as [string, string][]);
 
-      const totalDataAwait = AgentSettingModel.count({
+      const totalDataAwait = SettingModel.count({
         where: condition,
       });
-      const listDataAwait = AgentSettingModel.findAll({
+      const listDataAwait = SettingModel.findAll({
         order,
         ...(searchText
           ? {}
@@ -66,17 +66,15 @@ class AgentSettingDB {
       ];
     } catch (err: any) {
       logEveryWhere({
-        message: `getListAgentSetting() error: ${err?.message}`,
+        message: `getListSetting() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async getOneAgentSetting(
-    id: number,
-  ): Promise<[IAgentSetting | null, Error | null]> {
+  async getOneSetting(id: number): Promise<[ISetting | null, Error | null]> {
     try {
-      const data = await AgentSettingModel.findOne({
+      const data = await SettingModel.findOne({
         where: { id },
         raw: false,
       });
@@ -87,17 +85,17 @@ class AgentSettingDB {
       return [data?.toJSON(), null];
     } catch (err: any) {
       logEveryWhere({
-        message: `getOneAgentSetting() error: ${err?.message}`,
+        message: `getOneSetting() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async createAgentSetting(
-    data: Partial<IAgentSetting>,
-  ): Promise<[IAgentSetting | null, Error | null]> {
+  async createSetting(
+    data: Partial<ISetting>,
+  ): Promise<[ISetting | null, Error | null]> {
     try {
-      const agentSetting = await AgentSettingModel.create(
+      const agentSetting = await SettingModel.create(
         {
           ...data,
           createAt: new Date().getTime(),
@@ -111,46 +109,46 @@ class AgentSettingDB {
       return [agentSetting?.toJSON(), null];
     } catch (err: any) {
       logEveryWhere({
-        message: `createAgentSetting() error: ${err?.message}`,
+        message: `createSetting() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async updateAgentSetting(
-    data: IAgentSetting,
-  ): Promise<[IAgentSetting | null, Error | null]> {
+  async updateSetting(
+    data: ISetting,
+  ): Promise<[ISetting | null, Error | null]> {
     try {
-      await AgentSettingModel.update(
+      await SettingModel.update(
         _.omit({ ...data, updateAt: new Date().getTime() }, ["id"]) as any,
         {
           where: { id: data?.id },
         },
       );
 
-      return await this.getOneAgentSetting(data?.id!);
+      return await this.getOneSetting(data?.id!);
     } catch (err: any) {
       logEveryWhere({
-        message: `updateAgentSetting() error: ${err?.message}`,
+        message: `updateSetting() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 
-  async deleteAgentSetting(
+  async deleteSetting(
     listID: number[],
   ): Promise<[number | null, Error | null]> {
     try {
-      const data = await AgentSettingModel.destroy({ where: { id: listID } });
+      const data = await SettingModel.destroy({ where: { id: listID } });
       return [data, null];
     } catch (err: any) {
       logEveryWhere({
-        message: `deleteAgentSetting() error: ${err?.message}`,
+        message: `deleteSetting() error: ${err?.message}`,
       });
       return [null, err];
     }
   }
 }
 
-const agentSettingDB = new AgentSettingDB();
-export { agentSettingDB };
+const settingDB = new SettingDB();
+export { settingDB };

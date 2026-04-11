@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import _ from "lodash";
-import { IAgentSetting, ICampaign, INodeEndpointGroup } from "@/electron/type";
+import { ISetting, ICampaign, INodeEndpointGroup } from "@/electron/type";
 import { useTranslation } from "@/hook";
 import { EMPTY_STRING } from "@/config/constant";
 import { listChainConfig } from "../../WalletView/config";
 import { PresetItemWrapper } from "./style";
 
 interface PresetItemProps {
-  setting: IAgentSetting;
+  setting: ISetting;
   listNodeEndpointGroup: INodeEndpointGroup[];
   listCampaign: ICampaign[];
-  onLoad: (setting: IAgentSetting) => void;
+  onLoad: (setting: ISetting) => void;
   onDelete: (id: number) => void;
 }
 

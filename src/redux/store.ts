@@ -30,7 +30,7 @@ import searchReducer from "./search";
 import agentReducer from "./agent";
 import mcpServerReducer from "./mcpServer";
 import agentSkillReducer from "./agentSkill";
-import agentSettingReducer from "./agentSetting";
+import settingReducer from "./setting";
 import agentProfileReducer from "./agentProfile";
 import agentTaskReducer from "./agentTask";
 import appLogReducer from "./appLog";
@@ -64,7 +64,7 @@ const reducers = combineReducers({
   Agent: agentReducer,
   McpServer: mcpServerReducer,
   AgentSkill: agentSkillReducer,
-  AgentSetting: agentSettingReducer,
+  Setting: settingReducer,
   AgentProfile: agentProfileReducer,
   AgentTask: agentTaskReducer,
   AppLog: appLogReducer,
@@ -92,7 +92,7 @@ const persistedReducer = persistReducer(
       "Agent",
       "McpServer",
       "AgentSkill",
-      "AgentSetting",
+      "Setting",
       "CampaignProfile",
       "NodeEndpoint",
       "NodeEndpointGroup",

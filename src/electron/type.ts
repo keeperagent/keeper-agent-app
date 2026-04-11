@@ -2736,7 +2736,7 @@ export type IAgentSkill = {
   filePath?: string;
 };
 
-export type IAgentSetting = {
+export type ISetting = {
   id?: number;
   name: string;
   type: string;
@@ -2745,8 +2745,9 @@ export type IAgentSetting = {
   updateAt?: number;
 };
 
-export enum AGENT_SETTING_TYPE {
+export enum SETTING_TYPE {
   AGENT_PRESET = "AGENT_PRESET",
+  WORKFLOW_GLOBAL_VARIABLE = "WORKFLOW_GLOBAL_VARIABLE",
 }
 
 export enum AgentMailboxStatus {

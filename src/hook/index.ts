@@ -179,11 +179,11 @@ export {
   clearAuthToken,
 } from "./authStorage";
 export {
-  useGetListAgentSetting,
-  useCreateAgentSetting,
-  useUpdateAgentSetting,
-  useDeleteAgentSetting,
-} from "./agentSetting";
+  useGetListSetting,
+  useCreateSetting,
+  useUpdateSetting,
+  useDeleteSetting,
+} from "./setting";
 export {
   useGetListAgentProfile,
   useGetOneAgentProfile,

@@ -109,11 +109,34 @@ const getVariableFromProfile = (
   profile: ICampaignProfile | null,
   campaign: ICampaign | null,
   workflow: IWorkflow | null,
+  globalVariables: IWorkflowVariable[] = [],
 ): IWorkflowVariable[] => {
-  if (profile === null) {
-    return [];
-  }
   const mapVariable: { [key: string]: IWorkflowVariable } = {};
+
+  // global variables — lowest priority
+  globalVariables.forEach((variable: IWorkflowVariable) => {
+    if (variable?.variable) {
+      mapVariable[variable.variable] = variable;
+    }
+  });
+
+  // workflow variables — middle priority
+  workflow?.listVariable?.forEach((variable: IWorkflowVariable) => {
+    if (variable?.variable) {
+      mapVariable[variable.variable] = {
+        value: variable?.value,
+        label: variable?.label,
+        variable: variable?.variable,
+      };
+    }
+  });
+
+  if (profile === null) {
+    return _.sortBy(
+      Object.values(mapVariable),
+      (variable: IWorkflowVariable) => variable?.variable,
+    );
+  }
 
   // only campaign has default wallet variables
   if (campaign) {
@@ -152,7 +175,7 @@ const getVariableFromProfile = (
     });
   });
 
-  // variable from Campaign
+  // variable from Campaign — highest priority
   const additionalColumn = getCampaignAdditionalColumn(campaign);
   additionalColumn?.forEach((column: ColumnConfig) => {
     if (column?.variable) {
@@ -160,17 +183,6 @@ const getVariableFromProfile = (
         value: (profile as any)?.[column?.dataIndex!],
         label: column?.title!,
         variable: column?.variable,
-      };
-    }
-  });
-
-  // set variable from Workflow config
-  workflow?.listVariable?.forEach((variable: IWorkflowVariable) => {
-    if (variable?.variable) {
-      mapVariable[variable.variable] = {
-        value: variable?.value,
-        label: variable?.label,
-        variable: variable?.variable,
       };
     }
   });

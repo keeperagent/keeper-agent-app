@@ -1,6 +1,6 @@
 import type {
   IAgentProfile,
-  IAgentSetting,
+  ISetting,
   IAgentSkill,
   IAgentTask,
   AppLogType,
@@ -469,15 +469,15 @@ export type IpcUpdateAgentSkillPayload = {
   data: IAgentSkill;
 };
 
-// AgentSetting
-export type IpcGetListAgentSettingPayload = IpcSortedPagePayload & {
+// Setting
+export type IpcGetListSettingPayload = IpcSortedPagePayload & {
   type?: string;
 };
-export type IpcCreateAgentSettingPayload = {
-  data: IAgentSetting;
+export type IpcCreateSettingPayload = {
+  data: ISetting;
 };
-export type IpcUpdateAgentSettingPayload = {
-  data: IAgentSetting;
+export type IpcUpdateSettingPayload = {
+  data: ISetting;
 };
 
 // Agent profile

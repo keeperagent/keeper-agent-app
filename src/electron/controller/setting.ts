@@ -1,20 +1,20 @@
 import { MESSAGE } from "@/electron/constant";
-import { agentSettingDB } from "@/electron/database/agentSetting";
+import { settingDB } from "@/electron/database/setting";
 import type {
-  IpcGetListAgentSettingPayload,
-  IpcCreateAgentSettingPayload,
-  IpcUpdateAgentSettingPayload,
+  IpcGetListSettingPayload,
+  IpcCreateSettingPayload,
+  IpcUpdateSettingPayload,
   IpcDeletePayload,
 } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
 
-export const agentSettingController = () => {
-  onIpc<IpcGetListAgentSettingPayload>(
+export const settingController = () => {
+  onIpc<IpcGetListSettingPayload>(
     MESSAGE.GET_LIST_AGENT_SETTING,
     MESSAGE.GET_LIST_AGENT_SETTING_RES,
     async (event, payload) => {
       const { page, pageSize, searchText, sortField, type } = payload || {};
-      const [res] = await agentSettingDB.getListAgentSetting(
+      const [res] = await settingDB.getListSetting(
         page,
         pageSize,
         searchText,
@@ -27,24 +27,24 @@ export const agentSettingController = () => {
     },
   );
 
-  onIpc<IpcCreateAgentSettingPayload>(
+  onIpc<IpcCreateSettingPayload>(
     MESSAGE.CREATE_AGENT_SETTING,
     MESSAGE.CREATE_AGENT_SETTING_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [res] = await agentSettingDB.createAgentSetting(data);
+      const [res] = await settingDB.createSetting(data);
       event.reply(MESSAGE.CREATE_AGENT_SETTING_RES, {
         data: res,
       });
     },
   );
 
-  onIpc<IpcUpdateAgentSettingPayload>(
+  onIpc<IpcUpdateSettingPayload>(
     MESSAGE.UPDATE_AGENT_SETTING,
     MESSAGE.UPDATE_AGENT_SETTING_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [res] = await agentSettingDB.updateAgentSetting(data);
+      const [res] = await settingDB.updateSetting(data);
       event.reply(MESSAGE.UPDATE_AGENT_SETTING_RES, {
         data: res,
       });
@@ -55,9 +55,7 @@ export const agentSettingController = () => {
     MESSAGE.DELETE_AGENT_SETTING,
     MESSAGE.DELETE_AGENT_SETTING_RES,
     async (event, payload) => {
-      const [res] = await agentSettingDB.deleteAgentSetting(
-        payload?.data || [],
-      );
+      const [res] = await settingDB.deleteSetting(payload?.data || []);
       event.reply(MESSAGE.DELETE_AGENT_SETTING_RES, {
         data: res,
       });

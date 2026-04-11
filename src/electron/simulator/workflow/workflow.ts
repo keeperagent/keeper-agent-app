@@ -30,8 +30,10 @@ import {
   INodeConfig,
   IWorkflow,
   IWorkflowVariable,
+  SETTING_TYPE,
 } from "@/electron/type";
 import { campaignDB } from "@/electron/database/campaign";
+import { settingDB } from "@/electron/database/setting";
 import { extensionDB } from "@/electron/database/extension";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { sleep } from "@/electron/simulator/util";
@@ -71,6 +73,7 @@ export class Workflow {
   private currentInstance: CurrentInstance;
   private session: IExecutionSession | null;
   private handoffToNext: boolean;
+  private globalVariables: IWorkflowVariable[];
 
   constructor(
     workflowId: number,
@@ -97,6 +100,7 @@ export class Workflow {
     this.encryptKey = "";
     this.session = null;
     this.handoffToNext = false;
+    this.globalVariables = [];
   }
 
   runWorkflow = async (
@@ -827,6 +831,29 @@ export class Workflow {
       return err;
     }
     this.workflow = workflowRecord;
+
+    const [globalSettingRows] = await settingDB.getListSetting(
+      1,
+      1000,
+      undefined,
+      undefined,
+      SETTING_TYPE.WORKFLOW_GLOBAL_VARIABLE,
+    );
+    this.globalVariables = (globalSettingRows?.data || []).map((row) => {
+      const parsed = (() => {
+        try {
+          return JSON.parse(row.data || "{}");
+        } catch {
+          return {};
+        }
+      })();
+      return {
+        variable: row.name,
+        label: parsed.label || "",
+        value: parsed.value || "",
+      };
+    });
+
     const workflowData: IWorkflowData = workflowRecord?.data
       ? JSON.parse(workflowRecord?.data)
       : { nodes: [], edges: [] };
@@ -1066,6 +1093,7 @@ export class Workflow {
         profile,
         this.campaign,
         this.workflow,
+        this.globalVariables,
       );
 
       const flowProfile: IFlowProfile = {
@@ -1107,7 +1135,12 @@ export class Workflow {
     }
 
     flowProfile = flowProfile as IFlowProfile;
-    const listVariable = getVariableFromProfile(null, null, this.workflow);
+    const listVariable = getVariableFromProfile(
+      null,
+      null,
+      this.workflow,
+      this.globalVariables,
+    );
     return {
       ...flowProfile,
       listVariable,
