@@ -70,6 +70,7 @@ const CustomNode = (props: any) => {
   const { translate } = useTranslation();
   const {
     numberOfFlowProfile,
+    runningSlots,
     nodeMinMaxDuration,
     data = {},
     selected,
@@ -405,7 +406,7 @@ const CustomNode = (props: any) => {
             <div className="item">
               <div className="label">{translate("running")}</div>
               <div className="value">
-                {numberOfFlowProfile} {translate("workflow.thread")}
+                {runningSlots} {translate("workflow.thread")}
               </div>
             </div>
           </div>
@@ -536,6 +537,7 @@ export default connect(
 
     return {
       numberOfFlowProfile,
+      runningSlots: state?.WorkflowRunner?.mapNodeSlots?.[nodeID] || 0,
       nodeMinMaxDuration: state?.WorkflowRunner?.mapMinMaxDuration?.[nodeID],
       nodeError: state?.WorkflowRunner?.mapError?.[nodeID],
       mapExtensionID: state?.WorkflowRunner?.mapExtensionID,

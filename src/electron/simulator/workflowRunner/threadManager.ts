@@ -55,7 +55,6 @@ export type Thread = {
 };
 
 // @ThreadManager class used to manage or initiate each Thread
-
 export class ThreadManager {
   private baseBrowser: BaseBrowser;
   private mapThread: { [threadID: string]: Thread };

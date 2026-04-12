@@ -42,7 +42,6 @@ const Queue = (props: IQueueProps) => {
     selectedEdgeID,
     conditionLabel,
     conditionColor,
-    maxConcurrency = 0,
   } = props;
 
   useEffect(() => {
@@ -67,14 +66,10 @@ const Queue = (props: IQueueProps) => {
   };
 
   const totalThread = useMemo(() => {
-    const numberOfThread = selectedCampaign
+    return selectedCampaign
       ? selectedCampaign?.numberOfThread || 1
       : selectedWorkflow?.numberOfThread || 1;
-
-    return maxConcurrency > 0
-      ? Math.min(maxConcurrency, numberOfThread)
-      : numberOfThread;
-  }, [selectedCampaign, selectedWorkflow, maxConcurrency]);
+  }, [selectedCampaign, selectedWorkflow]);
 
   const numberOfFlowProfile = useMemo(() => {
     let count = 0;

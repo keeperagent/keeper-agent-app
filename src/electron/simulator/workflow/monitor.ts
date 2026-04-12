@@ -193,6 +193,7 @@ export class Monitor {
       mapThread: this.mapThread,
       mapNodeError: this.mapNodeError,
       mapMinMaxDuration: this.mapMinMaxDuration,
+      mapNodeSlots: this.mapNodeSlots,
       isRunning: this.isRunning,
       currentRound: this.currentRound,
       isSleeping: this.isSleeping,
@@ -205,12 +206,14 @@ export class Monitor {
 
   acquireNodeSlot = (nodeId: string) => {
     this.mapNodeSlots[nodeId] = (this.mapNodeSlots[nodeId] || 0) + 1;
+    this.markPendingUpdate();
   };
 
   releaseNodeSlot = (nodeId: string) => {
     if (this.mapNodeSlots[nodeId] > 0) {
       this.mapNodeSlots[nodeId] -= 1;
     }
+    this.markPendingUpdate();
   };
 
   getNodeSlotCount = (nodeId: string): number => {
