@@ -32,9 +32,16 @@ const Wrapper = styled.div`
 `;
 
 const ListVariableWrapper = styled.div`
-  max-height: 70vh;
+  max-height: 45rem;
   padding: 0 0.5rem;
   overflow-y: auto;
 `;
 
-export { Wrapper, ListVariableWrapper };
+const PopoverContentWrapper = styled.div`
+  .search {
+    padding: 0 0.5rem;
+    margin-bottom: 0.8rem;
+  }
+`;
+
+export { Wrapper, ListVariableWrapper, PopoverContentWrapper };

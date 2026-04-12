@@ -12,12 +12,14 @@ import Other from "./Other";
 import LanguageModel from "./LanguageModel";
 import WebSearch from "./WebSearch";
 import KeeperMcp from "./KeeperMcp";
+import WorkflowSetting from "./Workflow";
 
 const TAB = {
   GENERAL_SETTING: "GENERAL_SETTING",
   AGENT_SETTING: "AGENT_SETTING",
   KEEPER_MCP: "KEEPER_MCP",
   DATABASE_SETTING: "DATABASE_SETTING",
+  WORKFLOW: "WORKFLOW",
 };
 
 const SettingPage = (props: any) => {
@@ -57,6 +59,10 @@ const SettingPage = (props: any) => {
             {
               key: TAB.KEEPER_MCP,
               label: translate("setting.keeperMcp"),
+            },
+            {
+              key: TAB.WORKFLOW,
+              label: translate("setting.workflow"),
             },
             {
               key: TAB.DATABASE_SETTING,
@@ -148,6 +154,8 @@ const SettingPage = (props: any) => {
       )}
 
       {activeTab === TAB.KEEPER_MCP && <KeeperMcp />}
+
+      {activeTab === TAB.WORKFLOW && <WorkflowSetting />}
     </Wrapper>
   );
 };

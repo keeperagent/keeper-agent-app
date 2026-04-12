@@ -649,7 +649,9 @@ const Workflow = (props: IProps) => {
               className="mark"
               style={{
                 backgroundColor:
-                  progress === 100 ? "var(--green)" : "var(--color-error)",
+                  progress === 100
+                    ? "var(--color-success)"
+                    : "var(--color-error)",
               }}
             />
           </Tooltip>

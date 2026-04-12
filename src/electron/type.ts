@@ -502,10 +502,18 @@ export type IExtension = {
   iconPath?: string;
 };
 
+export enum WorkflowVariableSourceType {
+  GLOBAL = "global",
+  WORKFLOW = "workflow",
+  OTHER_WORKFLOW = "other_workflow",
+}
+
 export type IWorkflowVariable = {
   variable: string;
   label?: string;
   value?: any;
+  sourceLabel?: string;
+  sourceType?: WorkflowVariableSourceType;
 };
 
 export type IStaticProxyGroup = {
@@ -2737,16 +2745,28 @@ export type IAgentSkill = {
 };
 
 export type IAgentSetting = {
+  chainKey: string;
+  nodeEndpointGroupId: number | null;
+  campaignId: number | null;
+  selectedProfileIds: number[];
+  isAllWallet: boolean;
+};
+
+export type ISetting = {
   id?: number;
   name: string;
   type: string;
   data: string;
   createAt?: number;
   updateAt?: number;
+  // parsed fields — populated by formatSetting, never stored in DB
+  agentSetting?: IAgentSetting;
+  workflowGlobalVariable?: IWorkflowVariable;
 };
 
-export enum AGENT_SETTING_TYPE {
+export enum SETTING_TYPE {
   AGENT_PRESET = "AGENT_PRESET",
+  WORKFLOW_GLOBAL_VARIABLE = "WORKFLOW_GLOBAL_VARIABLE",
 }
 
 export enum AgentMailboxStatus {

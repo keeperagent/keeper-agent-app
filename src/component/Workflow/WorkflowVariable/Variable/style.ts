@@ -2,6 +2,9 @@ import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
+  max-width: 25rem;
+  position: relative;
+
   &:not(:last-of-type) {
     margin-bottom: 0.5rem;
   }
@@ -22,6 +25,31 @@ const Wrapper = styled.div`
     font-size: 1rem;
     font-weight: 500;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .source-label {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    opacity: 0.7;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top: 0.1rem;
+  }
+
+  .source-type-badge {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   .variable {
@@ -31,6 +59,12 @@ const Wrapper = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    .variable-name {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
 
     .icon {
       height: 1.1rem;

@@ -34,12 +34,12 @@ const GlobalStyle = createGlobalStyle`
   /* change default color when select text */
   ::selection {
     background: var(--color-primary) !important;
-    color: var(--white) !important;
+    color: var(--color-white) !important;
   }
 
   ::-moz-selection { /* Code for Firefox */
     background: var(--color-primary) !important;
-    color: var(--white) !important;
+    color: var(--color-white) !important;
   }
 
   :root {
@@ -98,15 +98,7 @@ const GlobalStyle = createGlobalStyle`
     --background-brown: rgb(197, 104, 36, 0.3);
     --background-dark-light: rgba(0, 0, 0, 0.03);
     --telegram-color: #229ED9;
-
-    --white: #FFF;
-    --green: #16BF78;
-    --grey-light: #CDD9ED;
-    --grey-dark: #3F4656;
     --primary-light: #7699FF;
-    --dark: #1C212E;
-    --sand-light: #EDD9A9;
-    --sand: #DCB773;
   }
 
   .custom-input {

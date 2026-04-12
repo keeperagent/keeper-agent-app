@@ -15,6 +15,8 @@ import {
   IJob,
   IWorkflow,
   IAgentTask,
+  ISetting,
+  SETTING_TYPE,
 } from "@/electron/type";
 import { encryptionService } from "./encrypt";
 
@@ -363,6 +365,30 @@ const formatAgentMailbox = (raw: any): IAgentMailbox => {
   };
 };
 
+const formatSetting = (raw: any): ISetting => {
+  const formatedData = formatDBResponse(raw) as ISetting;
+
+  try {
+    const parsed = JSON.parse(formatedData.data || "{}");
+    if (formatedData.type === SETTING_TYPE.AGENT_PRESET) {
+      formatedData.agentSetting = {
+        chainKey: parsed.chainKey || "",
+        nodeEndpointGroupId: parsed.nodeEndpointGroupId || null,
+        campaignId: parsed.campaignId || null,
+        selectedProfileIds: JSON.parse(parsed.selectedProfileIds || "[]"),
+        isAllWallet: parsed.isAllWallet !== false,
+      };
+    } else if (formatedData.type === SETTING_TYPE.WORKFLOW_GLOBAL_VARIABLE) {
+      formatedData.workflowGlobalVariable = {
+        variable: formatedData.name,
+        label: parsed.label || "",
+        value: parsed.value || "",
+      };
+    }
+  } catch {}
+  return formatedData;
+};
+
 export {
   formatDBResponse,
   formatResourceGroup,
@@ -378,4 +404,5 @@ export {
   formatJob,
   formatAgentMailbox,
   formatAgentTask,
+  formatSetting,
 };

@@ -238,7 +238,9 @@ const HttpRequest = (props: Props) => {
                 onChange={onChangeMethod}
               >
                 <Option value={HTTP_METHOD.GET}>
-                  <span style={{ color: "var(--green)", fontWeight: 500 }}>
+                  <span
+                    style={{ color: "var(--color-success)", fontWeight: 500 }}
+                  >
                     GET
                   </span>
                 </Option>

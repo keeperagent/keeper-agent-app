@@ -18,13 +18,13 @@ import {
   useTranslation,
 } from "@/hook";
 import {
-  useGetListAgentSetting,
-  useCreateAgentSetting,
-  useDeleteAgentSetting,
-} from "@/hook/agentSetting";
+  useGetListSetting,
+  useCreateSetting,
+  useDeleteSetting,
+} from "@/hook/setting";
 import {
-  IAgentSetting,
-  AGENT_SETTING_TYPE,
+  ISetting,
+  SETTING_TYPE,
   ICampaign,
   INodeEndpointGroup,
 } from "@/electron/type";
@@ -70,9 +70,9 @@ const ContextBar = (props: any) => {
   const { translate, locale } = useTranslation();
   const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
   const { getListCampaign } = useGetListCampaign();
-  const { getListAgentSetting } = useGetListAgentSetting();
-  const { createAgentSetting } = useCreateAgentSetting();
-  const { deleteAgentSetting } = useDeleteAgentSetting();
+  const { getListSetting } = useGetListSetting();
+  const { createSetting } = useCreateSetting();
+  const { deleteSetting } = useDeleteSetting();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [presetPopoverOpen, setPresetPopoverOpen] = useState(false);
@@ -81,10 +81,10 @@ const ContextBar = (props: any) => {
   useEffect(() => {
     getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
     getListCampaign({ page: 1, pageSize: 1000 });
-    getListAgentSetting({
+    getListSetting({
       page: 1,
       pageSize: 1000,
-      type: AGENT_SETTING_TYPE.AGENT_PRESET,
+      type: SETTING_TYPE.AGENT_PRESET,
     });
   }, []);
 
@@ -119,15 +119,15 @@ const ContextBar = (props: any) => {
   const hasMatchingPreset = useMemo(() => {
     const currentProfileIds = JSON.stringify(listProfileId || []);
 
-    return listAgentSetting?.some((setting: IAgentSetting) => {
-      const parsed = JSON.parse(setting.data || "{}");
-
+    return listAgentSetting?.some((setting: ISetting) => {
+      const agentSetting = setting.agentSetting;
       return (
-        parsed.chainKey === chainKey &&
-        parsed.nodeEndpointGroupId === nodeEndpointGroupId &&
-        parsed.campaignId === campaignId &&
-        parsed.selectedProfileIds === currentProfileIds &&
-        parsed.isAllWallet === isAllWallet
+        agentSetting?.chainKey === chainKey &&
+        agentSetting?.nodeEndpointGroupId === nodeEndpointGroupId &&
+        agentSetting?.campaignId === campaignId &&
+        JSON.stringify(agentSetting?.selectedProfileIds || []) ===
+          currentProfileIds &&
+        agentSetting?.isAllWallet === isAllWallet
       );
     });
   }, [
@@ -147,19 +147,20 @@ const ContextBar = (props: any) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const onLoadPreset = (setting: IAgentSetting) => {
-    const parsed = JSON.parse(setting.data || "{}");
-    props?.actSaveChainKey(parsed.chainKey || "");
-    props?.actSaveNodeEndpointGroupId(parsed.nodeEndpointGroupId || null);
-    props?.actSaveCampaignId(parsed.campaignId || null);
-    props?.actSaveIsAllWallet(parsed.isAllWallet !== false);
-    const profileIds = JSON.parse(parsed.selectedProfileIds || "[]");
-    props?.actSaveListProfileId(profileIds);
+  const onLoadPreset = (setting: ISetting) => {
+    const agentSetting = setting.agentSetting;
+    props?.actSaveChainKey(agentSetting?.chainKey || "");
+    props?.actSaveNodeEndpointGroupId(
+      agentSetting?.nodeEndpointGroupId || null,
+    );
+    props?.actSaveCampaignId(agentSetting?.campaignId || null);
+    props?.actSaveIsAllWallet(agentSetting?.isAllWallet !== false);
+    props?.actSaveListProfileId(agentSetting?.selectedProfileIds || []);
     setPresetPopoverOpen(false);
   };
 
   const onDeletePreset = (presetId: number) => {
-    deleteAgentSetting(presetId);
+    deleteSetting(presetId);
   };
 
   const onDrawerSavePreset = () => {
@@ -168,9 +169,9 @@ const ContextBar = (props: any) => {
       return;
     }
 
-    createAgentSetting({
+    createSetting({
       name: drawerPresetName.trim(),
-      type: AGENT_SETTING_TYPE.AGENT_PRESET,
+      type: SETTING_TYPE.AGENT_PRESET,
       data: JSON.stringify({
         chainKey: chainKey || "",
         nodeEndpointGroupId: nodeEndpointGroupId || null,
@@ -190,7 +191,7 @@ const ContextBar = (props: any) => {
         </div>
       )}
 
-      {listAgentSetting?.map((setting: IAgentSetting) => (
+      {listAgentSetting?.map((setting: ISetting) => (
         <div
           key={setting.id}
           className="preset-item"
@@ -433,7 +434,7 @@ const ContextBar = (props: any) => {
           )}
 
           <div className="list-preset">
-            {listAgentSetting?.map((setting: IAgentSetting) => (
+            {listAgentSetting?.map((setting: ISetting) => (
               <PresetItem
                 key={setting.id}
                 setting={setting}
@@ -460,7 +461,7 @@ export default connect(
     isAllWallet: state?.Agent?.isAllWallet,
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
     listCampaign: state?.Campaign?.listCampaign,
-    listAgentSetting: state?.AgentSetting?.listAgentSetting,
+    listAgentSetting: state?.Setting?.listSetting,
   }),
   {
     actSaveChainKey,

@@ -2,7 +2,7 @@ import { DataTypes, Sequelize } from "sequelize";
 
 export default (db: Sequelize) =>
   db.define(
-    "AgentSetting",
+    "Setting",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -34,5 +34,11 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ["name", "type"],
+        },
+      ],
     },
   );
