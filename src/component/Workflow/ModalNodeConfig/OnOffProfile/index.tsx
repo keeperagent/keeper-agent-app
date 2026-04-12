@@ -47,6 +47,7 @@ const OnOffProfile = (props: Props) => {
       onError: config?.onError || NODE_ACTION.PAUSE_THREAD,
       profileStatus: config?.profileStatus || PROFILE_STATUS.ACTIVE,
       timeout: config?.timeout || DEFAULT_TIMEOUT / 1000,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
   }, [isModalOpen, config, form]);
@@ -67,6 +68,7 @@ const OnOffProfile = (props: Props) => {
         onError,
         timeout,
         profileStatus,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -77,6 +79,7 @@ const OnOffProfile = (props: Props) => {
         "onError",
         "timeout",
         "profileStatus",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -90,6 +93,7 @@ const OnOffProfile = (props: Props) => {
         timeout,
         profileStatus,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

@@ -190,7 +190,7 @@ const TypeText = (props: Props) => {
             >
               <InputNumber
                 placeholder={translate("workflow.egSpeedType")}
-                className="custom-input-number"
+                className="custom-input"
                 size="large"
                 style={{ width: "100%" }}
                 min={0}
@@ -293,7 +293,9 @@ const TypeText = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideMaxConcurrency={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

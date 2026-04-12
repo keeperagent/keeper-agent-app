@@ -133,6 +133,7 @@ const SaveResource = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setMode((config?.mode as ENCRYPT_MODE) || ENCRYPT_MODE.NO_ENSCRYPT);
@@ -172,6 +173,7 @@ const SaveResource = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
         ...rest
       } = await form?.validateFields([
         "sleep",
@@ -183,6 +185,7 @@ const SaveResource = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
         ...listFieldName,
       ]);
       if (workflowId && nodeId && isEncryptKeyTouched) {
@@ -208,6 +211,7 @@ const SaveResource = (props: Props) => {
         alertTelegramWhenError,
         retry: 0,
         ...rest,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

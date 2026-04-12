@@ -120,6 +120,7 @@ const StopWorkflow = (props: Props) => {
             hideTelegramCheckbox={true}
             hideTimeout={true}
             hideWaitingTime={true}
+            hideMaxConcurrency={true}
           />
         )}
 

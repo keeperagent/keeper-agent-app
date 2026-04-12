@@ -108,6 +108,7 @@ const TransferToken = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setMode(config?.tokenType || TOKEN_TYPE.NATIVE_TOKEN);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -149,6 +150,7 @@ const TransferToken = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -168,6 +170,7 @@ const TransferToken = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -194,6 +197,7 @@ const TransferToken = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

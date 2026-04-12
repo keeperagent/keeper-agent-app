@@ -112,7 +112,9 @@ const GoBack = (props: Props) => {
       />
 
       <Form layout="vertical" form={form} initialValues={{ sleep: 0 }}>
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideMaxConcurrency={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

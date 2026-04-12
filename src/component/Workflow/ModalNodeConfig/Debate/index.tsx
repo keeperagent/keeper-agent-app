@@ -73,6 +73,7 @@ const Debate = (props: Props) => {
       judgeAgentProfileId: config?.judgeAgentProfileId,
       judgePrompt: config?.judgePrompt || DEFAULT_JUDGE_PROMPT,
       includeTranscript: config?.includeTranscript || false,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -100,6 +101,7 @@ const Debate = (props: Props) => {
         judgeAgentProfileId,
         judgePrompt,
         includeTranscript,
+        maxConcurrency,
       } = await form.validateFields();
 
       onSaveNodeConfig({
@@ -122,6 +124,7 @@ const Debate = (props: Props) => {
         judgeAgentProfileId,
         judgePrompt,
         includeTranscript,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

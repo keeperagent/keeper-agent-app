@@ -50,6 +50,7 @@ const SnipeTelegram = (props: Props) => {
       profileMode:
         config?.profileMode || TELEGRAM_SNIPER_MODE.ONE_EVENT_ONE_PROFILE,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -76,6 +77,7 @@ const SnipeTelegram = (props: Props) => {
         variable,
         profileMode,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -91,6 +93,7 @@ const SnipeTelegram = (props: Props) => {
         "variable",
         "profileMode",
         "retry",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -111,6 +114,7 @@ const SnipeTelegram = (props: Props) => {
         variable,
         profileMode,
         retry,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

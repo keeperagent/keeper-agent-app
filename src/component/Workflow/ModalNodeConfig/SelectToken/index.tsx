@@ -90,6 +90,7 @@ const SelectToken = (props: Props) => {
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
       walletAddress: config?.walletAddress,
       chainType: config?.chainType || CHAIN_TYPE.EVM,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -125,6 +126,7 @@ const SelectToken = (props: Props) => {
         nodeEndpointGroupId,
         chainType,
         walletAddress,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -138,6 +140,7 @@ const SelectToken = (props: Props) => {
         "nodeEndpointGroupId",
         "chainType",
         "walletAddress",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -160,6 +163,7 @@ const SelectToken = (props: Props) => {
             option?.tokenName && option?.tokenAddress,
         ),
         walletAddress,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

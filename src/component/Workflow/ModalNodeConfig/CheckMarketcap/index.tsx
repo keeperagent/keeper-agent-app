@@ -84,6 +84,7 @@ const CheckMarketcap = (props: Props) => {
       compareValue: config?.compareValue || 100000,
       poolInterval: config?.poolInterval || 5,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -118,6 +119,7 @@ const CheckMarketcap = (props: Props) => {
         compareCondition,
         compareValue,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -139,6 +141,7 @@ const CheckMarketcap = (props: Props) => {
         "compareCondition",
         "compareValue",
         "retry",
+        "maxConcurrency",
       ]);
 
       if (chainType === CHAIN_TYPE.SOLANA) {
@@ -176,6 +179,7 @@ const CheckMarketcap = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

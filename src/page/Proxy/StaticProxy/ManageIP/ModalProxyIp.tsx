@@ -192,7 +192,7 @@ const ModalProxyIp = (props: any) => {
             >
               <InputNumber
                 placeholder={translate("proxy.enterPort")}
-                className="custom-input-number"
+                className="custom-input"
                 size="large"
                 style={{ width: "100%" }}
               />

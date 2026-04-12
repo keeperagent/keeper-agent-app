@@ -83,6 +83,7 @@ const ApproveRevokeEVM = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsUnlimitedAmount(config?.isUnlimitedAmount || false);
     setIsRevoke(Boolean(config?.isRevoke));
@@ -124,6 +125,7 @@ const ApproveRevokeEVM = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -143,6 +145,7 @@ const ApproveRevokeEVM = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -169,6 +172,7 @@ const ApproveRevokeEVM = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

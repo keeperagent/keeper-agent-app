@@ -6,7 +6,7 @@ import { DownArrowIcon } from "@/component/Icon";
 import { RootState } from "@/redux/store";
 import { actSetSidebarOpen } from "@/redux/layout";
 import { MenuItemWrapper } from "./style";
-import { formatPathName } from "./index";
+import { formatPathName } from "./util";
 
 interface SubMenuChild {
   label: string;
@@ -39,7 +39,7 @@ const SubMenuItem = (props: SubMenuItemProps) => {
       ...item,
       url: formatPathName(item?.url),
     })),
-    { url: pathname }
+    { url: pathname },
   );
 
   useEffect(() => {
@@ -51,13 +51,13 @@ const SubMenuItem = (props: SubMenuItemProps) => {
   const onShowMenu = () => {
     if (menuClassname.includes("show-menu")) {
       setMenuClassname(
-        active ? "menu-item-wrapper active" : "menu-item-wrapper"
+        active ? "menu-item-wrapper active" : "menu-item-wrapper",
       );
     } else {
       setMenuClassname(
         active
           ? "menu-item-wrapper show-menu active"
-          : "menu-item-wrapper show-menu"
+          : "menu-item-wrapper show-menu",
       );
     }
   };
@@ -118,5 +118,5 @@ export default connect(
     isSidebarOpen: state.Layout.isSidebarOpen,
     isLightMode: state.Layout.isLightMode,
   }),
-  { actSetSidebarOpen }
+  { actSetSidebarOpen },
 )(SubMenuItem);

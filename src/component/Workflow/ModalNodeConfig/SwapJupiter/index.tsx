@@ -102,6 +102,7 @@ const SwapJupiter = (props: Props) => {
           ? true
           : Boolean(config?.swapInput?.shouldWaitTransactionComfirmed),
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -149,6 +150,7 @@ const SwapJupiter = (props: Props) => {
         shouldWaitTransactionComfirmed,
         pritorityFeeMicroLamport,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -172,6 +174,7 @@ const SwapJupiter = (props: Props) => {
         "shouldWaitTransactionComfirmed",
         "pritorityFeeMicroLamport",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -204,6 +207,7 @@ const SwapJupiter = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

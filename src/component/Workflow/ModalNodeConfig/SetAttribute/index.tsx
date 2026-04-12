@@ -44,6 +44,7 @@ const SetAttribute = (props: Props) => {
       leftSide: config?.skipSetting?.leftSide,
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -66,6 +67,7 @@ const SetAttribute = (props: Props) => {
         rightSide,
         comparedValue,
         listValue,
+        maxConcurrency,
       } = await form?.validateFields([
         "variable",
         "value",
@@ -76,6 +78,7 @@ const SetAttribute = (props: Props) => {
         "rightSide",
         "comparedValue",
         "listValue",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -94,6 +97,7 @@ const SetAttribute = (props: Props) => {
           isSkip,
         },
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

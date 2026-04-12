@@ -54,6 +54,7 @@ const AskAgent = (props: Props) => {
       model: config?.model || "gpt-4o-mini",
       apiKey: config?.apiKey || preference?.openAIApiKey,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -80,6 +81,7 @@ const AskAgent = (props: Props) => {
         model,
         apiKey,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -95,6 +97,7 @@ const AskAgent = (props: Props) => {
         "model",
         "apiKey",
         "retry",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -115,6 +118,7 @@ const AskAgent = (props: Props) => {
         model,
         apiKey,
         retry,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

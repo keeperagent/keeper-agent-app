@@ -75,6 +75,7 @@ const ConvertTokenAmount = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setChainType(config?.chainType || CHAIN_TYPE.EVM);
     setMode(config?.tokenType || TOKEN_TYPE.NATIVE_TOKEN);
@@ -112,6 +113,7 @@ const ConvertTokenAmount = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -127,6 +129,7 @@ const ConvertTokenAmount = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -150,6 +153,7 @@ const ConvertTokenAmount = (props: Props) => {
         },
         alertTelegramWhenError,
         retry: 0,
+        maxConcurrency,
       });
 
       onCloseModal();

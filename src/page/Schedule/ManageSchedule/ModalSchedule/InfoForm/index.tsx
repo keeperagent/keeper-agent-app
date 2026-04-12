@@ -197,7 +197,7 @@ const InfoForm = (props: IProps) => {
                   placeholder={translate(
                     "schedule.durationBetweenRunPlaceholder",
                   )}
-                  className="custom-input-number"
+                  className="custom-input"
                   size="large"
                   min={0}
                   style={{ width: "100%" }}

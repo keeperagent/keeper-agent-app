@@ -65,6 +65,7 @@ const Checkpoint = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -85,6 +86,7 @@ const Checkpoint = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "variableName",
@@ -98,6 +100,7 @@ const Checkpoint = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         name,
@@ -116,6 +119,7 @@ const Checkpoint = (props: Props) => {
           isSkip,
         },
         alertTelegramWhenError,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

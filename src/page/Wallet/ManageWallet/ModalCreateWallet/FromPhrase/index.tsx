@@ -224,7 +224,7 @@ const FromPhrase = (props: IFromPhraseProps) => {
         >
           <InputNumber
             placeholder={`${translate("wallet.quantityCreate")}:`}
-            className="custom-input-number"
+            className="custom-input"
             style={{ width: "100%" }}
             size="large"
             min={1}

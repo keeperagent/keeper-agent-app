@@ -37,6 +37,7 @@ const RandomOnOff = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -56,6 +57,7 @@ const RandomOnOff = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -64,6 +66,7 @@ const RandomOnOff = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -80,6 +83,7 @@ const RandomOnOff = (props: Props) => {
         },
         alertTelegramWhenError,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import { actSetSidebarOpen } from "@/redux/layout";
 import { MenuItemWrapper } from "./style";
-import { formatPathName } from "./index";
+import { formatPathName } from "./util";
 import BeforeRouteChangeBlocker from "../../BeforeRouteChangeBlocker";
 
 interface MenuItemProps {

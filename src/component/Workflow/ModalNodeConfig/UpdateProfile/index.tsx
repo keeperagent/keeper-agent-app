@@ -57,6 +57,7 @@ const UpdateProfile = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -79,6 +80,7 @@ const UpdateProfile = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -90,6 +92,7 @@ const UpdateProfile = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
 
       const listColumn = getCampaignAdditionalColumn(selectedCampaign);
@@ -113,6 +116,7 @@ const UpdateProfile = (props: Props) => {
         },
         alertTelegramWhenError,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

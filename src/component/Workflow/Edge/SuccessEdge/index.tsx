@@ -45,6 +45,9 @@ const SuccessEdge = (props: any) => {
             selected={selected}
             conditionLabel="SUCCESS"
             conditionColor="var(--color-success)"
+            maxConcurrency={
+              (targetNode?.data?.config as any)?.maxConcurrency || 0
+            }
           />
         </EdgeLabelRenderer>
       )}

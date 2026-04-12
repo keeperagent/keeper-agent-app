@@ -77,6 +77,7 @@ const CustomNode = (props: any) => {
     mapExtensionID,
     preference,
     selectedNodeID,
+    selectedCampaign,
   } = props;
   const nodeData: INodeData = data;
   const { config, version } = nodeData;
@@ -157,7 +158,7 @@ const CustomNode = (props: any) => {
   const nodeStatus = useMemo(() => {
     if (
       nodeData?.config?.workflowType === WORKFLOW_TYPE.UPDATE_PROFILE &&
-      !props?.selectedCampaign
+      !selectedCampaign
     ) {
       setWarning(translate("workflow.nodeNeedRunInCampaign"));
       return NODE_STATUS.INVALID;
@@ -230,7 +231,7 @@ const CustomNode = (props: any) => {
     }
 
     return status;
-  }, [nodeData, mapExtensionID, status, preference]);
+  }, [nodeData, mapExtensionID, status, preference, selectedCampaign]);
 
   useEffect(() => {
     if (previousSelected.current === selected) {

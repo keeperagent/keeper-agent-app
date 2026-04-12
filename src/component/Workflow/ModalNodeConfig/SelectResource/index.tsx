@@ -100,6 +100,7 @@ const SelectResource = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -139,6 +140,7 @@ const SelectResource = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -151,6 +153,7 @@ const SelectResource = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
 
       if (workflowId && nodeId && isEncryptKeyTouched) {
@@ -175,6 +178,7 @@ const SelectResource = (props: Props) => {
         },
         alertTelegramWhenError,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

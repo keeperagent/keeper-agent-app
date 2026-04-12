@@ -229,7 +229,7 @@ const AutoGenerate = (props: IAutoGenerateProps) => {
         >
           <InputNumber
             placeholder={`${translate("wallet.quantityCreate")}:`}
-            className="custom-input-number"
+            className="custom-input"
             size="large"
             style={{ width: "100%" }}
             min={1}

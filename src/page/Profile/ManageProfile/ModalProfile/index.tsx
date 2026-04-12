@@ -209,7 +209,7 @@ const ModalProfile = (props: IModalProfileProps) => {
               <div className="value">
                 <InputNumber
                   value={numberOfProfile}
-                  className="custom-input-number"
+                  className="custom-input"
                   style={{ width: "100%", marginTop: "1rem" }}
                   onChange={onChangeInput}
                   min={1}

@@ -133,6 +133,7 @@ const SwapUniswap = (props: Props) => {
           ? true
           : Boolean(config?.swapInput?.shouldWaitTransactionComfirmed),
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -156,7 +157,11 @@ const SwapUniswap = (props: Props) => {
     if (event?.target?.checked) {
       form?.setFieldValue("isOutputNativeToken", false);
     }
-    form.validateFields(["inputTokenAddress", "outputTokenAddress"]);
+    form.validateFields([
+      "inputTokenAddress",
+      "outputTokenAddress",
+      "maxConcurrency",
+    ]);
   };
 
   const onChangeIsOutputNativeToken = (event: any) => {
@@ -196,6 +201,7 @@ const SwapUniswap = (props: Props) => {
         gasPrice,
         shouldWaitTransactionComfirmed,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -267,6 +273,7 @@ const SwapUniswap = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

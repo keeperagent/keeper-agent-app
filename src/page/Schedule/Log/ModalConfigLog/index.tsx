@@ -67,7 +67,7 @@ const ModalConfigLog = (props: IProps) => {
           name="maxLogAge"
         >
           <InputNumber
-            className="custom-input-number"
+            className="custom-input"
             size="large"
             // @ts-ignore
             ref={inputRef}
@@ -84,5 +84,5 @@ export default connect(
   (state: RootState) => ({
     preference: state?.Preference?.preference,
   }),
-  {}
+  {},
 )(ModalConfigLog);

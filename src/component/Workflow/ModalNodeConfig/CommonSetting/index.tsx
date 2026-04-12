@@ -10,6 +10,7 @@ type IProps = {
   hideCondition?: boolean;
   hideTelegramCheckbox?: boolean;
   hideRetry?: boolean;
+  hideMaxConcurrency?: boolean;
 };
 
 const CommonSetting = (props: IProps) => {
@@ -19,6 +20,7 @@ const CommonSetting = (props: IProps) => {
     hideCondition,
     hideTelegramCheckbox,
     hideRetry,
+    hideMaxConcurrency,
   } = props;
 
   const { translate } = useTranslation();
@@ -52,7 +54,7 @@ const CommonSetting = (props: IProps) => {
         <Form.Item label={`${translate("workflow.sleepTime")}:`} name="sleep">
           <InputNumber
             placeholder={translate("workflow.placeholderSleepTime")}
-            className="custom-input-number"
+            className="custom-input"
             size="large"
             style={{ width: "100%" }}
             min={0}
@@ -67,7 +69,7 @@ const CommonSetting = (props: IProps) => {
         >
           <InputNumber
             placeholder={translate("workflow.placeholderSleepTime")}
-            className="custom-input-number"
+            className="custom-input"
             size="large"
             style={{ width: "100%" }}
             min={3}
@@ -76,12 +78,33 @@ const CommonSetting = (props: IProps) => {
       )}
 
       {!hideRetry && (
-        <Form.Item label={`${translate("workflow.retryLabel")}:`} name="retry">
+        <Form.Item
+          label={`${translate("workflow.retryLabel")}:`}
+          name="retry"
+          tooltip={translate("workflow.retryTooltip")}
+        >
           <InputNumber
-            className="custom-input-number"
+            className="custom-input"
             size="large"
             style={{ width: "100%" }}
             min={0}
+          />
+        </Form.Item>
+      )}
+
+      {!hideMaxConcurrency && (
+        <Form.Item
+          label={`${translate("workflow.maxConcurrency")}:`}
+          name="maxConcurrency"
+          tooltip={translate("workflow.maxConcurrencyTooltip")}
+        >
+          <InputNumber
+            className="custom-input"
+            size="large"
+            style={{ width: "100%" }}
+            min={0}
+            placeholder="0"
+            defaultValue={0}
           />
         </Form.Item>
       )}

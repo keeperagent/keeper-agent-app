@@ -259,7 +259,11 @@ const CheckElementExist = (props: Props) => {
         )}
 
         {activeTab === TAB.SETTING && (
-          <CommonSetting hideCondition={true} hideTelegramCheckbox={true} />
+          <CommonSetting
+            hideCondition={true}
+            hideTelegramCheckbox={true}
+            hideMaxConcurrency={true}
+          />
         )}
 
         {activeTab === TAB.SKIP && (

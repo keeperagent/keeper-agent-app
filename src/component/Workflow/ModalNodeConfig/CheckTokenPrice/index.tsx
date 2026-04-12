@@ -83,6 +83,7 @@ const CheckTokenPrice = (props: Props) => {
       compareValue: config?.compareValue || 0.1,
       poolInterval: config?.poolInterval || 5,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -117,6 +118,7 @@ const CheckTokenPrice = (props: Props) => {
         compareCondition,
         compareValue,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -138,6 +140,7 @@ const CheckTokenPrice = (props: Props) => {
         "compareCondition",
         "compareValue",
         "retry",
+        "maxConcurrency",
       ]);
 
       if (chainType === CHAIN_TYPE.SOLANA) {
@@ -175,6 +178,7 @@ const CheckTokenPrice = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

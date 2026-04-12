@@ -693,6 +693,7 @@ export type IUpdateProfileNodeConfig = {
   sleep: number;
   timeout?: number;
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting;
   alertTelegramWhenError?: boolean;
 
@@ -712,6 +713,7 @@ export type ICalculateNodeConfig = {
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   variable?: string; // variable name to store the result
 
   leftSideEquation?: string; // left side of the equation
@@ -730,6 +732,7 @@ export type ICheckConditionNodeConfig = {
   sleep: number; // sleep time between each node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
+  maxConcurrency?: number; // max concurrent threads for this node
   retry?: number; // number of retries on failure
 
   leftSide?: string; // left side of the condition
@@ -747,6 +750,7 @@ export type IOnOffProfileNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -766,6 +770,7 @@ export type IGetRandomValueNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -788,6 +793,7 @@ export type ISaveResourceNodeConfig = {
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
 
   col1?: string; // value of the first column
   col2?: string; // value of the second column
@@ -837,6 +843,7 @@ export type ISaveWalletNodeConfig = {
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
 
   phrase?: string; // phrase of the wallet
   address?: string; // address of the wallet
@@ -1127,6 +1134,7 @@ export type ISetAttributeNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the value
@@ -1236,6 +1244,7 @@ export type ISelectTokenNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1260,6 +1269,7 @@ export type ISelectChainNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1285,6 +1295,7 @@ export type ISendTelegramNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1304,6 +1315,7 @@ export type ISnipeTelegramNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1323,6 +1335,7 @@ export type ISaveLogNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1354,6 +1367,7 @@ export type IRandomOnOffNodeConfig = {
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
 
   truePercentage?: number; // true percentage, how many percentage of the time to be true
 };
@@ -1452,6 +1466,7 @@ export type ICheckElementExistNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1471,6 +1486,7 @@ export type IGetWalletBalanceNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1492,6 +1508,7 @@ export type IConvertTokenAmountNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1513,6 +1530,7 @@ export type ITransferTokenNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1538,6 +1556,7 @@ export type IApproveRevokeEVMNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1562,6 +1581,7 @@ export type ISwapUniswapNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
 
@@ -1608,6 +1628,7 @@ export type ISwapKyberswapNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error
   variable?: string; // variable name to store the result
@@ -1652,6 +1673,7 @@ export type ISwapJupiterNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1683,6 +1705,7 @@ export type ISwapCetusNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1713,6 +1736,7 @@ export type IExecuteTransactionNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1744,6 +1768,7 @@ export type IGetTokenPriceNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1765,6 +1790,7 @@ export type ICheckTokenPriceNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1790,6 +1816,7 @@ export type ICheckMarketcapNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1815,6 +1842,7 @@ export type IGetGasPriceNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1833,6 +1861,7 @@ export type IGetPriorityFeeNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1851,6 +1880,7 @@ export type IGenerateVanityAddressNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -1871,6 +1901,7 @@ export type IEVMSnipeContractNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1903,6 +1934,7 @@ export type IEVMReadFromContractNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -1924,6 +1956,7 @@ export type IEVMWriteContractNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2197,6 +2230,7 @@ export type ISelectWalletNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2217,6 +2251,7 @@ export type ICheckResourceNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2237,6 +2272,7 @@ export type IHttpRequestNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2273,6 +2309,7 @@ export type ILaunchTokenPumpfunNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2308,6 +2345,7 @@ export type ILaunchTokenBonkfunNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
@@ -2363,6 +2401,7 @@ export type IGenerateImageNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable?: string; // variable name to store the result
@@ -2388,6 +2427,7 @@ export type IRunAgentNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
   variable: string; // variable name to store the result
@@ -2397,40 +2437,44 @@ export type IRunAgentNodeConfig = {
 };
 
 export type IDebateNodeConfig = {
-  workflowType?: WORKFLOW_TYPE;
-  status?: NODE_STATUS;
-  name: string;
-  onError?: NODE_ACTION;
-  onSuccess?: NODE_ACTION;
-  sleep: number;
-  timeout?: number;
-  retry?: number;
-  skipSetting?: ISkipSetting;
-  alertTelegramWhenError?: boolean;
-  variable: string;
-  topic: string;
-  rounds: number;
-  agentAProfileId?: number;
-  agentAPersona: string;
-  agentBProfileId?: number;
-  agentBPersona: string;
-  judgeAgentProfileId?: number;
-  judgePrompt: string;
-  includeTranscript?: boolean;
+  workflowType?: WORKFLOW_TYPE; // workflow type to run debate
+  status?: NODE_STATUS; // status of the node
+  name: string; // name of the node
+  onError?: NODE_ACTION; // action to perform when error occurs
+  onSuccess?: NODE_ACTION; // action to perform when success
+  sleep: number; // sleep time between each node
+  timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
+  skipSetting?: ISkipSetting; // skip setting for the node
+  alertTelegramWhenError?: boolean; // alert telegram when error occurs
+
+  variable: string; // variable name to store the result
+  topic: string; // topic to debate
+  rounds: number; // number of rounds to run
+  agentAProfileId?: number; // agent A profile id to use
+  agentAPersona: string; // persona of the agent A
+  agentBProfileId?: number; // agent B profile id to use
+  agentBPersona: string; // persona of the agent B
+  judgeAgentProfileId?: number; // judge agent profile id to use
+  judgePrompt: string; // prompt to use for the judge
+  includeTranscript?: boolean; // include transcript in the output
 };
 
 // CHECKPOINT @workflowType
 export type ICheckpointNodeConfig = {
-  workflowType?: WORKFLOW_TYPE;
-  status?: NODE_STATUS;
-  name: string;
-  onError?: NODE_ACTION;
-  onSuccess?: NODE_ACTION;
-  sleep: number;
-  timeout?: number;
-  retry?: number;
-  skipSetting?: ISkipSetting;
-  alertTelegramWhenError?: boolean;
+  workflowType?: WORKFLOW_TYPE; // workflow type to write to checkpoint
+  status?: NODE_STATUS; // status of the node
+  name: string; // name of the node
+  onError?: NODE_ACTION; // action to perform when error occurs
+  onSuccess?: NODE_ACTION; // action to perform when success
+  sleep: number; // sleep time between each node
+  timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
+  skipSetting?: ISkipSetting; // skip setting for the node
+  alertTelegramWhenError?: boolean; // alert telegram when error occurs
+
   variableName: string; // existing variable key to update
   value: string; // value to write
 };
@@ -2441,8 +2485,29 @@ export type IGenerateProfileNodeConfig = {
   status?: NODE_STATUS; // status of the node
   name: string; // name of the node
   sleep: number; // sleep time between each node
+  maxConcurrency?: number; // max concurrent threads for this node
 
   listProfile: IFakeProfile[]; // list of fake profiles to generate
+};
+
+// ASK_AGENT @workflowType
+export type IAskAgentNodeConfig = {
+  workflowType?: WORKFLOW_TYPE; // type of the workflow
+  status?: NODE_STATUS; // status of the node
+  name: string; // name of the node
+  onSuccess?: NODE_ACTION; // action to perform when success
+  onError?: NODE_ACTION; // action to perform when error occurs
+  sleep: number; // sleep time between each node
+  timeout?: number; // timeout for the node
+  retry?: number; // number of retries on failure
+  skipSetting?: ISkipSetting; // skip setting for the node
+  alertTelegramWhenError?: boolean; // alert telegram when error
+  maxConcurrency?: number; // max concurrent threads for this node
+
+  variable?: string; // variable name to store the result
+  prompt?: string; // prompt to ask the agent
+  model?: string; // model to use
+  apiKey?: string; // api key to use
 };
 
 // Preference

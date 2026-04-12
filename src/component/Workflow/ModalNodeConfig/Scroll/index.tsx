@@ -300,7 +300,7 @@ const Scroll = (props: Props) => {
                   name="yAxis"
                 >
                   <InputNumber
-                    className="custom-input-number"
+                    className="custom-input"
                     size="large"
                     style={{ width: "100%" }}
                     defaultValue={0}
@@ -311,7 +311,9 @@ const Scroll = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideMaxConcurrency={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

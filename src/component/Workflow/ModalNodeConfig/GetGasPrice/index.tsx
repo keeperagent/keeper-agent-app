@@ -70,6 +70,7 @@ const GetGasPrice = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -105,6 +106,7 @@ const GetGasPrice = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -119,6 +121,7 @@ const GetGasPrice = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -139,6 +142,7 @@ const GetGasPrice = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

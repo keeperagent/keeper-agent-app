@@ -29,14 +29,6 @@ import { SearchInput } from "@/component/Input";
 import { SidebarWrapper } from "./style";
 import MenuItem from "./MenuItem";
 
-export const formatPathName = (pathname: string) => {
-  if (pathname.indexOf("?") !== -1) {
-    return pathname.slice(0, pathname.indexOf("?"));
-  } else {
-    return pathname;
-  }
-};
-
 interface IProps {
   isSidebarOpen: boolean;
   actSetModalGlobalSearchOpen: (payload: boolean) => void;

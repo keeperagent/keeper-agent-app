@@ -127,24 +127,6 @@ const GlobalStyle = createGlobalStyle`
       color: ${({ theme }: { theme: ITheme }) =>
         theme?.colorTextSecondary} !important;
     }
-  }
-
-  .custom-input-number {
-    background-color: ${({ theme }: { theme: ITheme }) =>
-      theme?.colorBgTransparent} !important;
-    border-radius: 0.4rem !important;
-    border: 1px solid transparent !important;
-    box-shadow: none !important;
-    font-size: 1.3rem !important;
-
-    input {
-      font-weight: 500 !important;
-      height: 35px !important;
-    }
-
-    &:hover, &:focus {
-      border: 1px solid var(--color-primary) !important;
-    }
 
     &.ant-input-number-disabled {
       background-color: ${({ theme }: { theme: ITheme }) =>

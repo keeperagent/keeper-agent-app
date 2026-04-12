@@ -51,6 +51,9 @@ const ErrorEdge = (props: any) => {
             selected={selected}
             conditionLabel="ERROR"
             conditionColor="var(--color-error)"
+            maxConcurrency={
+              (targetNode?.data?.config as any)?.maxConcurrency || 0
+            }
           />
         </EdgeLabelRenderer>
       )}

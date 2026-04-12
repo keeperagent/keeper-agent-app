@@ -52,6 +52,7 @@ const Calculate = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       onSuccess: config?.onSuccess || NODE_ACTION.CONTINUE_RUN,
       onError: config?.onError || NODE_ACTION.PAUSE_THREAD,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -76,6 +77,7 @@ const Calculate = (props: Props) => {
         leftSide,
         condition,
         rightSide,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -89,6 +91,7 @@ const Calculate = (props: Props) => {
         "leftSide",
         "condition",
         "rightSide",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -108,6 +111,7 @@ const Calculate = (props: Props) => {
           isSkip,
         },
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

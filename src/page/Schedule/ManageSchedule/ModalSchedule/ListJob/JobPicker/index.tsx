@@ -314,7 +314,7 @@ const JobPicker = (props: IProps) => {
                 >
                   <InputNumber
                     placeholder={translate("schedule.timeoutPlaceholder")}
-                    className="custom-input-number"
+                    className="custom-input"
                     size="large"
                     style={{ width: "100%" }}
                     min={1}

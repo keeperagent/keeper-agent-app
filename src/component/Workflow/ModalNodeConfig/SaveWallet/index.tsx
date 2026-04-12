@@ -84,6 +84,7 @@ const SaveWallet = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setMode(config?.mode || ENCRYPT_MODE.NO_ENSCRYPT);
@@ -118,6 +119,7 @@ const SaveWallet = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -131,6 +133,7 @@ const SaveWallet = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
       if (workflowId && nodeId && isEncryptKeyTouched) {
         await saveNodeSecret(workflowId, nodeId, encryptKey);
@@ -155,6 +158,7 @@ const SaveWallet = (props: Props) => {
         },
         alertTelegramWhenError,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

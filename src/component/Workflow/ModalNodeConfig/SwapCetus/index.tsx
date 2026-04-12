@@ -97,6 +97,7 @@ const SwapCetus = (props: Props) => {
           ? true
           : Boolean(config?.swapInput?.shouldWaitTransactionComfirmed),
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -140,6 +141,7 @@ const SwapCetus = (props: Props) => {
         shouldWaitTransactionComfirmed,
         gasPrice,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -163,6 +165,7 @@ const SwapCetus = (props: Props) => {
         "shouldWaitTransactionComfirmed",
         "gasPrice",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -194,6 +197,7 @@ const SwapCetus = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();
