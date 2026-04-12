@@ -219,6 +219,22 @@ const WorkflowSetting = ({ listSetting }: Props) => {
             name="variable"
             rules={[
               { required: true, message: translate("form.requiredField") },
+              {
+                validator: (_, value) => {
+                  if (!value) {
+                    return Promise.resolve();
+                  }
+                  const isDuplicated = listSetting.some(
+                    (item) =>
+                      item.name === value.trim().toUpperCase() &&
+                      item.id !== selectedItem?.id,
+                  );
+                  if (isDuplicated) {
+                    return Promise.reject(translate("form.duplicatedVariable"));
+                  }
+                  return Promise.resolve();
+                },
+              },
             ]}
           >
             <Input

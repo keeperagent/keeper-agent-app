@@ -32,9 +32,10 @@ export const settingController = () => {
     MESSAGE.CREATE_AGENT_SETTING_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [res] = await settingDB.createSetting(data);
+      const [res, err] = await settingDB.createSetting(data);
       event.reply(MESSAGE.CREATE_AGENT_SETTING_RES, {
         data: res,
+        error: err?.message,
       });
     },
   );
@@ -44,9 +45,10 @@ export const settingController = () => {
     MESSAGE.UPDATE_AGENT_SETTING_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [res] = await settingDB.updateSetting(data);
+      const [res, err] = await settingDB.updateSetting(data);
       event.reply(MESSAGE.UPDATE_AGENT_SETTING_RES, {
         data: res,
+        error: err?.message,
       });
     },
   );

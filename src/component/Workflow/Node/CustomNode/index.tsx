@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { connect } from "react-redux";
 import { Tooltip } from "antd";
 import { Handle, Position, useStore, useNodeId } from "@xyflow/react";
@@ -66,8 +66,6 @@ const WORKFLOW_TYPE_RABBY_WALLET = [
   WORKFLOW_TYPE.ADD_NETWORK_RABBY_WALLET,
 ];
 
-let previousSelected: any = null;
-
 const CustomNode = (props: any) => {
   const { translate } = useTranslation();
   const {
@@ -88,14 +86,9 @@ const CustomNode = (props: any) => {
   const connectionNodeId = useStore((state: any) => state.connection?.nodeId);
   const isTarget = connectionNodeId === nodeID;
   const [warning, setWarning] = useState("");
+  const previousSelected = useRef<any>(null);
 
   const { locale } = useTranslation();
-
-  useEffect(() => {
-    return () => {
-      previousSelected = false;
-    };
-  }, []);
 
   const SCRIPT_NAME = useMemo(() => {
     return SCRIPT_NAME_EN;
@@ -240,7 +233,7 @@ const CustomNode = (props: any) => {
   }, [nodeData, mapExtensionID, status, preference]);
 
   useEffect(() => {
-    if (previousSelected === selected) {
+    if (previousSelected.current === selected) {
       return;
     }
 
@@ -248,7 +241,7 @@ const CustomNode = (props: any) => {
       return;
     }
 
-    previousSelected = selected;
+    previousSelected.current = selected;
     props?.actSaveSelectedNode(selected ? nodeID : null);
     props?.actSetSelectedWorkflowType(config?.workflowType);
 

@@ -960,6 +960,7 @@
   "alert.canImportMultipleFile": "You can import multiple files at the same time",
   "alert.downloadSampleFile": "You download the sample file",
   "form.requiredField": "This field is required",
+  "form.duplicatedVariable": "This variable already exists",
   "select.select": "Select",
   "select.unSelect": "Unselect",
   "select.group": "Select group",

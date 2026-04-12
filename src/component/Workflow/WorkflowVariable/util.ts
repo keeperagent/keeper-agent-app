@@ -199,7 +199,7 @@ const getVariablesFromNodes = (
         const config = node?.data?.config as ISwapUniswapNodeConfig;
         const variable: IWorkflowVariable = {
           variable: config?.variable || "",
-          sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.SWAP_UNISWAP]} Processor`,
+          sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.SWAP_PANCAKESWAP]} Processor`,
         };
 
         if (variable?.variable) {
@@ -212,7 +212,7 @@ const getVariablesFromNodes = (
         const config = node?.data?.config as ISwapCetusNodeConfig;
         const variable: IWorkflowVariable = {
           variable: config?.variable || "",
-          sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.SWAP_UNISWAP]} Processor`,
+          sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.SWAP_CETUS]} Processor`,
         };
 
         if (variable?.variable) {

@@ -34,5 +34,11 @@ export default (db: Sequelize) =>
     },
     {
       timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ["name", "type"],
+        },
+      ],
     },
   );

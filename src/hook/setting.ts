@@ -9,6 +9,7 @@ import {
 } from "@/redux/setting";
 import type { IpcGetListSettingPayload } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
+import { message } from "antd";
 
 const useGetListSetting = () => {
   const {
@@ -32,7 +33,12 @@ const useCreateSetting = (options?: { onSuccess?: () => void }) => {
     MESSAGE.CREATE_AGENT_SETTING_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.data) dispatch(actSaveCreateSetting(payload.data));
+        if (payload?.data) {
+          dispatch(actSaveCreateSetting(payload.data));
+        }
+        if (payload?.error) {
+          message.error(payload.error);
+        }
         options?.onSuccess?.();
       },
     },
@@ -47,8 +53,13 @@ const useUpdateSetting = (options?: { onSuccess?: () => void }) => {
     MESSAGE.UPDATE_AGENT_SETTING_RES,
     {
       onSuccess: (payload, dispatch) => {
-        dispatch(actSaveUpdateSetting(payload?.data));
-        options?.onSuccess?.();
+        if (payload?.error) {
+          message.error(payload.error);
+        }
+        if (payload?.data) {
+          dispatch(actSaveUpdateSetting(payload.data));
+          options?.onSuccess?.();
+        }
       },
     },
   );
