@@ -66,9 +66,9 @@ const Queue = (props: IQueueProps) => {
   };
 
   const totalThread = useMemo(() => {
-    return selectedCampaign
-      ? selectedCampaign?.numberOfThread || 1
-      : selectedWorkflow?.numberOfThread || 1;
+    return (
+      selectedCampaign?.numberOfThread || selectedWorkflow?.numberOfThread || 1
+    );
   }, [selectedCampaign, selectedWorkflow]);
 
   const numberOfFlowProfile = useMemo(() => {

@@ -230,6 +230,7 @@ const SwapUniswap = (props: Props) => {
         "gasPrice",
         "shouldWaitTransactionComfirmed",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({

@@ -543,8 +543,16 @@ export class Workflow {
             (flowProfile?.config as any)?.maxConcurrency || numberOfThread;
           const nodeId = flowProfile?.nodeID!;
 
-          while (this.monitor.getNodeSlotCount(nodeId) >= maxConcurrency) {
+          while (
+            this.monitor.isRunning &&
+            this.monitor.getNodeSlotCount(nodeId) >= maxConcurrency
+          ) {
             await sleep(500);
+          }
+
+          if (!this.monitor.isRunning) {
+            await this.stopWorkflow();
+            break;
           }
 
           this.monitor.acquireNodeSlot(nodeId);

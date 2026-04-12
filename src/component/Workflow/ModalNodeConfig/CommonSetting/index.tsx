@@ -97,14 +97,14 @@ const CommonSetting = (props: IProps) => {
           label={`${translate("workflow.maxConcurrency")}:`}
           name="maxConcurrency"
           tooltip={translate("workflow.maxConcurrencyTooltip")}
+          initialValue={0}
         >
           <InputNumber
             className="custom-input"
             size="large"
             style={{ width: "100%" }}
             min={0}
-            placeholder="0"
-            defaultValue={0}
+            placeholder={translate("workflow.maxConcurrencyPlaceholder")}
           />
         </Form.Item>
       )}

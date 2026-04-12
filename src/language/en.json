@@ -447,6 +447,7 @@
   "workflow.retryTooltip": "Number of times to retry this processor if it fails, before moving to the error branch. Each retry re-executes only this processor, not the whole workflow.",
   "workflow.maxConcurrency": "Max concurrency",
   "workflow.maxConcurrencyTooltip": "Maximum number of profiles executing this processor at the same time. 0 means same as workflow thread count.",
+  "workflow.maxConcurrencyPlaceholder": "0 = no limit",
   "workflow.extensionPopup": "Extension popup",
   "workflow.validateNameFile": "Filename cannot contain special characters like / \\",
   "workflow.queue": "queue",

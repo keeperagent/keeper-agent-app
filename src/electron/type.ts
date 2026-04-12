@@ -673,6 +673,7 @@ export type INodeConfig =
   | ILaunchTokenBonkfunNodeConfig
   | IGenerateImageNodeConfig
   | IRunAgentNodeConfig
+  | IAskAgentNodeConfig
   | IDebateNodeConfig
   | ICheckpointNodeConfig;
 
@@ -1991,6 +1992,7 @@ export type IScrollNodeConfig = {
   sleep: number; // sleep time between each node
   timeout?: number; // timeout for the node
   retry?: number; // number of retries on failure
+  maxConcurrency?: number; // max concurrent threads for this node
   skipSetting?: ISkipSetting; // skip setting for the node
   alertTelegramWhenError?: boolean; // alert telegram when error occurs
 
