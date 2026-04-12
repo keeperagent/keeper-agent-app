@@ -2,6 +2,8 @@ import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
+  max-width: 25rem;
+
   &:not(:last-of-type) {
     margin-bottom: 0.5rem;
   }
@@ -22,6 +24,9 @@ const Wrapper = styled.div`
     font-size: 1rem;
     font-weight: 500;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   .variable {
@@ -31,6 +36,12 @@ const Wrapper = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    .variable-name {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
 
     .icon {
       height: 1.1rem;

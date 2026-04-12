@@ -2736,6 +2736,14 @@ export type IAgentSkill = {
   filePath?: string;
 };
 
+export type IAgentSetting = {
+  chainKey: string;
+  nodeEndpointGroupId: number | null;
+  campaignId: number | null;
+  selectedProfileIds: number[];
+  isAllWallet: boolean;
+};
+
 export type ISetting = {
   id?: number;
   name: string;
@@ -2743,6 +2751,9 @@ export type ISetting = {
   data: string;
   createAt?: number;
   updateAt?: number;
+  // parsed fields — populated by formatSetting, never stored in DB
+  agentSetting?: IAgentSetting;
+  workflowGlobalVariable?: IWorkflowVariable;
 };
 
 export enum SETTING_TYPE {

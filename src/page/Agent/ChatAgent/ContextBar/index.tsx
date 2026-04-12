@@ -120,14 +120,14 @@ const ContextBar = (props: any) => {
     const currentProfileIds = JSON.stringify(listProfileId || []);
 
     return listAgentSetting?.some((setting: ISetting) => {
-      const parsed = JSON.parse(setting.data || "{}");
-
+      const agentSetting = setting.agentSetting;
       return (
-        parsed.chainKey === chainKey &&
-        parsed.nodeEndpointGroupId === nodeEndpointGroupId &&
-        parsed.campaignId === campaignId &&
-        parsed.selectedProfileIds === currentProfileIds &&
-        parsed.isAllWallet === isAllWallet
+        agentSetting?.chainKey === chainKey &&
+        agentSetting?.nodeEndpointGroupId === nodeEndpointGroupId &&
+        agentSetting?.campaignId === campaignId &&
+        JSON.stringify(agentSetting?.selectedProfileIds || []) ===
+          currentProfileIds &&
+        agentSetting?.isAllWallet === isAllWallet
       );
     });
   }, [
@@ -148,13 +148,14 @@ const ContextBar = (props: any) => {
   };
 
   const onLoadPreset = (setting: ISetting) => {
-    const parsed = JSON.parse(setting.data || "{}");
-    props?.actSaveChainKey(parsed.chainKey || "");
-    props?.actSaveNodeEndpointGroupId(parsed.nodeEndpointGroupId || null);
-    props?.actSaveCampaignId(parsed.campaignId || null);
-    props?.actSaveIsAllWallet(parsed.isAllWallet !== false);
-    const profileIds = JSON.parse(parsed.selectedProfileIds || "[]");
-    props?.actSaveListProfileId(profileIds);
+    const agentSetting = setting.agentSetting;
+    props?.actSaveChainKey(agentSetting?.chainKey || "");
+    props?.actSaveNodeEndpointGroupId(
+      agentSetting?.nodeEndpointGroupId || null,
+    );
+    props?.actSaveCampaignId(agentSetting?.campaignId || null);
+    props?.actSaveIsAllWallet(agentSetting?.isAllWallet !== false);
+    props?.actSaveListProfileId(agentSetting?.selectedProfileIds || []);
     setPresetPopoverOpen(false);
   };
 

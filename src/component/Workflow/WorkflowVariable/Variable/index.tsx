@@ -30,7 +30,7 @@ const Variable = (props: IProps) => {
   return (
     <Wrapper onClick={onClick} className={isActive ? "active" : ""}>
       <div className="variable">
-        <span>{variable?.variable}</span>
+        <span className="variable-name">{variable?.variable}</span>
 
         <Tooltip title={translate("copy")} placement="top">
           <div className="icon" onClick={onCopy}>
@@ -38,6 +38,7 @@ const Variable = (props: IProps) => {
           </div>
         </Tooltip>
       </div>
+
       <div className="label">{variable?.label || EMPTY_STRING}</div>
     </Wrapper>
   );

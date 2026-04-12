@@ -17,19 +17,6 @@ import { settingSelector } from "@/redux/setting";
 import { RootState } from "@/redux/store";
 import { Wrapper } from "./style";
 
-interface VariableData {
-  label: string;
-  value: string;
-}
-
-const parseData = (raw: string): VariableData => {
-  try {
-    return JSON.parse(raw || "{}");
-  } catch {
-    return { label: "", value: "" };
-  }
-};
-
 interface Props {
   listSetting: ISetting[];
 }
@@ -68,8 +55,11 @@ const WorkflowSetting = ({ listSetting }: Props) => {
 
   const onOpenEdit = (item: ISetting) => {
     setSelectedItem(item);
-    const { label, value } = parseData(item.data);
-    form.setFieldsValue({ variable: item.name, label, value });
+    form.setFieldsValue({
+      variable: item.name,
+      label: item.workflowGlobalVariable?.label || "",
+      value: item.workflowGlobalVariable?.value || "",
+    });
     setModalOpen(true);
   };
 
@@ -130,13 +120,15 @@ const WorkflowSetting = ({ listSetting }: Props) => {
       title: translate("setting.variableValue"),
       key: "value",
       width: "20%",
-      render: (_: any, record: ISetting) => parseData(record.data).value,
+      render: (_: any, record: ISetting) =>
+        record.workflowGlobalVariable?.value,
     },
     {
       title: translate("setting.variableLabel"),
       key: "label",
       width: "23%",
-      render: (_: any, record: ISetting) => parseData(record.data).label,
+      render: (_: any, record: ISetting) =>
+        record.workflowGlobalVariable?.label,
     },
     {
       title: translate("createdAt"),

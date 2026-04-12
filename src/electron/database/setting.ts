@@ -2,6 +2,7 @@ import { Op } from "sequelize";
 import _ from "lodash";
 import { ISetting, IGetListResponse, ISorter } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
+import { formatSetting } from "@/electron/service/formatData";
 import { SORT_ORDER } from "@/electron/constant";
 import { SettingModel } from "./index";
 
@@ -56,7 +57,7 @@ class SettingDB {
 
       return [
         {
-          data: listData,
+          data: listData.map((item: any) => formatSetting(item)),
           totalData,
           page,
           pageSize,
@@ -82,7 +83,7 @@ class SettingDB {
       if (!data) {
         return [null, null];
       }
-      return [data?.toJSON(), null];
+      return [formatSetting(data), null];
     } catch (err: any) {
       logEveryWhere({
         message: `getOneSetting() error: ${err?.message}`,
@@ -106,7 +107,7 @@ class SettingDB {
         },
       );
 
-      return [agentSetting?.toJSON(), null];
+      return [formatSetting(agentSetting), null];
     } catch (err: any) {
       logEveryWhere({
         message: `createSetting() error: ${err?.message}`,

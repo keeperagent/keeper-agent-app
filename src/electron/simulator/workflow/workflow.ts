@@ -839,20 +839,9 @@ export class Workflow {
       undefined,
       SETTING_TYPE.WORKFLOW_GLOBAL_VARIABLE,
     );
-    this.globalVariables = (globalSettingRows?.data || []).map((row) => {
-      const parsed = (() => {
-        try {
-          return JSON.parse(row.data || "{}");
-        } catch {
-          return {};
-        }
-      })();
-      return {
-        variable: row.name,
-        label: parsed.label || "",
-        value: parsed.value || "",
-      };
-    });
+    this.globalVariables = (globalSettingRows?.data || [])
+      .filter((row) => row.workflowGlobalVariable?.variable)
+      .map((row) => row.workflowGlobalVariable!);
 
     const workflowData: IWorkflowData = workflowRecord?.data
       ? JSON.parse(workflowRecord?.data)

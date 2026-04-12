@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Popover, FormInstance } from "antd";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { Node } from "@xyflow/react";
 import _ from "lodash";
 import { RootState } from "@/redux/store";
@@ -30,9 +30,12 @@ import {
   IGenerateVanityAddressNodeConfig,
   ILaunchTokenBonkfunNodeConfig,
   IWorkflow,
+  SETTING_TYPE,
 } from "@/electron/type";
+import { settingSelector } from "@/redux/setting";
 import { getVariableFromCampaign } from "@/component/Workflow/util";
 import { useTranslation } from "@/hook";
+import { useGetListSetting } from "@/hook/setting";
 import {
   WORKFLOW_TYPE,
   SNIPE_CONTRACT_BLOCK_NUMBER,
@@ -79,6 +82,18 @@ const WorkflowVariable = (props: IProps) => {
     useJavascriptVariable,
   } = props;
   const [currentValue, setCurrentValue] = useState("");
+  const { getListSetting } = useGetListSetting();
+  const listSetting = useSelector(
+    (state: RootState) => settingSelector(state).listSetting,
+  );
+
+  useEffect(() => {
+    getListSetting({
+      page: 1,
+      pageSize: 1000,
+      type: SETTING_TYPE.WORKFLOW_GLOBAL_VARIABLE,
+    });
+  }, []);
 
   useEffect(() => {
     if (fieldName && form) {
@@ -95,6 +110,27 @@ const WorkflowVariable = (props: IProps) => {
   const renderListVariable = useCallback(() => {
     const mapVariable: { [key: string]: IWorkflowVariable } = {};
 
+    // global variables — lowest priority
+    listSetting
+      .filter((item) => item.type === SETTING_TYPE.WORKFLOW_GLOBAL_VARIABLE)
+      .forEach((item) => {
+        if (item.workflowGlobalVariable?.variable) {
+          const { variable, label } = item.workflowGlobalVariable;
+          mapVariable[variable] = {
+            variable,
+            label: label || variable,
+          };
+        }
+      });
+
+    // set variable from Workflow variables — middle priority
+    selectedWorkflow?.listVariable?.forEach((variable: IWorkflowVariable) => {
+      if (variable?.variable) {
+        mapVariable[variable?.variable] = variable;
+      }
+    });
+
+    // get variable from Campaign — middle priority
     if (selectedCampaign) {
       const listVariableOfCampaign = getVariableFromCampaign(
         selectedCampaign,
@@ -107,14 +143,7 @@ const WorkflowVariable = (props: IProps) => {
       });
     }
 
-    // set variable from config of Workflow
-    selectedWorkflow?.listVariable?.forEach((variable: IWorkflowVariable) => {
-      if (variable?.variable) {
-        mapVariable[variable?.variable] = variable;
-      }
-    });
-
-    // get variable from Node
+    // get variable from Node — highest priority
     nodes?.forEach((node: Node) => {
       switch ((node?.data?.config as any)?.workflowType) {
         case WORKFLOW_TYPE.GENERATE_PROFILE: {
@@ -575,7 +604,7 @@ const WorkflowVariable = (props: IProps) => {
         ))}
       </ListVariableWrapper>
     );
-  }, [selectedCampaign, nodes, translate, currentValue]);
+  }, [selectedCampaign, nodes, translate, currentValue, listSetting]);
 
   const onSelectVariable = (variable: any) => {
     let value = getVariableFormat(variable);
