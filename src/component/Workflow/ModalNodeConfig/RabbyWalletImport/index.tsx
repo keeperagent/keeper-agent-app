@@ -245,7 +245,9 @@ const RabbyWalletImportWallet = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideMaxConcurrency={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

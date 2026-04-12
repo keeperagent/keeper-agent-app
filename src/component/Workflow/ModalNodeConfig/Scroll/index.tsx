@@ -72,6 +72,7 @@ const Scroll = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
 
     setSelectorMode(
@@ -101,6 +102,7 @@ const Scroll = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -115,6 +117,7 @@ const Scroll = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "retry",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         name,
@@ -136,6 +139,7 @@ const Scroll = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();
@@ -298,12 +302,12 @@ const Scroll = (props: Props) => {
                 <Form.Item
                   label={`${translate("workflow.yCoordinate")} (pixel):`}
                   name="yAxis"
+                  initialValue={0}
                 >
                   <InputNumber
-                    className="custom-input-number"
+                    className="custom-input"
                     size="large"
                     style={{ width: "100%" }}
-                    defaultValue={0}
                   />
                 </Form.Item>
               </Fragment>

@@ -121,6 +121,7 @@ const WriteToContractEVM = (props: Props) => {
           ? true
           : Boolean(config?.transactionConfig?.shouldWaitTransactionComfirmed),
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -165,6 +166,7 @@ const WriteToContractEVM = (props: Props) => {
         gasPrice,
         shouldWaitTransactionComfirmed,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -187,6 +189,7 @@ const WriteToContractEVM = (props: Props) => {
         "gasPrice",
         "shouldWaitTransactionComfirmed",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -220,6 +223,7 @@ const WriteToContractEVM = (props: Props) => {
           nativeTokenAmount,
         },
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

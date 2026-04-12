@@ -48,6 +48,7 @@ export type IWorkflowRunnerState = {
     [nodeID: string]: { timestamp: number; message: string };
   };
   mapExtensionID: { [extensionKey: string]: string };
+  mapNodeSlots: { [nodeID: string]: number };
   isFullScreen: boolean;
 
   flowData: IUndoRedo;
@@ -91,6 +92,7 @@ const initialState: IWorkflowRunnerState = {
   mapError: {},
   mapExtensionID: {},
   mapMinMaxDuration: {},
+  mapNodeSlots: {},
   isFullScreen: false,
   flowData: initialFlowData,
   isShowModalInstruction: false,
@@ -167,6 +169,7 @@ export const workflowSlice = createSlice({
       state.mapError = {};
       state.mapMinMaxDuration = {};
       state.mapThread = {};
+      state.mapNodeSlots = {};
     },
     actSetIsFullscreen: (
       state: IWorkflowRunnerState,
@@ -371,6 +374,7 @@ export const workflowSlice = createSlice({
       state.mapThread = action.payload?.mapThread;
       state.mapError = action.payload?.mapError;
       state.mapMinMaxDuration = action.payload?.mapMinMaxDuration;
+      state.mapNodeSlots = action.payload?.mapNodeSlots || {};
       state.isRunning = action.payload?.isRunning;
       state.currentRound = action.payload?.currentRound;
       state.isSleeping = action.payload?.isSleeping;

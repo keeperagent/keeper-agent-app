@@ -66,7 +66,7 @@ const Other = (props: IProps) => {
           tooltip={translate("setting.maxConcurrentWorkflowTooltip")}
         >
           <InputNumber
-            className="custom-input-number"
+            className="custom-input"
             placeholder={translate("setting.maxConcurrentWorkflowPlaceholder")}
             style={{ width: "100%" }}
             min={1}

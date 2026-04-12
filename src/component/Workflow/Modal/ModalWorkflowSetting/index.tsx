@@ -113,7 +113,7 @@ const ModalWorkflowSetting = (props: IProps) => {
           >
             <InputNumber
               placeholder={translate("campaign.numberOfThreadPlaceholder")}
-              className="custom-input-number"
+              className="custom-input"
               size="large"
               style={{ width: "100%" }}
               // @ts-ignore
@@ -134,7 +134,7 @@ const ModalWorkflowSetting = (props: IProps) => {
           >
             <InputNumber
               placeholder={translate("workflow.egNumberOfLoop")}
-              className="custom-input-number"
+              className="custom-input"
               size="large"
               style={{ width: "100%" }}
               min={1}
@@ -174,7 +174,7 @@ const ModalWorkflowSetting = (props: IProps) => {
               >
                 <InputNumber
                   placeholder={translate("campaign.windowWidthPlaceholder")}
-                  className="custom-input-number"
+                  className="custom-input"
                   size="large"
                   // @ts-ignore
                   ref={inputRef}
@@ -196,7 +196,7 @@ const ModalWorkflowSetting = (props: IProps) => {
               >
                 <InputNumber
                   placeholder={translate("campaign.windowHeightPlaceholder")}
-                  className="custom-input-number"
+                  className="custom-input"
                   size="large"
                   style={{ width: "100%" }}
                   min={1}

@@ -87,6 +87,7 @@ const SelectWallet = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -119,6 +120,7 @@ const SelectWallet = (props: Props) => {
         condition,
         rightSide,
         alertTelegramWhenError,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -132,6 +134,7 @@ const SelectWallet = (props: Props) => {
         "condition",
         "rightSide",
         "alertTelegramWhenError",
+        "maxConcurrency",
       ]);
       if (workflowId && nodeId && encryptKey) {
         await saveNodeSecret(workflowId, nodeId, encryptKey);
@@ -155,6 +158,7 @@ const SelectWallet = (props: Props) => {
         },
         alertTelegramWhenError,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

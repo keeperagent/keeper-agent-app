@@ -56,7 +56,7 @@ const LayoutForm = (props: IProps) => {
           >
             <InputNumber
               placeholder={translate("campaign.windowWidthPlaceholder")}
-              className="custom-input-number"
+              className="custom-input"
               size="large"
               // @ts-ignore
               ref={inputRef}
@@ -78,7 +78,7 @@ const LayoutForm = (props: IProps) => {
           >
             <InputNumber
               placeholder={translate("campaign.windowHeightPlaceholder")}
-              className="custom-input-number"
+              className="custom-input"
               size="large"
               style={{ width: "100%" }}
               min={1}

@@ -106,6 +106,7 @@ const ExecuteTransaction = (props: Props) => {
       transactionValue: config?.transactionValue || "0",
       transactionType: EVM_TRANSACTION_TYPE.LEGACY,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -146,6 +147,7 @@ const ExecuteTransaction = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -166,6 +168,7 @@ const ExecuteTransaction = (props: Props) => {
         "toAddress",
         "transactionValue",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -189,6 +192,7 @@ const ExecuteTransaction = (props: Props) => {
         transactionValue,
         transactionType: EVM_TRANSACTION_TYPE.LEGACY,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

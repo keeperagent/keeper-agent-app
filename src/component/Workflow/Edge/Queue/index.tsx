@@ -7,14 +7,15 @@ import {
 } from "@/redux/workflowRunner";
 import { RootState } from "@/redux/store";
 import { ICampaign, IFlowProfile, IWorkflow } from "@/electron/type";
-import { QueueWrapper } from "./style";
 import { useTranslation } from "@/hook";
+import { QueueWrapper } from "./style";
 
 type IQueueProps = {
   edgeID: string;
   style?: React.CSSProperties;
   conditionLabel?: string;
   conditionColor?: string;
+  maxConcurrency?: number;
   mapThread: {
     [threadID: string]: IFlowProfile;
   };
@@ -65,9 +66,9 @@ const Queue = (props: IQueueProps) => {
   };
 
   const totalThread = useMemo(() => {
-    return selectedCampaign
-      ? selectedCampaign?.numberOfThread || 1
-      : selectedWorkflow?.numberOfThread || 1;
+    return (
+      selectedCampaign?.numberOfThread || selectedWorkflow?.numberOfThread || 1
+    );
   }, [selectedCampaign, selectedWorkflow]);
 
   const numberOfFlowProfile = useMemo(() => {

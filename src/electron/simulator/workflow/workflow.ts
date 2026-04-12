@@ -314,6 +314,7 @@ export class Workflow {
       mapExtensionID = {},
       nodes = [],
       edges = [],
+      numberOfThread = 1,
     } = this.monitor.getWorkflowState();
 
     const startNodeId = getStartNodeId(nodes);
@@ -538,11 +539,32 @@ export class Workflow {
         });
 
         if (flowProfile?.config?.workflowType) {
-          const [updatedFlowProfile, err] = await this.executor.executeScript(
-            flowProfile?.config?.workflowType,
-            flowProfile,
-          );
-          await this.processResultOfScript(updatedFlowProfile!, err);
+          const maxConcurrency =
+            (flowProfile?.config as any)?.maxConcurrency || numberOfThread;
+          const nodeId = flowProfile?.nodeID!;
+
+          while (
+            this.monitor.isRunning &&
+            this.monitor.getNodeSlotCount(nodeId) >= maxConcurrency
+          ) {
+            await sleep(500);
+          }
+
+          if (!this.monitor.isRunning) {
+            await this.stopWorkflow();
+            break;
+          }
+
+          this.monitor.acquireNodeSlot(nodeId);
+          try {
+            const [updatedFlowProfile, err] = await this.executor.executeScript(
+              flowProfile?.config?.workflowType,
+              flowProfile,
+            );
+            await this.processResultOfScript(updatedFlowProfile!, err);
+          } finally {
+            this.monitor.releaseNodeSlot(nodeId);
+          }
         }
       } else {
         // flow profile just finished a node — move to edge state

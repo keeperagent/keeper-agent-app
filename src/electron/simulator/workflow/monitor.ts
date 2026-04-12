@@ -53,7 +53,15 @@ export class Monitor {
   currentRound = 0;
   private currentInstance: CurrentInstance;
   private workflowKey: string;
-  private mapOpenProfileId: { [key: number]: { [key: number]: boolean } }; // campaignId -> profileId -> isOpen
+  // campaignId -> profileId -> isOpen
+  private mapOpenProfileId: { [key: number]: { [key: number]: boolean } };
+  /** nodeId -> number of threads currently executing that node
+   * Two-level concurrency control:
+   *   1. Workflow-level: numberOfThread controls how many profiles run in parallel across the entire workflow
+   *   2. Node-level: maxConcurrency on each node limits how many of those threads can execute that specific node simultaneously
+   */
+  private mapNodeSlots: { [nodeId: string]: number };
+
   private campaignId: number;
   private syncIntervalId: ReturnType<typeof setInterval> | null = null;
   private hasPendingUpdates = false;
@@ -84,6 +92,7 @@ export class Monitor {
       scheduleId,
     );
     this.mapOpenProfileId = {};
+    this.mapNodeSlots = {};
     this.campaignId = campaignId;
   }
 
@@ -184,6 +193,7 @@ export class Monitor {
       mapThread: this.mapThread,
       mapNodeError: this.mapNodeError,
       mapMinMaxDuration: this.mapMinMaxDuration,
+      mapNodeSlots: this.mapNodeSlots,
       isRunning: this.isRunning,
       currentRound: this.currentRound,
       isSleeping: this.isSleeping,
@@ -194,6 +204,22 @@ export class Monitor {
     this.hasPendingUpdates = true;
   };
 
+  acquireNodeSlot = (nodeId: string) => {
+    this.mapNodeSlots[nodeId] = (this.mapNodeSlots[nodeId] || 0) + 1;
+    this.markPendingUpdate();
+  };
+
+  releaseNodeSlot = (nodeId: string) => {
+    if (this.mapNodeSlots[nodeId] > 0) {
+      this.mapNodeSlots[nodeId] -= 1;
+    }
+    this.markPendingUpdate();
+  };
+
+  getNodeSlotCount = (nodeId: string): number => {
+    return this.mapNodeSlots[nodeId] || 0;
+  };
+
   stopAllThread = () => {
     this._isRunning = false;
     this.stopSyncInterval();
@@ -202,6 +228,7 @@ export class Monitor {
     this._isThreadStarted = {};
     this._mapThreadError = {};
     this.mapNodeError = {};
+    this.mapNodeSlots = {};
     this.workflowState = initialWorkflowState;
 
     if (this.sleepTimeoutId) {

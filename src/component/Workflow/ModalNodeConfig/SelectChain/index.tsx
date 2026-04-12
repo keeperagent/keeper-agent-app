@@ -50,6 +50,7 @@ const SelectChain = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
       walletAddress: config?.walletAddress,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -86,6 +87,7 @@ const SelectChain = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         walletAddress,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -97,6 +99,7 @@ const SelectChain = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "walletAddress",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -120,6 +123,7 @@ const SelectChain = (props: Props) => {
             option?.nodeEndpointGroupId !== null,
         ),
         walletAddress,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

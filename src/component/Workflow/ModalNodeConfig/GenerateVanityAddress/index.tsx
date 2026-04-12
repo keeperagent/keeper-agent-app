@@ -50,6 +50,7 @@ const GenerateVanityAddress = (props: Props) => {
       variableToSavePrivateKey:
         config?.variableToSavePrivateKey || "VANITY_PRIVATE_KEY",
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -76,6 +77,7 @@ const GenerateVanityAddress = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "prefix",
         "suffix",
@@ -91,6 +93,7 @@ const GenerateVanityAddress = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "retry",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         prefix,
@@ -111,6 +114,7 @@ const GenerateVanityAddress = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

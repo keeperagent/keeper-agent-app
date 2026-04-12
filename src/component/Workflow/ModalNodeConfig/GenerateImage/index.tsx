@@ -73,6 +73,7 @@ const GenerateImage = (props: Props) => {
       folderPath: config?.folderPath || "",
       fileName: config?.fileName || "",
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -96,7 +97,7 @@ const GenerateImage = (props: Props) => {
     }
     form.setFieldValue("folderPath", folderPath);
     try {
-      await form.validateFields(["folderPath"]);
+      await form.validateFields(["folderPath", "maxConcurrency"]);
     } catch {}
   };
 
@@ -121,6 +122,7 @@ const GenerateImage = (props: Props) => {
         quality,
         aspectRatio,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -161,6 +163,7 @@ const GenerateImage = (props: Props) => {
         quality,
         aspectRatio,
         retry,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

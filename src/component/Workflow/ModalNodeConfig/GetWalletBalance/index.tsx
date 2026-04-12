@@ -76,6 +76,7 @@ const GetWalletBalance = (props: Props) => {
       rightSide: config?.skipSetting?.rightSide,
       alertTelegramWhenError: config?.alertTelegramWhenError,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setChainType(config?.chainType || CHAIN_TYPE.EVM);
     setMode(config?.tokenType || TOKEN_TYPE.NATIVE_TOKEN);
@@ -114,6 +115,7 @@ const GetWalletBalance = (props: Props) => {
         rightSide,
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -130,6 +132,7 @@ const GetWalletBalance = (props: Props) => {
         "rightSide",
         "alertTelegramWhenError",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -153,6 +156,7 @@ const GetWalletBalance = (props: Props) => {
         },
         alertTelegramWhenError,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

@@ -68,7 +68,7 @@ const ConfigForm = (props: any) => {
       >
         <InputNumber
           placeholder={translate("campaign.numberOfThreadPlaceholder")}
-          className="custom-input-number"
+          className="custom-input"
           size="large"
           style={{ width: "100%" }}
           min={1}
@@ -89,7 +89,7 @@ const ConfigForm = (props: any) => {
       >
         <InputNumber
           placeholder={translate("workflow.egNumberOfLoop")}
-          className="custom-input-number"
+          className="custom-input"
           size="large"
           style={{ width: "100%" }}
           min={1}
@@ -108,7 +108,7 @@ const ConfigForm = (props: any) => {
       >
         <InputNumber
           placeholder={translate("workflow.egSleepBetweenRound")}
-          className="custom-input-number"
+          className="custom-input"
           size="large"
           style={{ width: "100%" }}
           min={0}

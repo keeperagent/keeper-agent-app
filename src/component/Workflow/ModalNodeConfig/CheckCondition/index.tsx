@@ -45,6 +45,7 @@ const CheckCondition = (props: Props) => {
       rightSide: config?.rightSide || "",
       onSuccess: config?.onSuccess || NODE_ACTION.CONTINUE_RUN,
       onError: config?.onError || NODE_ACTION.PAUSE_THREAD,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
   }, [isModalOpen, config, form]);
@@ -63,6 +64,7 @@ const CheckCondition = (props: Props) => {
         rightSide,
         onSuccess,
         onError,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -71,6 +73,7 @@ const CheckCondition = (props: Props) => {
         "rightSide",
         "onSuccess",
         "onError",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -82,6 +85,7 @@ const CheckCondition = (props: Props) => {
         onError,
         onSuccess,
         retry: 0,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

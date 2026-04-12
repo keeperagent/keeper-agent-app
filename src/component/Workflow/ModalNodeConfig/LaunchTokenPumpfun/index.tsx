@@ -102,6 +102,7 @@ const LaunchTokenPumpfun = (props: Props) => {
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
       vanityAddressPrivateKey: config?.vanityAddressPrivateKey,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
     setActiveTab(TAB.DETAIL);
@@ -149,6 +150,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         unitPrice,
         vanityAddressPrivateKey,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -176,6 +178,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         "unitPrice",
         "vanityAddressPrivateKey",
         "retry",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -209,6 +212,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         unitPrice,
         vanityAddressPrivateKey,
         retry,
+        maxConcurrency,
       });
 
       onCloseModal();

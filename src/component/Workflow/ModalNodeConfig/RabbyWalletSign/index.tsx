@@ -189,7 +189,7 @@ const RabbyWalletSign = (props: Props) => {
                 <InputNumber
                   placeholder={translate("workflow.gasLimitPlaceholder")}
                   size="large"
-                  className="custom-input-number"
+                  className="custom-input"
                   style={{ width: "100%" }}
                   min={0}
                 />
@@ -253,7 +253,7 @@ const RabbyWalletSign = (props: Props) => {
                 <InputNumber
                   placeholder={translate("workflow.gasPricePlaceholder")}
                   size="large"
-                  className="custom-input-number"
+                  className="custom-input"
                   style={{ width: "100%" }}
                   min={0}
                 />
@@ -270,7 +270,9 @@ const RabbyWalletSign = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideMaxConcurrency={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

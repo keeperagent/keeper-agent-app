@@ -49,6 +49,7 @@ const GetGasPrice = (props: Props) => {
       leftSide: config?.skipSetting?.leftSide,
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setMode((config?.type as RANDOM_OPTION) || RANDOM_OPTION.RANDOM_NUMBER);
@@ -75,6 +76,7 @@ const GetGasPrice = (props: Props) => {
         leftSide,
         condition,
         rightSide,
+        maxConcurrency,
       } = await form?.validateFields([
         "name",
         "sleep",
@@ -89,6 +91,7 @@ const GetGasPrice = (props: Props) => {
         "leftSide",
         "condition",
         "rightSide",
+        "maxConcurrency",
       ]);
 
       onSaveNodeConfig({
@@ -111,6 +114,7 @@ const GetGasPrice = (props: Props) => {
           isSkip,
         },
         retry: 0,
+        maxConcurrency,
       });
 
       onCloseModal();

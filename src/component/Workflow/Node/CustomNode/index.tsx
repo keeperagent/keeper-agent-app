@@ -70,6 +70,7 @@ const CustomNode = (props: any) => {
   const { translate } = useTranslation();
   const {
     numberOfFlowProfile,
+    runningSlots,
     nodeMinMaxDuration,
     data = {},
     selected,
@@ -77,6 +78,7 @@ const CustomNode = (props: any) => {
     mapExtensionID,
     preference,
     selectedNodeID,
+    selectedCampaign,
   } = props;
   const nodeData: INodeData = data;
   const { config, version } = nodeData;
@@ -157,7 +159,7 @@ const CustomNode = (props: any) => {
   const nodeStatus = useMemo(() => {
     if (
       nodeData?.config?.workflowType === WORKFLOW_TYPE.UPDATE_PROFILE &&
-      !props?.selectedCampaign
+      !selectedCampaign
     ) {
       setWarning(translate("workflow.nodeNeedRunInCampaign"));
       return NODE_STATUS.INVALID;
@@ -230,7 +232,7 @@ const CustomNode = (props: any) => {
     }
 
     return status;
-  }, [nodeData, mapExtensionID, status, preference]);
+  }, [nodeData, mapExtensionID, status, preference, selectedCampaign]);
 
   useEffect(() => {
     if (previousSelected.current === selected) {
@@ -404,7 +406,7 @@ const CustomNode = (props: any) => {
             <div className="item">
               <div className="label">{translate("running")}</div>
               <div className="value">
-                {numberOfFlowProfile} {translate("workflow.thread")}
+                {runningSlots} {translate("workflow.thread")}
               </div>
             </div>
           </div>
@@ -535,6 +537,7 @@ export default connect(
 
     return {
       numberOfFlowProfile,
+      runningSlots: state?.WorkflowRunner?.mapNodeSlots?.[nodeID] || 0,
       nodeMinMaxDuration: state?.WorkflowRunner?.mapMinMaxDuration?.[nodeID],
       nodeError: state?.WorkflowRunner?.mapError?.[nodeID],
       mapExtensionID: state?.WorkflowRunner?.mapExtensionID,

@@ -109,7 +109,7 @@ const Loop = (props: Props) => {
             >
               <InputNumber
                 placeholder={translate("workflow.egNumberOfLoop")}
-                className="custom-input-number"
+                className="custom-input"
                 size="large"
                 style={{ width: "100%" }}
                 min={1}
@@ -124,6 +124,7 @@ const Loop = (props: Props) => {
             hideCondition={true}
             hideTelegramCheckbox={true}
             hideRetry={true}
+            hideMaxConcurrency={true}
           />
         )}
 

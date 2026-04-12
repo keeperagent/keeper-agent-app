@@ -48,7 +48,7 @@ const RunAgent = (props: Props) => {
   }, [locale]);
 
   useEffect(() => {
-    getListAgentProfile({ page: 1, pageSize: 999 });
+    getListAgentProfile({ page: 1, pageSize: 1000 });
   }, []);
 
   useEffect(() => {
@@ -67,6 +67,7 @@ const RunAgent = (props: Props) => {
       promptTemplate: config?.promptTemplate,
       outputFormat: config?.outputFormat || RUN_AGENT_OUTPUT_FORMAT.TEXT,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -93,6 +94,7 @@ const RunAgent = (props: Props) => {
         promptTemplate,
         outputFormat,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "sleep",
         "name",
@@ -108,6 +110,7 @@ const RunAgent = (props: Props) => {
         "promptTemplate",
         "outputFormat",
         "retry",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         sleep,
@@ -128,6 +131,7 @@ const RunAgent = (props: Props) => {
         promptTemplate,
         outputFormat,
         retry,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

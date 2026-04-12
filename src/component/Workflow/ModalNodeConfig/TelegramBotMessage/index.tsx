@@ -53,6 +53,7 @@ const TelegramBotMessage = (props: Props) => {
       condition: config?.skipSetting?.condition,
       rightSide: config?.skipSetting?.rightSide,
       retry: config?.retry || 0,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
     setIsSkip(Boolean(config?.skipSetting?.isSkip));
@@ -78,6 +79,7 @@ const TelegramBotMessage = (props: Props) => {
         condition,
         rightSide,
         retry,
+        maxConcurrency,
       } = await form?.validateFields([
         "botToken",
         "chatId",
@@ -92,6 +94,7 @@ const TelegramBotMessage = (props: Props) => {
         "condition",
         "rightSide",
         "retry",
+        "maxConcurrency",
       ]);
       onSaveNodeConfig({
         botToken,
@@ -111,6 +114,7 @@ const TelegramBotMessage = (props: Props) => {
           isSkip,
         },
         retry,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}

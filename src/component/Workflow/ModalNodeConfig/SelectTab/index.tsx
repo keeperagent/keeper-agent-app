@@ -126,7 +126,7 @@ const SelectTab = (props: Props) => {
             <Form.Item label={`${translate("select.tab")}:`} name="selectedTab">
               <InputNumber
                 placeholder={translate("workflow.egNumberOfLoop")}
-                className="custom-input-number"
+                className="custom-input"
                 size="large"
                 style={{ width: "100%" }}
                 min={1}
@@ -136,7 +136,9 @@ const SelectTab = (props: Props) => {
           </Fragment>
         )}
 
-        {activeTab === TAB.SETTING && <CommonSetting />}
+        {activeTab === TAB.SETTING && (
+          <CommonSetting hideMaxConcurrency={true} />
+        )}
 
         {activeTab === TAB.SKIP && (
           <SkipSetting form={form} setIsSkip={setIsSkip} isSkip={isSkip} />

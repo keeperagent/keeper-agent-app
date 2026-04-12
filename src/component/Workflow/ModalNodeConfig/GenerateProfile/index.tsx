@@ -42,6 +42,7 @@ const GenerateProfile = (props: Props) => {
     form.setFieldsValue({
       name: config?.name,
       sleep: config?.sleep,
+      maxConcurrency: config?.maxConcurrency || 0,
     });
     setActiveTab(TAB.DETAIL);
   }, [isModalOpen, config, form]);
@@ -52,12 +53,17 @@ const GenerateProfile = (props: Props) => {
 
   const onSubmit = async () => {
     try {
-      const { sleep, name } = await form?.validateFields(["sleep", "name"]);
+      const { sleep, name, maxConcurrency } = await form?.validateFields([
+        "sleep",
+        "name",
+        "maxConcurrency",
+      ]);
       onSaveNodeConfig({
         sleep,
         name,
         status: NODE_STATUS.RUN,
         listProfile,
+        maxConcurrency,
       });
       onCloseModal();
     } catch {}
