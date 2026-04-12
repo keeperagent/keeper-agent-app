@@ -502,10 +502,18 @@ export type IExtension = {
   iconPath?: string;
 };
 
+export enum WorkflowVariableSourceType {
+  GLOBAL = "global",
+  WORKFLOW = "workflow",
+  OTHER_WORKFLOW = "other_workflow",
+}
+
 export type IWorkflowVariable = {
   variable: string;
   label?: string;
   value?: any;
+  sourceLabel?: string;
+  sourceType?: WorkflowVariableSourceType;
 };
 
 export type IStaticProxyGroup = {

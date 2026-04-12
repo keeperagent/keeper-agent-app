@@ -34,7 +34,7 @@ const LoginFormWrapper = styled.div`
   }
 
   .ant-input {
-    color: var(--white);
+    color: var(--color-white);
 
     &::placeholder {
       color: var(--color-text-secondary);
