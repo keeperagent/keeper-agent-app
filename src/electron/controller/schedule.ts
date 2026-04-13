@@ -4,8 +4,8 @@ import { scheduleDB } from "@/electron/database/schedule";
 import { AppLogModel } from "@/electron/database";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
-import { onIpc } from "./helpers";
 import { logEveryWhere } from "@/electron/service/util";
+import { ScheduleType } from "@/electron/type";
 import type {
   IpcGetListSchedulePayload,
   IpcGetOneSchedulePayload,
@@ -13,6 +13,7 @@ import type {
   IpcUpdateSchedulePayload,
   IpcDeletePayload,
 } from "@/electron/ipcTypes";
+import { onIpc } from "./helpers";
 
 export const runScheduleController = () => {
   onIpc<IpcGetListSchedulePayload>(
@@ -56,6 +57,10 @@ export const runScheduleController = () => {
       const { data } = payload;
 
       const [res, err] = await scheduleDB.createSchedule(data);
+      if (res?.type === ScheduleType.AGENT) {
+        agentTaskScheduler.register(res);
+      }
+
       event.reply(MESSAGE.CREATE_SCHEDULE_RES, {
         data: res,
         error: err?.message,

@@ -357,6 +357,7 @@ class ScheduleDB {
             ),
             { isActive: true },
             { isRunning: false },
+            { isPaused: false },
             { repeatPerDay: SCHEDULE_REPEAT_PER_DAY.MANY_TIME_PER_DAY },
             {
               [Op.or]: [
@@ -423,6 +424,7 @@ class ScheduleDB {
           isCompleted: false,
           isActive: true,
           isRunning: false,
+          isPaused: false,
           startTime: { [Op.lte]: currentTime },
           repeatPerDay: SCHEDULE_REPEAT_PER_DAY.ONCE_PER_DAY,
           [Op.or]: [
@@ -464,6 +466,7 @@ class ScheduleDB {
           isRunning: false,
           isCompleted: false,
           isActive: true,
+          isPaused: false,
           startTime: { [Op.lte]: currentTime },
           repeat: SCHEDULE_REPEAT.NO_REPEAT,
         },

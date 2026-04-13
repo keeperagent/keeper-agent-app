@@ -523,11 +523,17 @@ class AgentChatBridge {
         });
       }
 
-      const modelName = await getModelName(session.provider);
-      const { supportsVision } = await checkModelCapability(
-        modelName,
-        session.provider,
-      );
+      const hasImageAttachments =
+        options?.attachedFiles?.some((file) => file.type === "image") ?? false;
+      let supportsVision = true;
+      if (hasImageAttachments) {
+        const modelName = await getModelName(session.provider);
+        ({ supportsVision } = await checkModelCapability(
+          modelName,
+          session.provider,
+        ));
+      }
+
       const humanMessage = await buildHumanMessage(
         redactedInput,
         options?.attachedFiles,

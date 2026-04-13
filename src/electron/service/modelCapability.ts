@@ -23,6 +23,9 @@ class ModelCapabilityService {
   private cache: Record<string, IModelCapability> = {};
   private cacheLoaded = false;
 
+  private cacheKey = (provider: LLMProvider, modelName: string) =>
+    `${provider}:${modelName}`;
+
   checkModelCapability = async (
     modelName: string,
     provider: LLMProvider,
@@ -32,12 +35,13 @@ class ModelCapabilityService {
     }
 
     await this.ensureCacheLoaded();
-    if (modelName in this.cache) {
-      return this.cache[modelName];
+    const key = this.cacheKey(provider, modelName);
+    if (key in this.cache) {
+      return this.cache[key];
     }
 
     const capability = await this.fetchModelCapability(modelName, provider);
-    this.cache[modelName] = capability;
+    this.cache[key] = capability;
     await this.saveToDisk(this.cache);
     return capability;
   };
@@ -58,7 +62,11 @@ class ModelCapabilityService {
 
   private saveToDisk = async (data: Record<string, IModelCapability>) => {
     try {
-      await fs.writeFile(this.getCachePath(), JSON.stringify(data), "utf-8");
+      await fs.writeFile(
+        this.getCachePath(),
+        JSON.stringify(data, null, 2),
+        "utf-8",
+      );
     } catch {}
   };
 

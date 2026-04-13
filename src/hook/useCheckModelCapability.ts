@@ -7,6 +7,9 @@ import type { IModelCapability } from "@/electron/service/modelCapability";
 
 const capabilityCache = new Map<string, boolean>();
 
+const capabilityCacheKey = (provider: LLMProvider, modelName: string) =>
+  `${provider}:${modelName}`;
+
 const useCheckModelCapability = () => {
   const [modelCapability, setModelCapability] =
     useState<IModelCapability | null>(null);
@@ -21,8 +24,9 @@ const useCheckModelCapability = () => {
         setModelCapability(result);
         return result;
       }
-      if (capabilityCache.has(modelName)) {
-        const result = { supportsVision: capabilityCache.get(modelName)! };
+      const key = capabilityCacheKey(provider, modelName);
+      if (capabilityCache.has(key)) {
+        const result = { supportsVision: capabilityCache.get(key)! };
         setModelCapability(result);
         return result;
       }
@@ -64,7 +68,7 @@ const useCheckModelCapability = () => {
         resolve(true);
       });
 
-      capabilityCache.set(modelName, result.supportsVision);
+      capabilityCache.set(key, result.supportsVision);
       setModelCapability(result);
       return result;
     },
