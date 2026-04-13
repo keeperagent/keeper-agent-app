@@ -209,7 +209,7 @@ const NodeProviderGroup = (props: any) => {
   };
 
   const onViewGroup = (groupID: number) => {
-    navigate(`/dashboard/node-provider?group=${groupID}`);
+    navigate(`/dashboard/connections?tab=node-provider&group=${groupID}`);
   };
 
   const dataSource: any[] = listNodeEndpointGroup?.map(

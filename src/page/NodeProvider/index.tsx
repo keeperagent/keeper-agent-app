@@ -28,5 +28,5 @@ const NodeProvider = (props: any) => {
 };
 
 export default connect((_state: RootState) => ({}), { actSetPageName })(
-  NodeProvider
+  NodeProvider,
 );

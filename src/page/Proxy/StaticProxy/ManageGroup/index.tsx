@@ -178,7 +178,7 @@ const StaticProxyGroupList = (props: any) => {
   };
 
   const onViewGroup = (groupID: number) => {
-    navigate(`/dashboard/proxy?group=${groupID}`);
+    navigate(`/dashboard/connections?tab=proxy&group=${groupID}`);
   };
 
   const dataSource: any[] = listStaticProxyGroup?.map(

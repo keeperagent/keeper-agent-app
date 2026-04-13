@@ -5,15 +5,13 @@ import {
   HomeIcon,
   ObjectGroupIcon,
   ScriptIcon,
-  ExtensionIcon,
-  WifiIcon,
+  LinkIcon,
   DoubleRightArrowIcon,
   DoubleLeftArrowIcon,
   WalletIcon,
   MixIcon,
   RocketIcon,
   PreferencesIcon,
-  NetworkCircleIcon,
   ClockIcon,
   LookupIcon,
   SearchIcon,
@@ -153,21 +151,9 @@ const SidebarContent = ({
       />
 
       <MenuItem
-        label={translate("sidebar.proxy")}
-        icon={<WifiIcon />}
-        url="/dashboard/proxy"
-      />
-
-      <MenuItem
-        label={translate("sidebar.extension")}
-        icon={<ExtensionIcon />}
-        url="/dashboard/extension"
-      />
-
-      <MenuItem
-        label="Node provider"
-        icon={<NetworkCircleIcon />}
-        url="/dashboard/node-provider"
+        label={translate("sidebar.connections")}
+        icon={<LinkIcon />}
+        url="/dashboard/connections"
       />
 
       <MenuItem

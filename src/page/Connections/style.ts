@@ -6,8 +6,12 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: center;
+  align-items: stretch;
   font-size: 1.6rem;
+
+  .tab {
+    display: flex;
+  }
 `;
 
 export { PageWrapper };
