@@ -1,7 +1,7 @@
+import { app } from "electron";
 import _ from "lodash";
 import AsyncLock from "async-lock";
 import dayjs from "dayjs";
-import { Executor } from "./executor";
 import { getNewExecutor } from "@/electron/inject";
 import { workflowDB } from "@/electron/database/workflow";
 import {
@@ -13,14 +13,6 @@ import {
   NODE_TYPE,
   WORKFLOW_TYPE,
 } from "@/electron/constant";
-import { IWorkflowData, EdgeConditionType, INode } from "./common";
-import {
-  enhanceConfigWithExtensionID,
-  getStartNodeId,
-  getNextNodeId,
-  getVariableFromProfile,
-} from "./util";
-import { Monitor } from "./monitor";
 import {
   ICampaign,
   ICampaignProfile,
@@ -42,7 +34,7 @@ import {
   MESSAGE_LOOP_DONE,
   NODE_ACTION,
 } from "@/electron/simulator/constant";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { LOG_TYPE } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
@@ -50,6 +42,15 @@ import { mainWindow } from "@/electron/main";
 import { jobDB } from "@/electron/database/job";
 import { CurrentInstance } from "./currentInstance";
 import { ExecutionSession } from "./executionSession";
+import { IWorkflowData, EdgeConditionType, INode } from "./common";
+import {
+  enhanceConfigWithExtensionID,
+  getStartNodeId,
+  getNextNodeId,
+  getVariableFromProfile,
+} from "./util";
+import { Monitor } from "./monitor";
+import { Executor } from "./executor";
 
 const EMPTY_STRING = "--";
 
@@ -332,15 +333,17 @@ export class Workflow {
         const detlaTimestamp =
           currentTime - (flowProfile?.nextRunTimestamp || 0);
         if (detlaTimestamp < 0 && flowProfile?.nodeID === null) {
-          logEveryWhere({
-            campaignId: this.campaignId,
-            workflowId: this.workflowId,
-            campaignName: this.campaign?.name,
-            workflowName: this.workflow?.name,
-            threadId: threadID,
-            type: LOG_TYPE.DIM,
-            message: `sleep ${-detlaTimestamp / 1000}s`,
-          });
+          if (!app.isPackaged) {
+            logEveryWhere({
+              campaignId: this.campaignId,
+              workflowId: this.workflowId,
+              campaignName: this.campaign?.name,
+              workflowName: this.workflow?.name,
+              threadId: threadID,
+              type: LOG_TYPE.DIM,
+              message: `sleep ${-detlaTimestamp / 1000}s`,
+            });
+          }
           await sleep(Math.abs(-detlaTimestamp));
         }
       } else {
@@ -728,7 +731,7 @@ export class Workflow {
   private sendMessageTelegram = async (
     message: string,
   ): Promise<Error | null> => {
-    const [preference] = await preferenceDB.getOnePreference();
+    const [preference] = await preferenceService.getOnePreference();
     const err = await telegramBotService.sendMessage(
       preference?.botTokenTelegram || "",
       message,

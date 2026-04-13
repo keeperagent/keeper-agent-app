@@ -1,6 +1,5 @@
 import type { SubAgent } from "deepagents";
 import { agentSkillDB } from "@/electron/database/agentSkill";
-import { preferenceDB } from "@/electron/database/preference";
 import { LLMProvider } from "@/electron/type";
 import {
   getSkillRootDir,
@@ -10,6 +9,7 @@ import {
 import { mcpToolLoader } from "./mcpTool";
 import { ToolContext } from "./toolContext";
 import { createLLM } from "./llm";
+import { getLlmSetting } from "./utils";
 import { draftPlanTool, submitPlanTool } from "./baseTool";
 import {
   createAgentTeamTool,
@@ -44,8 +44,8 @@ export const createKeeperAgent = async (
   const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
   const toolContext = options?.toolContext || new ToolContext();
 
-  const [preference] = await preferenceDB.getOnePreference();
-  const disabledTools = new Set<string>(preference?.disabledTools || []);
+  const [llmSetting] = await getLlmSetting();
+  const disabledTools = new Set<string>(llmSetting?.disabledTools || []);
 
   toolContext.update({ llmProvider: provider });
   const baseSubAgents = buildBaseSubAgents(toolContext, disabledTools);

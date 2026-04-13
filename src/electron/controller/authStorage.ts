@@ -6,7 +6,7 @@ import {
   clearAuth,
 } from "@/electron/service/authSafeStorage";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 
 export const authStorageController = () => {
   // Renderer requests current auth state on startup
@@ -33,9 +33,6 @@ export const authStorageController = () => {
     clearAuth();
     masterPasswordManager.clearMasterPassword();
 
-    const [preference] = await preferenceDB.getOnePreferenceRaw();
-    if (preference?.id) {
-      await preferenceDB.updateMasterPasswordVerifier(preference.id, "");
-    }
+    await preferenceService.updateMasterPasswordVerifier("");
   });
 };

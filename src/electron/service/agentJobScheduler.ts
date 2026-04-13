@@ -12,7 +12,7 @@ import { scheduleDB } from "@/electron/database/schedule";
 import { appLogDB } from "@/electron/database/appLog";
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { jobDB } from "@/electron/database/job";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { logEveryWhere, sleep } from "@/electron/service/util";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
@@ -435,7 +435,7 @@ class AgentTaskScheduler {
       }
     }
 
-    const [preference] = await preferenceDB.getOnePreference();
+    const [preference] = await preferenceService.getOnePreference();
 
     // If the job has agentProfileId, run it using that agent profile's config
     let agentCreator: { agent: any; cleanup: () => Promise<void> };
@@ -573,7 +573,7 @@ class AgentTaskScheduler {
       if (!job.notifyPlatform) {
         return;
       }
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       const chatId = preference?.chatIdTelegram?.toString() || "";
       const botToken = preference?.botTokenTelegram || "";
       if (!chatId || !botToken) {

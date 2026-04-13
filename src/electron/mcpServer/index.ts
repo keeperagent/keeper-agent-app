@@ -3,8 +3,8 @@ import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import crypto from "crypto";
-import { mcpTokenDB } from "@/electron/database/mcpToken";
-import { preferenceDB } from "@/electron/database/preference";
+import { mcpTokenService } from "@/electron/service/mcpToken";
+import { preferenceService } from "@/electron/service/preference";
 import { McpTokenPermission, IMcpToken } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { DEFAULT_MCP_PORT } from "@/electron/constant";
@@ -77,7 +77,7 @@ class KeeperMcpServer {
       }
 
       const tokenHash = hashToken(match[1]);
-      const [tokenRecord] = await mcpTokenDB.getByTokenHash(tokenHash);
+      const [tokenRecord] = await mcpTokenService.getByTokenHash(tokenHash);
       if (!tokenRecord) {
         const existing = failedAttempts.get(ip);
         if (existing && now < existing.resetAt) {
@@ -225,7 +225,7 @@ class KeeperMcpServer {
 
   async startIfEnabled(): Promise<void> {
     try {
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       if (preference?.isMcpServerOn) {
         await this.start(preference.mcpServerPort || DEFAULT_MCP_PORT);
       }

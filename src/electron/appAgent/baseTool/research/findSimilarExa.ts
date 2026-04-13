@@ -2,16 +2,11 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ExaFindSimilarResults } from "@langchain/exa";
 import { Exa } from "exa-js";
-import { getExaKey } from "@/electron/appAgent/utils";
+import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 
 const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
-
-type FindSimilarExaInput = {
-  url: string;
-  maxResults?: number;
-};
 
 export const findSimilarExaTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
@@ -29,10 +24,11 @@ export const findSimilarExaTool = () =>
         .optional()
         .describe("Maximum number of similar results to return (default 5)"),
     }),
-    func: async (input: FindSimilarExaInput) => {
+    func: async (input) => {
       const { url, maxResults = MAX_RESULTS } = input;
       try {
-        const [apiKey, keyErr] = await getExaKey();
+        const [llm, keyErr] = await getLlmSetting();
+        const apiKey = llm?.exaApiKey || null;
         if (keyErr || !apiKey) {
           return "Error: Exa API key is not configured. Please set it in Settings > Agent.";
         }

@@ -1,7 +1,7 @@
 import { BrowserContext } from "playwright-core";
 import fs from "fs-extra";
 import _ from "lodash";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { logEveryWhere } from "@/electron/service/util";
 import { IProfileProxy } from "@/electron/type";
 import { browserDownloader } from "@/electron/service/browserDownloader";
@@ -149,7 +149,7 @@ export class BaseBrowser {
         }
       }
 
-      const [preference, err] = await preferenceDB.getOnePreference();
+      const [preference, err] = await preferenceService.getOnePreference();
       if (err || !preference) {
         return [null, err];
       }

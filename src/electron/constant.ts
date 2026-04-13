@@ -821,8 +821,6 @@ export const PORTFOLIO_APP_URL = {
   [PORTFOLIO_APP.SOL_SCAN]: "https://solscan.io",
 };
 
-export const preferenceUniqueKey = "1";
-
 // telegram
 export const TELEGRAM_BOT = {
   COMMAND_CONNECT_BOT: "connect_bot",

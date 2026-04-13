@@ -1,5 +1,6 @@
 {
   "english": "English",
+  "value": "Value",
   "password": "Password",
   "login": "Sign in",
   "signup": "Sign up",
@@ -704,7 +705,9 @@
   "workflow.runCompleted": "Done",
   "workflow.currentRound": "Current round",
   "workflow.nodeInstruction": "Processor instruction",
-  "workflow.listDefaultVariable": "Default variables",
+  "workflow.listDefaultVariable": "Default variable",
+  "workflow.listGlobalVariable": "Global variable",
+  "workflow.globalVariableEmptyText": "No global variable defined in this workflow.",
   "workflow.variableNameLabel": "Variable name",
   "workflow.enterVariableName": "Enter variable name",
   "workflow.variableValueLabel": "Variable value",

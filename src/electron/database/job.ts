@@ -13,7 +13,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { encryptionService } from "@/electron/service/encrypt";
 import { formatDBResponse, formatJob } from "@/electron/service/formatData";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
-import { preferenceDB } from "./preference";
+import { preferenceService } from "@/electron/service/preference";
 import { campaignProfileDB } from "./campaignProfile";
 
 class JobDB {
@@ -71,7 +71,7 @@ class JobDB {
       job?.schedule?.alertTelegram &&
       job?.campaignId !== undefined
     ) {
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
 
       const [totalProfile, totalUnFinishedProfile] =
         await campaignProfileDB?.getCampaignProfileStatus(

@@ -18,7 +18,7 @@ import { agentProfileDB } from "@/electron/database/agentProfile";
 import { appLogDB } from "@/electron/database/appLog";
 import { agentSkillDB } from "@/electron/database/agentSkill";
 import { mcpServerDB } from "@/electron/database/mcpServer";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
@@ -155,7 +155,7 @@ class TaskDispatcher {
 
   private buildUnassignedContext =
     async (): Promise<UnassignedDispatchContext | null> => {
-      const [preference, prefErr] = await preferenceDB.getOnePreference();
+      const [preference, prefErr] = await preferenceService.getOnePreference();
       if (prefErr || !preference?.llmProvider) {
         return null;
       }

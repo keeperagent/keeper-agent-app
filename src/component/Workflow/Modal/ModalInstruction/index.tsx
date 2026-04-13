@@ -6,10 +6,12 @@ import { actSetShowModalInstruction } from "@/redux/workflowRunner";
 import { useTranslation } from "@/hook";
 import NodeInstruction from "./NodeInstruction";
 import DefaultVariable from "./DefaultVariable";
+import GlobalVariable from "./GlobalVariable";
 
 const TAB = {
   NODE_INSTRUCTION: "NODE_INSTRUCTION",
   LIST_VARIABLE: "LIST_VARIABLE",
+  GLOBAL_VARIABLE: "GLOBAL_VARIABLE",
 };
 
 const ModalInstruction = (props: any) => {
@@ -49,12 +51,17 @@ const ModalInstruction = (props: any) => {
             key: TAB.LIST_VARIABLE,
             label: translate("workflow.listDefaultVariable"),
           },
+          {
+            key: TAB.GLOBAL_VARIABLE,
+            label: translate("workflow.listGlobalVariable"),
+          },
         ]}
         activeKey={activeTab}
       />
 
       {activeTab === TAB.NODE_INSTRUCTION && <NodeInstruction />}
       {activeTab === TAB.LIST_VARIABLE && <DefaultVariable />}
+      {activeTab === TAB.GLOBAL_VARIABLE && <GlobalVariable />}
     </Modal>
   );
 };

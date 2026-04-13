@@ -1,5 +1,5 @@
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
 import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
@@ -21,8 +21,8 @@ export const masterPasswordController = () => {
     MESSAGE.CHECK_MASTER_PASSWORD_EXISTS,
     MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES,
     async (event) => {
-      const [preference] = await preferenceDB.getOnePreferenceRaw();
-      const exists = Boolean(preference?.masterPasswordVerifier);
+      const [verifier] = await preferenceService.getMasterPasswordVerifier();
+      const exists = Boolean(verifier);
       event.reply(MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES, {
         code: RESPONSE_CODE.SUCCESS,
         data: { exists },
@@ -55,9 +55,7 @@ export const masterPasswordController = () => {
       const passwordBuffer = masterPasswordManager.derivePassword(password);
       const verifier = masterPasswordManager.createVerifier(passwordBuffer);
 
-      const [preference] = await preferenceDB.getOnePreferenceRaw();
-      await preferenceDB.updatePreference({
-        id: preference?.id,
+      await preferenceService.updatePreference({
         masterPasswordVerifier: verifier,
       });
 
@@ -91,8 +89,7 @@ export const masterPasswordController = () => {
         return;
       }
 
-      const [preference] = await preferenceDB.getOnePreferenceRaw();
-      const verifier = preference?.masterPasswordVerifier;
+      const [verifier] = await preferenceService.getMasterPasswordVerifier();
       if (!verifier) {
         event.reply(MESSAGE.VERIFY_MASTER_PASSWORD_RES, {
           code: RESPONSE_CODE.ERROR,
@@ -143,24 +140,13 @@ export const masterPasswordController = () => {
         return;
       }
 
-      const [preference] = await preferenceDB.getOnePreferenceRaw();
-      if (!preference?.id) {
-        event.reply(MESSAGE.RESET_MASTER_PASSWORD_RES, {
-          code: RESPONSE_CODE.ERROR,
-          error: "Preference not found",
-        });
-        return;
-      }
-
       masterPasswordManager.setSalt(email);
       const passwordBuffer = masterPasswordManager.derivePassword(newPassword);
       const verifierToSet =
         masterPasswordManager.createVerifier(passwordBuffer);
 
-      const [updated] = await preferenceDB.updateMasterPasswordVerifier(
-        preference.id,
-        verifierToSet,
-      );
+      const [updated] =
+        await preferenceService.updateMasterPasswordVerifier(verifierToSet);
       if (!updated) {
         event.reply(MESSAGE.RESET_MASTER_PASSWORD_RES, {
           code: RESPONSE_CODE.ERROR,

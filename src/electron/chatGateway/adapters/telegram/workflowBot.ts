@@ -50,7 +50,7 @@
 */
 
 import { Telegraf } from "telegraf";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { campaignDB } from "@/electron/database/campaign";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { workflowDB } from "@/electron/database/workflow";
@@ -235,7 +235,7 @@ class TelegramBotService {
           `<b>Workflow:</b> ${escapeHtml(this.monitoringWorkflowName || "")}\n` +
           `<b>Progress:</b> ${completed}/${totalProfile} profiles (${progress}%)`;
 
-        const [preference] = await preferenceDB.getOnePreference();
+        const [preference] = await preferenceService.getOnePreference();
         await this.sendMessage(
           preference?.botTokenTelegram || "",
           message,
@@ -286,7 +286,7 @@ class TelegramBotService {
         `<b>Workflow:</b> ${escapeHtml(workflowName)}\n` +
         `<b>Total profiles:</b> ${err ? "N/A" : totalProfile}`;
 
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       await this.sendMessage(
         preference?.botTokenTelegram || "",
         message,
@@ -738,7 +738,7 @@ class TelegramBotService {
 
   start = async () => {
     try {
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       if (!preference?.isTelegramOn || !preference?.botTokenTelegram) {
         logEveryWhere({ message: "Telegram bot is not connected" });
         return;
@@ -760,7 +760,7 @@ class TelegramBotService {
       // Authorization middleware — only the registered chat can interact with the bot.
       // If no chat is registered yet, only /connect is allowed through (first-time setup).
       telegramBot.use(async (ctx, next) => {
-        const [pref] = await preferenceDB.getOnePreference();
+        const [pref] = await preferenceService.getOnePreference();
         const authorizedChatId = pref?.chatIdTelegram;
         const incomingChatId = ctx.chat?.id;
 
@@ -806,8 +806,11 @@ class TelegramBotService {
       telegramBot.command(TELEGRAM_BOT.COMMAND_CONNECT_BOT, async (ctx) => {
         const chatIdTelegram = ctx.chat.id;
         ctx.reply(`Chat ID: ${chatIdTelegram}`);
-        const [pref] = await preferenceDB.getOnePreference();
-        await preferenceDB.updatePreference({ chatIdTelegram, id: pref?.id });
+        const [pref] = await preferenceService.getOnePreference();
+        await preferenceService.updatePreference({
+          chatIdTelegram,
+          id: pref?.id,
+        });
         logEveryWhere({ message: `Chat ID saved, chat id: ${chatIdTelegram}` });
       });
 

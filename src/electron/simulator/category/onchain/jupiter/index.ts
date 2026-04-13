@@ -1,8 +1,8 @@
 import _ from "lodash";
 import AsyncLock from "async-lock";
-import { SwapOnJupiter } from "./swapOnJupiter";
 import { getSolanaProvider } from "@/electron/inject";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
+import { SwapOnJupiter } from "./swapOnJupiter";
 
 export class SwapOnJupiterManager {
   private mapSwapOnJupiter: { [key: string]: SwapOnJupiter };
@@ -16,7 +16,7 @@ export class SwapOnJupiterManager {
   }
 
   getSwapOnJupiter = async (
-    listNodeEndpoint: string[]
+    listNodeEndpoint: string[],
   ): Promise<SwapOnJupiter> => {
     return await this.lock.acquire(this.lockKey, async () => {
       const key = this.getKey(listNodeEndpoint);
@@ -24,14 +24,14 @@ export class SwapOnJupiterManager {
         return this.mapSwapOnJupiter[key];
       }
 
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       const listJupiterApiKey = preference?.jupiterApiKeys || [];
 
       const solanaProvider = getSolanaProvider();
       this.mapSwapOnJupiter[key] = new SwapOnJupiter(
         listNodeEndpoint,
         listJupiterApiKey,
-        solanaProvider
+        solanaProvider,
       );
       return this.mapSwapOnJupiter[key];
     });

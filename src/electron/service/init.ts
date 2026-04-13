@@ -14,7 +14,7 @@ import {
   KA_MEMORY_FOLDER,
   EXTENSION_FOLDER,
 } from "@/electron/constant";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { logEveryWhere, removeLastTrailingSlash } from "./util";
 
 const createFolderIfNotExist = () => {
@@ -142,7 +142,7 @@ const getMacAddress = () => {
 };
 
 const initDeviceId = async () => {
-  const [preference, err] = await preferenceDB.getOnePreferenceRaw();
+  const [preference, err] = await preferenceService.getOnePreference();
   if (err || preference?.deviceId) {
     return;
   }
@@ -159,8 +159,7 @@ const initDeviceId = async () => {
     deviceId = uid(9);
   }
 
-  await preferenceDB.updatePreference({
-    id: preference?.id,
+  await preferenceService.updatePreference({
     deviceId: deviceId?.slice(0, 9),
   });
 };
