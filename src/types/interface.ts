@@ -17,6 +17,7 @@ export type IFile = {
 export type IElectron = {
   send: (channel: string, data?: any) => void;
   on: (channel: string, callback?: any) => void;
+  removeListener: (channel: string, callback?: any) => void;
   removeAllListeners: (channel: string) => void;
   getPathForFile?: (file: File) => string;
 };

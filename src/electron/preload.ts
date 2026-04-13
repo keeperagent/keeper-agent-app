@@ -6,6 +6,8 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 contextBridge.exposeInMainWorld("electron", {
   send: (channel: string, data?: any) => ipcRenderer.send(channel, data),
   on: (channel: string, callback?: any) => ipcRenderer.on(channel, callback),
+  removeListener: (channel: string, callback?: any) =>
+    ipcRenderer.removeListener(channel, callback),
   removeAllListeners: (channel: string) =>
     ipcRenderer.removeAllListeners(channel),
   // Absolute filesystem path for a File (from input or drop).

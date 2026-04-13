@@ -1,8 +1,15 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { connect } from "react-redux";
 import { ChatPlatform } from "@/electron/chatGateway/types";
 import { RootState } from "@/redux/store";
-import { useDashboardAgent, useTranslation } from "@/hook";
+import {
+  useDashboardAgent,
+  useTranslation,
+  useCheckModelCapability,
+} from "@/hook";
+import { LLMProvider } from "@/electron/type";
+import { DEFAULT_LLM_MODELS } from "@/electron/constant";
+import { preferenceSelector } from "@/redux/preference";
 import { actSetLayoutMode } from "@/redux/agent";
 import { getToolDisplayName } from "@/electron/constant";
 import { ChatRole } from "@/electron/chatGateway/types";
@@ -27,8 +34,11 @@ const AgentView = (props: any) => {
     encryptKey,
     chainKey,
     layoutMode,
+    preference,
   } = props;
   const { translate } = useTranslation();
+  const { checkModelCapability, modelCapability } = useCheckModelCapability();
+  const [visionWarning, setVisionWarning] = useState<string | null>(null);
   const {
     sessionId,
     conversation,
@@ -39,6 +49,7 @@ const AgentView = (props: any) => {
     streamingContent,
     executingTool,
     planReview,
+    llmProvider,
     createSession,
     sendMessage,
     stopAgent,
@@ -52,6 +63,27 @@ const AgentView = (props: any) => {
       createSession();
     }
   }, [sessionId, creatingSession, createSession]);
+
+  const modelName = useMemo(() => {
+    const preferenceByProvider: Record<LLMProvider, string> = {
+      [LLMProvider.OPENAI]:
+        preference?.openAIModel || DEFAULT_LLM_MODELS[LLMProvider.OPENAI],
+      [LLMProvider.CLAUDE]:
+        preference?.anthropicModel || DEFAULT_LLM_MODELS[LLMProvider.CLAUDE],
+      [LLMProvider.GEMINI]:
+        preference?.googleGeminiModel || DEFAULT_LLM_MODELS[LLMProvider.GEMINI],
+    };
+    return preferenceByProvider[llmProvider];
+  }, [
+    llmProvider,
+    preference?.openAIModel,
+    preference?.anthropicModel,
+    preference?.googleGeminiModel,
+  ]);
+
+  useEffect(() => {
+    checkModelCapability(modelName, llmProvider);
+  }, [modelName, llmProvider]);
 
   const displayedMessages: DisplayMessage[] = useMemo(() => {
     const mapped: DisplayMessage[] = (conversation || [])
@@ -139,6 +171,20 @@ const AgentView = (props: any) => {
   ]);
 
   const onSend = (draft: string, attachedFiles: AttachedFile[]) => {
+    const hasImages = attachedFiles.some(
+      (fileItem) => fileItem.type === "image",
+    );
+    if (hasImages && modelCapability && !modelCapability?.supportsVision) {
+      setVisionWarning(
+        translate("agent.modelDoesNotSupportVision").replace(
+          "{model}",
+          modelName,
+        ),
+      );
+    } else {
+      setVisionWarning(null);
+    }
+
     const context = {
       platformId: ChatPlatform.KEEPER,
       chainKey,
@@ -167,7 +213,10 @@ const AgentView = (props: any) => {
       messages={displayedMessages}
       loading={loading}
       error={error}
-      composerDisabled={creatingSession || (!!sessionId && !agentReady) || hasPlanReview}
+      warning={visionWarning}
+      composerDisabled={
+        creatingSession || (Boolean(sessionId) && !agentReady) || hasPlanReview
+      }
       showPreparingStatus={creatingSession || (!!sessionId && !agentReady)}
       canReset={conversation.length > 0}
       onSend={onSend}
@@ -191,6 +240,7 @@ export default connect(
     isAllWallet: state?.Agent?.isAllWallet,
     chainKey: state?.Agent?.chainKey,
     layoutMode: state?.Agent?.layoutMode,
+    preference: preferenceSelector(state)?.preference,
   }),
   { actSetLayoutMode },
 )(AgentView);

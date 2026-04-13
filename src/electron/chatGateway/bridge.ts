@@ -18,10 +18,12 @@ import {
   createKeeperAgent,
   createBackgroundLLM,
   hasApiKey,
+  getModelName,
   type KeeperAgent,
   ToolContext,
   type IAttachedFileContext,
 } from "@/electron/appAgent";
+import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
 import { looksLikeEncryptKey } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
@@ -84,13 +86,16 @@ const IMAGE_MIME_BY_EXT: Record<string, string> = {
 const buildHumanMessage = async (
   text: string,
   attachedFiles?: IAttachedFileContext[],
+  supportsVision = true,
 ): Promise<HumanMessage> => {
-  const imageFiles = (attachedFiles || []).filter(
-    (file) =>
-      file.type === "image" &&
-      file.filePath &&
-      IMAGE_MIME_BY_EXT[file.extension || ""],
-  );
+  const imageFiles = supportsVision
+    ? (attachedFiles || []).filter(
+        (file) =>
+          file.type === "image" &&
+          file.filePath &&
+          IMAGE_MIME_BY_EXT[file.extension || ""],
+      )
+    : [];
 
   if (imageFiles.length === 0) {
     return new HumanMessage(text);
@@ -518,9 +523,21 @@ class AgentChatBridge {
         });
       }
 
+      const hasImageAttachments =
+        options?.attachedFiles?.some((file) => file.type === "image") ?? false;
+      let supportsVision = true;
+      if (hasImageAttachments) {
+        const modelName = await getModelName(session.provider);
+        ({ supportsVision } = await checkModelCapability(
+          modelName,
+          session.provider,
+        ));
+      }
+
       const humanMessage = await buildHumanMessage(
         redactedInput,
         options?.attachedFiles,
+        supportsVision,
       );
 
       // Inject the compaction summary as the first exchange in the new thread so the agent has session context even after the checkpointer was reset
@@ -539,7 +556,7 @@ class AgentChatBridge {
       }
       initialMessages.push(humanMessage);
 
-      const eventStream = (agent as any).streamEvents(
+      const eventStream = agent?.streamEvents(
         { messages: initialMessages },
         {
           configurable: { thread_id: session.threadId },

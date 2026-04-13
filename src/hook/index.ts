@@ -200,3 +200,4 @@ export {
   useDeleteMcpToken,
 } from "./mcpToken";
 export { useGetListAppLog, useDeleteAppLog, useCreateAppLog } from "./appLog";
+export { useCheckModelCapability } from "./useCheckModelCapability";

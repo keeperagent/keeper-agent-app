@@ -96,6 +96,7 @@ type Props = {
   messages: DisplayMessage[];
   loading: boolean;
   error?: string | null;
+  warning?: string | null;
   composerDisabled?: boolean;
   canReset?: boolean;
   showPreparingStatus?: boolean;
@@ -114,6 +115,7 @@ const AgentChatView = ({
   messages,
   loading,
   error,
+  warning,
   composerDisabled,
   canReset,
   showPreparingStatus,
@@ -579,6 +581,12 @@ const AgentChatView = ({
         {secretWarning && (
           <SecretWarning>
             <span>{translate("agent.secretDetectedWarning")}</span>
+          </SecretWarning>
+        )}
+
+        {warning && (
+          <SecretWarning>
+            <span>{warning}</span>
           </SecretWarning>
         )}
 

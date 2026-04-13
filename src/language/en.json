@@ -1280,6 +1280,7 @@
   "agent.removeAttachment": "Remove attachment",
   "agent.dropFilesHere": "Drop files here",
   "agent.secretDetectedWarning": "Private key or seed phrase detected — redacted before sending",
+  "agent.modelDoesNotSupportVision": "{model} may not support vision. Images might not be processed.",
   "agent.waitingForApproval": "Waiting for your approval",
   "agent.planReviewTitle": "Ready to execute?",
   "agent.planReviewDesc": "Review the plan carefully. Approve to proceed or reject",

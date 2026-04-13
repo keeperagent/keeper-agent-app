@@ -13,7 +13,9 @@ import type {
   IpcAgentResetSessionPayload,
   IpcAgentChangeProviderPayload,
   IpcAgentGetStatusPayload,
+  IpcCheckModelCapabilityPayload,
 } from "@/electron/ipcTypes";
+import { checkModelCapability } from "@/electron/service/modelCapability";
 import { hasApiKey } from "@/electron/appAgent";
 
 const CONTEXT_HEADER = "CURRENT CONTEXT (use these values";
@@ -271,6 +273,19 @@ export const agentController = () => {
             skillsCount: session.keeper.skillsCount,
           }),
         },
+      });
+    },
+  );
+
+  onIpc<IpcCheckModelCapabilityPayload>(
+    MESSAGE.CHECK_MODEL_CAPABILITY,
+    MESSAGE.CHECK_MODEL_CAPABILITY_RES,
+    async (event, payload) => {
+      const { modelName, provider, requestId } = payload || {};
+      const capability = await checkModelCapability(modelName || "", provider);
+      event.reply(MESSAGE.CHECK_MODEL_CAPABILITY_RES, {
+        data: capability,
+        requestId,
       });
     },
   );

@@ -594,6 +594,12 @@ export type IpcOpenFolderPayload = {
   isOpenFile?: boolean;
 };
 
+export type IpcCheckModelCapabilityPayload = {
+  modelName: string;
+  provider: LLMProvider;
+  requestId?: string;
+};
+
 // File
 export type IpcFolderStatisticPayload = {
   limit: number;

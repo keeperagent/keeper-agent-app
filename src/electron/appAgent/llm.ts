@@ -84,6 +84,12 @@ export const createBackgroundLLM = async (provider: LLMProvider) => {
   return createLLM(provider, 0, backgroundModel);
 };
 
+export const getModelName = async (provider: LLMProvider): Promise<string> => {
+  const config = getProviderConfig(provider);
+  const [llm] = await getLlmSetting();
+  return (llm?.[config.modelField] as string) || DEFAULT_LLM_MODELS[provider];
+};
+
 export const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   const config = getProviderConfig(provider);
   const [llm, llmErr] = await getLlmSetting();

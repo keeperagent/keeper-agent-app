@@ -33,6 +33,7 @@ import {
   useGetListNodeEndpointGroup,
   useGetListCampaignProfile,
   useTranslation,
+  useCheckModelCapability,
 } from "@/hook";
 import { BASE_TOOL_REGISTRY } from "@/electron/appAgent/baseTool/registry";
 import { LlmProviderPicker, PasswordInput } from "@/component";
@@ -88,6 +89,7 @@ const ModalAgentProfile = (props: Props) => {
   const [encryptKeyValue, setEncryptKeyValue] = useState<string>("");
 
   const { translate, locale } = useTranslation();
+  const { checkModelCapability } = useCheckModelCapability();
   const [form] = Form.useForm();
   const { createAgentProfile, loading: createLoading } =
     useCreateAgentProfile();
@@ -178,6 +180,11 @@ const ModalAgentProfile = (props: Props) => {
   const onSubmit = async () => {
     try {
       const values = await form.validateFields();
+
+      // trigger in background
+      if (values.llmModel) {
+        checkModelCapability(values.llmModel, llmProvider as LLMProvider);
+      }
 
       const data: Partial<IAgentProfile> = {
         name: values.name,
