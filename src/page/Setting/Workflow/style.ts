@@ -12,6 +12,12 @@ const Wrapper = styled.div`
     margin-bottom: 1.6rem;
   }
 
+  .cell-sub-label {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    margin-top: 0.2rem;
+  }
+
   .list-icon {
     display: flex;
     justify-content: center;
@@ -35,4 +41,16 @@ const Wrapper = styled.div`
   }
 `;
 
-export { Wrapper };
+const OtherSettingsPanel = styled.div`
+  padding: 1.6rem;
+
+  .panel-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    margin-bottom: 1.6rem;
+  }
+`;
+
+export { Wrapper, OtherSettingsPanel };

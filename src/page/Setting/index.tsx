@@ -91,8 +91,6 @@ const SettingPage = (props: any) => {
               </div>
               <ConnectWhatsApp />
             </div>
-
-            <Divider />
           </Col>
 
           <Col span={7}>

@@ -400,7 +400,7 @@ const LogViewer = (props: IProps) => {
             : () => props?.actSetIsShowLog(false)
         }
         icon={
-          <TerminalIconWrapper>
+          <TerminalIconWrapper isActive={isShowLog}>
             {!isShowLog ? <TerminalIcon /> : <CloseIcon />}
           </TerminalIconWrapper>
         }

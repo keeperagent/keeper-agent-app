@@ -78,6 +78,26 @@ export const ListAuthTokenRoot = styled.div`
       display: none;
     }
 
+    .trash-icon {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 0.3rem;
+      border-radius: 0.3rem;
+
+      svg {
+        width: 1.6rem;
+        height: 1.6rem;
+        min-width: 1.6rem;
+        min-height: 1.6rem;
+        fill: var(--color-error);
+      }
+
+      &:hover {
+        background: var(--color-border);
+      }
+    }
+
     .token-info {
       flex: 1;
       min-width: 0;
