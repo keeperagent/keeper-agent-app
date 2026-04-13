@@ -14,13 +14,17 @@ class McpTokenService {
 
   getListMcpToken = async (): Promise<[IMcpToken[] | null, Error | null]> => {
     try {
-      const [response] = await settingDB.getListSetting(
+      const [response, err] = await settingDB.getListSetting(
         1,
         1000,
         undefined,
         undefined,
         SETTING_TYPE.MCP_TOKEN,
       );
+      if (err) {
+        return [null, err];
+      }
+
       return [
         (response?.data || []).map((item) => this.toMcpToken(item)),
         null,
@@ -35,9 +39,9 @@ class McpTokenService {
     id: number,
   ): Promise<[IMcpToken | null, Error | null]> => {
     try {
-      const [setting] = await settingDB.getOneSetting(id);
-      if (!setting) {
-        return [null, null];
+      const [setting, err] = await settingDB.getOneSetting(id);
+      if (!setting || err) {
+        return [null, err];
       }
       return [this.toMcpToken(setting), null];
     } catch (err: any) {
@@ -50,13 +54,16 @@ class McpTokenService {
     tokenHash: string,
   ): Promise<[IMcpToken | null, Error | null]> => {
     try {
-      const [response] = await settingDB.getListSetting(
+      const [response, err] = await settingDB.getListSetting(
         1,
         1000,
         undefined,
         undefined,
         SETTING_TYPE.MCP_TOKEN,
       );
+      if (err) {
+        return [null, err];
+      }
       const setting = (response?.data || []).find(
         (item) => item.mcpTokenSetting?.tokenHash === tokenHash,
       );
@@ -71,7 +78,7 @@ class McpTokenService {
     data: Partial<IMcpToken>,
   ): Promise<[IMcpToken | null, Error | null]> => {
     try {
-      const [setting] = await settingDB.createSetting({
+      const [setting, err] = await settingDB.createSetting({
         name: data.name || "",
         type: SETTING_TYPE.MCP_TOKEN,
         data: JSON.stringify({
@@ -80,7 +87,7 @@ class McpTokenService {
         }),
       });
       if (!setting) {
-        return [null, null];
+        return [null, err];
       }
       return [this.toMcpToken(setting), null];
     } catch (err: any) {
@@ -93,9 +100,9 @@ class McpTokenService {
     data: IMcpToken,
   ): Promise<[IMcpToken | null, Error | null]> => {
     try {
-      const [current] = await settingDB.getOneSetting(data.id!);
-      if (!current) {
-        return [null, null];
+      const [current, err] = await settingDB.getOneSetting(data.id!);
+      if (!current || err) {
+        return [null, err];
       }
       const [setting] = await settingDB.updateSetting({
         ...current,
