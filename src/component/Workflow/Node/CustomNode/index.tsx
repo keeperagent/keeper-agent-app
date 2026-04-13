@@ -214,8 +214,8 @@ const CustomNode = (props: any) => {
           config.key ===
           (nodeData?.config as IGenerateImageNodeConfig)?.provider,
       );
-      const apiKey = providerConfig
-        ? preference?.[providerConfig?.apiKeyField]
+      const apiKey = providerConfig?.apiKeyField
+        ? preference?.[providerConfig.apiKeyField]
         : null;
       if (!apiKey) {
         setWarning(translate("workflow.imageProviderApiKeyNotFound"));

@@ -60,9 +60,10 @@ export class AgentWorkflow {
           throw new Error(`Provider ${provider} not found`);
         }
         const [llmSetting] = await getLlmSetting();
-        const apiKey =
-          llmSetting?.[providerConfig.apiKeyField as keyof ILlmSetting] || "";
-        if (!apiKey) {
+        const apiKey = providerConfig.apiKeyField
+          ? llmSetting?.[providerConfig.apiKeyField as keyof ILlmSetting]
+          : "";
+        if (!apiKey && providerConfig.apiKeyField) {
           throw new Error(`API key for ${provider} not found in preferences`);
         }
 

@@ -17,6 +17,8 @@ const PROVIDER_PREFIXES: Record<LLMProvider, string[]> = {
   [LLMProvider.OPENAI]: ["openai/"],
   [LLMProvider.CLAUDE]: ["claude-", "openrouter/anthropic/"],
   [LLMProvider.GEMINI]: ["gemini/", "openrouter/google/"],
+  [LLMProvider.OPENROUTER]: ["openrouter/"],
+  [LLMProvider.OLLAMA]: ["ollama/"],
 };
 
 class ModelCapabilityService {

@@ -1,16 +1,23 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOllama } from "@langchain/ollama";
+import { ChatOpenRouter } from "@langchain/openrouter";
 import { ILlmSetting, LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { getLlmSetting } from "./utils";
 
 type ProviderConfig = {
-  apiKeyField: keyof ILlmSetting;
+  apiKeyField: keyof ILlmSetting | null;
   modelField: keyof ILlmSetting;
-  backgroundModelField: keyof ILlmSetting;
-  keyError: string;
-  createChat: (apiKey: string, model: string, temperature: number) => any;
+  backgroundModelField: keyof ILlmSetting | null;
+  keyError: string | null;
+  createChat: (
+    apiKey: string,
+    model: string,
+    temperature: number,
+    llmSetting: ILlmSetting,
+  ) => any;
 };
 
 const PROVIDER_CONFIG: Record<LLMProvider, ProviderConfig> = {
@@ -50,6 +57,32 @@ const PROVIDER_CONFIG: Record<LLMProvider, ProviderConfig> = {
     createChat: (apiKey, model, temperature) =>
       new ChatOpenAI({ apiKey, model, temperature, streaming: true }),
   },
+  [LLMProvider.OPENROUTER]: {
+    apiKeyField: "openRouterApiKey",
+    modelField: "openRouterModel",
+    backgroundModelField: null,
+    keyError:
+      "OpenRouter API key is not found, please set it in the Settings page",
+    createChat: (apiKey, model, temperature) =>
+      new ChatOpenRouter(model, {
+        apiKey,
+        temperature,
+        siteUrl: "https://keeperagent.app",
+        siteName: "Keeper Agent",
+      }),
+  },
+  [LLMProvider.OLLAMA]: {
+    apiKeyField: null,
+    modelField: "ollamaModel",
+    backgroundModelField: null,
+    keyError: null,
+    createChat: (_, model, temperature, llmSetting) =>
+      new ChatOllama({
+        model,
+        baseUrl: llmSetting?.ollamaBaseUrl || "http://localhost:11434",
+        temperature,
+      }),
+  },
 };
 
 const getProviderConfig = (provider: LLMProvider): ProviderConfig =>
@@ -65,23 +98,27 @@ export const createLLM = async (
   if (llmErr) {
     throw llmErr;
   }
-  const apiKey = (llm?.[config.apiKeyField] as string) || null;
-  if (!apiKey) {
-    throw new Error(config.keyError);
+  const apiKey = config.apiKeyField ? llm?.[config.apiKeyField] || "" : "";
+  if (config.apiKeyField && !apiKey) {
+    throw new Error(config.keyError!);
   }
   const modelName =
-    modelOverride ||
-    (llm?.[config.modelField] as string) ||
-    DEFAULT_LLM_MODELS[provider];
-  return config.createChat(apiKey, modelName, temperature);
+    modelOverride || llm?.[config.modelField] || DEFAULT_LLM_MODELS[provider];
+  return config.createChat(
+    apiKey as string,
+    modelName as string,
+    temperature,
+    llm || {},
+  );
 };
 
 export const createBackgroundLLM = async (provider: LLMProvider) => {
   const config = getProviderConfig(provider);
   const [llm] = await getLlmSetting();
-  const backgroundModel =
-    (llm?.[config.backgroundModelField] as string) || undefined;
-  return createLLM(provider, 0, backgroundModel);
+  const backgroundModel = config.backgroundModelField
+    ? llm?.[config.backgroundModelField] || undefined
+    : undefined;
+  return createLLM(provider, 0, backgroundModel as string);
 };
 
 export const getModelName = async (provider: LLMProvider): Promise<string> => {
@@ -92,6 +129,9 @@ export const getModelName = async (provider: LLMProvider): Promise<string> => {
 
 export const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   const config = getProviderConfig(provider);
+  if (!config.apiKeyField) {
+    return true;
+  }
   const [llm, llmErr] = await getLlmSetting();
   if (llmErr) {
     throw llmErr;

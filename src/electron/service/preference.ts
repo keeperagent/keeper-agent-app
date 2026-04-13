@@ -157,6 +157,9 @@ class PreferenceService {
         "disabledTools",
         "isMcpServerOn",
         "mcpServerPort",
+        "openRouterModel",
+        "ollamaBaseUrl",
+        "ollamaModel",
       ];
       const llmEncryptedKeys: (keyof IPreference)[] = [
         "openAIApiKey",
@@ -164,6 +167,7 @@ class PreferenceService {
         "googleGeminiApiKey",
         "tavilyApiKey",
         "exaApiKey",
+        "openRouterApiKey",
       ];
       const llmKeys = [...llmPlainKeys, ...llmEncryptedKeys];
       if (llmKeys.some((key) => preference[key] !== undefined)) {

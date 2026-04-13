@@ -59,6 +59,8 @@ export enum LLMProvider {
   OPENAI = "openai",
   CLAUDE = "claude",
   GEMINI = "gemini",
+  OPENROUTER = "openrouter",
+  OLLAMA = "ollama",
 }
 
 // api response
@@ -2539,6 +2541,10 @@ export type IPreference = {
   openAIBackgroundModel?: string;
   anthropicBackgroundModel?: string;
   googleGeminiBackgroundModel?: string;
+  openRouterApiKey?: string;
+  openRouterModel?: string;
+  ollamaBaseUrl?: string;
+  ollamaModel?: string;
   jupiterApiKeys?: string[];
   tavilyApiKey?: string;
   exaApiKey?: string;
@@ -2841,6 +2847,10 @@ export type ILlmSetting = {
   openAIBackgroundModel?: string;
   anthropicBackgroundModel?: string;
   googleGeminiBackgroundModel?: string;
+  openRouterApiKey?: string;
+  openRouterModel?: string;
+  ollamaBaseUrl?: string;
+  ollamaModel?: string;
   tavilyApiKey?: string;
   exaApiKey?: string;
   llmProvider?: string;

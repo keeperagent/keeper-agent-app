@@ -10,30 +10,8 @@ import {
 import { IPreference, LLMProvider } from "@/electron/type";
 import { PasswordInput } from "@/component/Input";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
-import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { ProviderLabel } from "@/page/Setting/ProviderLabel";
 import { Wrapper } from "./style";
-
-const ProviderLabel = ({
-  provider,
-  label,
-}: {
-  provider: LLMProvider;
-  label: string;
-}) => {
-  const providerConfig = LLM_PROVIDERS.find((p) => p.key === provider);
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "1rem" }}>
-      {providerConfig && (
-        <img
-          src={providerConfig.icon}
-          alt={providerConfig.label}
-          style={{ width: 16, height: 16, objectFit: "contain" }}
-        />
-      )}
-      {label}
-    </span>
-  );
-};
 
 type IProps = {
   preference: IPreference | null;

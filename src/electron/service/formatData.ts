@@ -402,6 +402,12 @@ const formatSetting = (raw: any): ISetting => {
             : parsed.disabledTools || [],
         isMcpServerOn: parsed.isMcpServerOn,
         mcpServerPort: parsed.mcpServerPort,
+        openRouterApiKey: parsed.openRouterApiKey
+          ? encryptionService.decryptData(parsed.openRouterApiKey)
+          : "",
+        openRouterModel: parsed.openRouterModel,
+        ollamaBaseUrl: parsed.ollamaBaseUrl,
+        ollamaModel: parsed.ollamaModel,
       };
       formatedData.llmSetting = llmSetting;
     } else if (formatedData.type === SETTING_TYPE.DEX_SETTING) {
