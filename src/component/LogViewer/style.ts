@@ -117,7 +117,7 @@ const LogViewerWrapper = styled.div<LogViewerProps>`
   }
 `;
 
-const TerminalIconWrapper = styled.div`
+const TerminalIconWrapper = styled.div<{ isActive?: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -127,7 +127,8 @@ const TerminalIconWrapper = styled.div`
     width: 2rem;
     min-width: 2rem;
     min-height: 2rem;
-    fill: white;
+    fill: ${({ isActive }) =>
+      isActive ? "var(--color-white)" : "currentColor"};
   }
 `;
 

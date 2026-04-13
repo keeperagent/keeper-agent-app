@@ -1,4 +1,4 @@
-import { Form, Button, Row, message, InputNumber, Input, Switch } from "antd";
+import { Form, Button, Row, message, Input, Switch } from "antd";
 import { useEffect } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -19,7 +19,6 @@ const Other = (props: IProps) => {
 
   useEffect(() => {
     form.setFieldsValue({
-      maxConcurrentJob: preference?.maxConcurrentJob,
       jupiterApiKeys: preference?.jupiterApiKeys?.join(","),
     });
   }, [preference]);
@@ -34,10 +33,7 @@ const Other = (props: IProps) => {
 
   const onSubmitForm = async () => {
     try {
-      const { maxConcurrentJob, jupiterApiKeys } = await form.validateFields([
-        "maxConcurrentJob",
-        "jupiterApiKeys",
-      ]);
+      const { jupiterApiKeys } = await form.validateFields(["jupiterApiKeys"]);
 
       let listJupiterApiKeys = [];
       if (jupiterApiKeys) {
@@ -45,7 +41,6 @@ const Other = (props: IProps) => {
       }
       await updatePreference({
         id: preference?.id,
-        maxConcurrentJob,
         jupiterApiKeys: listJupiterApiKeys,
       });
     } catch {}
@@ -54,25 +49,6 @@ const Other = (props: IProps) => {
   return (
     <Wrapper>
       <Form layout="vertical" form={form}>
-        <Form.Item
-          label={`${translate("setting.maxConcurrentWorkflow")}:`}
-          name="maxConcurrentJob"
-          rules={[
-            {
-              required: true,
-              message: translate("form.requiredField"),
-            },
-          ]}
-          tooltip={translate("setting.maxConcurrentWorkflowTooltip")}
-        >
-          <InputNumber
-            className="custom-input"
-            placeholder={translate("setting.maxConcurrentWorkflowPlaceholder")}
-            style={{ width: "100%" }}
-            min={1}
-          />
-        </Form.Item>
-
         <Form.Item
           label="Jupiter API Key:"
           name="jupiterApiKeys"

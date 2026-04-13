@@ -87,6 +87,7 @@ const ConnectWhatsApp = (props: IProps) => {
     <Wrapper>
       <div className="status-wrapper">
         <Status
+          isLarge
           content={statusLabel}
           isSuccess={status === WhatsAppStatus.CONNECTED}
         />

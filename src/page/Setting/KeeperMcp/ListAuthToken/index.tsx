@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
-import { Button, Empty, Form, Popconfirm, Spin } from "antd";
+import { Empty, Form, Popconfirm, Spin, Button } from "antd";
+import { TrashIcon } from "@/component/Icon";
 import { IMcpToken, McpTokenPermission } from "@/electron/type";
 import { useTranslation } from "@/hook";
 import {
@@ -142,14 +143,9 @@ export const ListAuthToken = () => {
                       cancelText={translate("no")}
                       style={{ width: "10rem" }}
                     >
-                      <Button
-                        type="primary"
-                        size="small"
-                        loading={deletingToken}
-                        danger
-                      >
-                        {translate("button.delete")}
-                      </Button>
+                      <span className="trash-icon">
+                        <TrashIcon />
+                      </span>
                     </Popconfirm>
                   </div>
                 </div>

@@ -15,11 +15,17 @@ import { NUMBER_OF_COLUMN } from "@/electron/constant";
 
 const { TextArea } = Input;
 
+const defaultColumnOrder = Array.from(
+  { length: NUMBER_OF_COLUMN },
+  (_, index) => `col${index + 1}`,
+);
+
 const ModalConfig = (props: any) => {
   const { translate } = useTranslation();
   const { isModalOpen, setModalOpen, selectedCampaign } = props;
   const [isBtnLoading, setBtnLoading] = useState(false);
   const [config, setConfig] = useState<IColumnConfig>({});
+  const [columnOrder, setColumnOrder] = useState<string[]>(defaultColumnOrder);
 
   const [form] = Form.useForm();
   const { updateCampaign, loading, isSuccess } = useUpdateCampaign();
@@ -37,6 +43,12 @@ const ModalConfig = (props: any) => {
     }).flat();
 
     setConfig(_.pick(selectedCampaign, columnKeys));
+
+    setColumnOrder(
+      selectedCampaign?.columnOrder?.length === NUMBER_OF_COLUMN
+        ? selectedCampaign.columnOrder
+        : defaultColumnOrder,
+    );
   }, [isModalOpen, form, selectedCampaign]);
 
   useEffect(() => {
@@ -57,12 +69,14 @@ const ModalConfig = (props: any) => {
       const updatedData = {
         id: selectedCampaign?.id,
         defaultOpenUrl,
+        columnOrder,
         ...config,
       };
       updateCampaign(updatedData);
       props?.actSaveSelectedCampaign({
         ...selectedCampaign,
         defaultOpenUrl,
+        columnOrder,
         ...config,
       });
     } catch {}
@@ -139,6 +153,8 @@ const ModalConfig = (props: any) => {
                 isModalOpen={isModalOpen}
                 setConfig={setConfig}
                 config={config}
+                columnOrder={columnOrder}
+                setColumnOrder={setColumnOrder}
               />
             </Form.Item>
           </Form>

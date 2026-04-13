@@ -11,7 +11,7 @@ const ColumnPreviewWrapper = styled.div`
   transition: all 0.2s ease-in-out;
 
   &.active {
-    transform: scaleY(0.95) rotateZ(5deg);
+    transform: translateY(-1rem);
 
     .grid {
       background-color: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
@@ -53,6 +53,11 @@ const ColumnPreviewWrapper = styled.div`
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
 
     .horizon-line {
       border-bottom: 1px solid

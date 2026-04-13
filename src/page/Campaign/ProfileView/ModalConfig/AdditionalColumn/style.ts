@@ -19,11 +19,36 @@ const FormWrapper = styled.div`
   .preview {
     display: flex;
     justify-content: space-between;
-    overflow: hidden;
   }
 
   .help {
     margin-top: var(--margin-top);
+  }
+`;
+
+const PreviewHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+
+  .hint {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
+
+  .reset-btn {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 0.3rem;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--color-border);
+    }
   }
 `;
 
@@ -44,4 +69,4 @@ const HelpWrapper = styled.div`
   }
 `;
 
-export { FormWrapper, HelpWrapper };
+export { FormWrapper, HelpWrapper, PreviewHeader };

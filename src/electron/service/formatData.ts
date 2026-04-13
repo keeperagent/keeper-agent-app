@@ -119,6 +119,10 @@ const formatCampaign = (data: Model<any, any>): ICampaign => {
     listColumnForCalculate: campaign?.listColumnForCalculate
       ? JSON.parse(campaign?.listColumnForCalculate?.toString())
       : [],
+    columnOrder:
+      typeof formatedData?.columnOrder === "string"
+        ? JSON.parse(formatedData?.columnOrder || "[]")
+        : formatedData?.columnOrder,
   };
 
   return campaign;

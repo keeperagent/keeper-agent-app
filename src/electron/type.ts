@@ -432,6 +432,7 @@ export type ICampaign = {
   sortOrder?: string;
   listColumnForCalculate?: string | string[];
   unitForCalculate?: string;
+  columnOrder?: string[];
   createAt?: number;
   updateAt?: number;
 };
