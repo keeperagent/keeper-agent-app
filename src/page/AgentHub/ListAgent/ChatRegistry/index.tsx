@@ -3,13 +3,13 @@ import { Button, Tabs, Spin } from "antd";
 import { BackIcon } from "@/component/Icon";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { IAgentProfile, ICampaign } from "@/electron/type";
+import { IAgentProfile, ICampaign, LLMProvider } from "@/electron/type";
 import { agentProfileSelector } from "@/redux/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
-import { useIpcAction } from "@/hook";
+import { useIpcAction, useCheckModelCapability } from "@/hook";
 import AgentChatView, {
   type DisplayMessage,
   type AttachedFile,
@@ -42,8 +42,10 @@ type ChatMessage = {
 const ChatRegistry = (props: Props) => {
   const { agentProfileId, onBack, selectedAgentProfile, listCampaign } = props;
   const { translate } = useTranslation();
+  const { checkModelCapability, modelCapability } = useCheckModelCapability();
 
   const [activeTab, setActiveTab] = useState(TAB.CHAT);
+  const [visionWarning, setVisionWarning] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -175,6 +177,15 @@ const ChatRegistry = (props: Props) => {
     createSession({ agentProfileId });
   }, [agentProfileId]);
 
+  useEffect(() => {
+    if (selectedAgentProfile?.llmModel) {
+      checkModelCapability(
+        selectedAgentProfile.llmModel,
+        selectedAgentProfile.llmProvider as LLMProvider,
+      );
+    }
+  }, [selectedAgentProfile?.llmModel, selectedAgentProfile?.llmProvider]);
+
   const displayedMessages: DisplayMessage[] = useMemo(() => {
     const result: DisplayMessage[] = messages.map((msg) => ({
       role: msg.role === "user" ? "human" : "assistant",
@@ -207,6 +218,25 @@ const ChatRegistry = (props: Props) => {
   const onSend = (draft: string, attachedFiles: AttachedFile[]) => {
     if (!sessionId || isStreaming) {
       return;
+    }
+
+    const hasImages = attachedFiles.some(
+      (fileItem) => fileItem.type === "image",
+    );
+    if (
+      hasImages &&
+      modelCapability &&
+      !modelCapability.supportsVision &&
+      selectedAgentProfile?.llmModel
+    ) {
+      setVisionWarning(
+        translate("agent.modelDoesNotSupportVision").replace(
+          "{model}",
+          selectedAgentProfile.llmModel,
+        ),
+      );
+    } else {
+      setVisionWarning(null);
     }
     streamingContentRef.current = "";
     setStreamingContent("");
@@ -339,6 +369,7 @@ const ChatRegistry = (props: Props) => {
                 <AgentChatView
                   messages={displayedMessages}
                   loading={isStreaming}
+                  warning={visionWarning}
                   composerDisabled={sessionLoading || !sessionId}
                   canReset={messages.length > 0}
                   onSend={onSend}

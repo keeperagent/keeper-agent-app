@@ -2,7 +2,11 @@ import { Form, Button, Row, message, Input, Divider } from "antd";
 import { useEffect } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { useUpdatePreference, useTranslation } from "@/hook";
+import {
+  useUpdatePreference,
+  useTranslation,
+  useCheckModelCapability,
+} from "@/hook";
 import { IPreference, LLMProvider } from "@/electron/type";
 import { PasswordInput } from "@/component/Input";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
@@ -39,6 +43,8 @@ const LanguageModel = (props: IProps) => {
   const { preference } = props;
   const [form] = Form.useForm();
   const { translate } = useTranslation();
+  const { updatePreference, loading, isSuccess } = useUpdatePreference();
+  const { checkModelCapability } = useCheckModelCapability();
 
   useEffect(() => {
     form.setFieldsValue({
@@ -53,8 +59,6 @@ const LanguageModel = (props: IProps) => {
       googleGeminiBackgroundModel: preference?.googleGeminiBackgroundModel,
     });
   }, [preference]);
-
-  const { updatePreference, loading, isSuccess } = useUpdatePreference();
 
   useEffect(() => {
     if (!loading && isSuccess) {
@@ -85,6 +89,16 @@ const LanguageModel = (props: IProps) => {
         "anthropicBackgroundModel",
         "googleGeminiBackgroundModel",
       ]);
+
+      // trigger in background
+      const listModel: { model: string; provider: LLMProvider }[] = [
+        { model: anthropicModel, provider: LLMProvider.CLAUDE },
+        { model: openAIModel, provider: LLMProvider.OPENAI },
+        { model: googleGeminiModel, provider: LLMProvider.GEMINI },
+      ].filter((item) => Boolean(item.model));
+      for (const { model, provider } of listModel) {
+        checkModelCapability(model, provider);
+      }
 
       await updatePreference({
         id: preference?.id,

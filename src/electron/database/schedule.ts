@@ -497,6 +497,7 @@ class ScheduleDB {
       const listData = await ScheduleModel.findAll({
         where: {
           isRunning: true,
+          isActive: true,
         },
         order: [["startTime", "ASC"]],
         include: [
