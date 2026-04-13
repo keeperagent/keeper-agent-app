@@ -2867,6 +2867,11 @@ export type IMasterPasswordSetting = {
   masterPasswordVerifier?: string;
 };
 
+export type IMcpTokenSetting = {
+  tokenHash: string;
+  permission: McpTokenPermission;
+};
+
 export type ISetting = {
   id?: number;
   name: string;
@@ -2883,6 +2888,7 @@ export type ISetting = {
   telegramSetting?: ITelegramSetting;
   whatsappSetting?: IWhatsAppSetting;
   masterPasswordSetting?: IMasterPasswordSetting;
+  mcpTokenSetting?: IMcpTokenSetting;
 };
 
 export enum SETTING_TYPE {
@@ -2894,6 +2900,7 @@ export enum SETTING_TYPE {
   TELEGRAM_SETTING = "TELEGRAM_SETTING",
   WHATSAPP_SETTING = "WHATSAPP_SETTING",
   MASTER_PASSWORD_SETTING = "MASTER_PASSWORD_SETTING",
+  MCP_TOKEN = "MCP_TOKEN",
 }
 
 export enum AgentMailboxStatus {

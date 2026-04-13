@@ -3,7 +3,7 @@ import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import crypto from "crypto";
-import { mcpTokenDB } from "@/electron/database/mcpToken";
+import { mcpTokenService } from "@/electron/service/mcpToken";
 import { preferenceService } from "@/electron/service/preference";
 import { McpTokenPermission, IMcpToken } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
@@ -77,7 +77,7 @@ class KeeperMcpServer {
       }
 
       const tokenHash = hashToken(match[1]);
-      const [tokenRecord] = await mcpTokenDB.getByTokenHash(tokenHash);
+      const [tokenRecord] = await mcpTokenService.getByTokenHash(tokenHash);
       if (!tokenRecord) {
         const existing = failedAttempts.get(ip);
         if (existing && now < existing.resetAt) {

@@ -38,7 +38,6 @@ class ScheduleManager {
     this.preference = preference;
 
     this.cronDeleteOldLog();
-    this.cronDeleteHistoryLog();
     this.cronResetScheduleEachDay();
     this.cronUpdatePreference();
 
@@ -205,33 +204,18 @@ class ScheduleManager {
       if (!this.preference) {
         return;
       }
-
-      const maxLogAge = this.preference?.maxLogAge || 0;
-      if (maxLogAge <= 0) {
-        return;
-      }
       const currentDate = new Date().getTime();
-      const minDay = dayjs(currentDate).subtract(maxLogAge, "day").toDate();
-
-      await appLogDB.deleteAppLogCron(minDay.getTime(), AppLogType.SCHEDULE);
-    });
-  };
-
-  private cronDeleteHistoryLog = () => {
-    // run every hour
-    cron.schedule("0 * * * *", async () => {
-      if (!this.preference) {
-        return;
+      const logTypes = [
+        { age: this.preference.maxLogAge, type: AppLogType.SCHEDULE },
+        { age: this.preference.maxHistoryLogAge, type: AppLogType.WORKFLOW },
+      ];
+      for (const { age, type } of logTypes) {
+        if (!age || age <= 0) {
+          continue;
+        }
+        const minDay = dayjs(currentDate).subtract(age, "day").toDate();
+        await appLogDB.deleteAppLogCron(minDay.getTime(), type);
       }
-
-      const maxLogAge = this.preference?.maxHistoryLogAge || 0;
-      if (maxLogAge <= 0) {
-        return;
-      }
-      const currentDate = new Date().getTime();
-      const minDay = dayjs(currentDate).subtract(maxLogAge, "day").toDate();
-
-      await appLogDB.deleteAppLogCron(minDay.getTime(), AppLogType.WORKFLOW);
     });
   };
 }

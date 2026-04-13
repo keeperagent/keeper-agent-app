@@ -1,5 +1,5 @@
 import { MESSAGE } from "@/electron/constant";
-import { mcpTokenDB } from "@/electron/database/mcpToken";
+import { mcpTokenService } from "@/electron/service/mcpToken";
 import { keeperMcpServer, hashToken } from "@/electron/mcpServer";
 import { connectionTracker } from "@/electron/mcpServer/connectionTracker";
 import type {
@@ -13,7 +13,7 @@ export const mcpTokenController = () => {
     MESSAGE.GET_LIST_MCP_TOKEN,
     MESSAGE.GET_LIST_MCP_TOKEN_RES,
     async (event, _payload) => {
-      const [tokens] = await mcpTokenDB.getListMcpToken();
+      const [tokens] = await mcpTokenService.getListMcpToken();
       const connections = connectionTracker.getAll();
 
       event.reply(MESSAGE.GET_LIST_MCP_TOKEN_RES, {
@@ -35,7 +35,7 @@ export const mcpTokenController = () => {
       }
 
       const tokenHash = hashToken(plainToken);
-      const [token, err] = await mcpTokenDB.createMcpToken({
+      const [token, err] = await mcpTokenService.createMcpToken({
         ...rest,
         tokenHash,
       });
@@ -60,7 +60,7 @@ export const mcpTokenController = () => {
       for (const tokenId of listId) {
         keeperMcpServer.stopConnectionsByTokenId(tokenId);
       }
-      const [count] = await mcpTokenDB.deleteMcpToken(listId);
+      const [count] = await mcpTokenService.deleteMcpToken(listId);
       event.reply(MESSAGE.DELETE_MCP_TOKEN_RES, { data: count });
     },
   );

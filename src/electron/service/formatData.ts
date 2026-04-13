@@ -22,6 +22,7 @@ import {
   ITelegramSetting,
   IWhatsAppSetting,
   IMasterPasswordSetting,
+  McpTokenPermission,
 } from "@/electron/type";
 import { encryptionService } from "./encrypt";
 
@@ -428,6 +429,11 @@ const formatSetting = (raw: any): ISetting => {
         masterPasswordVerifier: parsed.masterPasswordVerifier,
       };
       formatedData.masterPasswordSetting = masterPasswordSetting;
+    } else if (formatedData.type === SETTING_TYPE.MCP_TOKEN) {
+      formatedData.mcpTokenSetting = {
+        tokenHash: parsed.tokenHash || "",
+        permission: parsed.permission || McpTokenPermission.READ,
+      };
     }
   } catch {}
   return formatedData;
