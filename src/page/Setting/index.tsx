@@ -11,6 +11,8 @@ import ExportDatabase from "./ExportDatabase";
 import Other from "./Other";
 import LanguageModel from "./LanguageModel";
 import WebSearch from "./WebSearch";
+import OpenRouterSetting from "./OpenRouterSetting";
+import OllamaSetting from "./OllamaSetting";
 import KeeperMcp from "./KeeperMcp";
 import WorkflowSetting from "./Workflow";
 
@@ -119,6 +121,24 @@ const SettingPage = (props: any) => {
           </Col>
 
           <Col span={7}>
+            <div className="form">
+              <div className="heading">
+                <span>{translate("setting.openRouter")}</span>
+              </div>
+              <OpenRouterSetting />
+            </div>
+
+            <Divider />
+
+            <div className="form">
+              <div className="heading">
+                <span>{translate("setting.ollama")}</span>
+              </div>
+              <OllamaSetting />
+            </div>
+
+            <Divider />
+
             <div className="form">
               <div className="heading">
                 <span>{translate("setting.webSearch")}</span>

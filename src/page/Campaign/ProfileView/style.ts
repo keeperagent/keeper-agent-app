@@ -315,6 +315,7 @@ const StatisticWrapper = styled.div`
     width: 100%;
     display: flex;
     flex-wrap: wrap;
+    gap: var(--margin-right-small);
 
     .stats-info {
       display: flex;
@@ -322,8 +323,6 @@ const StatisticWrapper = styled.div`
       background-color: ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
       padding: 0.7rem 1.5rem;
       border-radius: var(--border-radius);
-      margin-right: 1.5rem;
-      margin-bottom: var(--margin-bottom);
       width: auto;
 
       .label {

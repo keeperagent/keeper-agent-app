@@ -4,6 +4,8 @@ export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
   [LLMProvider.OPENAI]: "gpt-4o-mini",
   [LLMProvider.CLAUDE]: "claude-sonnet-4-6",
   [LLMProvider.GEMINI]: "gemini-2.0-flash",
+  [LLMProvider.OPENROUTER]: "anthropic/claude-sonnet-4.6",
+  [LLMProvider.OLLAMA]: "llama3.2",
 };
 
 // Maximum number of extra columns for campaigns, campaign profiles, resources, and resource groups.

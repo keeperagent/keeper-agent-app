@@ -11,7 +11,6 @@ const SidebarWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  z-index: 1;
   box-sizing: border-box;
   z-index: 2;
   border-right: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
@@ -175,11 +174,11 @@ const SidebarWrapper = styled.div`
 
   .menu {
     height: 100%;
-    padding: 0;
     margin: 0;
     overflow: visible;
     overflow-y: auto;
     padding: 0 1.7rem;
+    padding-bottom: 2rem;
     list-style: none;
   }
 

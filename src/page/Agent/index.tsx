@@ -65,10 +65,10 @@ const AgentPage = (props: any) => {
   };
 
   const isProviderConfigured = (provider: (typeof LLM_PROVIDERS)[number]) => {
-    return (
-      Boolean(preference?.[provider.apiKeyField]) &&
-      Boolean(preference?.[provider.modelField])
-    );
+    const hasApiKey = provider.apiKeyField
+      ? Boolean(preference?.[provider.apiKeyField])
+      : true;
+    return hasApiKey && Boolean(preference?.[provider.modelField]);
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
