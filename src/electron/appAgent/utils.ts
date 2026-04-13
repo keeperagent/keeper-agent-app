@@ -9,8 +9,9 @@ import type {
   IProfileGroup,
   INodeEndpointGroup,
 } from "@/electron/type";
+import { ILlmSetting } from "@/electron/type";
+import { preferenceService } from "@/electron/service/preference";
 import { SupportedChainType } from "./types";
-import { preferenceDB } from "@/electron/database/preference";
 
 export const SUPPORTED_CHAIN_TYPES: SupportedChainType[] = [
   "EVM",
@@ -42,100 +43,9 @@ export const capitalizeFirstLetter = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-export const getOpenAIKey = async (): Promise<
-  [string | null, Error | null]
-> => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err) {
-    return [null, err];
-  }
-  if (!preference) {
-    return [null, new Error("Preference not found")];
-  }
-  return [preference?.openAIApiKey || null, null];
-};
-
-export const getAnthropicKey = async (): Promise<
-  [string | null, Error | null]
-> => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err) {
-    return [null, err];
-  }
-  if (!preference) {
-    return [null, new Error("Preference not found")];
-  }
-  return [preference?.anthropicApiKey || null, null];
-};
-
-export const getGoogleGeminiKey = async (): Promise<
-  [string | null, Error | null]
-> => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err) {
-    return [null, err];
-  }
-  if (!preference) {
-    return [null, new Error("Preference not found")];
-  }
-  return [preference?.googleGeminiApiKey || null, null];
-};
-
-export const getOpenAIModel = async (): Promise<string | null> => {
-  const [preference] = await preferenceDB.getOnePreference();
-  return preference?.openAIModel || null;
-};
-
-export const getAnthropicModel = async (): Promise<string | null> => {
-  const [preference] = await preferenceDB.getOnePreference();
-  return preference?.anthropicModel || null;
-};
-
-export const getGoogleGeminiModel = async (): Promise<string | null> => {
-  const [preference] = await preferenceDB.getOnePreference();
-  return preference?.googleGeminiModel || null;
-};
-
-export const getOpenAIBackgroundModel = async (): Promise<string | null> => {
-  const [preference] = await preferenceDB.getOnePreference();
-  return preference?.openAIBackgroundModel || null;
-};
-
-export const getAnthropicBackgroundModel = async (): Promise<string | null> => {
-  const [preference] = await preferenceDB.getOnePreference();
-  return preference?.anthropicBackgroundModel || null;
-};
-
-export const getGoogleGeminiBackgroundModel = async (): Promise<
-  string | null
-> => {
-  const [preference] = await preferenceDB.getOnePreference();
-  return preference?.googleGeminiBackgroundModel || null;
-};
-
-export const getTavilyKey = async (): Promise<
-  [string | null, Error | null]
-> => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err) {
-    return [null, err];
-  }
-  if (!preference) {
-    return [null, new Error("Preference not found")];
-  }
-  return [preference?.tavilyApiKey || null, null];
-};
-
-export const getExaKey = async (): Promise<[string | null, Error | null]> => {
-  const [preference, err] = await preferenceDB.getOnePreference();
-  if (err) {
-    return [null, err];
-  }
-  if (!preference) {
-    return [null, new Error("Preference not found")];
-  }
-  return [preference?.exaApiKey || null, null];
-};
+export const getLlmSetting = async (): Promise<
+  [ILlmSetting | null, Error | null]
+> => preferenceService.getLlmSetting();
 
 export const normalizeChainType = (
   value?: string | null,

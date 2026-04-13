@@ -1,33 +1,23 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { LLMProvider } from "@/electron/type";
+import { ILlmSetting, LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
-import {
-  getOpenAIKey,
-  getAnthropicKey,
-  getGoogleGeminiKey,
-  getOpenAIModel,
-  getAnthropicModel,
-  getGoogleGeminiModel,
-  getOpenAIBackgroundModel,
-  getAnthropicBackgroundModel,
-  getGoogleGeminiBackgroundModel,
-} from "./utils";
+import { getLlmSetting } from "./utils";
 
 type ProviderConfig = {
-  getKey: () => Promise<[string | null, ...any[]]>;
-  getModel: () => Promise<string | null>;
-  getBackgroundModel: () => Promise<string | null>;
+  apiKeyField: keyof ILlmSetting;
+  modelField: keyof ILlmSetting;
+  backgroundModelField: keyof ILlmSetting;
   keyError: string;
   createChat: (apiKey: string, model: string, temperature: number) => any;
 };
 
 const PROVIDER_CONFIG: Record<LLMProvider, ProviderConfig> = {
   [LLMProvider.CLAUDE]: {
-    getKey: getAnthropicKey,
-    getModel: getAnthropicModel,
-    getBackgroundModel: getAnthropicBackgroundModel,
+    apiKeyField: "anthropicApiKey",
+    modelField: "anthropicModel",
+    backgroundModelField: "anthropicBackgroundModel",
     keyError:
       "Anthropic API key is not found, please set it in the Settings page",
     createChat: (apiKey, model, temperature) =>
@@ -39,9 +29,9 @@ const PROVIDER_CONFIG: Record<LLMProvider, ProviderConfig> = {
       }),
   },
   [LLMProvider.GEMINI]: {
-    getKey: getGoogleGeminiKey,
-    getModel: getGoogleGeminiModel,
-    getBackgroundModel: getGoogleGeminiBackgroundModel,
+    apiKeyField: "googleGeminiApiKey",
+    modelField: "googleGeminiModel",
+    backgroundModelField: "googleGeminiBackgroundModel",
     keyError:
       "Google Gemini API key is not found, please set it in the Settings page",
     createChat: (apiKey, model, temperature) =>
@@ -53,9 +43,9 @@ const PROVIDER_CONFIG: Record<LLMProvider, ProviderConfig> = {
       }),
   },
   [LLMProvider.OPENAI]: {
-    getKey: getOpenAIKey,
-    getModel: getOpenAIModel,
-    getBackgroundModel: getOpenAIBackgroundModel,
+    apiKeyField: "openAIApiKey",
+    modelField: "openAIModel",
+    backgroundModelField: "openAIBackgroundModel",
     keyError: "OpenAI API key is not found, please set it in the Settings page",
     createChat: (apiKey, model, temperature) =>
       new ChatOpenAI({ apiKey, model, temperature, streaming: true }),
@@ -71,29 +61,34 @@ export const createLLM = async (
   modelOverride?: string,
 ) => {
   const config = getProviderConfig(provider);
-  const [apiKey, keyErr] = await config.getKey();
-  if (keyErr) {
-    throw keyErr;
+  const [llm, llmErr] = await getLlmSetting();
+  if (llmErr) {
+    throw llmErr;
   }
+  const apiKey = (llm?.[config.apiKeyField] as string) || null;
   if (!apiKey) {
     throw new Error(config.keyError);
   }
   const modelName =
-    modelOverride || (await config.getModel()) || DEFAULT_LLM_MODELS[provider];
+    modelOverride ||
+    (llm?.[config.modelField] as string) ||
+    DEFAULT_LLM_MODELS[provider];
   return config.createChat(apiKey, modelName, temperature);
 };
 
 export const createBackgroundLLM = async (provider: LLMProvider) => {
   const config = getProviderConfig(provider);
-  const backgroundModel = await config.getBackgroundModel();
-  return createLLM(provider, 0, backgroundModel || undefined);
+  const [llm] = await getLlmSetting();
+  const backgroundModel =
+    (llm?.[config.backgroundModelField] as string) || undefined;
+  return createLLM(provider, 0, backgroundModel);
 };
 
 export const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   const config = getProviderConfig(provider);
-  const [apiKey, keyErr] = await config.getKey();
-  if (keyErr) {
-    throw keyErr;
+  const [llm, llmErr] = await getLlmSetting();
+  if (llmErr) {
+    throw llmErr;
   }
-  return !!apiKey;
+  return !!llm?.[config.apiKeyField];
 };

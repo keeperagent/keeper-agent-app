@@ -11,7 +11,7 @@ import {
   MESSAGE,
 } from "@/electron/constant";
 import { extensionDB } from "@/electron/database/extension";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { chromium } from "@/electron/service/stealthBrowser";
 import { getBaseProfilePath, getProfilePath } from "@/electron/simulator/util";
 import {
@@ -250,7 +250,7 @@ const reloadExtension = async (page: Page) => {
 const getExtensionIdBrowser = async (
   extensionPath: string,
 ): Promise<[string | null, Error | null]> => {
-  const [preference] = await preferenceDB.getOnePreference();
+  const [preference] = await preferenceService.getOnePreference();
   const executablePath =
     preference?.customChromePath ||
     browserDownloader.getChromiumExecutablePath();
@@ -375,7 +375,7 @@ const waitForExtensionsToSettle = (
 const createBaseProfileExtension = async (
   listExtensionPath: string,
 ): Promise<void> => {
-  const [preference] = await preferenceDB.getOnePreference();
+  const [preference] = await preferenceService.getOnePreference();
   const executablePath =
     preference?.customChromePath ||
     browserDownloader.getChromiumExecutablePath();

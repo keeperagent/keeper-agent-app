@@ -2,16 +2,11 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ExaSearchResults } from "@langchain/exa";
 import { Exa } from "exa-js";
-import { getExaKey } from "@/electron/appAgent/utils";
+import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 
 const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
-
-type WebSearchExaInput = {
-  query: string;
-  maxResults?: number;
-};
 
 export const webSearchExaTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
@@ -33,10 +28,11 @@ export const webSearchExaTool = () =>
         .optional()
         .describe("Maximum number of results to return (default 5)"),
     }),
-    func: async (input: WebSearchExaInput) => {
+    func: async (input) => {
       const { query, maxResults = MAX_RESULTS } = input;
       try {
-        const [apiKey, keyErr] = await getExaKey();
+        const [llm, keyErr] = await getLlmSetting();
+        const apiKey = llm?.exaApiKey || null;
         if (keyErr || !apiKey) {
           return "Error: Exa API key is not configured. Please set it in Settings > Agent.";
         }

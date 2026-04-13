@@ -149,6 +149,55 @@ class SettingDB {
       return [null, err];
     }
   }
+
+  async getSettingByType(
+    type: string,
+  ): Promise<[ISetting | null, Error | null]> {
+    try {
+      const data = await SettingModel.findOne({
+        where: { type, name: "" },
+        raw: true,
+      });
+      if (!data) {
+        return [null, null];
+      }
+      return [formatSetting(data), null];
+    } catch (err: any) {
+      logEveryWhere({ message: `getSettingByType() error: ${err?.message}` });
+      return [null, err];
+    }
+  }
+
+  async upsertSettingByType(
+    type: string,
+    data: string,
+  ): Promise<[ISetting | null, Error | null]> {
+    try {
+      const existing = await SettingModel.findOne({
+        where: { type, name: "" },
+      });
+      if (existing) {
+        await SettingModel.update(
+          { data, updateAt: new Date().getTime() },
+          { where: { type, name: "" } },
+        );
+      } else {
+        await SettingModel.create({
+          type,
+          name: "",
+          data,
+          createAt: new Date().getTime(),
+          updateAt: new Date().getTime(),
+        } as any);
+      }
+      return await this.getSettingByType(type);
+    } catch (err: any) {
+      logEveryWhere({
+        message: `upsertSettingByType() error: ${err?.message}`,
+      });
+      return [null, err];
+    }
+  }
 }
 
 const settingDB = new SettingDB();

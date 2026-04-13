@@ -2520,9 +2520,7 @@ export type IPreference = {
   isTelegramOn?: boolean;
   botTokenTelegram?: string;
   isWhatsAppOn?: boolean;
-  whatsappAuthState?: string;
   hideMinimap?: boolean;
-  key?: string;
   deviceId?: string;
   isChromeDownloaded?: boolean;
   isStopAllSchedule?: boolean;
@@ -2819,6 +2817,56 @@ export type IAgentSetting = {
   isAllWallet: boolean;
 };
 
+export type IGeneralSetting = {
+  nodeBlackList?: string[];
+  hideMinimap?: boolean;
+  deviceId?: string;
+  isStopAllSchedule?: boolean;
+  dayResetJobStatus?: number;
+  maxLogAge?: number;
+  maxHistoryLogAge?: number;
+  customChromePath?: string;
+  maxConcurrentJob?: number;
+  isScreenCaptureProtectionOn?: boolean;
+};
+
+export type ILlmSetting = {
+  openAIApiKey?: string;
+  anthropicApiKey?: string;
+  googleGeminiApiKey?: string;
+  openAIModel?: string;
+  anthropicModel?: string;
+  googleGeminiModel?: string;
+  openAIBackgroundModel?: string;
+  anthropicBackgroundModel?: string;
+  googleGeminiBackgroundModel?: string;
+  tavilyApiKey?: string;
+  exaApiKey?: string;
+  llmProvider?: string;
+  disabledTools?: string[];
+  isMcpServerOn?: boolean;
+  mcpServerPort?: number;
+};
+
+export type IDexSetting = {
+  jupiterApiKeys?: string[];
+};
+
+export type ITelegramSetting = {
+  chatIdTelegram?: number;
+  isTelegramOn?: boolean;
+  botTokenTelegram?: string;
+};
+
+export type IWhatsAppSetting = {
+  isWhatsAppOn?: boolean;
+  whatsappAuthState?: string;
+};
+
+export type IMasterPasswordSetting = {
+  masterPasswordVerifier?: string;
+};
+
 export type ISetting = {
   id?: number;
   name: string;
@@ -2829,11 +2877,23 @@ export type ISetting = {
   // parsed fields — populated by formatSetting, never stored in DB
   agentSetting?: IAgentSetting;
   workflowGlobalVariable?: IWorkflowVariable;
+  generalSetting?: IGeneralSetting;
+  llmSetting?: ILlmSetting;
+  dexSetting?: IDexSetting;
+  telegramSetting?: ITelegramSetting;
+  whatsappSetting?: IWhatsAppSetting;
+  masterPasswordSetting?: IMasterPasswordSetting;
 };
 
 export enum SETTING_TYPE {
   AGENT_PRESET = "AGENT_PRESET",
   WORKFLOW_GLOBAL_VARIABLE = "WORKFLOW_GLOBAL_VARIABLE",
+  GENERAL_SETTING = "GENERAL_SETTING",
+  LLM_SETTING = "LLM_SETTING",
+  DEX_SETTING = "DEX_SETTING",
+  TELEGRAM_SETTING = "TELEGRAM_SETTING",
+  WHATSAPP_SETTING = "WHATSAPP_SETTING",
+  MASTER_PASSWORD_SETTING = "MASTER_PASSWORD_SETTING",
 }
 
 export enum AgentMailboxStatus {

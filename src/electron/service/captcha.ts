@@ -1,7 +1,7 @@
 import qs from "qs";
 import { Page } from "playwright-core";
 import axios from "axios";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { logEveryWhere, sleep } from "./util";
 
 export const CAPTCHA_METHOD = {
@@ -207,7 +207,7 @@ const getCaptchaToken = async (
         return [null, Error("solve captcha timeout")];
       }
 
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       if (!preference) {
         return [null, Error("API key not found")];
       }

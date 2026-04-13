@@ -6,7 +6,6 @@ import {
   IMcpServer,
   IAgentProfile,
   IAgentMailbox,
-  IPreference,
   IProfile,
   IProfileGroup,
   IResource,
@@ -17,6 +16,12 @@ import {
   IAgentTask,
   ISetting,
   SETTING_TYPE,
+  IGeneralSetting,
+  ILlmSetting,
+  IDexSetting,
+  ITelegramSetting,
+  IWhatsAppSetting,
+  IMasterPasswordSetting,
 } from "@/electron/type";
 import { encryptionService } from "./encrypt";
 
@@ -210,45 +215,6 @@ const formatProfile = (data: Model<any, any>): IProfile => {
   return profile;
 };
 
-const formatPreference = (data: any): IPreference => {
-  const formatedData = formatDBResponse(data);
-  return {
-    ...formatedData,
-    nodeBlackList:
-      typeof formatedData?.nodeBlackList === "string"
-        ? JSON.parse(formatedData?.nodeBlackList || "[]")
-        : formatedData?.nodeBlackList,
-    botTokenTelegram: formatedData?.botTokenTelegram
-      ? encryptionService.decryptData(formatedData?.botTokenTelegram)
-      : "",
-    jupiterApiKeys:
-      typeof formatedData?.jupiterApiKeys === "string"
-        ? JSON.parse(
-            encryptionService.decryptData(formatedData?.jupiterApiKeys) || "[]",
-          )
-        : formatedData?.jupiterApiKeys,
-    openAIApiKey: formatedData?.openAIApiKey
-      ? encryptionService.decryptData(formatedData?.openAIApiKey)
-      : "",
-    anthropicApiKey: formatedData?.anthropicApiKey
-      ? encryptionService.decryptData(formatedData?.anthropicApiKey)
-      : "",
-    googleGeminiApiKey: formatedData?.googleGeminiApiKey
-      ? encryptionService.decryptData(formatedData?.googleGeminiApiKey)
-      : "",
-    tavilyApiKey: formatedData?.tavilyApiKey
-      ? encryptionService.decryptData(formatedData?.tavilyApiKey)
-      : "",
-    exaApiKey: formatedData?.exaApiKey
-      ? encryptionService.decryptData(formatedData?.exaApiKey)
-      : "",
-    disabledTools:
-      typeof formatedData?.disabledTools === "string"
-        ? JSON.parse(formatedData?.disabledTools || "[]")
-        : formatedData?.disabledTools,
-  };
-};
-
 const formatMcpServer = (data: any): IMcpServer => {
   const formatedData = formatDBResponse(data);
   return {
@@ -384,6 +350,84 @@ const formatSetting = (raw: any): ISetting => {
         label: parsed.label || "",
         value: parsed.value || "",
       };
+    } else if (formatedData.type === SETTING_TYPE.GENERAL_SETTING) {
+      const generalSetting: IGeneralSetting = {
+        nodeBlackList:
+          typeof parsed.nodeBlackList === "string"
+            ? JSON.parse(parsed.nodeBlackList || "[]")
+            : parsed.nodeBlackList || [],
+        hideMinimap: parsed.hideMinimap,
+        deviceId: parsed.deviceId,
+        isStopAllSchedule: parsed.isStopAllSchedule,
+        dayResetJobStatus: parsed.dayResetJobStatus,
+        maxLogAge: parsed.maxLogAge,
+        maxHistoryLogAge: parsed.maxHistoryLogAge,
+        customChromePath: parsed.customChromePath,
+        maxConcurrentJob: parsed.maxConcurrentJob,
+        isScreenCaptureProtectionOn: parsed.isScreenCaptureProtectionOn,
+      };
+      formatedData.generalSetting = generalSetting;
+    } else if (formatedData.type === SETTING_TYPE.LLM_SETTING) {
+      const llmSetting: ILlmSetting = {
+        openAIApiKey: parsed.openAIApiKey
+          ? encryptionService.decryptData(parsed.openAIApiKey)
+          : "",
+        anthropicApiKey: parsed.anthropicApiKey
+          ? encryptionService.decryptData(parsed.anthropicApiKey)
+          : "",
+        googleGeminiApiKey: parsed.googleGeminiApiKey
+          ? encryptionService.decryptData(parsed.googleGeminiApiKey)
+          : "",
+        tavilyApiKey: parsed.tavilyApiKey
+          ? encryptionService.decryptData(parsed.tavilyApiKey)
+          : "",
+        exaApiKey: parsed.exaApiKey
+          ? encryptionService.decryptData(parsed.exaApiKey)
+          : "",
+        openAIModel: parsed.openAIModel,
+        anthropicModel: parsed.anthropicModel,
+        googleGeminiModel: parsed.googleGeminiModel,
+        openAIBackgroundModel: parsed.openAIBackgroundModel,
+        anthropicBackgroundModel: parsed.anthropicBackgroundModel,
+        googleGeminiBackgroundModel: parsed.googleGeminiBackgroundModel,
+        llmProvider: parsed.llmProvider,
+        disabledTools:
+          typeof parsed.disabledTools === "string"
+            ? JSON.parse(parsed.disabledTools || "[]")
+            : parsed.disabledTools || [],
+        isMcpServerOn: parsed.isMcpServerOn,
+        mcpServerPort: parsed.mcpServerPort,
+      };
+      formatedData.llmSetting = llmSetting;
+    } else if (formatedData.type === SETTING_TYPE.DEX_SETTING) {
+      const dexSetting: IDexSetting = {
+        jupiterApiKeys: parsed.jupiterApiKeys
+          ? JSON.parse(
+              encryptionService.decryptData(parsed.jupiterApiKeys) || "[]",
+            )
+          : [],
+      };
+      formatedData.dexSetting = dexSetting;
+    } else if (formatedData.type === SETTING_TYPE.TELEGRAM_SETTING) {
+      const telegramSetting: ITelegramSetting = {
+        chatIdTelegram: parsed.chatIdTelegram,
+        isTelegramOn: parsed.isTelegramOn,
+        botTokenTelegram: parsed.botTokenTelegram
+          ? encryptionService.decryptData(parsed.botTokenTelegram)
+          : "",
+      };
+      formatedData.telegramSetting = telegramSetting;
+    } else if (formatedData.type === SETTING_TYPE.WHATSAPP_SETTING) {
+      const whatsappSetting: IWhatsAppSetting = {
+        isWhatsAppOn: parsed.isWhatsAppOn,
+        whatsappAuthState: parsed.whatsappAuthState,
+      };
+      formatedData.whatsappSetting = whatsappSetting;
+    } else if (formatedData.type === SETTING_TYPE.MASTER_PASSWORD_SETTING) {
+      const masterPasswordSetting: IMasterPasswordSetting = {
+        masterPasswordVerifier: parsed.masterPasswordVerifier,
+      };
+      formatedData.masterPasswordSetting = masterPasswordSetting;
     }
   } catch {}
   return formatedData;
@@ -396,7 +440,6 @@ export {
   formatCampaign,
   formatCampaignProfile,
   formatProfile,
-  formatPreference,
   formatMcpServer,
   formatAgentProfile,
   formatWorkflow,

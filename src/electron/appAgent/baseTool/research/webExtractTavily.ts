@@ -1,14 +1,10 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { TavilyExtractAPIWrapper } from "@langchain/tavily";
-import { getTavilyKey } from "@/electron/appAgent/utils";
+import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 
 const MAX_OUTPUT_LENGTH = 10_000;
-
-type WebExtractTavilyInput = {
-  urls: string[];
-};
 
 export const webExtractTavilyTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
@@ -22,10 +18,11 @@ export const webExtractTavilyTool = () =>
         .array(z.string())
         .describe("List of URLs to extract content from"),
     }),
-    func: async (input: WebExtractTavilyInput) => {
+    func: async (input) => {
       const { urls } = input;
       try {
-        const [apiKey, keyErr] = await getTavilyKey();
+        const [llm, keyErr] = await getLlmSetting();
+        const apiKey = llm?.tavilyApiKey || null;
         if (keyErr || !apiKey) {
           return "Error: Tavily API key is not configured. Please set it in Settings > Agent.";
         }

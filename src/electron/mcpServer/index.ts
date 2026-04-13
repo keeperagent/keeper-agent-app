@@ -4,7 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import crypto from "crypto";
 import { mcpTokenDB } from "@/electron/database/mcpToken";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { McpTokenPermission, IMcpToken } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { DEFAULT_MCP_PORT } from "@/electron/constant";
@@ -225,7 +225,7 @@ class KeeperMcpServer {
 
   async startIfEnabled(): Promise<void> {
     try {
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       if (preference?.isMcpServerOn) {
         await this.start(preference.mcpServerPort || DEFAULT_MCP_PORT);
       }

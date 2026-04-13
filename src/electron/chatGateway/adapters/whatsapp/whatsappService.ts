@@ -24,7 +24,7 @@ import {
   WhatsAppStatus,
   IPlatformMessage,
 } from "@/electron/chatGateway/types";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { createWhatsAppChatAdapter } from "./chatAdapter";
 import type { WhatsAppChatAdapter } from "./chatAdapter";
 
@@ -62,7 +62,7 @@ class WhatsAppService {
   /* Called on app startup — only connects if isWhatsAppOn is true. */
   start = async () => {
     try {
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       if (!preference?.isWhatsAppOn) {
         logEveryWhere({ message: "[WhatsApp] WhatsApp is not enabled" });
         return;
@@ -84,7 +84,7 @@ class WhatsAppService {
     try {
       await this.stopSocket();
       // Clear stale auth so we always get a fresh QR on user-initiated connect
-      await preferenceDB.clearWhatsAppAuthState();
+      await preferenceService.clearWhatsAppAuthState();
       await this.initSocket();
     } catch (err: any) {
       this.isStarting = false;
@@ -96,9 +96,9 @@ class WhatsAppService {
 
   disconnect = async () => {
     await this.stopSocket();
-    const [preference] = await preferenceDB.getOnePreference();
+    const [preference] = await preferenceService.getOnePreference();
     if (preference && preference.isWhatsAppOn) {
-      await preferenceDB.updatePreference({
+      await preferenceService.updatePreference({
         id: preference.id,
         isWhatsAppOn: false,
       });
@@ -117,7 +117,7 @@ class WhatsAppService {
   };
 
   private initSocket = async () => {
-    const { state, saveCreds } = await preferenceDB.getWhatsAppAuthState();
+    const { state, saveCreds } = await preferenceService.getWhatsAppAuthState();
     const { version } = await fetchLatestBaileysVersion();
     console.log(`[WhatsApp] Creating socket with version ${version.join(".")}`);
 
@@ -152,9 +152,9 @@ class WhatsAppService {
         this.registerAdapter();
 
         // Auto-save preference so it reconnects on next app start
-        const [preference] = await preferenceDB.getOnePreference();
+        const [preference] = await preferenceService.getOnePreference();
         if (preference && !preference.isWhatsAppOn) {
-          await preferenceDB.updatePreference({
+          await preferenceService.updatePreference({
             id: preference.id,
             isWhatsAppOn: true,
           });
@@ -193,7 +193,7 @@ class WhatsAppService {
             return;
           } else {
             // No credentials — stale session, clear auth so next connect gets a fresh QR
-            await preferenceDB.clearWhatsAppAuthState();
+            await preferenceService.clearWhatsAppAuthState();
             logEveryWhere({
               message: "[WhatsApp] Cleared stale auth state after stream error",
             });

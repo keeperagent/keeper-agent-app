@@ -1,4 +1,5 @@
 import { uid } from "uid";
+import { app } from "electron";
 import xlsx from "xlsx";
 import {
   ICampaignProfile,
@@ -37,7 +38,9 @@ const flushPendingLogs = (): void => {
 const logEveryWhere = (input: IStructuredLogPayload): void => {
   try {
     const message = JSON.stringify(input);
-    console.log(message);
+    if (!app.isPackaged) {
+      console.log(message);
+    }
     pendingLogs.push({ message, id: uid(15) });
 
     if (!logFlushTimer) {

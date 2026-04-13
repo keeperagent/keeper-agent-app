@@ -177,7 +177,7 @@ const DefaultVariable = () => {
       ]}
       columns={columns(translate)}
       size="middle"
-      scroll={{ y: "67vh" }}
+      scroll={{ x: 1000, y: "67vh" }}
     />
   );
 };

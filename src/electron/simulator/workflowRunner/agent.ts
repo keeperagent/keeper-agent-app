@@ -20,7 +20,8 @@ import {
   ToolContext,
 } from "@/electron/appAgent";
 import { agentProfileDB } from "@/electron/database/agentProfile";
-import { preferenceDB } from "@/electron/database/preference";
+import { ILlmSetting } from "@/electron/type";
+import { getLlmSetting } from "@/electron/appAgent/utils";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import {
@@ -52,12 +53,15 @@ export class AgentWorkflow {
         }
 
         const provider = config?.provider || LLMProvider.OPENAI;
-        const providerConfig = LLM_PROVIDERS.find((p) => p.key === provider);
-        const [preference] = await preferenceDB.getOnePreference();
-        const apiKey = providerConfig
-          ? (preference?.[providerConfig?.apiKeyField] as string)
-          : "";
-
+        const providerConfig = LLM_PROVIDERS.find(
+          (item) => item.key === provider,
+        );
+        if (!providerConfig) {
+          throw new Error(`Provider ${provider} not found`);
+        }
+        const [llmSetting] = await getLlmSetting();
+        const apiKey =
+          llmSetting?.[providerConfig.apiKeyField as keyof ILlmSetting] || "";
         if (!apiKey) {
           throw new Error(`API key for ${provider} not found in preferences`);
         }
@@ -70,7 +74,7 @@ export class AgentWorkflow {
           config?.folderPath || "",
           config?.fileName || "",
           provider,
-          apiKey,
+          apiKey as string,
           config?.size || OPENAI_IMAGE_SIZE.SIZE_1024_1024,
           config?.quality || OPENAI_IMAGE_QUALITY.MEDIUM,
           config?.aspectRatio || GOOGLE_IMAGE_ASPECT_RATIO.SQUARE,

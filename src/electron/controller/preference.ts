@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from "electron";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { browserDownloader } from "@/electron/service/browserDownloader";
 import { MESSAGE, RESPONSE_CODE, DEFAULT_MCP_PORT } from "@/electron/constant";
 import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
@@ -10,14 +10,14 @@ import { logEveryWhere } from "../service/util";
 
 export const perferenceController = () => {
   ipcMain.on(MESSAGE.INIT_PREFERENCE, async (_event, _payload) => {
-    const [preference] = await preferenceDB.getOnePreference();
+    const [preference] = await preferenceService.getOnePreference();
 
-    if (!preference) {
-      await preferenceDB.createPreference({
-        nodeBlackList: [],
-        maxConcurrentJob: 50,
-        maxLogAge: 15,
-        maxHistoryLogAge: 30,
+    if (!preference || !preference?.maxConcurrentJob) {
+      await preferenceService.updatePreference({
+        nodeBlackList: preference?.nodeBlackList || [],
+        maxConcurrentJob: 30,
+        maxLogAge: preference?.maxLogAge || 15,
+        maxHistoryLogAge: preference?.maxHistoryLogAge || 30,
       });
     }
   });
@@ -26,7 +26,7 @@ export const perferenceController = () => {
     MESSAGE.GET_ONE_PREFERENCE,
     MESSAGE.GET_ONE_PREFERENCE_RES,
     async (event, _payload) => {
-      const [res] = await preferenceDB.getOnePreference();
+      const [res] = await preferenceService.getOnePreference();
 
       event.reply(MESSAGE.GET_ONE_PREFERENCE_RES, {
         data: {
@@ -42,7 +42,7 @@ export const perferenceController = () => {
     MESSAGE.UPDATE_PREFERENCE_RES,
     async (event, payload) => {
       const { requestId, data, isUpdateAgentTool } = payload;
-      const [res, err] = await preferenceDB.updatePreference(data);
+      const [res, err] = await preferenceService.updatePreference(data);
 
       if (err) {
         event.reply(MESSAGE.UPDATE_PREFERENCE_RES, {
@@ -93,7 +93,7 @@ export const applyScreenCaptureProtection = async (
   targetWindow?: BrowserWindow,
 ) => {
   try {
-    const [preference] = await preferenceDB.getOnePreference();
+    const [preference] = await preferenceService.getOnePreference();
     const enabled = Boolean(preference?.isScreenCaptureProtectionOn);
     const windows = targetWindow
       ? [targetWindow]

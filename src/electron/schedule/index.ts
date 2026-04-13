@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import cron from "node-cron";
-import { preferenceDB } from "@/electron/database/preference";
+import { preferenceService } from "@/electron/service/preference";
 import { scheduleDB } from "@/electron/database/schedule";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { logEveryWhere, sleep } from "@/electron/service/util";
@@ -34,7 +34,7 @@ class ScheduleManager {
   };
 
   start = async () => {
-    const [preference] = await preferenceDB.getOnePreference();
+    const [preference] = await preferenceService.getOnePreference();
     this.preference = preference;
 
     this.cronDeleteOldLog();
@@ -169,7 +169,7 @@ class ScheduleManager {
   private cronUpdatePreference = () => {
     // every 1 minutes
     cron.schedule("*/1 * * * *", async () => {
-      const [preference] = await preferenceDB.getOnePreference();
+      const [preference] = await preferenceService.getOnePreference();
       this.preference = preference;
     });
   };
@@ -192,7 +192,7 @@ class ScheduleManager {
 
       await scheduleDB.resetScheduleEachDay();
       // mark job is reseted for current day
-      await preferenceDB.updatePreference({
+      await preferenceService.updatePreference({
         id: this.preference?.id,
         dayResetJobStatus: currentDay.getTime(),
       });
