@@ -34,7 +34,7 @@ export default (db: Sequelize) =>
         allowNull: false,
         defaultValue: 0,
       },
-profileType: { type: DataTypes.STRING, allowNull: true },
+      profileType: { type: DataTypes.STRING, allowNull: true },
       isUseRandomUserAgent: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
@@ -332,6 +332,11 @@ profileType: { type: DataTypes.STRING, allowNull: true },
         type: DataTypes.STRING,
         allowNull: true,
         defaultValue: null,
+      },
+      columnOrder: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "[]",
       },
       note: {
         type: DataTypes.STRING,

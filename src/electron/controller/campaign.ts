@@ -174,6 +174,7 @@ export const campaignController = () => {
         listColumnForCalculate: JSON.stringify(
           campaign?.listColumnForCalculate || [],
         ),
+        columnOrder: JSON.stringify(campaign?.columnOrder || []) as any,
       });
 
       if (campaign.profileType === PROFILE_TYPE.CUSTOM_SELECT) {

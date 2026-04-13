@@ -8,8 +8,8 @@ import { IColumnConfig } from "../index";
 
 type IColumnConfigProps = {
   index: number;
-  activeCol: number | null;
-  setActiveCol: (value: number | null) => void;
+  activeCol: string | null;
+  setActiveCol: (value: string | null) => void;
   setConfig: (value: IColumnConfig) => void;
   config: IColumnConfig;
   isModalOpen: boolean;
@@ -29,9 +29,10 @@ const ColumnConfig = (props: IColumnConfigProps) => {
     return config?.[variableFieldName] && config?.[labelFieldName];
   }, [config, variableFieldName, labelFieldName]);
 
+  const colKey = `col${index + 1}`;
   const isActive = useMemo(() => {
-    return activeCol === index;
-  }, [activeCol, index]);
+    return activeCol === colKey;
+  }, [activeCol, colKey]);
 
   useEffect(() => {
     if (index === 0 && isModalOpen) {
@@ -51,8 +52,8 @@ const ColumnConfig = (props: IColumnConfigProps) => {
   }, [isActive]);
 
   const onClick = () => {
-    if (activeCol !== index) {
-      setActiveCol(index);
+    if (activeCol !== colKey) {
+      setActiveCol(colKey);
     }
   };
 

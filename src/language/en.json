@@ -366,6 +366,8 @@
   "campaign.profileStatus": "Status",
   "campaign.refreshAfter": "Refresh data after (seconds)",
   "campaign.configSubColumn": "Setting",
+  "campaign.resetColumnOrder": "Restore default order",
+  "campaign.columnOrderHint": "Reorder columns by dragging. This only changes how they appear in the table.",
   "campaign.resetData": "Reset profiles",
   "campaign.dataToReset": "Data you want to reset",
   "campaign.resetSelectedData": "Reset only selected profiles",

@@ -29,24 +29,32 @@ const getCampaignAdditionalColumn = (
     return [];
   }
 
-  let listColumn: ColumnConfig[] = Array.from(
+  const defaultOrder = Array.from(
     { length: NUMBER_OF_COLUMN },
-    (_, index) => {
-      const num = index + 1;
-      return {
-        variable: (campaign as any)?.[`col${num}Variable`],
-        title: (campaign as any)?.[`col${num}Label`],
-        dataIndex: `col${num}Value`,
-      };
-    },
+    (_, index) => `col${index + 1}`,
   );
+  const order =
+    campaign.columnOrder?.length === NUMBER_OF_COLUMN
+      ? campaign.columnOrder
+      : defaultOrder;
 
-  listColumn = listColumn.filter(
-    (config: ColumnConfig) =>
-      Boolean(config?.variable) && Boolean(config?.title),
-  );
+  const columnMap: Record<string, ColumnConfig> = {};
+  Array.from({ length: NUMBER_OF_COLUMN }, (_, index) => {
+    const num = index + 1;
+    const key = `col${num}`;
+    columnMap[key] = {
+      variable: (campaign as any)?.[`${key}Variable`],
+      title: (campaign as any)?.[`${key}Label`],
+      dataIndex: `${key}Value`,
+    };
+  });
 
-  return listColumn;
+  return order
+    .map((key) => columnMap[key])
+    .filter(
+      (config: ColumnConfig) =>
+        Boolean(config?.variable) && Boolean(config?.title),
+    );
 };
 
 export { getResourceColumn, getCampaignAdditionalColumn };
