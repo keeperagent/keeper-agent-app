@@ -10,7 +10,7 @@ const NodeProvider = lazy(() => import("@/page/NodeProvider"));
 
 const TAB_PROXY = "proxy";
 const TAB_EXTENSION = "extension";
-const TAB_NODE_PROVIDER = "node_provider";
+const TAB_NODE_PROVIDER = "node-provider";
 
 const Connections = () => {
   const { translate } = useTranslation();

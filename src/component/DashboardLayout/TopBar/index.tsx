@@ -58,9 +58,7 @@ const TopBar = (props: IProps) => {
       "/dashboard/profile",
       "/dashboard/campaign",
       "/dashboard/workflow",
-      "/dashboard/proxy",
-      "/dashboard/extension",
-      "/dashboard/node-provider",
+      "/dashboard/connections",
       "/dashboard/history",
       "/dashboard/schedule",
     ]?.includes(pathname);

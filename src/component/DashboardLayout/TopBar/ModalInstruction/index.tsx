@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import qs from "qs";
 import { Modal } from "antd";
 import { connect } from "react-redux";
 import { useLocation } from "react-router-dom";
@@ -66,7 +67,8 @@ const ModalInstruction = (props: IProps) => {
     isReadExtensionInstruction,
     isReadHistoryInstruction,
   } = props;
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const { tab } = qs.parse(search, { ignoreQueryPrefix: true });
   const { translate } = useTranslation();
 
   useEffect(() => {
@@ -76,8 +78,12 @@ const ModalInstruction = (props: IProps) => {
           props?.actSetModalInstructionOpen(true);
         }
         break;
-      case "/dashboard/node-provider":
-        if (!isReadNodeProviderInstruction) {
+      case "/dashboard/connections":
+        if (tab === "node-provider" && !isReadNodeProviderInstruction) {
+          props?.actSetModalInstructionOpen(true);
+        } else if (tab === "extension" && !isReadExtensionInstruction) {
+          props?.actSetModalInstructionOpen(true);
+        } else if ((!tab || tab === "proxy") && !isReadProxyInstruction) {
           props?.actSetModalInstructionOpen(true);
         }
         break;
@@ -98,16 +104,6 @@ const ModalInstruction = (props: IProps) => {
         break;
       case "/dashboard/workflow":
         if (!isReadWorkflowInstruction) {
-          props?.actSetModalInstructionOpen(true);
-        }
-        break;
-      case "/dashboard/proxy":
-        if (!isReadProxyInstruction) {
-          props?.actSetModalInstructionOpen(true);
-        }
-        break;
-      case "/dashboard/extension":
-        if (!isReadExtensionInstruction) {
           props?.actSetModalInstructionOpen(true);
         }
         break;
@@ -144,8 +140,14 @@ const ModalInstruction = (props: IProps) => {
       case "/dashboard/campaign":
         props?.actSetReadCampaignInstruction(true);
         break;
-      case "/dashboard/node-provider":
-        props?.actSetReadNodeProviderInstruction(true);
+      case "/dashboard/connections":
+        if (tab === "node-provider") {
+          props?.actSetReadNodeProviderInstruction(true);
+        } else if (tab === "extension") {
+          props?.actSetReadExtensionInstruction(true);
+        } else {
+          props?.actSetReadProxyInstruction(true);
+        }
         break;
       case "/dashboard/wallet":
         props?.actSetReadWalletInstruction(true);
@@ -158,12 +160,6 @@ const ModalInstruction = (props: IProps) => {
         break;
       case "/dashboard/workflow":
         props?.actSetReadWorkflowInstruction(true);
-        break;
-      case "/dashboard/proxy":
-        props?.actSetReadProxyInstruction(true);
-        break;
-      case "/dashboard/extension":
-        props?.actSetReadExtensionInstruction(true);
         break;
       case "/dashboard/history":
         props?.actSetReadHistoryInstruction(true);
@@ -178,8 +174,14 @@ const ModalInstruction = (props: IProps) => {
     switch (pathname) {
       case "/dashboard/campaign":
         return <CampaignInstruction />;
-      case "/dashboard/node-provider":
-        return <NodeProviderInstruction />;
+      case "/dashboard/connections":
+        if (tab === "node-provider") {
+          return <NodeProviderInstruction />;
+        }
+        if (tab === "extension") {
+          return <ExtensionInstruction />;
+        }
+        return <ProxyInstruction />;
       case "/dashboard/wallet":
         return <WalletInstruction />;
       case "/dashboard/resource":
@@ -188,10 +190,6 @@ const ModalInstruction = (props: IProps) => {
         return <ProfileInstruction />;
       case "/dashboard/workflow":
         return <WorkflowInstruction />;
-      case "/dashboard/proxy":
-        return <ProxyInstruction />;
-      case "/dashboard/extension":
-        return <ExtensionInstruction />;
       case "/dashboard/history":
         return <HistoryInstruction />;
       case "/dashboard/schedule":
