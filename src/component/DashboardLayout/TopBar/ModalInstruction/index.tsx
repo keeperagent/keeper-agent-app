@@ -81,9 +81,9 @@ const ModalInstruction = (props: IProps) => {
       case "/dashboard/connections":
         if (tab === "node-provider" && !isReadNodeProviderInstruction) {
           props?.actSetModalInstructionOpen(true);
-        } else if (tab === "extension" && !isReadExtensionInstruction) {
+        } else if (tab === "proxy" && !isReadProxyInstruction) {
           props?.actSetModalInstructionOpen(true);
-        } else if ((!tab || tab === "proxy") && !isReadProxyInstruction) {
+        } else if (!isReadExtensionInstruction) {
           props?.actSetModalInstructionOpen(true);
         }
         break;
@@ -143,10 +143,10 @@ const ModalInstruction = (props: IProps) => {
       case "/dashboard/connections":
         if (tab === "node-provider") {
           props?.actSetReadNodeProviderInstruction(true);
-        } else if (tab === "extension") {
-          props?.actSetReadExtensionInstruction(true);
-        } else {
+        } else if (tab === "proxy") {
           props?.actSetReadProxyInstruction(true);
+        } else {
+          props?.actSetReadExtensionInstruction(true);
         }
         break;
       case "/dashboard/wallet":
@@ -178,10 +178,10 @@ const ModalInstruction = (props: IProps) => {
         if (tab === "node-provider") {
           return <NodeProviderInstruction />;
         }
-        if (tab === "extension") {
-          return <ExtensionInstruction />;
+        if (tab === "proxy") {
+          return <ProxyInstruction />;
         }
-        return <ProxyInstruction />;
+        return <ExtensionInstruction />;
       case "/dashboard/wallet":
         return <WalletInstruction />;
       case "/dashboard/resource":

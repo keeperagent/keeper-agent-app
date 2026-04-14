@@ -47,8 +47,8 @@ export const Wrapper = styled.div`
     border-radius: var(--border-radius);
 
     .empty-title {
-      font-size: 1.8rem;
-      font-weight: 500;
+      font-size: 1.7rem;
+      font-weight: 600;
       color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
       margin-bottom: 1rem;
     }

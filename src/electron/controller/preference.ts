@@ -3,10 +3,11 @@ import { preferenceService } from "@/electron/service/preference";
 import { browserDownloader } from "@/electron/service/browserDownloader";
 import { MESSAGE, RESPONSE_CODE, DEFAULT_MCP_PORT } from "@/electron/constant";
 import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
+import { keeperMcpServer } from "@/electron/mcpServer/index";
+import { logEveryWhere } from "@/electron/service/util";
+import { LLMProvider } from "@/electron/type";
 import { onIpc } from "./helpers";
 import { recreateAllAgents } from "./appAgent";
-import { keeperMcpServer } from "@/electron/mcpServer/index";
-import { logEveryWhere } from "../service/util";
 
 export const perferenceController = () => {
   ipcMain.on(MESSAGE.INIT_PREFERENCE, async (_event, _payload) => {
@@ -18,6 +19,7 @@ export const perferenceController = () => {
         maxConcurrentJob: 30,
         maxLogAge: preference?.maxLogAge || 15,
         maxHistoryLogAge: preference?.maxHistoryLogAge || 30,
+        llmProvider: LLMProvider.CLAUDE,
       });
     }
   });

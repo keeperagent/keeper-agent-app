@@ -33,7 +33,7 @@ const PageWrapper = styled.div`
     justify-content: center;
     align-items: center;
     flex-grow: 1;
-    margin-top: -10vh;
+    margin-top: 10vh;
   }
 `;
 

@@ -77,7 +77,6 @@ const CustomNode = (props: any) => {
     nodeError,
     mapExtensionID,
     preference,
-    selectedNodeID,
     selectedCampaign,
   } = props;
   const nodeData: INodeData = data;
@@ -239,21 +238,17 @@ const CustomNode = (props: any) => {
       return;
     }
 
-    if (!selected && selectedNodeID !== nodeID) {
+    previousSelected.current = selected;
+    if (!selected) {
       return;
     }
 
-    previousSelected.current = selected;
-    props?.actSaveSelectedNode(selected ? nodeID : null);
+    props?.actSaveSelectedNode(nodeID);
     props?.actSetSelectedWorkflowType(config?.workflowType);
-
-    if (selected) {
-      props?.actSaveSelectedEdge(null);
-    }
-  }, [selected, selectedNodeID, nodeID, config]);
+    props?.actSaveSelectedEdge(null);
+  }, [selected, nodeID, config]);
 
   // numberOfFlowProfile is now computed in the Redux selector
-
   const className = useMemo(() => {
     if (numberOfFlowProfile !== 0) {
       return "active";

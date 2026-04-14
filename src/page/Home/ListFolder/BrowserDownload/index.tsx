@@ -14,7 +14,7 @@ import qs from "qs";
 import { useLocation } from "react-router-dom";
 import { IPreference } from "@/electron/type";
 import { RootState } from "@/redux/store";
-import { useTranslation, useCheckDeviceType } from "@/hook";
+import { useTranslation, useCheckDeviceType, useGetPreference } from "@/hook";
 import {
   useDownloadBrowser,
   useGetFolderStatistic,
@@ -41,6 +41,7 @@ const BrowserDownload = (props: IProps) => {
     useGetFolderStatistic("browser");
   const { updatePreference } = useUpdatePreference();
   const { isWindow } = useCheckDeviceType();
+  const { getPreference } = useGetPreference();
 
   const location = useLocation();
   const { search } = location;
@@ -61,6 +62,7 @@ const BrowserDownload = (props: IProps) => {
   useEffect(() => {
     if (downloadStatus?.isDone && downloadStatus?.isAvailable) {
       getBrowserFolderStatistic(2);
+      getPreference();
     }
   }, [downloadStatus]);
 

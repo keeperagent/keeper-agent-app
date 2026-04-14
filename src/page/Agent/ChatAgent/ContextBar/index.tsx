@@ -237,9 +237,13 @@ const ContextBar = (props: any) => {
             },
           }}
         >
-          <span className="context-chip">
-            <img className="chip-icon" src={chainConfig?.logo} alt="" />
-            <span className="chip-label">{chainConfig?.chainName}</span>
+          <span className={`context-chip ${!chainConfig ? "placeholder" : ""}`}>
+            {chainConfig && (
+              <img className="chip-icon" src={chainConfig?.logo} alt="" />
+            )}
+            <span className="chip-label">
+              {chainConfig?.chainName || EMPTY_STRING}
+            </span>
           </span>
         </Dropdown>
 
