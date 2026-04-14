@@ -1,10 +1,12 @@
 import path from "path";
 import { Umzug, SequelizeStorage } from "umzug";
 import { Sequelize } from "sequelize";
+import sqlite3 from "@vscode/sqlite3";
 import { getDbPath } from "@/electron/database/common";
 
 const db = new Sequelize({
   dialect: "sqlite",
+  dialectModule: sqlite3,
   storage: getDbPath(),
   query: { nest: true },
   logging: true,

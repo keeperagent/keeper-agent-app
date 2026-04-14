@@ -38,6 +38,7 @@
     "@uniswap/v2-sdk": "^4.15.2",
     "@uniswap/v3-sdk": "^3.25.2",
     "@uniswap/v4-sdk": "^1.21.4",
+    "@vscode/sqlite3": "^5.1.12-vscode",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "async-lock": "^1.4.1",
     "axios": "^1.13.3",
@@ -69,7 +70,6 @@
     "sequelize": "^6.31.1",
     "shell-env": "^4.0.3",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
     "telegraf": "^4.16.3",
     "telegram": "^2.26.22",
     "uid": "^2.0.2",
@@ -85,7 +85,6 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "rebuild-native": "electron-rebuild -f -w sqlite3",
     "package-mac": "electron-builder build --mac --universal --publish never",
     "package-mac-intel": "electron-builder build --mac --x64 --publish never",
     "package-mac-arm": "electron-builder build --mac --arm64 --publish never",
@@ -154,7 +153,6 @@
     "electron": "^39.2.7",
     "electron-builder": "^26.4.0",
     "electron-devtools-installer": "^3.2.0",
-    "electron-rebuild": "^3.2.9",
     "electron-vite": "^5.0.0",
     "ellipsize": "^0.5.1",
     "eslint": "^9.39.3",
@@ -236,7 +234,7 @@
     },
     "npmRebuild": false,
     "asarUnpack": [
-      "node_modules/sqlite3"
+      "node_modules/@vscode/sqlite3"
     ]
   }
 }
