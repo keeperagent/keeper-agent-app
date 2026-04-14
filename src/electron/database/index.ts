@@ -1,4 +1,5 @@
 import { DataTypes, Sequelize } from "sequelize";
+import sqlite3 from "@vscode/sqlite3";
 import { runMigration } from "./migration";
 import { getDbPath } from "./common";
 import { logEveryWhere } from "@/electron/service/util";
@@ -35,6 +36,7 @@ logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
 
 const db = new Sequelize({
   dialect: "sqlite",
+  dialectModule: sqlite3,
   storage: getDbPath(),
   query: { nest: true },
   logging: false,
