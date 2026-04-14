@@ -9,13 +9,11 @@ const WorkflowPage = lazy(() => import("@/page/Workflow"));
 const WalletPage = lazy(() => import("@/page/Wallet"));
 const ResourcePage = lazy(() => import("@/page/Resource"));
 const ProfilePage = lazy(() => import("@/page/Profile"));
-const ExtensionPage = lazy(() => import("@/page/Extension"));
-const ProxyPage = lazy(() => import("@/page/Proxy"));
+const ConnectionsPage = lazy(() => import("@/page/Connections"));
 const CampaignPage = lazy(() => import("@/page/Campaign"));
 const SettingPage = lazy(() => import("@/page/Setting"));
 const LoginPage = lazy(() => import("@/page/Login"));
 const LogoutPage = lazy(() => import("@/page/LogoutPage"));
-const NodeProviderPage = lazy(() => import("@/page/NodeProvider"));
 const ActivityLogPage = lazy(() => import("@/page/ActivityLog"));
 const SchedulePage = lazy(() => import("@/page/Schedule"));
 const MasterPasswordPage = lazy(() => import("@/page/MasterPassword"));
@@ -73,13 +71,8 @@ const routesConfig: IRoute[] = [
   },
   {
     isPrivateRoute: true,
-    path: "/dashboard/proxy",
-    element: <ProxyPage />,
-  },
-  {
-    isPrivateRoute: true,
-    path: "/dashboard/extension",
-    element: <ExtensionPage />,
+    path: "/dashboard/connections",
+    element: <ConnectionsPage />,
   },
   {
     isPrivateRoute: true,
@@ -90,11 +83,6 @@ const routesConfig: IRoute[] = [
     isPrivateRoute: true,
     path: "/dashboard/activity-log",
     element: <ActivityLogPage />,
-  },
-  {
-    isPrivateRoute: true,
-    path: "/dashboard/node-provider",
-    element: <NodeProviderPage />,
   },
   {
     isPrivateRoute: false,

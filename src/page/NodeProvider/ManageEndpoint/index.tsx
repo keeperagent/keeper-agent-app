@@ -249,7 +249,7 @@ const NodeEndpoint = (props: any) => {
   );
 
   const onChangeNodeEndpointGroup = (groupID: any) => {
-    navigate(`/dashboard/node-provider?group=${groupID}`);
+    navigate(`/dashboard/connections?tab=node-provider&group=${groupID}`);
   };
 
   const onSearchNodeEndpointGroup = (text: string) => {
@@ -262,7 +262,7 @@ const NodeEndpoint = (props: any) => {
   };
 
   const onBack = () => {
-    navigate(`/dashboard/node-provider`);
+    navigate(`/dashboard/connections?tab=node-provider`);
   };
 
   return (

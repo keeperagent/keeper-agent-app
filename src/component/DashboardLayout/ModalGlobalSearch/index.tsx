@@ -20,6 +20,9 @@ import {
 } from "@/electron/type";
 import SearchResult from "./SearchResult";
 import { CAMPAIGN_VIEW_MODE, EMPTY_STRING } from "@/config/constant";
+import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
+import { VIEW_MODE as WALLET_VIEW_MODE } from "@/page/Wallet";
+import { VIEW_MODE as RESOURCE_VIEW_MODE } from "@/page/Resource";
 
 interface IProps {
   isModalGlobalSearchOpen: boolean;
@@ -155,7 +158,7 @@ const ModalGlobalSearch = (props: IProps) => {
                       description={profileGroup?.note || EMPTY_STRING}
                       updateAt={profileGroup?.updateAt || 0}
                       totalData={profileGroup?.totalProfile || 0}
-                      link={`/dashboard/profile?group=${profileGroup?.id}&mode=PROFILE`}
+                      link={`/dashboard/profile?group=${profileGroup?.id}&mode=${PROFILE_VIEW_MODE.PROFILE}`}
                       totalLabel={translate("profile.allProfile")}
                     />
                   ))}
@@ -175,7 +178,7 @@ const ModalGlobalSearch = (props: IProps) => {
                       updateAt={walletGroup?.updateAt || 0}
                       totalData={walletGroup?.totalWallet || 0}
                       totalLabel={translate("wallet.allNumberWallets")}
-                      link={`/dashboard/wallet?group=${walletGroup?.id}&mode=WALLET`}
+                      link={`/dashboard/wallet?group=${walletGroup?.id}&mode=${WALLET_VIEW_MODE.WALLET}`}
                     />
                   ))}
                 </div>
@@ -197,7 +200,7 @@ const ModalGlobalSearch = (props: IProps) => {
                         updateAt={resourceGroup?.updateAt || 0}
                         totalData={resourceGroup?.totalResource || 0}
                         totalLabel={translate("resource.totalResource")}
-                        link={`/dashboard/resource?group=${resourceGroup?.id}&mode=RESOURCE`}
+                        link={`/dashboard/resource?group=${resourceGroup?.id}&mode=${RESOURCE_VIEW_MODE.RESOURCE}`}
                       />
                     ),
                   )}
@@ -217,7 +220,7 @@ const ModalGlobalSearch = (props: IProps) => {
                         description={staticProxyGroup?.note || EMPTY_STRING}
                         updateAt={staticProxyGroup?.updateAt || 0}
                         totalData={staticProxyGroup?.totalProxyIp || 0}
-                        link={`/dashboard/proxy?group=${staticProxyGroup?.id}&mode=LIST_IP`}
+                        link={`/dashboard/connections?tab=proxy&group=${staticProxyGroup?.id}`}
                         totalLabel={translate("staticProxy.totalIp")}
                       />
                     ),
@@ -238,7 +241,7 @@ const ModalGlobalSearch = (props: IProps) => {
                         description={nodeEndpointGroup?.note || EMPTY_STRING}
                         updateAt={nodeEndpointGroup?.updateAt || 0}
                         totalData={nodeEndpointGroup?.totalNodeEndpoint || 0}
-                        link={`/dashboard/node-provider?group=${nodeEndpointGroup?.id}`}
+                        link={`/dashboard/connections?tab=node-provider&group=${nodeEndpointGroup?.id}`}
                         totalLabel={translate("nodeProvider.totalNode")}
                       />
                     ),

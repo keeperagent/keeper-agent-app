@@ -3,7 +3,6 @@ import { ITheme } from "@/style/theme";
 
 const PageWrapper = styled.div`
   width: 100%;
-  margin-top: var(--margin-top);
 
   .heading {
     width: 100%;

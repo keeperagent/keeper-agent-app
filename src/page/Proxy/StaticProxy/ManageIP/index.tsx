@@ -222,7 +222,7 @@ const StaticProxyList = (props: any) => {
   );
 
   const onChangeStaticProxyGroup = (groupID: any) => {
-    navigate(`/dashboard/proxy?group=${groupID}`);
+    navigate(`/dashboard/connections?tab=proxy&group=${groupID}`);
   };
 
   const onSearchStaticProxyGroup = (text: string) => {
@@ -235,7 +235,7 @@ const StaticProxyList = (props: any) => {
   };
 
   const onBack = () => {
-    navigate(`/dashboard/proxy`);
+    navigate(`/dashboard/connections?tab=proxy`);
   };
 
   return (

@@ -8,7 +8,6 @@ const PageWrapper = styled.div`
   justify-content: flex-start;
   align-items: center;
   font-size: 1.6rem;
-  margin-top: var(--margin-top);
 
   .heading {
     width: 100%;
