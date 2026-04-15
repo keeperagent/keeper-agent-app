@@ -53,6 +53,37 @@ const extractToolOutput = (rawOutput: any): string => {
   return JSON.stringify(rawOutput || "");
 };
 
+const truncateToolResultForIpc = (
+  result: string,
+  maxTotal: number = 10000,
+): string => {
+  try {
+    const parsed = JSON.parse(result);
+    const truncateValue = (value: any): any => {
+      if (typeof value === "string" && value.length > 2000) {
+        return value.slice(0, 2000) + "...[truncated]";
+      }
+      if (Array.isArray(value)) {
+        return value.map(truncateValue);
+      }
+      if (value && typeof value === "object") {
+        const truncated: Record<string, any> = {};
+        for (const key of Object.keys(value)) {
+          truncated[key] = truncateValue(value[key]);
+        }
+        return truncated;
+      }
+      return value;
+    };
+    const serialized = JSON.stringify(truncateValue(parsed));
+    return serialized.length > maxTotal
+      ? serialized.slice(0, maxTotal)
+      : serialized;
+  } catch {
+    return result.slice(0, maxTotal);
+  }
+};
+
 export type AgentSession = {
   checkpointer: MemorySaver;
   threadId: string;
@@ -668,7 +699,7 @@ class AgentChatBridge {
             sessionId,
             toolName,
             runId: evt?.run_id || "",
-            result: toolResult.slice(0, 10000),
+            result: truncateToolResultForIpc(toolResult),
           });
 
           steps.push({
