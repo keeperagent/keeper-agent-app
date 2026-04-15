@@ -258,8 +258,6 @@ export const getSummaryPairs = (
   return pairs;
 };
 
-export type ResultItem = { title: string; url: string };
-
 export const SEARCH_TOOL_NAMES = new Set<string>([
   TOOL_KEYS.WEB_SEARCH_TAVILY,
   TOOL_KEYS.WEB_SEARCH_EXA,
@@ -267,6 +265,7 @@ export const SEARCH_TOOL_NAMES = new Set<string>([
   TOOL_KEYS.FIND_SIMILAR_EXA,
 ]);
 
+export type ResultItem = { title: string; url: string };
 export const parseResultItems = (
   toolName: string,
   result?: string,
@@ -316,6 +315,7 @@ export const getCodeContent = (
       }
     } catch {}
   }
+
   // For write tools, read from input
   let raw = input?.input ?? input?.code ?? null;
   if (typeof raw !== "string") {
@@ -327,14 +327,14 @@ export const getCodeContent = (
     if (parsed && typeof parsed.input === "string") {
       raw = parsed.input;
     }
-  } catch {
-    // raw is plain code, not JSON — use as-is
-  }
+  } catch {}
   return typeof raw === "string" && raw ? raw : null;
 };
 
 export const looksLikeMarkdown = (text: string): boolean => {
-  return /(?:^|\n)#{1,6}\s|\*\*[^*]+\*\*|(?:^|\n)\s*[-*]\s|\[.+\]\(.+\)/.test(text);
+  return /(?:^|\n)#{1,6}\s|\*\*[^*]+\*\*|(?:^|\n)\s*[-*]\s|\[.+\]\(.+\)/.test(
+    text,
+  );
 };
 
 export const getCodeLanguage = (toolName: string): "javascript" | "python" => {

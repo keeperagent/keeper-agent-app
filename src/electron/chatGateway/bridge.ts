@@ -25,7 +25,7 @@ import {
 } from "@/electron/appAgent";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
-import { looksLikeEncryptKey } from "@/electron/appAgent/utils";
+import { looksLikeEncryptKey, isErrorResult } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { LLMProvider } from "@/electron/type";
@@ -675,7 +675,7 @@ class AgentChatBridge {
             toolName,
             args: evt.data?.input || {},
             result: toolResult,
-            success: !toolResult.startsWith("Error"),
+            success: !isErrorResult(toolResult),
           });
         }
       }

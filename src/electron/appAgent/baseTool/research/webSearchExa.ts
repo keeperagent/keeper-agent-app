@@ -47,7 +47,6 @@ export const webSearchExaTool = () =>
         });
 
         const result = await exaTool.invoke(query);
-        console.log("Exa raw result shape:", result);
 
         const output =
           typeof result === "string" ? result : JSON.stringify(result);

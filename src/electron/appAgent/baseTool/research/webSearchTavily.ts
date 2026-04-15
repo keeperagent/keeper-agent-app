@@ -42,10 +42,6 @@ export const webSearchTavilyTool = () =>
           maxResults,
           includeAnswer: true,
         });
-        console.log(
-          "Tavily raw result shape:",
-          JSON.stringify(results).slice(0, 500),
-        );
 
         const output = JSON.stringify(results);
         const truncated =

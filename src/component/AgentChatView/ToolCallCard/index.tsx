@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { MESSAGE } from "@/electron/constant";
+import CodeEditor from "@/component/CodeEditor";
+import {
+  ArrowRightIcon,
+  CheckCircleIcon,
+  DownArrowIcon,
+} from "@/component/Icon";
 import { type ToolCallState, ToolCallStateStatus } from "../util";
 import {
   getToolIcon,
@@ -15,14 +22,16 @@ import {
   looksLikeMarkdown,
   SEARCH_TOOL_NAMES,
 } from "./util";
-import {
-  ArrowRightIcon,
-  CheckCircleIcon,
-  DownArrowIcon,
-} from "@/component/Icon";
 import { ToolCallGroupWrapper } from "./style";
-import { MESSAGE } from "@/electron/constant";
-import CodeEditor from "@/component/CodeEditor";
+
+const openExternalUrl = (url: string): void => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url });
+    }
+  } catch {}
+};
 
 type ToolCallRowProps = {
   toolCall: ToolCallState;
@@ -53,6 +62,7 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
   return (
     <div className="tool-row">
       <span className="tool-icon">{getToolIcon(toolCall.toolName)}</span>
+
       <div className="tool-row-header">
         <div className="tool-row-top">
           <span className="tool-name">{primaryLabel}</span>
@@ -60,12 +70,14 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
             {toolCall.state === ToolCallStateStatus.RUNNING && (
               <span className="spinner-sm" />
             )}
+
             {toolCall.state === ToolCallStateStatus.DONE &&
               resultItems.length > 0 && (
                 <span className="result-count">
                   {resultItems.length} results
                 </span>
               )}
+
             {toolCall.state === ToolCallStateStatus.ERROR && (
               <span className="error-mark">✗</span>
             )}
@@ -101,11 +113,7 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
             <div
               key={index}
               className="result-item"
-              onClick={() =>
-                window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-                  url: resultItem.url,
-                })
-              }
+              onClick={() => openExternalUrl(resultItem.url)}
             >
               <img
                 className="result-favicon"
@@ -143,6 +151,7 @@ const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
       const timer = setTimeout(() => setExpanded(false), 5000);
       return () => clearTimeout(timer);
     }
+
     if (anyRunning || isActive) {
       setExpanded(true);
     }
@@ -175,6 +184,7 @@ const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
               <ToolCallRow key={toolCall.runId} toolCall={toolCall} />
             ))}
           </div>
+
           {!anyRunning && isActive && (
             <div className="thinking-row">
               <span className="thinking-icon">
@@ -183,6 +193,7 @@ const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
               <span className="thinking-label">Thinking…</span>
             </div>
           )}
+
           {!anyRunning && !isActive && (
             <div className="done-row">
               <span className="done-icon">

@@ -8,7 +8,10 @@ import {
   LLMProvider,
 } from "@/redux/agent";
 import { ChatRole } from "@/electron/chatGateway/types";
-import { type ToolCallState, ToolCallStateStatus } from "@/component/AgentChatView/util";
+import {
+  type ToolCallState,
+  ToolCallStateStatus,
+} from "@/component/AgentChatView/util";
 
 const looksLikeEncryptKey = (text: string): boolean => {
   if (text.length > 128) {
@@ -39,6 +42,26 @@ type AgentMessage = {
   content: string;
   timestamp?: number;
   toolCalls?: ToolCallState[];
+};
+
+const isErrorResult = (result: unknown): boolean => {
+  if (typeof result !== "string") {
+    return false;
+  }
+  if (result.startsWith("Error")) {
+    return true;
+  }
+  try {
+    const parsed = JSON.parse(result);
+    return (
+      parsed?.success === false ||
+      parsed?.status === "error" ||
+      (typeof parsed?.status === "string" &&
+        parsed.status.startsWith("blocked_"))
+    );
+  } catch {
+    return false;
+  }
 };
 
 const normalizeSteps = (steps: any[]): AgentToolStep[] => {
@@ -199,7 +222,11 @@ const useDashboardAgent = () => {
         const failedToolCalls = Array.from(toolCallMapRef.current.values()).map(
           (toolCall) =>
             toolCall.state === ToolCallStateStatus.RUNNING
-              ? { ...toolCall, state: ToolCallStateStatus.ERROR, result: errMessage }
+              ? {
+                  ...toolCall,
+                  state: ToolCallStateStatus.ERROR,
+                  result: errMessage,
+                }
               : toolCall,
         );
         if (failedToolCalls.length > 0) {
@@ -268,15 +295,28 @@ const useDashboardAgent = () => {
           setConversation((prev) => [...prev, errorMessage]);
           saveMessageToDB(errorMessage);
         } else if (completedToolCalls.length > 0) {
-          // Tools ran but produced no final text — attach tool cards to the last message
+          // Tools ran but produced no final text — attach tool cards to the last AI message
           setConversation((prev) => {
             if (prev.length === 0) {
               return prev;
             }
             const last = prev[prev.length - 1];
+            if (last.role === ChatRole.AI) {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, toolCalls: completedToolCalls },
+              ];
+            }
+
+            // Last entry is not an AI message — append a synthetic assistant turn
             return [
-              ...prev.slice(0, -1),
-              { ...last, toolCalls: completedToolCalls },
+              ...prev,
+              {
+                role: ChatRole.AI,
+                content: "",
+                timestamp: Date.now(),
+                toolCalls: completedToolCalls,
+              },
             ];
           });
         }
@@ -366,11 +406,13 @@ const useDashboardAgent = () => {
         // Update the matching tool call to done state
         if (runId && toolCallMapRef.current.has(runId)) {
           const existing = toolCallMapRef.current.get(runId)!;
-          const isError =
-            typeof result === "string" && result.startsWith("Error");
+          const isError = isErrorResult(result);
+
           toolCallMapRef.current.set(runId, {
             ...existing,
-            state: isError ? ToolCallStateStatus.ERROR : ToolCallStateStatus.DONE,
+            state: isError
+              ? ToolCallStateStatus.ERROR
+              : ToolCallStateStatus.DONE,
             result,
           });
           setToolCallStates(Array.from(toolCallMapRef.current.values()));

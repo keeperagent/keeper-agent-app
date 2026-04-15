@@ -294,16 +294,24 @@ export const executePythonTool = (toolContext?: ToolContext) =>
       "The code has a 60-second timeout. " +
       "Do NOT retry if the same error occurs — report it instead. " +
       "Input: the complete Python code string to execute.",
-    func: async (input: string) => {
+    func: async (_input: string) => {
       const agentId = String(toolContext?.agentProfileId || "main");
-      // Module-level store is shared across all agent contexts (main + subagents)
+      // Only execute code that was approved via write_python — never the raw agent input
       const stored = loadPendingCode(agentId);
-      const code =
+      const approvedCode =
         stored?.language === "python"
           ? stored.code
           : toolContext?.pendingCode?.language === "python"
             ? toolContext.pendingCode.code
-            : input;
+            : null;
+      if (!approvedCode) {
+        return safeStringify({
+          error:
+            "No approved Python snippet found. Call write_python first so the user can review and approve the code before execution.",
+          status: "blocked_no_approved_code",
+        });
+      }
+      const code = approvedCode;
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
