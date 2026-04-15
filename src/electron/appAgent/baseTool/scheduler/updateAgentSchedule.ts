@@ -8,6 +8,7 @@ import {
   scheduleNotFoundResponse,
   scheduleTargetSchema,
 } from "./helpers";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   ...scheduleTargetSchema,
@@ -24,7 +25,7 @@ const schema = z.object({
 
 export const updateAgentScheduleTool = () =>
   new DynamicStructuredTool({
-    name: "update_agent_schedule",
+    name: TOOL_KEYS.UPDATE_AGENT_SCHEDULE,
     description:
       "Update the name, cron expression, notes, or active state of an agent schedule. Identify the schedule by id or name.",
     schema: schema as any,

@@ -2,6 +2,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { campaignDB } from "@/electron/database/campaign";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   searchText: z
@@ -14,7 +15,7 @@ const schema = z.object({
 
 export const searchCampaignsTool = () =>
   new DynamicStructuredTool({
-    name: "search_campaigns",
+    name: TOOL_KEYS.SEARCH_CAMPAIGNS,
     description:
       "Search and list campaigns. Returns campaign IDs, names, profile counts, and their attached workflows with IDs and variables.\n" +
       "Use this to find the campaignId and workflowId needed by run_workflow / stop_workflow.",

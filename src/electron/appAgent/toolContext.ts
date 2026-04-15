@@ -10,6 +10,11 @@ export enum PlanState {
   APPROVED = "approved",
 }
 
+export interface IPendingCode {
+  language: "javascript" | "python";
+  code: string;
+}
+
 interface IToolContextData {
   nodeEndpointGroupId?: number;
   encryptKey?: string;
@@ -25,6 +30,8 @@ interface IToolContextData {
   requestPlanApproval?: (plan: string) => Promise<boolean>;
   // Set for registry agents so mailbox tools know the sender ID. Undefined for the main agent
   agentProfileId?: number;
+  // Code written by write_javascript/write_python, consumed by execute_javascript/execute_python
+  pendingCode?: IPendingCode;
 }
 
 /**
@@ -92,6 +99,9 @@ export class ToolContext {
     if (data.agentProfileId !== undefined) {
       this.data.agentProfileId = data.agentProfileId;
     }
+    if (data.pendingCode !== undefined) {
+      this.data.pendingCode = data.pendingCode;
+    }
   }
 
   get nodeEndpointGroupId(): number | undefined {
@@ -149,5 +159,13 @@ export class ToolContext {
 
   get agentProfileId(): number | undefined {
     return this.data.agentProfileId;
+  }
+
+  get pendingCode(): IPendingCode | undefined {
+    return this.data.pendingCode;
+  }
+
+  clearPendingCode(): void {
+    this.data.pendingCode = undefined;
   }
 }

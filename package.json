@@ -7,6 +7,7 @@
   "dependencies": {
     "@aptos-labs/ts-sdk": "^5.2.1",
     "@cetusprotocol/cetus-sui-clmm-sdk": "^5.4.0",
+    "@codemirror/lang-python": "^6.2.1",
     "@coral-xyz/anchor": "^0.32.1",
     "@coral-xyz/borsh": "^0.32.1",
     "@keeperagent/crypto-key-guard": "^0.1.0",

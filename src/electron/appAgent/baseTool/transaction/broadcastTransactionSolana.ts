@@ -11,6 +11,7 @@ import { SolanaTransactionExecutor } from "@/electron/simulator/category/onchain
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { extractErrorMessage } from "../utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const CONFIRMATION_TIMEOUT = 30000;
 
@@ -40,7 +41,7 @@ export const broadcastTransactionSolanaTool = (
   toolContext?: ToolContext,
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
-    name: "broadcast_transaction_solana",
+    name: TOOL_KEYS.BROADCAST_TRANSACTION_SOLANA,
     description: `Broadcast a serialized transaction to Solana using campaign wallets.
 The transaction data must be base64-encoded. The tool handles signing with each wallet's private key and refreshes the blockhash automatically.
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary instructions).`,

@@ -4,6 +4,7 @@ import { agentTaskDB } from "@/electron/database/agentTask";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   id: z.number().describe("Task ID to delete"),
@@ -11,7 +12,7 @@ const schema = z.object({
 
 export const deleteAgentTaskTool = () =>
   new DynamicStructuredTool({
-    name: "delete_agent_task",
+    name: TOOL_KEYS.DELETE_AGENT_TASK,
     description:
       "Permanently delete an agent task by ID. Prefer setting status to cancelled over deleting unless the task should be fully removed.",
     schema: schema as any,

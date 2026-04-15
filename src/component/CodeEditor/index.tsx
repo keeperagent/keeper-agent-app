@@ -3,9 +3,10 @@ import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
+import { python } from "@codemirror/lang-python";
 import type { Extension } from "@codemirror/state";
 
-type CodeEditorLanguage = "json" | "javascript" | "markdown";
+type CodeEditorLanguage = "json" | "javascript" | "markdown" | "python";
 
 type CodeEditorProps = {
   value?: string;
@@ -22,6 +23,7 @@ const langExtensions: Record<CodeEditorLanguage, () => Extension> = {
   json: json,
   javascript: javascript,
   markdown: markdown,
+  python: python,
 };
 
 export default function CodeEditor(props: CodeEditorProps) {

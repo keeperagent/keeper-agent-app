@@ -202,6 +202,7 @@ const ChatRegistry = (props: Props) => {
         content: streamingContent,
         className: "message assistant streaming",
         isLoading: !streamingContent && isStreaming,
+        isAgentProcessing: isStreaming,
         timestamp: new Date(),
         executingToolText: activeToolName
           ? translate("agent.executingTool").replace(

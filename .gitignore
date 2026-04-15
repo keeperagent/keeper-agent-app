@@ -7,3 +7,6 @@ release
 .DS_Store
 release.sh
 .env
+.gitnexus
+AGENTS.md
+CLAUDE.md

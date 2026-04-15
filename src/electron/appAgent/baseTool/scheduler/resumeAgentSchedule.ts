@@ -7,12 +7,13 @@ import {
   scheduleNotFoundResponse,
   scheduleTargetSchema,
 } from "./helpers";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({ ...scheduleTargetSchema });
 
 export const resumeAgentScheduleTool = () =>
   new DynamicStructuredTool({
-    name: "resume_agent_schedule",
+    name: TOOL_KEYS.RESUME_AGENT_SCHEDULE,
     description:
       "Resume a previously paused agent schedule. Identify the schedule by id or name.",
     schema: schema as any,

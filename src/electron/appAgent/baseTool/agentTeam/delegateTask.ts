@@ -14,6 +14,7 @@ import {
 } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 import type { ToolContext } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const PRIORITY_MAP: Record<string, AgentTaskPriority> = {
   low: AgentTaskPriority.LOW,
@@ -44,7 +45,7 @@ const schema = z.object({
 
 export const delegateTaskTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: "delegate_task",
+    name: TOOL_KEYS.DELEGATE_TASK,
     description:
       "Delegate a task to an agent in the team. The task is created in the task pool and auto-dispatched. Use preferredAgentId to target a specific team member.",
     schema: schema as any,

@@ -5,6 +5,7 @@ import { agentTaskDB } from "@/electron/database/agentTask";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const PRIORITY_MAP: Record<string, AgentTaskPriority> = {
   low: AgentTaskPriority.LOW,
@@ -48,7 +49,7 @@ const schema = z.object({
 
 export const updateAgentTaskTool = () =>
   new DynamicStructuredTool({
-    name: "update_agent_task",
+    name: TOOL_KEYS.UPDATE_AGENT_TASK,
     description:
       "Update an agent task. Can change title, description, priority, status, assigned agent, pin state, result, or error message. " +
       "Status can be set to init (re-queue), done, failed, or cancelled.",

@@ -9,10 +9,11 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 export const launchPumpfunTokenTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
-    name: "launch_pumpfun_token",
+    name: TOOL_KEYS.LAUNCH_PUMPFUN_TOKEN,
     description: `Launch a new token on Pump.fun (Solana only).
 ONLY use when chainKey from context is "solana". Uses the first wallet from selected campaign profiles.
 Required: tokenName, symbol. If imageUrl omitted, the first image in the user's attached files is used.

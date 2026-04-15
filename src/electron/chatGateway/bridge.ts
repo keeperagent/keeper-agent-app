@@ -25,7 +25,7 @@ import {
 } from "@/electron/appAgent";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
-import { looksLikeEncryptKey } from "@/electron/appAgent/utils";
+import { looksLikeEncryptKey, isErrorResult } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { LLMProvider } from "@/electron/type";
@@ -36,6 +36,53 @@ import type { IChatAdapter, IPlatformMessage } from "./types";
 
 const COMPACTION_THRESHOLD = 40_000;
 const MIN_MESSAGES_FOR_COMPACTION = 10;
+
+/**
+ * Extracts the raw string content from a tool's output.
+ * LangChain wraps tool outputs in a ToolMessage object ({ lc, type, kwargs: { content } }).
+ * We need to unwrap it to get the actual string the tool returned.
+ */
+const extractToolOutput = (rawOutput: any): string => {
+  if (typeof rawOutput === "string") {
+    return rawOutput;
+  }
+  const content = rawOutput?.kwargs?.content ?? rawOutput?.content;
+  if (typeof content === "string") {
+    return content;
+  }
+  return JSON.stringify(rawOutput || "");
+};
+
+const truncateToolResultForIpc = (
+  result: string,
+  maxTotal: number = 10000,
+): string => {
+  try {
+    const parsed = JSON.parse(result);
+    const truncateValue = (value: any): any => {
+      if (typeof value === "string" && value.length > 2000) {
+        return value.slice(0, 2000) + "...[truncated]";
+      }
+      if (Array.isArray(value)) {
+        return value.map(truncateValue);
+      }
+      if (value && typeof value === "object") {
+        const truncated: Record<string, any> = {};
+        for (const key of Object.keys(value)) {
+          truncated[key] = truncateValue(value[key]);
+        }
+        return truncated;
+      }
+      return value;
+    };
+    const serialized = JSON.stringify(truncateValue(parsed));
+    return serialized.length > maxTotal
+      ? serialized.slice(0, maxTotal)
+      : serialized;
+  } catch {
+    return result.slice(0, maxTotal);
+  }
+};
 
 export type AgentSession = {
   checkpointer: MemorySaver;
@@ -621,10 +668,13 @@ class AgentChatBridge {
             subagentType = parsed?.subagent_type as string | undefined;
           }
           options?.onToolStart?.(toolName, subagentType);
+          const toolInput = evt.data?.input || {};
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_START, {
             sessionId,
             toolName,
             subagentType,
+            runId: evt?.run_id || `${toolName}_${Date.now()}`,
+            input: toolInput,
           });
         }
 
@@ -644,19 +694,19 @@ class AgentChatBridge {
         if (evt.event === "on_tool_end") {
           const toolName = evt.name || "unknown";
           options?.onToolComplete?.(toolName);
+          const toolResult = extractToolOutput(evt.data?.output);
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE, {
             sessionId,
             toolName,
+            runId: evt?.run_id || "",
+            result: truncateToolResultForIpc(toolResult),
           });
 
           steps.push({
             toolName,
             args: evt.data?.input || {},
-            result:
-              typeof evt.data?.output === "string"
-                ? evt.data.output
-                : JSON.stringify(evt.data?.output || ""),
-            success: !String(evt.data?.output || "").startsWith("Error"),
+            result: toolResult,
+            success: !isErrorResult(toolResult),
           });
         }
       }

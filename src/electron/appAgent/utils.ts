@@ -292,6 +292,26 @@ export const fetchWalletsForGroup = async (
   return limit ? wallets.slice(0, limit) : wallets;
 };
 
+export const isErrorResult = (result: unknown): boolean => {
+  if (typeof result !== "string") {
+    return false;
+  }
+  if (result.startsWith("Error")) {
+    return true;
+  }
+  try {
+    const parsed = JSON.parse(result);
+    return (
+      parsed?.success === false ||
+      parsed?.status === "error" ||
+      (typeof parsed?.status === "string" &&
+        parsed.status.startsWith("blocked_"))
+    );
+  } catch {
+    return false;
+  }
+};
+
 export const looksLikeEncryptKey = (text: string): boolean => {
   if (text.length > 128) {
     return false;

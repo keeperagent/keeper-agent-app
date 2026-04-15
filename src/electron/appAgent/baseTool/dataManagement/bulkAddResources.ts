@@ -8,6 +8,7 @@ import {
   rowToResourceFields,
   resolveResourceGroup,
 } from "./utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z
   .object({
@@ -26,7 +27,7 @@ const schema = z
 
 export const bulkAddResourcesTool = () =>
   new DynamicStructuredTool({
-    name: "bulk_add_resources",
+    name: TOOL_KEYS.BULK_ADD_RESOURCES,
     description:
       "Insert rows into an agent-created resource group. Provide groupId or groupName. " +
       "Duplicate rows (identical values across all columns) are silently skipped.",

@@ -397,7 +397,7 @@ export class Workflow {
         const hasError = Boolean(this.monitor.mapThreadError[threadID]);
         const targetNodeID = currentNodeId
           ? getNextNodeId(currentNodeId, edges, hasError)
-          : startNodeId;
+          : getNextNodeId(startNodeId, edges, false);
 
         // no next node — end of flow
         if (!targetNodeID) {

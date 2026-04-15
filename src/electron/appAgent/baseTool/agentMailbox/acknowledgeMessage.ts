@@ -2,6 +2,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentMailboxDB } from "@/electron/database/agentMailbox";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   messageId: z.number().describe("ID of the message to acknowledge"),
@@ -9,7 +10,7 @@ const schema = z.object({
 
 export const acknowledgeMessageTool = () =>
   new DynamicStructuredTool({
-    name: "acknowledge_message",
+    name: TOOL_KEYS.ACKNOWLEDGE_MESSAGE,
     description:
       "Mark a message as acknowledged after you have processed it. Acknowledged messages are excluded from future read_messages calls.",
     schema: schema as any,

@@ -7,12 +7,13 @@ import {
   scheduleNotFoundResponse,
   scheduleTargetSchema,
 } from "./helpers";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({ ...scheduleTargetSchema });
 
 export const runAgentScheduleNowTool = () =>
   new DynamicStructuredTool({
-    name: "run_agent_schedule_now",
+    name: TOOL_KEYS.RUN_AGENT_SCHEDULE_NOW,
     description:
       "Trigger an agent schedule to run immediately, bypassing its cron timing. Identify the schedule by id or name.",
     schema: schema as any,

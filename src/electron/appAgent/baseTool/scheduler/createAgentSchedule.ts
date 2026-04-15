@@ -12,6 +12,7 @@ import {
   ICampaign,
   IWorkflow,
 } from "@/electron/type";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const agentJobSchema = z.object({
   type: z
@@ -108,7 +109,7 @@ const schema = z.object({
 
 export const createAgentScheduleTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: "create_agent_schedule",
+    name: TOOL_KEYS.CREATE_AGENT_SCHEDULE,
     description:
       "Create a new agent schedule with one or more jobs. Jobs can be AI prompt jobs ('agent' type) or workflow execution jobs ('workflow' type). " +
       "Understand the user's intent in natural language and convert it to a cron expression internally. " +

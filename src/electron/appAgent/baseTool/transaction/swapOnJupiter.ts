@@ -13,6 +13,7 @@ import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { redistributeToCapacity, extractErrorMessage } from "../utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const GAS_BUFFER_SOL = 0.0005;
 const BALANCE_BATCH_SIZE = 10;
@@ -126,7 +127,7 @@ export const swapOnJupiterTool = (
   toolContext?: ToolContext,
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
-    name: "swap_on_jupiter",
+    name: TOOL_KEYS.SWAP_ON_JUPITER,
     description: `Swap tokens on Solana via Jupiter. BUY = SOL -> token, SELL = token -> SOL.
 ONLY use when chainKey is "solana". For EVM chains use swap_on_kyberswap.
 

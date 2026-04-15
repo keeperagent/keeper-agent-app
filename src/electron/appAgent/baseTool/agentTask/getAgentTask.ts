@@ -2,6 +2,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   id: z.number().describe("Task ID"),
@@ -9,7 +10,7 @@ const schema = z.object({
 
 export const getAgentTaskTool = () =>
   new DynamicStructuredTool({
-    name: "get_agent_task",
+    name: TOOL_KEYS.GET_AGENT_TASK,
     description: "Get full details of a specific agent task by ID.",
     schema: schema as any,
     func: async ({ id }: { id: number }) => {

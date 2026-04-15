@@ -4,13 +4,14 @@ import { ExaSearchResults } from "@langchain/exa";
 import { Exa } from "exa-js";
 import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const webSearchExaTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
-    name: "web_search_exa",
+    name: TOOL_KEYS.WEB_SEARCH_EXA,
     description:
       "Search the web using Exa for semantic/neural search. " +
       "Best for finding conceptually similar content, deep research, and discovering related projects or articles. " +

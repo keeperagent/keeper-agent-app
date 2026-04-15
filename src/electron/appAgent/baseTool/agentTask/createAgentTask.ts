@@ -11,6 +11,7 @@ import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const PRIORITY_MAP: Record<string, AgentTaskPriority> = {
   low: AgentTaskPriority.LOW,
@@ -40,7 +41,7 @@ const schema = z.object({
 
 export const createAgentTaskTool = () =>
   new DynamicStructuredTool({
-    name: "create_agent_task",
+    name: TOOL_KEYS.CREATE_AGENT_TASK,
     description:
       "Create a new task in the agent task pool. The dispatcher will automatically assign it to the best available agent unless assignedAgentId is specified.",
     schema: schema as any,

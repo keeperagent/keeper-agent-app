@@ -158,31 +158,27 @@ const ContextMenu = (props: ContextMenuProps) => {
           </MenuItem>
         )}
 
-        {selectedNodeID === null && (
-          <MenuItem onClick={() => onLayout(LayoutDirection.HORIZONTAL)}>
-            <MenuItemWrapper>
-              <div className="icon">
-                <HorizontalIcon color="var(--color-text-secondary)" />
-              </div>
-              <div className="label">
-                {translate("workflow.autoLayoutHorizontal")}
-              </div>
-            </MenuItemWrapper>
-          </MenuItem>
-        )}
+        <MenuItem onClick={() => onLayout(LayoutDirection.HORIZONTAL)}>
+          <MenuItemWrapper>
+            <div className="icon">
+              <HorizontalIcon color="var(--color-text-secondary)" />
+            </div>
+            <div className="label">
+              {translate("workflow.autoLayoutHorizontal")}
+            </div>
+          </MenuItemWrapper>
+        </MenuItem>
 
-        {selectedNodeID === null && (
-          <MenuItem onClick={() => onLayout(LayoutDirection.VERTICAL)}>
-            <MenuItemWrapper>
-              <div className="icon">
-                <VerticalIcon color="var(--color-text-secondary)" />
-              </div>
-              <div className="label">
-                {translate("workflow.autoLayoutVertical")}
-              </div>
-            </MenuItemWrapper>
-          </MenuItem>
-        )}
+        <MenuItem onClick={() => onLayout(LayoutDirection.VERTICAL)}>
+          <MenuItemWrapper>
+            <div className="icon">
+              <VerticalIcon color="var(--color-text-secondary)" />
+            </div>
+            <div className="label">
+              {translate("workflow.autoLayoutVertical")}
+            </div>
+          </MenuItemWrapper>
+        </MenuItem>
 
         {selectedNodeID !== null && selectedEdgeID === null && (
           <MenuItem onClick={onDuplicateNode}>

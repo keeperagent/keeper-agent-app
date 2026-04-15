@@ -4,6 +4,7 @@ import { ResourceGroupSource } from "@/electron/type";
 import { resourceDB } from "@/electron/database/resource";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { groupToColumns, resolveResourceGroup } from "./utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z
   .object({
@@ -27,7 +28,7 @@ const schema = z
 
 export const bulkUpdateResourcesTool = () =>
   new DynamicStructuredTool({
-    name: "bulk_update_resources",
+    name: TOOL_KEYS.BULK_UPDATE_RESOURCES,
     description:
       "Partially update existing rows in an agent-created resource group. " +
       "Each row must include 'id' (obtained from query_resources) plus only the columns to change. " +

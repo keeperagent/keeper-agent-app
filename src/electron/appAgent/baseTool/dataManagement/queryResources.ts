@@ -3,6 +3,7 @@ import { z } from "zod";
 import { resourceDB } from "@/electron/database/resource";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { groupToColumns, resourceToRow, resolveResourceGroup } from "./utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z
   .object({
@@ -26,7 +27,7 @@ const schema = z
 
 export const queryResourcesTool = () =>
   new DynamicStructuredTool({
-    name: "query_resources",
+    name: TOOL_KEYS.QUERY_RESOURCES,
     description:
       "Read rows from a resource group with pagination. Works on all groups (agent and user created). " +
       "Provide groupId or groupName.",

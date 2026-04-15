@@ -431,6 +431,7 @@ export const MESSAGE = {
   DASHBOARD_AGENT_STREAM_CHUNK: "DASHBOARD_AGENT_STREAM_CHUNK",
   DASHBOARD_AGENT_TOOL_START: "DASHBOARD_AGENT_TOOL_START",
   DASHBOARD_AGENT_TOOL_COMPLETE: "DASHBOARD_AGENT_TOOL_COMPLETE",
+  DASHBOARD_AGENT_TOOL_PROGRESS: "DASHBOARD_AGENT_TOOL_PROGRESS",
   DASHBOARD_AGENT_RESET_SESSION: "DASHBOARD_AGENT_RESET_SESSION",
   DASHBOARD_AGENT_RESET_SESSION_RES: "DASHBOARD_AGENT_RESET_SESSION_RES",
   DASHBOARD_AGENT_STOP: "DASHBOARD_AGENT_STOP",
@@ -513,6 +514,7 @@ export const MESSAGE = {
   AGENT_PROFILE_STREAM_CHUNK: "AGENT_PROFILE_STREAM_CHUNK",
   AGENT_PROFILE_TOOL_START: "AGENT_PROFILE_TOOL_START",
   AGENT_PROFILE_TOOL_COMPLETE: "AGENT_PROFILE_TOOL_COMPLETE",
+  AGENT_PROFILE_TOOL_PROGRESS: "AGENT_PROFILE_TOOL_PROGRESS",
   AGENT_PROFILE_STOP: "AGENT_PROFILE_STOP",
   AGENT_PROFILE_STOP_RES: "AGENT_PROFILE_STOP_RES",
   AGENT_PROFILE_RESET_SESSION: "AGENT_PROFILE_RESET_SESSION",
@@ -543,6 +545,7 @@ export const MESSAGE = {
   AGENT_TASK_ASSIGNED: "AGENT_TASK_ASSIGNED",
   GET_AGENT_ANALYTICS: "GET_AGENT_ANALYTICS",
   GET_AGENT_ANALYTICS_RES: "GET_AGENT_ANALYTICS_RES",
+
 };
 
 //  Log level for UI coloring (e.g. system log viewer)
@@ -1105,93 +1108,175 @@ export enum KYBERSWAP_CHAIN_KEY {
   HYPEREVM = "hyperevm",
 }
 
+export const TOOL_KEYS = {
+  // Subagents
+  TRANSACTION_AGENT: "transaction_agent",
+  CODE_EXECUTION_AGENT: "code_execution_agent",
+  WORKFLOW_AGENT: "workflow_agent",
+  RESEARCH_AGENT: "research_agent",
+  SCHEDULER_AGENT: "scheduler_agent",
+  TASK_MANAGEMENT_AGENT: "task_management_agent",
+  TEAM_MAILBOX_AGENT: "team_mailbox_agent",
+  DATA_MANAGEMENT_AGENT: "data_management_agent",
+  // Built-in tools
+  LS: "ls",
+  READ_FILE: "read_file",
+  WRITE_FILE: "write_file",
+  GREP: "grep",
+  FIND: "find",
+  EXECUTE: "execute",
+  TASK: "task",
+  // Transaction tools
+  SWAP_ON_JUPITER: "swap_on_jupiter",
+  SWAP_ON_KYBERSWAP: "swap_on_kyberswap",
+  TRANSFER_SOLANA_TOKEN: "transfer_solana_token",
+  GET_SOLANA_TOKEN_BALANCE: "get_solana_token_balance",
+  GET_EVM_TOKEN_BALANCE: "get_evm_token_balance",
+  GET_TOKEN_PRICE: "get_token_price",
+  LAUNCH_PUMPFUN_TOKEN: "launch_pumpfun_token",
+  LAUNCH_BONKFUN_TOKEN: "launch_bonkfun_token",
+  BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
+  BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
+  // Wallet & data tools
+  CREATE_WALLET_GROUP: "create_wallet_group",
+  GENERATE_WALLETS_FOR_GROUP: "generate_wallets_for_group",
+  CREATE_RESOURCE_GROUP: "create_resource_group",
+  LIST_RESOURCE_GROUPS: "list_resource_groups",
+  BULK_ADD_RESOURCES: "bulk_add_resources",
+  BULK_UPDATE_RESOURCES: "bulk_update_resources",
+  QUERY_RESOURCES: "query_resources",
+  // Code execution
+  WRITE_JAVASCRIPT: "write_javascript",
+  WRITE_PYTHON: "write_python",
+  EXECUTE_JAVASCRIPT: "execute_javascript",
+  EXECUTE_PYTHON: "execute_python",
+  // Workflow tools
+  SEARCH_CAMPAIGNS: "search_campaigns",
+  SEARCH_WORKFLOWS: "search_workflows",
+  RUN_WORKFLOW: "run_workflow",
+  STOP_WORKFLOW: "stop_workflow",
+  CHECK_WORKFLOW_STATUS: "check_workflow_status",
+  // Research tools
+  WEB_SEARCH_TAVILY: "web_search_tavily",
+  WEB_SEARCH_EXA: "web_search_exa",
+  WEB_EXTRACT_TAVILY: "web_extract_tavily",
+  FIND_SIMILAR_EXA: "find_similar_exa",
+  // Scheduler tools
+  CREATE_AGENT_SCHEDULE: "create_agent_schedule",
+  LIST_AGENT_SCHEDULES: "list_agent_schedules",
+  UPDATE_AGENT_SCHEDULE: "update_agent_schedule",
+  DELETE_AGENT_SCHEDULE: "delete_agent_schedule",
+  PAUSE_AGENT_SCHEDULE: "pause_agent_schedule",
+  RESUME_AGENT_SCHEDULE: "resume_agent_schedule",
+  RUN_AGENT_SCHEDULE_NOW: "run_agent_schedule_now",
+  // Agent task tools
+  LIST_AGENT_TASKS: "list_agent_tasks",
+  GET_AGENT_TASK: "get_agent_task",
+  CREATE_AGENT_TASK: "create_agent_task",
+  UPDATE_AGENT_TASK: "update_agent_task",
+  DELETE_AGENT_TASK: "delete_agent_task",
+  // Mailbox tools
+  SEND_MESSAGE: "send_message",
+  READ_MESSAGES: "read_messages",
+  ACKNOWLEDGE_MESSAGE: "acknowledge_message",
+  // Planning tools
+  DRAFT_PLAN: "draft_plan",
+  SUBMIT_PLAN: "submit_plan",
+  // Team tools
+  CREATE_AGENT_TEAM: "create_agent_team",
+  GET_TEAM_PROGRESS: "get_team_progress",
+  DELEGATE_TASK: "delegate_task",
+} as const;
+
 export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   // Subagent names
-  transaction_agent: "Transaction subagent",
-  code_execution_agent: "Code Execution subagent",
-  workflow_agent: "Workflow subagent",
-  research_agent: "Research subagent",
-  scheduler_agent: "Scheduler subagent",
-  task_management_agent: "Task management subagent",
-  team_mailbox_agent: "Mailbox subagent",
-  data_management_agent: "Data management subagent",
+  [TOOL_KEYS.TRANSACTION_AGENT]: "Transaction subagent",
+  [TOOL_KEYS.CODE_EXECUTION_AGENT]: "Code Execution subagent",
+  [TOOL_KEYS.WORKFLOW_AGENT]: "Workflow subagent",
+  [TOOL_KEYS.RESEARCH_AGENT]: "Research subagent",
+  [TOOL_KEYS.SCHEDULER_AGENT]: "Scheduler subagent",
+  [TOOL_KEYS.TASK_MANAGEMENT_AGENT]: "Task management subagent",
+  [TOOL_KEYS.TEAM_MAILBOX_AGENT]: "Mailbox subagent",
+  [TOOL_KEYS.DATA_MANAGEMENT_AGENT]: "Data management subagent",
 
   // Deepagents built-in tools
-  ls: "Browse files",
-  read_file: "Read file",
-  write_file: "Write file",
-  grep: "Search files",
-  find: "Find files",
-  execute: "Run command",
-  task: "Run subagent",
+  [TOOL_KEYS.LS]: "Browse files",
+  [TOOL_KEYS.READ_FILE]: "Read file",
+  [TOOL_KEYS.WRITE_FILE]: "Write file",
+  [TOOL_KEYS.GREP]: "Search files",
+  [TOOL_KEYS.FIND]: "Find files",
+  [TOOL_KEYS.EXECUTE]: "Run command",
+  [TOOL_KEYS.TASK]: "Run subagent",
 
   // Transaction tools
-  swap_on_jupiter: "Swap on Jupiter",
-  swap_on_kyberswap: "Swap on KyberSwap",
-  transfer_solana_token: "Transfer Solana token",
-  get_solana_token_balance: "Get Solana token balance",
-  get_evm_token_balance: "Get EVM token balance",
-  get_token_price: "Get token price",
-  launch_pumpfun_token: "Launch Pump.fun token",
-  launch_bonkfun_token: "Launch Bonk.fun token",
-  broadcast_transaction_evm: "Broadcast EVM transaction",
-  broadcast_transaction_solana: "Broadcast Solana transaction",
+  [TOOL_KEYS.SWAP_ON_JUPITER]: "Swap on Jupiter",
+  [TOOL_KEYS.SWAP_ON_KYBERSWAP]: "Swap on KyberSwap",
+  [TOOL_KEYS.TRANSFER_SOLANA_TOKEN]: "Transfer Solana token",
+  [TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE]: "Get Solana token balance",
+  [TOOL_KEYS.GET_EVM_TOKEN_BALANCE]: "Get EVM token balance",
+  [TOOL_KEYS.GET_TOKEN_PRICE]: "Get token price",
+  [TOOL_KEYS.LAUNCH_PUMPFUN_TOKEN]: "Launch Pump.fun token",
+  [TOOL_KEYS.LAUNCH_BONKFUN_TOKEN]: "Launch Bonk.fun token",
+  [TOOL_KEYS.BROADCAST_TRANSACTION_EVM]: "Broadcast EVM transaction",
+  [TOOL_KEYS.BROADCAST_TRANSACTION_SOLANA]: "Broadcast Solana transaction",
 
   // Wallet & data tools
-  create_wallet_group: "Create wallet group",
-  generate_wallets_for_group: "Generate wallets",
-  create_resource_group: "Create resource group",
-  list_resource_groups: "List resource groups",
-  bulk_add_resources: "Add resources",
-  bulk_update_resources: "Update resources",
-  query_resources: "Query resources",
+  [TOOL_KEYS.CREATE_WALLET_GROUP]: "Create wallet group",
+  [TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP]: "Generate wallets",
+  [TOOL_KEYS.CREATE_RESOURCE_GROUP]: "Create resource group",
+  [TOOL_KEYS.LIST_RESOURCE_GROUPS]: "List resource groups",
+  [TOOL_KEYS.BULK_ADD_RESOURCES]: "Add resources",
+  [TOOL_KEYS.BULK_UPDATE_RESOURCES]: "Update resources",
+  [TOOL_KEYS.QUERY_RESOURCES]: "Query resources",
 
   // Code execution
-  execute_javascript: "Execute JavaScript",
-  execute_python: "Execute Python",
+  [TOOL_KEYS.WRITE_JAVASCRIPT]: "Write JavaScript",
+  [TOOL_KEYS.WRITE_PYTHON]: "Write Python",
+  [TOOL_KEYS.EXECUTE_JAVASCRIPT]: "Execute JavaScript",
+  [TOOL_KEYS.EXECUTE_PYTHON]: "Execute Python",
 
   // Workflow tools
-  search_campaigns: "Search campaigns",
-  search_workflows: "Search workflows",
-  run_workflow: "Run workflow",
-  stop_workflow: "Stop workflow",
-  check_workflow_status: "Check workflow status",
+  [TOOL_KEYS.SEARCH_CAMPAIGNS]: "Search campaigns",
+  [TOOL_KEYS.SEARCH_WORKFLOWS]: "Search workflows",
+  [TOOL_KEYS.RUN_WORKFLOW]: "Run workflow",
+  [TOOL_KEYS.STOP_WORKFLOW]: "Stop workflow",
+  [TOOL_KEYS.CHECK_WORKFLOW_STATUS]: "Check workflow status",
 
   // Research tools
-  web_search_tavily: "Web search (Tavily)",
-  web_search_exa: "Web search (Exa)",
-  web_extract_tavily: "Web extract (Tavily)",
-  find_similar_exa: "Find similar (Exa)",
+  [TOOL_KEYS.WEB_SEARCH_TAVILY]: "Web search (Tavily)",
+  [TOOL_KEYS.WEB_SEARCH_EXA]: "Web search (Exa)",
+  [TOOL_KEYS.WEB_EXTRACT_TAVILY]: "Web extract (Tavily)",
+  [TOOL_KEYS.FIND_SIMILAR_EXA]: "Find similar (Exa)",
 
   // Scheduler tools
-  create_agent_schedule: "Create schedule",
-  list_agent_schedules: "List schedules",
-  update_agent_schedule: "Update schedule",
-  delete_agent_schedule: "Delete schedule",
-  pause_agent_schedule: "Pause schedule",
-  resume_agent_schedule: "Resume schedule",
-  run_agent_schedule_now: "Run schedule now",
+  [TOOL_KEYS.CREATE_AGENT_SCHEDULE]: "Create schedule",
+  [TOOL_KEYS.LIST_AGENT_SCHEDULES]: "List schedules",
+  [TOOL_KEYS.UPDATE_AGENT_SCHEDULE]: "Update schedule",
+  [TOOL_KEYS.DELETE_AGENT_SCHEDULE]: "Delete schedule",
+  [TOOL_KEYS.PAUSE_AGENT_SCHEDULE]: "Pause schedule",
+  [TOOL_KEYS.RESUME_AGENT_SCHEDULE]: "Resume schedule",
+  [TOOL_KEYS.RUN_AGENT_SCHEDULE_NOW]: "Run schedule now",
 
   // Agent task tools
-  list_agent_tasks: "List tasks",
-  get_agent_task: "Get task",
-  create_agent_task: "Create task",
-  update_agent_task: "Update task",
-  delete_agent_task: "Delete task",
+  [TOOL_KEYS.LIST_AGENT_TASKS]: "List tasks",
+  [TOOL_KEYS.GET_AGENT_TASK]: "Get task",
+  [TOOL_KEYS.CREATE_AGENT_TASK]: "Create task",
+  [TOOL_KEYS.UPDATE_AGENT_TASK]: "Update task",
+  [TOOL_KEYS.DELETE_AGENT_TASK]: "Delete task",
 
   // Mailbox tools
-  send_message: "Send message",
-  read_messages: "Read messages",
-  acknowledge_message: "Acknowledge message",
+  [TOOL_KEYS.SEND_MESSAGE]: "Send message",
+  [TOOL_KEYS.READ_MESSAGES]: "Read messages",
+  [TOOL_KEYS.ACKNOWLEDGE_MESSAGE]: "Acknowledge message",
 
   // Planning tools
-  draft_plan: "Draft plan",
-  submit_plan: "Submit plan",
+  [TOOL_KEYS.DRAFT_PLAN]: "Draft plan",
+  [TOOL_KEYS.SUBMIT_PLAN]: "Submit plan",
 
   // Team tools
-  create_agent_team: "Create agent team",
-  get_team_progress: "Get team progress",
-  delegate_task: "Delegate task",
+  [TOOL_KEYS.CREATE_AGENT_TEAM]: "Create agent team",
+  [TOOL_KEYS.GET_TEAM_PROGRESS]: "Get team progress",
+  [TOOL_KEYS.DELEGATE_TASK]: "Delegate task",
 };
 
 export const getToolDisplayName = (toolName: string): string =>

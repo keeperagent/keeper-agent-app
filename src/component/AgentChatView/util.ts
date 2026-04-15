@@ -53,20 +53,40 @@ export const fileToAttached = (file: File): AttachedFile => {
   };
 };
 
+export enum ToolCallStateStatus {
+  RUNNING = "running",
+  DONE = "done",
+  ERROR = "error",
+}
+
+export type ToolCallState = {
+  runId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  result?: string;
+  state: ToolCallStateStatus;
+};
+
 export type DisplayMessage = {
   role: string;
   label: string;
   content: string;
   className: string;
   isLoading?: boolean;
+  isAgentProcessing?: boolean;
   timestamp?: Date;
   executingToolText?: string;
+  toolCalls?: ToolCallState[];
   planReview?: { sessionId: string; plan: string };
 };
 
 export const deriveLabel = (role: string, t: (key: string) => string) => {
   const normalized = role?.toLowerCase() || "";
-  if (normalized === ChatRole.HUMAN || normalized.includes("human") || normalized.includes("user")) {
+  if (
+    normalized === ChatRole.HUMAN ||
+    normalized.includes("human") ||
+    normalized.includes("user")
+  ) {
     return t("agent.messageLabelYou");
   }
   if (normalized === ChatRole.TOOL || normalized.includes("tool")) {
@@ -80,7 +100,11 @@ export const deriveLabel = (role: string, t: (key: string) => string) => {
 
 export const deriveClassName = (role: string) => {
   const normalized = role?.toLowerCase() || "";
-  if (normalized === ChatRole.HUMAN || normalized.includes("human") || normalized.includes("user")) {
+  if (
+    normalized === ChatRole.HUMAN ||
+    normalized.includes("human") ||
+    normalized.includes("user")
+  ) {
     return "message user";
   }
   if (normalized === ChatRole.TOOL || normalized.includes("tool")) {
