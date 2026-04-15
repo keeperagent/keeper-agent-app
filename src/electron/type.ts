@@ -676,7 +676,6 @@ export type INodeConfig =
   | ILaunchTokenBonkfunNodeConfig
   | IGenerateImageNodeConfig
   | IRunAgentNodeConfig
-  | IAskAgentNodeConfig
   | IDebateNodeConfig
   | ICheckpointNodeConfig;
 
@@ -2493,26 +2492,6 @@ export type IGenerateProfileNodeConfig = {
   maxConcurrency?: number; // max concurrent threads for this node
 
   listProfile: IFakeProfile[]; // list of fake profiles to generate
-};
-
-// ASK_AGENT @workflowType
-export type IAskAgentNodeConfig = {
-  workflowType?: WORKFLOW_TYPE; // type of the workflow
-  status?: NODE_STATUS; // status of the node
-  name: string; // name of the node
-  onSuccess?: NODE_ACTION; // action to perform when success
-  onError?: NODE_ACTION; // action to perform when error occurs
-  sleep: number; // sleep time between each node
-  timeout?: number; // timeout for the node
-  retry?: number; // number of retries on failure
-  skipSetting?: ISkipSetting; // skip setting for the node
-  alertTelegramWhenError?: boolean; // alert telegram when error
-  maxConcurrency?: number; // max concurrent threads for this node
-
-  variable?: string; // variable name to store the result
-  prompt?: string; // prompt to ask the agent
-  model?: string; // model to use
-  apiKey?: string; // api key to use
 };
 
 // Preference
