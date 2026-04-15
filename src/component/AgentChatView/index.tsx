@@ -7,6 +7,7 @@ import { Alert, message } from "antd";
 import copy from "copy-to-clipboard";
 import { useTranslation, useSaveClipboardImage } from "@/hook";
 import { CopyIcon, CheckIcon, PaperPlaneIcon } from "@/component/Icon";
+import { ChatRole } from "@/electron/chatGateway/types";
 import {
   AgentChatViewWrapper,
   DropOverlay,
@@ -15,7 +16,6 @@ import {
   ExecutingToolBadge,
   ComposerStatus,
   SecretWarning,
-  ToolSpacerDiv,
 } from "./style";
 import { type AttachedFile } from "./AttachedFiles";
 import {
@@ -23,7 +23,7 @@ import {
   fileInfoToAttached,
   fileToAttached,
 } from "./util";
-import { ChatRole } from "@/electron/chatGateway/types";
+import { ToolCallGroup } from "./ToolCallCard";
 import ChatComposer from "./ChatComposer";
 import PlanReview from "./PlanReview";
 
@@ -518,22 +518,20 @@ const AgentChatView = ({
                       <Fragment>
                         <div className="message-bubble-wrapper">
                           <div className="bubble">
-                            <MessageBody content={msg.content} isUser={false} />
-                            {msg.executingToolText && (
-                              <ToolSpacerDiv hasContent={!!msg.content}>
-                                <ExecutingToolBadge>
-                                  <span className="spinner" />
-                                  {msg.executingToolText}
-                                </ExecutingToolBadge>
-                              </ToolSpacerDiv>
-                            )}
-                            {msg.isLoading && !msg.executingToolText && (
-                              <ToolSpacerDiv hasContent={!!msg.content}>
-                                <ExecutingToolBadge>
-                                  <span className="spinner" />
-                                  {translate("agent.thinking")}
-                                </ExecutingToolBadge>
-                              </ToolSpacerDiv>
+                            {msg.toolCalls && msg.toolCalls.length > 0 ? (
+                              <ToolCallGroup
+                                toolCalls={msg.toolCalls}
+                                isActive={!!msg.isLoading || !!msg.executingToolText || !!msg.isAgentProcessing}
+                              />
+                            ) : (msg.isLoading && !msg.content) ? (
+                              <ExecutingToolBadge>
+                                <span className="spinner" />
+                                {msg.executingToolText || translate("agent.thinking")}
+                              </ExecutingToolBadge>
+                            ) : null}
+
+                            {msg.content && (
+                              <MessageBody content={msg.content} isUser={false} />
                             )}
                           </div>
                           {(timestamp || !msg.isLoading) && (

@@ -134,7 +134,7 @@ const LanguageModel = (props: IProps) => {
         >
           <Input
             className="custom-input"
-            placeholder="claude-haiku-4-5-20251001"
+            placeholder="haiku-4-5-20251001"
             size="large"
           />
         </Form.Item>

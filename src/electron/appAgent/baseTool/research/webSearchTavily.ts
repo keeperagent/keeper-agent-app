@@ -3,13 +3,14 @@ import { z } from "zod";
 import { TavilySearchAPIWrapper } from "@langchain/tavily";
 import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const webSearchTavilyTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
-    name: "web_search_tavily",
+    name: TOOL_KEYS.WEB_SEARCH_TAVILY,
     description:
       "Search the web using Tavily for current information, news, facts, and general queries. " +
       "Returns structured results with titles, URLs, and content snippets. " +
@@ -41,6 +42,10 @@ export const webSearchTavilyTool = () =>
           maxResults,
           includeAnswer: true,
         });
+        console.log(
+          "Tavily raw result shape:",
+          JSON.stringify(results).slice(0, 500),
+        );
 
         const output = JSON.stringify(results);
         const truncated =

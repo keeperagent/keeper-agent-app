@@ -13,6 +13,7 @@ import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { mapNativeTokenName } from "./swapOnKyberswap";
 import { ToolContext } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
@@ -20,7 +21,7 @@ const DEFAULT_MAX_WALLETS_IN_RESPONSE = 50;
 
 export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
-    name: "get_evm_token_balance",
+    name: TOOL_KEYS.GET_EVM_TOKEN_BALANCE,
     description: `Get native token or ERC20 balances across campaign wallets on EVM chains.
 ONLY use when chainKey from context is an EVM chain. For Solana use get_solana_token_balance.
 

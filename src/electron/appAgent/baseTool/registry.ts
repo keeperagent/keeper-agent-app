@@ -30,6 +30,8 @@ export const BASE_TOOL_KEYS = {
   LAUNCH_BONKFUN_TOKEN: "launch_bonkfun_token",
   BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
   BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
+  WRITE_JAVASCRIPT: "write_javascript",
+  WRITE_PYTHON: "write_python",
   EXECUTE_JAVASCRIPT: "execute_javascript",
   EXECUTE_PYTHON: "execute_python",
   SEARCH_CAMPAIGNS: "search_campaigns",
@@ -341,6 +343,20 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     group: BaseToolGroup.AGENT_ORCHESTRATION,
   },
   // Code Execution Tools
+  {
+    key: BASE_TOOL_KEYS.WRITE_JAVASCRIPT,
+    name: "Write JavaScript",
+    description:
+      "Draft JavaScript / Node.js code for user review before execution",
+    group: BaseToolGroup.CODE_EXECUTION,
+  },
+  {
+    key: BASE_TOOL_KEYS.WRITE_PYTHON,
+    name: "Write Python",
+    description:
+      "Draft Python code for user review before execution",
+    group: BaseToolGroup.CODE_EXECUTION,
+  },
   {
     key: BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT,
     name: "Execute JavaScript",

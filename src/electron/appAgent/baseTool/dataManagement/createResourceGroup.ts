@@ -4,6 +4,7 @@ import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { ResourceGroupSource } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { columnsToGroupFields, groupToColumns } from "./utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   name: z.string().min(1).describe("Name for the resource group"),
@@ -28,7 +29,7 @@ const schema = z.object({
 
 export const createResourceGroupTool = () =>
   new DynamicStructuredTool({
-    name: "create_resource_group",
+    name: TOOL_KEYS.CREATE_RESOURCE_GROUP,
     description:
       "Create a new resource group with a custom column schema to store structured data collected by the agent. " +
       "Use this before bulk_add_resources to define where data will be stored. " +

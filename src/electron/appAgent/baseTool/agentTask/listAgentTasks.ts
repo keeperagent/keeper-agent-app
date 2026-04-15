@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AgentTaskStatus } from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const STATUS_MAP: Record<string, AgentTaskStatus> = {
   init: AgentTaskStatus.INIT,
@@ -37,7 +38,7 @@ const schema = z.object({
 
 export const listAgentTasksTool = () =>
   new DynamicStructuredTool({
-    name: "list_agent_tasks",
+    name: TOOL_KEYS.LIST_AGENT_TASKS,
     description:
       "List agent tasks from the task pool. Supports filtering by status, assigned agent, or keyword. " +
       "Returns id, title, status, priority, assignedAgentId, and createdAt for each task.",

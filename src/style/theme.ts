@@ -17,6 +17,7 @@ export interface ITheme {
   boxShadowNode: string;
   boxShadowNodeBold: string;
   colorBorderSecondary: string;
+  colorBorderSubtle: string;
   colorBgStatistic: string;
 
   colorTextPrimary: string;
@@ -37,7 +38,7 @@ const lightTheme: ITheme = {
   colorBgPrimary: "rgb(255, 255, 255)",
   colorBgSecondary: "rgb(255, 255, 255)",
   colorBgTransparent: "rgba(133, 122, 233, 0.15)",
-  colorBgTransparentLight: "rgba(133, 122, 233, 0.05)",
+  colorBgTransparentLight: "rgba(133, 122, 233, 0.03)",
   colorBgTag: "#f2f2f2",
   colorBorder: "#e8e8e8",
   colorBorderInput: "rgb(79, 70, 229)",
@@ -54,6 +55,7 @@ const lightTheme: ITheme = {
   boxShadowNode: "0px 0px 20px rgba(0, 0, 0, 0.05)",
   boxShadowNodeBold: "0px 0px 20px rgba(0, 0, 0, 0.2)",
   colorBorderSecondary: "transparent",
+  colorBorderSubtle: "rgba(0, 0, 0, 0.07)",
   colorBgStatistic: "rgb(255, 255, 255)",
 
   colorPrimary: "rgb(79, 70, 229)",
@@ -89,6 +91,7 @@ const darkTheme: ITheme = {
   boxShadowNode: "transparent",
   boxShadowNodeBold: "0px 0px 20px rgba(255, 255, 255, 0.2)",
   colorBorderSecondary: "rgba(80, 80, 80, 0.7)",
+  colorBorderSubtle: "rgba(255, 255, 255, 0.07)",
   colorBgStatistic: "rgb(28, 28, 28, 1)",
 
   colorPrimary: "rgb(79, 70, 229)",

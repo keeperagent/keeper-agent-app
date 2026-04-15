@@ -4,13 +4,14 @@ import { ExaFindSimilarResults } from "@langchain/exa";
 import { Exa } from "exa-js";
 import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const findSimilarExaTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
-    name: "find_similar_exa",
+    name: TOOL_KEYS.FIND_SIMILAR_EXA,
     description:
       "Find web pages that are similar to a given URL. " +
       "Use this to discover related projects, competitors, or similar content. " +

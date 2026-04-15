@@ -116,6 +116,7 @@ export { default as SpiderIcon } from "./Spider";
 export { default as DistributeIcon } from "./Distribute";
 export { default as SpeakIcon } from "./Speak";
 export { default as SaveIcon } from "./Save";
+export { default as ArrowRightIcon } from "./ArrowRight";
 
 export interface IIconProps {
   color?: string;

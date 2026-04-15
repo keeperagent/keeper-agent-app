@@ -9,10 +9,11 @@ import {
   normalizeChainType,
   safeStringify,
 } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 export const createWalletGroupTool = () =>
   new DynamicStructuredTool({
-    name: "create_wallet_group",
+    name: TOOL_KEYS.CREATE_WALLET_GROUP,
     description:
       "Create a new wallet group. Provide a unique name and optionally a chainType (EVM, APTOS, SUI, SOLANA). The agent will set the portfolioApp automatically based on the chain type. If wallets will be generated later, remember to collect the user's encryptKey so it can be passed to wallet creation tools.",
     schema: z.object({

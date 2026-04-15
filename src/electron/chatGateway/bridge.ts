@@ -37,6 +37,22 @@ import type { IChatAdapter, IPlatformMessage } from "./types";
 const COMPACTION_THRESHOLD = 40_000;
 const MIN_MESSAGES_FOR_COMPACTION = 10;
 
+/**
+ * Extracts the raw string content from a tool's output.
+ * LangChain wraps tool outputs in a ToolMessage object ({ lc, type, kwargs: { content } }).
+ * We need to unwrap it to get the actual string the tool returned.
+ */
+const extractToolOutput = (rawOutput: any): string => {
+  if (typeof rawOutput === "string") {
+    return rawOutput;
+  }
+  const content = rawOutput?.kwargs?.content ?? rawOutput?.content;
+  if (typeof content === "string") {
+    return content;
+  }
+  return JSON.stringify(rawOutput || "");
+};
+
 export type AgentSession = {
   checkpointer: MemorySaver;
   threadId: string;
@@ -621,10 +637,13 @@ class AgentChatBridge {
             subagentType = parsed?.subagent_type as string | undefined;
           }
           options?.onToolStart?.(toolName, subagentType);
+          const toolInput = evt.data?.input || {};
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_START, {
             sessionId,
             toolName,
             subagentType,
+            runId: evt?.run_id || `${toolName}_${Date.now()}`,
+            input: toolInput,
           });
         }
 
@@ -644,19 +663,19 @@ class AgentChatBridge {
         if (evt.event === "on_tool_end") {
           const toolName = evt.name || "unknown";
           options?.onToolComplete?.(toolName);
+          const toolResult = extractToolOutput(evt.data?.output);
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE, {
             sessionId,
             toolName,
+            runId: evt?.run_id || "",
+            result: toolResult.slice(0, 10000),
           });
 
           steps.push({
             toolName,
             args: evt.data?.input || {},
-            result:
-              typeof evt.data?.output === "string"
-                ? evt.data.output
-                : JSON.stringify(evt.data?.output || ""),
-            success: !String(evt.data?.output || "").startsWith("Error"),
+            result: toolResult,
+            success: !toolResult.startsWith("Error"),
           });
         }
       }

@@ -8,6 +8,7 @@ import {
   LLMProvider,
 } from "@/redux/agent";
 import { ChatRole } from "@/electron/chatGateway/types";
+import { type ToolCallState, ToolCallStateStatus } from "@/component/AgentChatView/util";
 
 const looksLikeEncryptKey = (text: string): boolean => {
   if (text.length > 128) {
@@ -37,6 +38,7 @@ type AgentMessage = {
   role: ChatRole;
   content: string;
   timestamp?: number;
+  toolCalls?: ToolCallState[];
 };
 
 const normalizeSteps = (steps: any[]): AgentToolStep[] => {
@@ -73,6 +75,8 @@ const useDashboardAgent = () => {
   const [error, setError] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState<string>("");
   const [executingTool, setExecutingTool] = useState<string | null>(null);
+  const [toolCallStates, setToolCallStates] = useState<ToolCallState[]>([]);
+  const toolCallMapRef = useRef<Map<string, ToolCallState>>(new Map());
   const [planReview, setPlanReview] = useState<{
     sessionId: string;
     plan: string;
@@ -192,17 +196,39 @@ const useDashboardAgent = () => {
     const handleRun = (_event: any, payload: any) => {
       const { data, error: errMessage } = payload || {};
       if (errMessage) {
-        setError(errMessage);
+        const failedToolCalls = Array.from(toolCallMapRef.current.values()).map(
+          (toolCall) =>
+            toolCall.state === ToolCallStateStatus.RUNNING
+              ? { ...toolCall, state: ToolCallStateStatus.ERROR, result: errMessage }
+              : toolCall,
+        );
+        if (failedToolCalls.length > 0) {
+          const errorMessage: AgentMessage = {
+            role: ChatRole.AI,
+            content: `Error: ${errMessage}`,
+            timestamp: Date.now(),
+            toolCalls: failedToolCalls,
+          };
+          setConversation((prev) => [...prev, errorMessage]);
+          saveMessageToDB(errorMessage);
+        } else {
+          setError(errMessage);
+        }
         setLoading(false);
         setStreamingContent("");
         streamingContentRef.current = "";
         setExecutingTool(null);
         toolDepthRef.current = 0;
+        setToolCallStates([]);
+        toolCallMapRef.current.clear();
         return;
       }
 
       const result = data || {};
       const normalizedSteps = normalizeSteps(result?.steps || []);
+
+      // Snapshot completed tool calls before clearing, so they can be attached to the message
+      const completedToolCalls = Array.from(toolCallMapRef.current.values());
 
       // Append remaining streamed content as a final AI message
       // (earlier chunks were flushed on tool_start as separate messages)
@@ -212,6 +238,8 @@ const useDashboardAgent = () => {
           role: ChatRole.AI,
           content: remainingContent,
           timestamp: Date.now(),
+          toolCalls:
+            completedToolCalls.length > 0 ? completedToolCalls : undefined,
         };
         setConversation((prev) => [...prev, assistantMessage]);
         saveMessageToDB(assistantMessage);
@@ -221,6 +249,8 @@ const useDashboardAgent = () => {
           role: ChatRole.AI,
           content: `Error: ${result.errorMsg || "An error occurred."}`,
           timestamp: Date.now(),
+          toolCalls:
+            completedToolCalls.length > 0 ? completedToolCalls : undefined,
         };
         setConversation((prev) => [...prev, errorMessage]);
         saveMessageToDB(errorMessage);
@@ -232,9 +262,23 @@ const useDashboardAgent = () => {
             role: ChatRole.AI,
             content: `Error: ${failedStep.result || "An error occurred while executing the task."}`,
             timestamp: Date.now(),
+            toolCalls:
+              completedToolCalls.length > 0 ? completedToolCalls : undefined,
           };
           setConversation((prev) => [...prev, errorMessage]);
           saveMessageToDB(errorMessage);
+        } else if (completedToolCalls.length > 0) {
+          // Tools ran but produced no final text — attach tool cards to the last message
+          setConversation((prev) => {
+            if (prev.length === 0) {
+              return prev;
+            }
+            const last = prev[prev.length - 1];
+            return [
+              ...prev.slice(0, -1),
+              { ...last, toolCalls: completedToolCalls },
+            ];
+          });
         }
       }
 
@@ -246,6 +290,8 @@ const useDashboardAgent = () => {
       streamingContentRef.current = "";
       setExecutingTool(null);
       toolDepthRef.current = 0;
+      setToolCallStates([]);
+      toolCallMapRef.current.clear();
     };
 
     const handleReset = (_event: any, payload: any) => {
@@ -274,6 +320,8 @@ const useDashboardAgent = () => {
         sessionId: payloadSessionId,
         toolName,
         subagentType,
+        runId,
+        input,
       } = payload || {};
       if (payloadSessionId === sessionIdRef.current && toolName) {
         // Flush any accumulated streaming text as a completed message
@@ -293,12 +341,41 @@ const useDashboardAgent = () => {
         toolDepthRef.current += 1;
         // For task tool show the subagent name; for inner tools show the tool display name
         setExecutingTool(subagentType || toolName);
+
+        // Track this tool call as a structured state entry
+        const resolvedRunId = runId || `${toolName}_${Date.now()}`;
+        const newToolCall: ToolCallState = {
+          runId: resolvedRunId,
+          toolName,
+          input: input || {},
+          state: ToolCallStateStatus.RUNNING,
+        };
+        toolCallMapRef.current.set(resolvedRunId, newToolCall);
+        setToolCallStates(Array.from(toolCallMapRef.current.values()));
       }
     };
 
     const handleToolComplete = (_event: any, payload: any) => {
-      const { sessionId: payloadSessionId, toolName } = payload || {};
+      const {
+        sessionId: payloadSessionId,
+        toolName,
+        runId,
+        result,
+      } = payload || {};
       if (payloadSessionId === sessionIdRef.current) {
+        // Update the matching tool call to done state
+        if (runId && toolCallMapRef.current.has(runId)) {
+          const existing = toolCallMapRef.current.get(runId)!;
+          const isError =
+            typeof result === "string" && result.startsWith("Error");
+          toolCallMapRef.current.set(runId, {
+            ...existing,
+            state: isError ? ToolCallStateStatus.ERROR : ToolCallStateStatus.DONE,
+            result,
+          });
+          setToolCallStates(Array.from(toolCallMapRef.current.values()));
+        }
+
         toolDepthRef.current = Math.max(0, toolDepthRef.current - 1);
         // Only clear the badge when all nested tool calls have finished
         if (toolDepthRef.current === 0) {
@@ -545,6 +622,8 @@ const useDashboardAgent = () => {
       streamingContentRef.current = "";
       setExecutingTool(null);
       toolDepthRef.current = 0;
+      setToolCallStates([]);
+      toolCallMapRef.current.clear();
       window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
         sessionId: sessionIdRef.current,
         input,
@@ -567,6 +646,8 @@ const useDashboardAgent = () => {
     setExecutingTool(null);
     setPlanReview(null);
     toolDepthRef.current = 0;
+    setToolCallStates([]);
+    toolCallMapRef.current.clear();
     expectingEncryptKeyRef.current = false;
     // Clear SQLite history so the next session starts fresh
     window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {});
@@ -633,6 +714,7 @@ const useDashboardAgent = () => {
     error,
     streamingContent,
     executingTool,
+    toolCallStates,
     planReview,
     llmProvider,
     createSession,

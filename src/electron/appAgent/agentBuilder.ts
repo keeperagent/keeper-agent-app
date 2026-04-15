@@ -153,17 +153,24 @@ Always shorten the display text.
 ## Planning mode
 When the user requests any of the following, you MUST use planning mode:
 - On-chain execution: swaps, transfers, token launches, broadcasting transactions
-- Code execution: running JavaScript or Python scripts
+- Code execution: running JavaScript or Python scripts (including fetching data from external APIs)
 - Workflow runs
 
-Steps:
+Steps — no shortcuts:
 1. Call \`draft_plan\` to enter planning mode
-2. Research: check balances, get token prices, web search — read-only tools work normally
-3. Call \`submit_plan\` with a clear summary: what will execute, which wallets/amounts/tokens/scripts/workflows are involved, expected outcome
-4. After user approves, execute the operations
+2. Research if needed: check balances, get token prices, web search — read-only tools work normally
+3. For code execution: call \`write_javascript\` or \`write_python\` with the complete code, then call \`submit_plan\` so the user can review the code before approving
+4. For on-chain/workflows: call \`submit_plan\` with a clear summary. For swaps/transfers, include a markdown table:
+   | Action | Token | Amount | Wallets | Strategy |
+   |--------|-------|--------|---------|----------|
+   | BUY/SELL | address | native amount (e.g. 0.5 SOL) | count | EQUAL_PER_WALLET / RANDOM_PER_WALLET / TOTAL_SPLIT_RANDOM |
+5. Wait for user approval — do NOT proceed until approved
 
-All execution tools are BLOCKED during planning mode — they return an error until \`submit_plan\` is called and approved.
-Skip planning mode only for simple read operations (balance check, price lookup, web search).
+All execution tools are BLOCKED during planning mode — they return an error until \`submit_plan\` is approved.
+Skip planning mode ONLY for: balance checks, price lookups via get_token_price tool, web searches.
+
+## Code execution
+For code tasks: call \`write_javascript\` or \`write_python\` first, then \`submit_plan\`, then delegate to "code_execution_agent" after approval.
 
 ## Swap strategy rules
 - "buy total X" / "buy total $X" → TOTAL_SPLIT_RANDOM (split total randomly across wallets)
@@ -295,13 +302,8 @@ export const buildBaseSubAgents = (
         "You are a subagent for on-chain operations (balances, prices, swaps, transfers, token launches on Pump.fun and Bonk.fun).\n\n" +
         "## Platform formatting (check task platformId)\n" +
         "TELEGRAM=HTML tags, WHATSAPP=*bold* plain-text links, KEEPER=Markdown.\n\n" +
-        "## Swap/Transfer procedure\n" +
-        "1. Show confirmation and STOP — wait for user approval.\n" +
-        "2. After approval, call the tool immediately. No extra text.\n\n" +
-        "## Confirmation format (5 fields only — no extras)\n" +
-        "- TELEGRAM: <b>Action:</b> BUY|SELL  <b>Token:</b> [addr]  <b>Amount:</b> [native, e.g. 0.00235 SOL]  <b>Wallets:</b> [n]  <b>Strategy:</b> [name]\n" +
-        "- WHATSAPP: *Action:* BUY|SELL  *Token:* [addr]  *Amount:* [native]  *Wallets:* [n]  *Strategy:* [name]\n" +
-        "- KEEPER: Markdown table with columns Action | Token | Amount | Wallets | Strategy\n\n" +
+        "## Execution\n" +
+        "The user has already approved this action via planning mode — call the tool immediately, no confirmation needed.\n\n" +
         "## FORBIDDEN\n" +
         "- Do NOT call get_token_price on the output/target token when buying.\n" +
         "- Do NOT estimate tokens received, comment on liquidity, or check wallet balance before swaps.\n\n" +
@@ -320,19 +322,18 @@ export const buildBaseSubAgents = (
       description:
         "Executes JavaScript or Python code to fetch data from external APIs, process data, or run any custom logic. Use this for tasks that require code execution, API calls, or data processing.",
       systemPrompt:
-        "You are a subagent that executes code.\n\n" +
+        "You are a subagent that runs pre-approved code.\n\n" +
+        "## Primary rule\n" +
+        "The approved code is already stored internally. You do NOT need to write or pass any code. " +
+        "Just call execute_javascript() or execute_python() with an empty string — the correct code will run automatically.\n\n" +
         "## Tools\n" +
-        "- `execute_javascript`: for JS/Node.js code\n" +
-        "- `execute_python`: for Python code\n\n" +
+        "- `execute_javascript`: for JS/Node.js tasks\n" +
+        "- `execute_python`: for Python tasks\n\n" +
         "## Rules\n" +
-        "- Pass the ENTIRE code as a single string. Do NOT use write_file — you don't have it.\n" +
-        "- JS: use console.log() for output. Python: use print(). Only stdout is returned.\n" +
-        "- Always use relative paths for generated files (e.g. `output.pdf`, NOT `/output.pdf`). Print the filename when done.\n" +
-        "- You MUST await all async calls. npm/pip packages are auto-installed on first use.\n" +
-        "- Always set a User-Agent header (e.g. `Mozilla/5.0`) on HTTP requests to avoid being blocked.\n" +
-        "- On failure: fix the code (add headers, change endpoint, etc.) — do NOT retry the exact same code.\n" +
-        "- Do NOT say you cannot do something — you have full Node.js/Python capabilities.\n" +
-        "- Keep responses concise.",
+        "- NEVER write code yourself — just call the tool with an empty string.\n" +
+        '- The tool returns JSON: { output: "...", executedCode: "..." }. Return only the `output` value to the user.\n' +
+        "- On failure: report the exact error — do NOT rewrite the code or retry.\n" +
+        "- Keep responses concise — return the execution result only.",
       tools: codeExecutionTools as any,
     });
   }

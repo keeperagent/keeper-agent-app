@@ -144,13 +144,16 @@ const AgentChatViewWrapper = styled.div`
 
       &.assistant {
         align-items: flex-start;
+        width: 100%;
 
         .message-content {
           flex-direction: row;
+          width: 100%;
         }
 
         .message-bubble-wrapper {
           align-items: flex-start;
+          width: 100%;
         }
 
         .bubble {
@@ -161,6 +164,7 @@ const AgentChatViewWrapper = styled.div`
           padding-left: 0;
           padding-right: 0;
           padding-bottom: 0;
+          width: 100%;
         }
 
         .message-footer {

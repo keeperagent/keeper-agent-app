@@ -9,10 +9,11 @@ import {
   resolveWalletGroup,
   safeStringify,
 } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 export const generateWalletsForGroupTool = () =>
   new DynamicStructuredTool({
-    name: "generate_wallets_for_group",
+    name: TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP,
     description:
       "Generate random wallets for a wallet group. Provide walletGroupId or walletGroupName, chainType (EVM, APTOS, SUI, SOLANA), batchSize (default 1, max 1000), and optionally encryptKey. If encryptKey is omitted, you must confirm with the user before proceeding because wallets will be stored unencrypted.",
     schema: z

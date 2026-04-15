@@ -22,6 +22,7 @@ import {
   sanitizeForDisplay,
   deriveLabel,
   deriveClassName,
+  type ToolCallState,
 } from "@/component/AgentChatView/util";
 
 const AgentView = (props: any) => {
@@ -48,6 +49,7 @@ const AgentView = (props: any) => {
     error,
     streamingContent,
     executingTool,
+    toolCallStates,
     planReview,
     llmProvider,
     createSession,
@@ -72,6 +74,11 @@ const AgentView = (props: any) => {
         preference?.anthropicModel || DEFAULT_LLM_MODELS[LLMProvider.CLAUDE],
       [LLMProvider.GEMINI]:
         preference?.googleGeminiModel || DEFAULT_LLM_MODELS[LLMProvider.GEMINI],
+      [LLMProvider.OPENROUTER]:
+        preference?.openRouterModel ||
+        DEFAULT_LLM_MODELS[LLMProvider.OPENROUTER],
+      [LLMProvider.OLLAMA]:
+        preference?.ollamaModel || DEFAULT_LLM_MODELS[LLMProvider.OLLAMA],
     };
     return preferenceByProvider[llmProvider];
   }, [
@@ -103,12 +110,17 @@ const AgentView = (props: any) => {
           ? new Date()
           : new Date(Number(timestampValue));
 
+        const msgWithToolCalls = msg as typeof msg & {
+          toolCalls?: ToolCallState[];
+        };
+
         return {
           role: msg?.role || "assistant",
           label: deriveLabel(msg?.role, translate),
           content,
           className: deriveClassName(msg?.role),
           timestamp,
+          toolCalls: msgWithToolCalls?.toolCalls,
         };
       });
 
@@ -131,8 +143,10 @@ const AgentView = (props: any) => {
         content,
         className: "message assistant streaming",
         isLoading,
+        isAgentProcessing: loading,
         timestamp: new Date(),
         executingToolText,
+        toolCalls: toolCallStates.length > 0 ? toolCallStates : undefined,
       });
     }
 
@@ -163,6 +177,7 @@ const AgentView = (props: any) => {
     loading,
     streamingContent,
     executingTool,
+    toolCallStates,
     sessionId,
     agentReady,
     creatingSession,

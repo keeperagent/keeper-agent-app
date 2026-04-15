@@ -9,6 +9,7 @@ import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { ToolContext } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
@@ -16,7 +17,7 @@ const DEFAULT_MAX_WALLETS_IN_RESPONSE = 50;
 
 export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
-    name: "get_solana_token_balance",
+    name: TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE,
     description: `Get SOL or SPL token balances across campaign wallets on Solana.
 ONLY use when chainKey from context is "solana". For EVM chains use get_evm_token_balance.
 

@@ -25,6 +25,7 @@ import {
   capitalizeFirstLetter,
   extractErrorMessage,
 } from "../utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const BALANCE_BATCH_SIZE = 10;
 
@@ -188,7 +189,7 @@ export const swapOnKyberswapTool = (
   toolContext?: ToolContext,
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
-    name: "swap_on_kyberswap",
+    name: TOOL_KEYS.SWAP_ON_KYBERSWAP,
     description: `Swap tokens on EVM chains via Kyberswap. BUY = native -> ERC20, SELL = ERC20 -> native.
 ONLY use when chainKey is an EVM chain. For Solana use swap_on_jupiter.
 

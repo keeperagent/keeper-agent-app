@@ -5,9 +5,13 @@ import {
   KYBERSWAP_CHAIN_KEY,
   SOL_MINT_ADDRESS,
 } from "@/electron/constant";
-import { safeStringify, capitalizeFirstLetter } from "@/electron/appAgent/utils";
+import {
+  safeStringify,
+  capitalizeFirstLetter,
+} from "@/electron/appAgent/utils";
 import { Pricing } from "@/electron/simulator/category/pricing";
 import { PRICE_DATA_SOURCE } from "@/electron/constant";
+import { TOOL_KEYS } from "@/electron/constant";
 
 // Map chainKey to chainId for DexScreener
 const mapChainKeyToChainId: Record<string, number> = {
@@ -124,7 +128,7 @@ export const getTokenPriceTool = () => {
   const pricing = new Pricing(DEFAULT_CACHE_TIME_MS);
 
   return new DynamicStructuredTool({
-    name: "get_token_price",
+    name: TOOL_KEYS.GET_TOKEN_PRICE,
     description: `Get token price in USD. Read-only, no confirmation needed.
 
 Native token: pass empty string as tokenAddress. Only works for the CURRENT chainKey from context.
@@ -140,12 +144,12 @@ Native token symbol matching: if user says "bnb price" but chainKey is "base", i
       chainKey: z
         .string()
         .describe(
-          "Chain key from context. ALWAYS use the MOST RECENT chainKey from context, not from user prompt. Supported: 'solana', 'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 'base', 'zksync', 'linea', 'scroll', 'mantle', 'blast', 'sonic', 'unichain', 'berachain', 'ronin', 'monad', 'plasma', 'hyperevm'."
+          "Chain key from context. ALWAYS use the MOST RECENT chainKey from context, not from user prompt. Supported: 'solana', 'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 'base', 'zksync', 'linea', 'scroll', 'mantle', 'blast', 'sonic', 'unichain', 'berachain', 'ronin', 'monad', 'plasma', 'hyperevm'.",
         ),
       tokenAddress: z
         .string()
         .describe(
-          "Token contract address, or empty string '' for native token price. Do NOT pass native token symbols (ETH, SOL, BNB) — always use empty string for native tokens."
+          "Token contract address, or empty string '' for native token price. Do NOT pass native token symbols (ETH, SOL, BNB) — always use empty string for native tokens.",
         ),
       timeoutMs: z
         .number()
@@ -169,7 +173,7 @@ Native token symbol matching: if user says "bnb price" but chainKey is "base", i
           normalizedTokenAddress !== SOL_MINT_ADDRESS.toUpperCase()
         ) {
           const isEvmAddress = /^0x[a-fA-F0-9]{40}$/i.test(
-            normalizedTokenAddress
+            normalizedTokenAddress,
           );
           const isSolanaAddress =
             normalizedTokenAddress.length >= 32 &&
@@ -188,7 +192,7 @@ Native token symbol matching: if user says "bnb price" but chainKey is "base", i
             return safeStringify({
               success: false,
               error: `Invalid token address for EVM chain (${capitalizeFirstLetter(
-                chainKey
+                chainKey,
               )}): ${tokenAddress}. This appears to be a Solana address (base58 format). Please switch to Solana chain in the app first.`,
               price: null,
             });

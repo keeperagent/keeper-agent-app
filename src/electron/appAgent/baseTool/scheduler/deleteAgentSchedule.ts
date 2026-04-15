@@ -8,12 +8,13 @@ import {
   scheduleNotFoundResponse,
   scheduleTargetSchema,
 } from "./helpers";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({ ...scheduleTargetSchema });
 
 export const deleteAgentScheduleTool = () =>
   new DynamicStructuredTool({
-    name: "delete_agent_schedule",
+    name: TOOL_KEYS.DELETE_AGENT_SCHEDULE,
     description:
       "Permanently delete an agent schedule and all its jobs. Identify the schedule by id or name.",
     schema: schema as any,

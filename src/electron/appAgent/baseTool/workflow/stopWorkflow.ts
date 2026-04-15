@@ -3,6 +3,7 @@ import { z } from "zod";
 import { campaignDB } from "@/electron/database/campaign";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -11,7 +12,7 @@ const schema = z.object({
 
 export const stopWorkflowTool = () =>
   new DynamicStructuredTool({
-    name: "stop_workflow",
+    name: TOOL_KEYS.STOP_WORKFLOW,
     description:
       "Stop a currently running workflow on a campaign using their IDs.",
     schema: schema as any,

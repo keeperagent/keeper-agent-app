@@ -7,6 +7,7 @@ import { RESPONSE_CODE } from "@/electron/constant";
 import { ICampaignProfile, IWorkflowVariable } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -27,7 +28,7 @@ const schema = z.object({
 
 export const runWorkflowTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: "run_workflow",
+    name: TOOL_KEYS.RUN_WORKFLOW,
     description:
       "Run a workflow on a campaign using their IDs. Use search_campaigns or search_workflows first to get the IDs.",
     schema: schema as any,

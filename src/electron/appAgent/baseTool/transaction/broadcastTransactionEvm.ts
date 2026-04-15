@@ -11,6 +11,7 @@ import { EvmTransactionExecutor } from "@/electron/simulator/category/onchain/ev
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { capitalizeFirstLetter, extractErrorMessage } from "../utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const CONFIRMATION_TIMEOUT = 30000;
 
@@ -63,7 +64,7 @@ export const broadcastTransactionEvmTool = (
   toolContext?: ToolContext,
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
-    name: "broadcast_transaction_evm",
+    name: TOOL_KEYS.BROADCAST_TRANSACTION_EVM,
     description: `Broadcast a transaction to an EVM chain using campaign wallets.
 The transaction data must be hex-encoded (0x-prefixed). Gas limit and gas price are auto-estimated.
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary calldata).`,

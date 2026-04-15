@@ -3,12 +3,13 @@ import { z } from "zod";
 import { TavilyExtractAPIWrapper } from "@langchain/tavily";
 import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const webExtractTavilyTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
-    name: "web_extract_tavily",
+    name: TOOL_KEYS.WEB_EXTRACT_TAVILY,
     description:
       "Extract and read the full content of one or more web pages by URL. " +
       "Use this after web search to read the full content of a result page. " +

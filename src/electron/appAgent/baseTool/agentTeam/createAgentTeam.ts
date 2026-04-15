@@ -3,6 +3,7 @@ import { z } from "zod";
 import { agentTeamStore } from "@/electron/appAgent/agentTeam/store";
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   name: z.string().describe("Team name"),
@@ -15,7 +16,7 @@ const schema = z.object({
 
 export const createAgentTeamTool = () =>
   new DynamicStructuredTool({
-    name: "create_agent_team",
+    name: TOOL_KEYS.CREATE_AGENT_TEAM,
     description:
       "Create an agent team with a shared goal. Returns a teamId used with get_team_progress and delegate_task. Teams are in-memory and reset on app restart.",
     schema: schema as any,

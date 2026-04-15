@@ -5,6 +5,7 @@ import { agentProfileDB } from "@/electron/database/agentProfile";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { AgentTaskStatus } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   teamId: z.number().describe("Team ID returned by create_agent_team"),
@@ -12,7 +13,7 @@ const schema = z.object({
 
 export const getTeamProgressTool = () =>
   new DynamicStructuredTool({
-    name: "get_team_progress",
+    name: TOOL_KEYS.GET_TEAM_PROGRESS,
     description:
       "Get current progress of an agent team: agent stats, task statuses, and overall completion percentage.",
     schema: schema as any,

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { agentMailboxDB } from "@/electron/database/agentMailbox";
 import { safeStringify } from "@/electron/appAgent/utils";
 import type { ToolContext } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   includeAcknowledged: z
@@ -15,7 +16,7 @@ const schema = z.object({
 
 export const readMessagesTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: "read_messages",
+    name: TOOL_KEYS.READ_MESSAGES,
     description:
       "Read messages in your mailbox — direct messages and broadcasts. Returns unread messages by default. Call acknowledge_message after processing a message.",
     schema: schema as any,

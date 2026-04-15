@@ -12,6 +12,10 @@ import { createLLM } from "./llm";
 import { getLlmSetting } from "./utils";
 import { draftPlanTool, submitPlanTool } from "./baseTool";
 import {
+  writeJavaScriptTool,
+  writePythonTool,
+} from "./baseTool/codeExecution";
+import {
   createAgentTeamTool,
   getTeamProgressTool,
   delegateTaskTool,
@@ -98,11 +102,16 @@ export const createKeeperAgent = async (
     submitPlanTool(toolContext),
   ];
 
+  const codeWriteTools = [
+    !disabledTools.has(BASE_TOOL_KEYS.WRITE_JAVASCRIPT) && writeJavaScriptTool(toolContext),
+    !disabledTools.has(BASE_TOOL_KEYS.WRITE_PYTHON) && writePythonTool(toolContext),
+  ].filter((tool): any => Boolean(tool));
+
   const agent = createDeepAgent({
     model: llm,
     systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
     backend,
-    tools: [...planningTools, ...teamCoordinationTools] as any,
+    tools: [...planningTools, ...codeWriteTools, ...teamCoordinationTools] as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

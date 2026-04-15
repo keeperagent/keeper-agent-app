@@ -4,6 +4,7 @@ import { campaignDB } from "@/electron/database/campaign";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { workflowManager } from "@/electron/simulator/workflow";
 import { safeStringify } from "@/electron/appAgent/utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -12,7 +13,7 @@ const schema = z.object({
 
 export const checkWorkflowStatusTool = () =>
   new DynamicStructuredTool({
-    name: "check_workflow_status",
+    name: TOOL_KEYS.CHECK_WORKFLOW_STATUS,
     description:
       "Check the progress and status of a workflow running on a campaign.",
     schema: schema as any,

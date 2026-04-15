@@ -3,10 +3,11 @@ import { z } from "zod";
 import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { groupToColumns } from "./utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 export const listResourceGroupsTool = () =>
   new DynamicStructuredTool({
-    name: "list_resource_groups",
+    name: TOOL_KEYS.LIST_RESOURCE_GROUPS,
     description:
       "List all resource groups with their column schema and row counts. " +
       "Use this to discover existing groups before querying or adding resources.",

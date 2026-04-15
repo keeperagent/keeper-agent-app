@@ -12,6 +12,7 @@ import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { redistributeToCapacity, extractErrorMessage } from "../utils";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const GAS_BUFFER_SOL = 0.0005;
 
@@ -26,7 +27,7 @@ const isValidSolanaAddress = (address: string): boolean => {
 
 export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
-    name: "transfer_solana_token",
+    name: TOOL_KEYS.TRANSFER_SOLANA_TOKEN,
     description: `Transfer native SOL or any SPL token on Solana from a source wallet to target wallets in a campaign.
 
 The source wallet must be a wallet in the campaign. Target wallets are all other wallets in the campaign (the source wallet is excluded automatically).

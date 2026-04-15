@@ -2,10 +2,11 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod/v3";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 export const submitPlanTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: "submit_plan",
+    name: TOOL_KEYS.SUBMIT_PLAN,
     description:
       "Present your execution plan to the user and wait for approval before proceeding. " +
       "Must be called after draft_plan and before running any transaction, code, or workflow. " +

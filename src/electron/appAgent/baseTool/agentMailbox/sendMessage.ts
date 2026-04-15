@@ -6,6 +6,7 @@ import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { safeStringify } from "@/electron/appAgent/utils";
 import type { ToolContext } from "@/electron/appAgent/toolContext";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   to: z
@@ -19,7 +20,7 @@ const schema = z.object({
 
 export const sendMessageTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: "send_message",
+    name: TOOL_KEYS.SEND_MESSAGE,
     description:
       'Send a message to another registry agent by their agent ID, or broadcast to all agents with to="*". Use this to coordinate work, share results, or delegate sub-tasks.',
     schema: schema as any,

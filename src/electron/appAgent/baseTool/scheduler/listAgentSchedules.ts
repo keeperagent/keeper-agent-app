@@ -3,6 +3,7 @@ import { z } from "zod";
 import { scheduleDB } from "@/electron/database/schedule";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { ScheduleType } from "@/electron/type";
+import { TOOL_KEYS } from "@/electron/constant";
 
 const schema = z.object({
   searchText: z
@@ -13,7 +14,7 @@ const schema = z.object({
 
 export const listAgentSchedulesTool = () =>
   new DynamicStructuredTool({
-    name: "list_agent_schedules",
+    name: TOOL_KEYS.LIST_AGENT_SCHEDULES,
     description:
       "List agent schedules with their current status, cron expression, and job count.",
     schema: schema as any,
