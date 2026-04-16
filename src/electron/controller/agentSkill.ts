@@ -111,7 +111,7 @@ export const agentSkillController = () => {
 
       const validation = await readAndValidateSkillMdAtPath(filePath);
       if (validation?.error) {
-        event.reply(MESSAGE.CREATE_AGENT_SKILL_RES, {
+        event.reply(MESSAGE.UPDATE_AGENT_SKILL_RES, {
           data: null,
           error: validation.error,
         });
@@ -134,7 +134,7 @@ export const agentSkillController = () => {
       );
 
       if (existingSkill) {
-        event.reply(MESSAGE.CREATE_AGENT_SKILL_RES, {
+        event.reply(MESSAGE.UPDATE_AGENT_SKILL_RES, {
           data: null,
           error: AGENT_SKILL_DUPLICATE_NAME_ERR,
         });

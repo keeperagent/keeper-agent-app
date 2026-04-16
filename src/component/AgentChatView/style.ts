@@ -437,10 +437,6 @@ const SecretWarning = styled.div`
   color: var(--color-text-secondary, #666);
 `;
 
-const ToolSpacerDiv = styled.div<{ hasContent?: boolean }>`
-  margin-top: ${({ hasContent }) => (hasContent ? "0.8rem" : undefined)};
-`;
-
 export {
   AgentChatViewWrapper,
   DropOverlay,
@@ -449,5 +445,4 @@ export {
   ExecutingToolBadge,
   ComposerStatus,
   SecretWarning,
-  ToolSpacerDiv,
 };

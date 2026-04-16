@@ -72,7 +72,7 @@ const FileItem = (props: FileItemProps) => {
                     <CloseCircleIcon color="red" />
                   </span>
 
-                  <span className="text">er{translate("error")}</span>
+                  <span className="text">{translate("error")}</span>
                 </div>
               </Tag>
             </Tooltip>

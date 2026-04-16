@@ -1,14 +1,6 @@
 import { walletGroupDB } from "@/electron/database/walletGroup";
 import { walletDB } from "@/electron/database/wallet";
-import { profileGroupDB } from "@/electron/database/profileGroup";
-import { profileDB } from "@/electron/database/profile";
-import { nodeEndpointGroupDB } from "@/electron/database/nodeEndpointGroup";
-import type {
-  IWalletGroup,
-  IWallet,
-  IProfileGroup,
-  INodeEndpointGroup,
-} from "@/electron/type";
+import type { IWalletGroup } from "@/electron/type";
 import { ILlmSetting } from "@/electron/type";
 import { preferenceService } from "@/electron/service/preference";
 import { SupportedChainType } from "./types";
@@ -152,71 +144,6 @@ export const resolveWalletGroup = async (input: {
   throw new Error("walletGroupId or walletGroupName is required");
 };
 
-export const findProfileGroupByName = async (
-  name: string,
-): Promise<IProfileGroup | null> => {
-  const trimmed = name.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const [response, err] = await profileGroupDB.getListProfileGroup(
-    1,
-    50,
-    trimmed,
-  );
-  if (err) {
-    throw err;
-  }
-
-  const list = response?.data || [];
-  const exact = list.find(
-    (group: IProfileGroup) =>
-      group?.name?.toLowerCase() === trimmed.toLowerCase(),
-  );
-  return exact || null;
-};
-
-export const resolveProfileGroup = async (input: {
-  profileGroupName?: string;
-}): Promise<IProfileGroup> => {
-  if (input.profileGroupName) {
-    const group = await findProfileGroupByName(input.profileGroupName);
-    if (group) {
-      return group;
-    }
-
-    throw new Error(`Profile group "${input.profileGroupName}" does not exist`);
-  }
-
-  throw new Error("profileGroupId or profileGroupName is required");
-};
-
-export const findNodeEndpointGroupByName = async (
-  name: string,
-): Promise<INodeEndpointGroup | null> => {
-  const trimmed = name.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const [response, err] = await nodeEndpointGroupDB.getListNodeEndpointGroup(
-    1,
-    50,
-    trimmed,
-  );
-  if (err) {
-    throw err;
-  }
-
-  const list = response?.data || [];
-  const exact = list.find(
-    (group: INodeEndpointGroup) =>
-      group?.name?.toLowerCase() === trimmed.toLowerCase(),
-  );
-  return exact || null;
-};
-
 export const getWalletCount = async (
   walletGroupId: number,
 ): Promise<number> => {
@@ -229,67 +156,6 @@ export const getWalletCount = async (
     (item: any) => Number(item?.groupId) === Number(walletGroupId),
   );
   return Number(record?.count || 0);
-};
-
-export const getProfileCount = async (
-  profileGroupId: number,
-): Promise<number> => {
-  const [countList, err] = await profileDB.countTotalProfile([profileGroupId]);
-  if (err) {
-    throw err;
-  }
-
-  const record = (countList || []).find(
-    (item: any) => Number(item?.groupId) === Number(profileGroupId),
-  );
-  return Number(record?.count || 0);
-};
-
-// no need to expose sensitive information when working with agent
-type IMinimalWalletInfo = {
-  id: number;
-  groupId: number;
-};
-export const fetchWalletsForGroup = async (
-  walletGroupId: number,
-  limit?: number,
-): Promise<IMinimalWalletInfo[]> => {
-  const wallets: IMinimalWalletInfo[] = [];
-  let page = 1;
-  const pageSize = 200;
-
-  while (true) {
-    const [response, err] = await walletDB.getListWallet({
-      page,
-      pageSize,
-      groupId: walletGroupId,
-    });
-    if (err) {
-      throw err;
-    }
-
-    const data = response?.data || [];
-    if (!data.length) {
-      break;
-    }
-    wallets.push(
-      ...data.map((item: IWallet) => ({
-        id: item?.id!,
-        groupId: item?.groupId!,
-      })),
-    );
-
-    if (limit && wallets.length >= limit) {
-      return wallets.slice(0, limit);
-    }
-
-    if (data.length < pageSize) {
-      break;
-    }
-    page += 1;
-  }
-
-  return limit ? wallets.slice(0, limit) : wallets;
 };
 
 export const isErrorResult = (result: unknown): boolean => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { uid } from "uid/secure";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import {
   actSaveGetOnePreference,
   actSaveUpdatePreference,
@@ -42,23 +42,28 @@ const useUpdatePreference = () => {
       isUpdateAgentTool,
     });
 
-    await new Promise(async (resolve) => {
-      window?.electron?.on(
-        MESSAGE.UPDATE_PREFERENCE_RES,
-        (event: any, payload: any) => {
-          const { requestId } = payload;
-          if (requestId !== uniqueID) {
-            return;
-          }
-          setLoading(false);
-          setIsSuccess(true);
-          dispatch(actSaveUpdatePreference(payload?.data));
-          resolve(true);
-        },
-      );
+    await new Promise<void>((resolve) => {
+      const handler = (_event: any, payload: any) => {
+        const { requestId } = payload;
+        if (requestId !== uniqueID) {
+          return;
+        }
+        window?.electron?.removeListener(
+          MESSAGE.UPDATE_PREFERENCE_RES,
+          handler,
+        );
+        setLoading(false);
+        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR || !payload?.data) {
+          setIsSuccess(false);
+          resolve();
+          return;
+        }
+        setIsSuccess(true);
+        dispatch(actSaveUpdatePreference(payload?.data));
+        resolve();
+      };
+      window?.electron?.on(MESSAGE.UPDATE_PREFERENCE_RES, handler);
     });
-
-    window?.electron?.removeAllListeners(MESSAGE.UPDATE_PREFERENCE_RES);
   };
 
   return { updatePreference, loading, isSuccess };

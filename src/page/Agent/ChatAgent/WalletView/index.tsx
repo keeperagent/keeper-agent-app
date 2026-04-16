@@ -14,7 +14,7 @@ import {
 import { connect } from "react-redux";
 import copy from "copy-to-clipboard";
 import { RootState } from "@/redux/store";
-import { CHAIN_TYPE } from "@/electron/constant";
+import { CHAIN_TYPE, MESSAGE } from "@/electron/constant";
 import {
   useGetListCampaign,
   useGetListCampaignProfile,
@@ -26,7 +26,12 @@ import {
   ICampaignProfile,
   INodeEndpointGroup,
 } from "@/electron/type";
-import { getChainConfig, IChainConfig } from "@/service/util";
+import {
+  getChainConfig,
+  getPortfolioAppImg,
+  getPortfolioAppUrl,
+  IChainConfig,
+} from "@/service/util";
 import {
   actSaveChainKey,
   actSaveNodeEndpointGroupId,
@@ -40,6 +45,7 @@ import {
   OptionWrapper,
   WalletViewWrapper,
   RadioWrapper,
+  PortfolioAppWrapper,
 } from "./style";
 import { EMPTY_STRING } from "@/config/constant";
 import { PasswordInput } from "@/component/Input";
@@ -192,6 +198,16 @@ const WalletView = (props: any) => {
     setTimeout(() => {
       setCopiedAddress(null);
     }, 1500);
+  };
+
+  const onViewPortfolio = (walletAddress: string, portfolioApp: string) => {
+    const url = getPortfolioAppUrl(walletAddress, portfolioApp);
+    if (!url) {
+      return;
+    }
+    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
+      url,
+    });
   };
 
   return (
@@ -443,6 +459,12 @@ const WalletView = (props: any) => {
                 isShowWallet = true;
               }
 
+              const portfolioApp = campaignProfile?.walletGroup?.portfolioApp;
+
+              if (!portfolioApp || !campaignProfile?.wallet?.address) {
+                return EMPTY_STRING;
+              }
+
               return (
                 <Option
                   key={campaignProfile?.id}
@@ -476,6 +498,25 @@ const WalletView = (props: any) => {
                               </div>
                             )}
                           </Tooltip>
+                        )}
+
+                        {isShowWallet && (
+                          <PortfolioAppWrapper
+                            onClick={() => {
+                              onViewPortfolio(
+                                campaignProfile?.wallet?.address || "",
+                                campaignProfile?.walletGroup?.portfolioApp ||
+                                  "",
+                              );
+                            }}
+                          >
+                            <div className="icon">
+                              <img
+                                src={getPortfolioAppImg(portfolioApp)}
+                                alt=""
+                              />
+                            </div>
+                          </PortfolioAppWrapper>
                         )}
                       </div>
                     </div>

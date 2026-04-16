@@ -3,7 +3,6 @@ import type {
   ISetting,
   IAgentSkill,
   IAgentTask,
-  AppLogType,
   ICampaign,
   ICampaignProfile,
   ICheckTokenPriceNodeConfig,
@@ -340,14 +339,6 @@ export type IpcMarkJobCompletedPayload = {
 export type IpcCheckJobExistedPayload = {
   campaignId?: number;
   workflowId?: number;
-};
-
-// AppLog
-export type IpcGetListAppLogPayload = IpcPagePayload & {
-  logType?: AppLogType;
-  scheduleId?: number;
-  taskId?: number;
-  jobType?: string;
 };
 
 // Extension

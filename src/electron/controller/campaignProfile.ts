@@ -100,7 +100,7 @@ export const campaignProfileController = () => {
         const listCampaignProfile = listProfileRes?.data as ICampaignProfile[];
 
         for (let j = 0; j < listCampaignProfile?.length; j++) {
-          const profileFolder = listCampaignProfile[i]?.profileFolderPath;
+          const profileFolder = listCampaignProfile[j]?.profileFolderPath;
           if (!profileFolder) {
             continue;
           }

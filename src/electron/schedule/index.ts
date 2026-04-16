@@ -155,7 +155,7 @@ class ScheduleManager {
 
     const maxRunningWorkflow = this.preference?.maxConcurrentJob || 0;
     const totalRunningWorkflow = workflowManager.totalRunningWorkflow();
-    if (totalRunningWorkflow > maxRunningWorkflow) {
+    if (totalRunningWorkflow >= maxRunningWorkflow) {
       return false;
     }
 

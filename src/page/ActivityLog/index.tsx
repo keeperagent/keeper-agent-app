@@ -88,8 +88,6 @@ const STATUS_LABEL_MAP: Record<string, string> = {
   CANCELLED: "Cancelled",
   IN_PROGRESS: "In Progress",
   INIT: "Pending",
-  AWAITING_APPROVAL: "Awaiting",
-  ASSIGNED: "Assigned",
   approved: "Approved",
   denied: "Denied",
 };

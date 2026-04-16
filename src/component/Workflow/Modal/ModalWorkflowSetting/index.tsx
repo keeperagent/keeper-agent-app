@@ -72,14 +72,21 @@ const ModalWorkflowSetting = (props: IProps) => {
 
   const onSubmitForm = async () => {
     try {
-      const { numberOfThread, numberOfRound } = await form.validateFields([
-        "numberOfThread",
-        "numberOfRound",
-      ]);
+      const { numberOfThread, numberOfRound, windowWidth, windowHeight } =
+        await form.validateFields([
+          "numberOfThread",
+          "numberOfRound",
+          ...(isFullScreen ? [] : ["windowWidth", "windowHeight"]),
+        ]);
 
       updateWorkflow({
         numberOfThread,
         numberOfRound,
+        windowWidth: isFullScreen ? selectedWorkflow?.windowWidth : windowWidth,
+        windowHeight: isFullScreen
+          ? selectedWorkflow?.windowHeight
+          : windowHeight,
+        isFullScreen,
         id: selectedWorkflow?.id,
       });
     } catch {}

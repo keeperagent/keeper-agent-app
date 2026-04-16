@@ -244,6 +244,17 @@ class AgentTaskDB {
     data: Partial<IAgentTask>,
   ): Promise<[IAgentTask | null, Error | null]> {
     try {
+      const where: any = { id };
+      if (data.status !== undefined) {
+        where.status = {
+          [Op.notIn]: [
+            AgentTaskStatus.DONE,
+            AgentTaskStatus.FAILED,
+            AgentTaskStatus.EXPIRED,
+            AgentTaskStatus.CANCELLED,
+          ],
+        };
+      }
       await AgentTaskModel.update(
         _.omit(
           {
@@ -260,7 +271,7 @@ class AgentTaskDB {
           },
           ["id"],
         ) as any,
-        { where: { id } },
+        { where },
       );
       return await this.getOneAgentTask(id);
     } catch (err: any) {

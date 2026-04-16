@@ -14,7 +14,6 @@ import CodeEditor from "@/component/CodeEditor";
 import { IKeyValue, IHttpRequestNodeConfig } from "@/electron/type";
 import { DEFAULT_TIMEOUT, NODE_ACTION } from "@/electron/simulator/constant";
 import { HTTP_METHOD, NODE_STATUS } from "@/electron/constant";
-import { RootState } from "@/redux/store";
 import { useTranslation } from "@/hook";
 import { QuestionIcon } from "@/component/Icon";
 import { Wrapper } from "./style";
@@ -46,13 +45,11 @@ type Props = {
   onSaveNodeConfig: (config: IHttpRequestNodeConfig) => void;
   config: IHttpRequestNodeConfig;
   isModalOpen: boolean;
-  isLightMode: boolean;
 };
 
 const HttpRequest = (props: Props) => {
   const { translate, locale } = useTranslation();
-  const { onCloseModal, onSaveNodeConfig, config, isModalOpen, isLightMode } =
-    props;
+  const { onCloseModal, onSaveNodeConfig, config, isModalOpen } = props;
 
   const [activeTab, setActiveTab] = useState(TAB.DETAIL);
   const [isSkip, setIsSkip] = useState(false);
@@ -435,9 +432,4 @@ const HttpRequest = (props: Props) => {
   );
 };
 
-export default connect(
-  (state: RootState) => ({
-    isLightMode: state?.Layout?.isLightMode,
-  }),
-  {},
-)(HttpRequest);
+export default connect(() => ({}), {})(HttpRequest);

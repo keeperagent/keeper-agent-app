@@ -1,8 +1,7 @@
-import { useEffect, ReactNode, useMemo, useCallback } from "react";
+import { useEffect, ReactNode, useMemo } from "react";
 import { connect } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLazyQuery } from "@apollo/client/react";
-import dayjs from "dayjs";
 import qs from "qs";
 import { RootState } from "@/redux/store";
 import { QueryGetUseInfo } from "@/api/auth";
@@ -13,9 +12,7 @@ import {
   actSetErrorCount,
 } from "@/redux/auth";
 import { useGetPreference } from "@/hook";
-import { sleep } from "@/service/util";
 import { IUser } from "@/types/interface";
-import { MESSAGE } from "@/electron/constant";
 import LogViewer from "@/component/LogViewer";
 import Sidebar from "./SideBar";
 import TopBar from "./TopBar";
@@ -25,7 +22,6 @@ import { LayoutWrapper, ContentWrapper, MainSectionWrapper } from "./style";
 const thresholdDuration = 1 * 60 * 60 * 1000; // 1 hour
 const thresholdDurationWhenError = 5 * 60 * 1000; // 5 minutes
 const maxErrorCount = 5;
-let isFreeTier: boolean | null = null;
 
 interface IProps {
   children: ReactNode;
@@ -49,7 +45,6 @@ const DashboardLayout = (props: IProps) => {
     lastVerifyTime,
     errorTime,
     errorCount,
-    user,
   } = props;
   const { pathname, search } = useLocation();
   const { workflowId } = qs.parse(search, { ignoreQueryPrefix: true });
@@ -68,52 +63,26 @@ const DashboardLayout = (props: IProps) => {
   }, []);
 
   useEffect(() => {
-    isFreeTier =
-      !user?.tierStatus ||
-      !user?.tierStatus?.pricingTier ||
-      user?.tierStatus?.pricingTier?.price === 0;
-    const expiredAt = user?.tierStatus?.expiredAt || 0;
-    const isExpired =
-      expiredAt > 0 && dayjs().isAfter(dayjs(Number(expiredAt)));
-    if (isExpired) {
-      isFreeTier = false;
-    }
-  }, [user]);
-
-  const sendUserPermissions = useCallback(async (requestId: string) => {
-    while (isFreeTier === null) {
-      await sleep(500);
-    }
-    window?.electron?.send(MESSAGE.GET_USER_PERMISSIONS_RES, {
-      requestId,
-      data: isFreeTier,
-    });
-  }, []);
-
-  useEffect(() => {
-    const handler = (_event: any, payload: any) => {
-      sendUserPermissions(payload?.requestId);
-    };
-    window?.electron?.on(MESSAGE.GET_USER_PERMISSIONS, handler);
-
-    return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GET_USER_PERMISSIONS);
-    };
-  }, [sendUserPermissions]);
-
-  useEffect(() => {
-    const currentTime = new Date().getTime();
-    if (errorCount === 0) {
-      if (
-        lastVerifyTime === 0 ||
-        currentTime - lastVerifyTime > thresholdDuration
-      ) {
+    const checkAuth = () => {
+      const currentTime = new Date().getTime();
+      if (errorCount === 0) {
+        if (
+          lastVerifyTime === 0 ||
+          currentTime - lastVerifyTime > thresholdDuration
+        ) {
+          actGetUserInfo();
+        }
+      } else if (currentTime - errorTime > thresholdDurationWhenError) {
         actGetUserInfo();
       }
-    } else if (currentTime - errorTime > thresholdDurationWhenError) {
-      actGetUserInfo();
-    }
-  }, [pathname, lastVerifyTime, errorCount, errorTime]);
+    };
+
+    const intervalDuration =
+      errorCount > 0 ? thresholdDurationWhenError : thresholdDuration;
+    checkAuth();
+    const timerId = setInterval(checkAuth, intervalDuration);
+    return () => clearInterval(timerId);
+  }, [lastVerifyTime, errorCount, errorTime]);
 
   useEffect(() => {
     const { data, loading, called } = getGetUserInfoResponse;
@@ -130,7 +99,6 @@ const DashboardLayout = (props: IProps) => {
       return;
     }
 
-    // Query finished but no data — either a network error or server rejected the token
     if (errorCount >= maxErrorCount) {
       navigate("/logout");
       return;

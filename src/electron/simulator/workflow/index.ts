@@ -83,7 +83,7 @@ export class WorkflowManager {
         const [fetchedEncryptKey] = await jobDB.getEncryptKey(job.id);
         encryptKey = fetchedEncryptKey || "";
       }
-      workflow.runWorkflow(encryptKey);
+      workflow.runWorkflow(encryptKey).catch(() => {});
       await sleep(5000);
     }
   };

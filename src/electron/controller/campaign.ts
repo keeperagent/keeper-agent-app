@@ -80,7 +80,7 @@ export const campaignController = () => {
       });
 
       event.reply(MESSAGE.GET_LIST_CAMPAIGN_RES, {
-        data: res,
+        data: { ...res, data: listCampaign },
       });
     },
   );
@@ -108,6 +108,7 @@ export const campaignController = () => {
         event.reply(MESSAGE.SYNC_CAMPAIGN_PROFILE_RES, {
           error: err?.message,
         });
+        return;
       }
       const { isUseProxy, proxyGroupId, profileGroupId } = campaign || {};
 
@@ -434,7 +435,7 @@ const initCampaignProfile = async (
         const isExist = existedProfiles?.length > 0;
         if (!isExist) {
           batchCampaignProfile.push(campaignProfile);
-          listNewCampaignProfile.push(listNewCampaignProfile);
+          listNewCampaignProfile.push(campaignProfile);
         }
       });
 

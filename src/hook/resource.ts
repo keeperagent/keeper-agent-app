@@ -15,8 +15,8 @@ const useImportResource = () => {
     MESSAGE.IMPORT_RESOURCE,
     MESSAGE.IMPORT_RESOURCE_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) message?.error(error);
+      onError: (errorMsg) => {
+        message?.error(errorMsg);
       },
     },
   );
@@ -38,12 +38,11 @@ const useExportResource = () => {
     MESSAGE.EXPORT_RESOURCE,
     MESSAGE.EXPORT_RESOURCE_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message?.error(error);
-        } else {
-          message.success(translate("hook.exportDataDone"));
-        }
+      onSuccess: () => {
+        message.success(translate("hook.exportDataDone"));
+      },
+      onError: (errorMsg) => {
+        message?.error(errorMsg);
       },
     },
   );
@@ -62,11 +61,15 @@ const useExportResource = () => {
 };
 
 const useGetListResource = () => {
-  const { execute: getListResource, loading } = useIpcAction<IpcGetListResourcePayload>(
-    MESSAGE.GET_LIST_RESOURCE,
-    MESSAGE.GET_LIST_RESOURCE_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveGetListResource(payload?.data)) },
-  );
+  const { execute: getListResource, loading } =
+    useIpcAction<IpcGetListResourcePayload>(
+      MESSAGE.GET_LIST_RESOURCE,
+      MESSAGE.GET_LIST_RESOURCE_RES,
+      {
+        onSuccess: (payload, dispatch) =>
+          dispatch(actSaveGetListResource(payload?.data)),
+      },
+    );
   return { loading, getListResource };
 };
 
@@ -83,9 +86,13 @@ const useUpdateResource = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.UPDATE_RESOURCE,
     MESSAGE.UPDATE_RESOURCE_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveUpdateResource(payload.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveUpdateResource(payload.data)),
+    },
   );
-  const updateResource = (data: IResource, encryptKey?: string) => execute({ data, encryptKey });
+  const updateResource = (data: IResource, encryptKey?: string) =>
+    execute({ data, encryptKey });
   return { updateResource, loading, isSuccess };
 };
 
@@ -93,9 +100,14 @@ const useCreateResource = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.CREATE_RESOURCE,
     MESSAGE.CREATE_RESOURCE_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveCreateResource(payload.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveCreateResource(payload.data)),
+      onError: (errorMsg) => message.error(errorMsg),
+    },
   );
-  const createResource = (data: IResource, encryptKey?: string) => execute({ data, encryptKey });
+  const createResource = (data: IResource, encryptKey?: string) =>
+    execute({ data, encryptKey });
   return { createResource, loading, isSuccess };
 };
 

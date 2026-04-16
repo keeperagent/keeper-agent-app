@@ -86,7 +86,7 @@ export const runWorkflowRunnerController = () => {
         campaignId,
         0,
       );
-      workflow.runWorkflow(encryptKey, overrideListVariable);
+      workflow.runWorkflow(encryptKey, overrideListVariable).catch(() => {});
 
       event.reply(MESSAGE.START_WORKFLOW_RES, {
         code: RESPONSE_CODE.SUCCESS,
@@ -181,6 +181,7 @@ export const runWorkflowRunnerController = () => {
           data: [],
           totalData: 0,
         });
+        return;
       }
 
       let eventABI = eventDetail?.inputs
@@ -207,6 +208,7 @@ export const runWorkflowRunnerController = () => {
           data: [],
           totalData: 0,
         });
+        return;
       }
       const [results, totalData] =
         contractSniper?.getSampleResult(sampleSize) || [];

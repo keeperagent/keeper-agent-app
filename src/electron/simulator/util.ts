@@ -274,7 +274,12 @@ export const waitAndClickText = async (
 };
 
 export const waitTextAppear = async (text: string, page?: Page) => {
+  const startTime = Date.now();
   while (true) {
+    if (Date.now() - startTime > DEFAULT_EXTENSION_TIMEOUT * 3) {
+      return;
+    }
+
     const isFound = await page?.evaluate((text) => {
       const buttons = Array.from(document.querySelectorAll("button"));
       const button = buttons.find((button) =>

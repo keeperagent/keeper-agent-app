@@ -12,10 +12,9 @@ import { MemoryWrapper } from "./style";
 
 type Props = {
   agentProfileId: number;
-  isLightMode: boolean;
 };
 
-const MemoryTab = ({ agentProfileId, isLightMode }: Props) => {
+const MemoryTab = ({ agentProfileId }: Props) => {
   const { translate } = useTranslation();
   const [draft, setDraft] = useState("");
   const {
@@ -98,6 +97,4 @@ const MemoryTab = ({ agentProfileId, isLightMode }: Props) => {
   );
 };
 
-export default connect((state: RootState) => ({
-  isLightMode: state.Layout.isLightMode,
-}))(MemoryTab);
+export default connect((_state: RootState) => ({}))(MemoryTab);

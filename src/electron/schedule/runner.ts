@@ -13,6 +13,7 @@ import { SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import { CampaignProfileModel } from "@/electron/database";
 import { logEveryWhere } from "@/electron/service/util";
 import { scheduleDB } from "@/electron/database/schedule";
+import { licenseService } from "@/electron/service/licenseService";
 
 class ScheduleRunner {
   private schedule: ISchedule;
@@ -128,7 +129,11 @@ class ScheduleRunner {
       action: SCHEDULE_LOG_ACTION.JOB_START,
       status: AgentScheduleStatus.RUNNING,
     });
-    workflow.runWorkflow(jobEncryptKey || "");
+    const scheduleAllocationLimit = licenseService.isFreeTier;
+    if (scheduleAllocationLimit) {
+      return;
+    }
+    workflow.runWorkflow(jobEncryptKey || "").catch(() => {});
 
     const checkTimeoutInterval = setInterval(async () => {
       isJobTimeout = await jobDB.checkJobTimeout(job);

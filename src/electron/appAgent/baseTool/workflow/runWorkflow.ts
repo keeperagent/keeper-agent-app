@@ -8,6 +8,7 @@ import { ICampaignProfile, IWorkflowVariable } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { licenseService } from "@/electron/service/licenseService";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -113,6 +114,11 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
         }));
       }
 
+      const agentResourceLimit = licenseService.isFreeTier;
+      if (agentResourceLimit) {
+        return safeStringify({ error: RESPONSE_CODE.ERROR });
+      }
+
       // Reset all campaign profiles before running
       await campaignProfileDB.updateListCampaignProfile(
         true,
@@ -126,7 +132,9 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
         campaignId,
         0,
       );
-      workflow.runWorkflow(resolvedEncryptKey, overrideListVariable);
+      workflow
+        .runWorkflow(resolvedEncryptKey, overrideListVariable)
+        .catch(() => {});
 
       return safeStringify({
         message: `Workflow "${targetWorkflow.name}" started on campaign "${campaign.name}"`,

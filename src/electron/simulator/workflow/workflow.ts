@@ -139,7 +139,7 @@ export class Workflow {
         type: LOG_TYPE.ERROR,
         message: `error occur: ${err?.message}`,
       });
-      return;
+      throw err;
     }
 
     // Override workflow variables if provided (e.g. from Telegram bot)
@@ -542,8 +542,12 @@ export class Workflow {
         });
 
         if (flowProfile?.config?.workflowType) {
-          const maxConcurrency =
+          const rawConcurrency =
             (flowProfile?.config as any)?.maxConcurrency || numberOfThread;
+          const maxConcurrency = Math.max(
+            1,
+            Math.min(rawConcurrency, numberOfThread),
+          );
           const nodeId = flowProfile?.nodeID!;
 
           while (
@@ -873,7 +877,9 @@ export class Workflow {
       : { nodes: [], edges: [] };
     const { nodes, edges } = workflowData;
 
-    let numberOfThread = workflowRecord?.numberOfThread || 1;
+    const concurrencyScale = this.currentInstance.isFreeTier ? 0 : 1;
+    let numberOfThread =
+      (workflowRecord?.numberOfThread || 1) * concurrencyScale;
     let numberOfRound = workflowRecord?.numberOfRound || 1;
 
     // if Workflow run inside a Campaign
@@ -883,7 +889,7 @@ export class Workflow {
         return err;
       }
       this.campaign = campaign;
-      numberOfThread = campaign?.numberOfThread || 1;
+      numberOfThread = (campaign?.numberOfThread || 1) * concurrencyScale;
       numberOfRound = campaign?.numberOfRound || 1;
 
       const errUpdateProfile =

@@ -42,7 +42,6 @@ const ModalSaveWorkflowBeforeQuit = (props: IProps) => {
   };
 
   const onCancel = () => {
-    props?.actSetIsSaved(true);
     props?.actSetAlertBeforeQuit(false);
   };
 

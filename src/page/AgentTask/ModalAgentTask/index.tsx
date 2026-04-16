@@ -45,8 +45,8 @@ export const ModalAgentTask = ({
 }: ModalAgentTaskProps) => {
   const { translate } = useTranslation();
   const [form] = Form.useForm();
-  const { createAgentTask, loading: createLoading } = useCreateAgentTask();
-  const { updateAgentTask, loading: updateLoading } = useUpdateAgentTask();
+  const { createAgentTask, loading: createLoading, isSuccess: createSuccess } = useCreateAgentTask();
+  const { updateAgentTask, loading: updateLoading, isSuccess: updateSuccess } = useUpdateAgentTask();
 
   const canEditDueDate =
     !editingTask || editingTask.status === AgentTaskStatus.INIT;
@@ -69,11 +69,18 @@ export const ModalAgentTask = ({
     }
   }, [open, editingTask?.id]);
 
+  useEffect(() => {
+    if (open && (createSuccess || updateSuccess)) {
+      onClose();
+    }
+  }, [createSuccess, updateSuccess]);
+
   const onSubmit = async () => {
     try {
       const values = await form.validateFields();
       const payload = {
         ...values,
+        title: (values.title || "").trim(),
         dueAt: values.dueAt ? values.dueAt.valueOf() : undefined,
       };
       if (editingTask) {
@@ -81,7 +88,6 @@ export const ModalAgentTask = ({
       } else {
         createAgentTask(payload);
       }
-      onClose();
     } catch {}
   };
 
@@ -104,7 +110,17 @@ export const ModalAgentTask = ({
         <Form.Item
           name="title"
           label={`${translate("agentTask.label.title")}:`}
-          rules={[{ required: true }]}
+          rules={[
+            {
+              required: true,
+              validator: (_, value) => {
+                if (!value || !value.trim()) {
+                  return Promise.reject(translate("form.requiredField"));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
         >
           <Input
             placeholder={translate("agentTask.placeholder.title")}
@@ -189,6 +205,7 @@ export const ModalAgentTask = ({
                 className="custom-input"
                 size="large"
                 min={1}
+                max={9999}
                 style={{ width: "100%" }}
               />
             </Form.Item>

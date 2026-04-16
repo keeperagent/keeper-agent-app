@@ -101,7 +101,7 @@ const ModalMcpServer = (props: any) => {
         name,
         description,
         config: configStr,
-        isEnabled: isEnabled || true,
+        isEnabled: isEnabled ?? true,
         status: MCPServerStatus.DISCONNECTED,
       };
 

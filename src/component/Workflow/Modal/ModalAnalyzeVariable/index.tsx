@@ -14,7 +14,6 @@ import { Wrapper, CodeLabelWrapper } from "./style";
 type IProps = {
   isModalAnalyzeVariableOpen: boolean;
   selectedVariable: IWorkflowVariable | null;
-  isLightMode: boolean;
   actSetModalAnalyzeVariableOpen: (payload: {
     isModalAnalyzeVariableOpen: boolean;
     selectedVariable: IWorkflowVariable | null;
@@ -24,7 +23,7 @@ type IProps = {
 let getResultTimeout: any = null;
 
 const ModalAnalyzeValue = (props: IProps) => {
-  const { isModalAnalyzeVariableOpen, selectedVariable, isLightMode } = props;
+  const { isModalAnalyzeVariableOpen, selectedVariable } = props;
   const [codeValue, setCodeValue] = useState("");
   const { runJavaScriptCode, result, loading } = useRunJavaScriptCode();
   const [form] = Form.useForm();
@@ -183,7 +182,6 @@ const ModalAnalyzeValue = (props: IProps) => {
 
 export default connect(
   (state: RootState) => ({
-    isLightMode: state?.Layout?.isLightMode,
     isModalAnalyzeVariableOpen:
       state?.WorkflowRunner?.isModalAnalyzeVariableOpen,
     selectedVariable: state?.WorkflowRunner?.selectedVariable,

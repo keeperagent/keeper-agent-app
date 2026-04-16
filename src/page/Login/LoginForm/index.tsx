@@ -72,12 +72,18 @@ const LoginForm = (props: any) => {
   );
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_GOOGLE_AUTH_CODE,
-      (event: any, payload: any) => {
-        onLoginWithGoogle(payload?.code);
-      },
-    );
+    const handleGoogleAuthCode = (_event: any, payload: any) => {
+      onLoginWithGoogle(payload?.code);
+    };
+
+    window?.electron?.on(MESSAGE.GET_GOOGLE_AUTH_CODE, handleGoogleAuthCode);
+
+    return () => {
+      window?.electron?.removeListener(
+        MESSAGE.GET_GOOGLE_AUTH_CODE,
+        handleGoogleAuthCode,
+      );
+    };
   }, []);
 
   const onSubmitForm = async () => {
@@ -178,7 +184,7 @@ const LoginForm = (props: any) => {
     if (error) {
       console.log(`Login error: ${error.message}`);
     }
-  }, [loginWithGoogleResponse.loading]);
+  }, [loginWithGoogleResponse]);
 
   const onLoginWithGoogle = (authorizationCode: string) => {
     actLoginWithGoogle({

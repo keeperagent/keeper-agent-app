@@ -3,12 +3,8 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/redux/store";
 
 export type IpcActionOptions<TRes = any> = {
-  /**
-   * Called whenever the response channel fires. Receives the raw IPC payload
-   * and the Redux dispatch function so callers can update the store without
-   * needing a separate useDispatch() call.
-   */
   onSuccess?: (payload: TRes, dispatch: AppDispatch) => void;
+  onError?: (errorMessage: string, dispatch: AppDispatch) => void;
   /**
    * Re-subscribe to the response channel whenever these values change.
    * Mirrors the useEffect dependency array. Defaults to [] (mount only).
@@ -18,10 +14,7 @@ export type IpcActionOptions<TRes = any> = {
 
 /**
  * Generic primitive for the send-IPC → receive-response → loading/isSuccess
- * pattern shared by nearly every CRUD hook.
- *
- * Complex patterns (streaming progress, promise+requestId) should be
- * implemented directly without this helper.
+ * pattern shared by nearly every CRUD hook
  */
 const useIpcAction = <TReq = any, TRes = any>(
   channel: string,
@@ -32,17 +25,24 @@ const useIpcAction = <TReq = any, TRes = any>(
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const { onSuccess, deps = [] } = options;
+  const { onSuccess, onError, deps = [] } = options;
 
   useEffect(() => {
-    window?.electron?.on(resChannel, (_event: any, payload: TRes) => {
+    const handler = (_event: any, payload: TRes) => {
       setLoading(false);
-      setIsSuccess(true);
-      onSuccess?.(payload, dispatch);
-    });
+      const hasError = (payload as any)?.error;
+      setIsSuccess(!hasError);
+      if (!hasError) {
+        onSuccess?.(payload, dispatch);
+      } else {
+        onError?.((payload as any).error, dispatch);
+      }
+    };
+
+    window?.electron?.on(resChannel, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(resChannel);
+      window?.electron?.removeListener(resChannel, handler);
     };
   }, deps);
 

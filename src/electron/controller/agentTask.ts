@@ -25,7 +25,11 @@ export const agentTaskController = () => {
     MESSAGE.GET_LIST_AGENT_TASK,
     MESSAGE.GET_LIST_AGENT_TASK_RES,
     async (event, _payload) => {
-      const [result] = await agentTaskDB.getListAgentTask();
+      const [result, err] = await agentTaskDB.getListAgentTask();
+      if (err) {
+        event.reply(MESSAGE.GET_LIST_AGENT_TASK_RES, { error: err.message });
+        return;
+      }
       event.reply(MESSAGE.GET_LIST_AGENT_TASK_RES, { data: result });
     },
   );
@@ -35,7 +39,11 @@ export const agentTaskController = () => {
     MESSAGE.GET_ONE_AGENT_TASK_RES,
     async (event, payload) => {
       const { id } = payload || {};
-      const [result] = await agentTaskDB.getOneAgentTask(id);
+      const [result, err] = await agentTaskDB.getOneAgentTask(id);
+      if (err) {
+        event.reply(MESSAGE.GET_ONE_AGENT_TASK_RES, { error: err.message });
+        return;
+      }
       event.reply(MESSAGE.GET_ONE_AGENT_TASK_RES, { data: result });
     },
   );
@@ -45,11 +53,15 @@ export const agentTaskController = () => {
     MESSAGE.CREATE_AGENT_TASK_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [result] = await agentTaskDB.createAgentTask({
+      const [result, err] = await agentTaskDB.createAgentTask({
         ...data,
         status: AgentTaskStatus.INIT,
         retryCount: 0,
       });
+      if (err) {
+        event.reply(MESSAGE.CREATE_AGENT_TASK_RES, { error: err.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_AGENT_TASK_RES, { data: result });
       if (result?.id) {
         appLogDB.createAppLog({
@@ -75,7 +87,11 @@ export const agentTaskController = () => {
       if (data.status === AgentTaskStatus.CANCELLED) {
         agentTaskExecutor.cancelTask(id);
       }
-      const [result] = await agentTaskDB.updateAgentTask(id, data);
+      const [result, err] = await agentTaskDB.updateAgentTask(id, data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_AGENT_TASK_RES, { error: err.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       agentTaskDispatcher.dispatch();
@@ -90,7 +106,11 @@ export const agentTaskController = () => {
       for (const id of ids) {
         agentTaskExecutor.cancelTask(id);
       }
-      const [result] = await agentTaskDB.deleteAgentTask(ids);
+      const [result, err] = await agentTaskDB.deleteAgentTask(ids);
+      if (err) {
+        event.reply(MESSAGE.DELETE_AGENT_TASK_RES, { error: err.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       agentTaskDispatcher.dispatch();

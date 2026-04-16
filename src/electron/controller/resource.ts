@@ -99,7 +99,7 @@ export const resourceController = () => {
         await resourceGroupDB.getOneResourceGroup(groupId);
 
       if (err || !resourceGroup) {
-        event.reply(MESSAGE.IMPORT_RESOURCE_RES, {
+        event.reply(MESSAGE.CREATE_RESOURCE_RES, {
           error: err?.message,
         });
         return;

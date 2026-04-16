@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { DeleteButtonWrapper } from "./style";
 
 // reference: https://dribbble.com/shots/10276145-Trash-Delete-Button
@@ -13,10 +13,11 @@ interface DeleteButtonProps {
 
 const DeleteButton = (props: DeleteButtonProps) => {
   const { style, disabled, loading = false, text, onClick } = props;
+  const btnRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (loading) {
-      const deleteBtn = document.getElementById("delete-btn");
+      const deleteBtn = btnRef.current;
 
       if (deleteBtn && !deleteBtn.classList.contains("delete")) {
         deleteBtn.classList.add("delete");
@@ -27,7 +28,7 @@ const DeleteButton = (props: DeleteButtonProps) => {
 
   return (
     <DeleteButtonWrapper
-      id="delete-btn"
+      ref={btnRef}
       onClick={onClick}
       style={style}
       disabled={disabled}
