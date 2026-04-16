@@ -131,7 +131,9 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
       if (agentResourceLimit) {
         return safeStringify({ error: RESPONSE_CODE.ERROR });
       }
-      workflow.runWorkflow(resolvedEncryptKey, overrideListVariable);
+      workflow
+        .runWorkflow(resolvedEncryptKey, overrideListVariable)
+        .catch(() => {});
 
       return safeStringify({
         message: `Workflow "${targetWorkflow.name}" started on campaign "${campaign.name}"`,

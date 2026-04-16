@@ -139,7 +139,7 @@ export class Workflow {
         type: LOG_TYPE.ERROR,
         message: `error occur: ${err?.message}`,
       });
-      return;
+      throw err;
     }
 
     // Override workflow variables if provided (e.g. from Telegram bot)

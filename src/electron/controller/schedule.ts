@@ -99,6 +99,10 @@ export const runScheduleController = () => {
           continue;
         }
 
+        if (schedule.type === ScheduleType.AGENT) {
+          agentTaskScheduler.unregister(scheduleId);
+        }
+
         const { listJob = [] } = schedule;
         for (const job of listJob) {
           const workflow = await workflowManager.getWorkflow(
@@ -129,6 +133,25 @@ export const runScheduleController = () => {
     MESSAGE.RUN_SCHEDULE_NOW,
     MESSAGE.RUN_SCHEDULE_NOW_RES,
     async (event, payload) => {
+      const [schedule] = await scheduleDB.getOneSchedule(payload.scheduleId);
+      if (!schedule) {
+        event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, {
+          error: "Schedule not found",
+        });
+        return;
+      }
+      if (!schedule.isActive) {
+        event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, {
+          error: "Schedule is not active",
+        });
+        return;
+      }
+      if (schedule.isPaused) {
+        event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, {
+          error: "Schedule is paused",
+        });
+        return;
+      }
       event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, { error: null });
       agentTaskScheduler.runNow(payload.scheduleId).catch((err) => {
         logEveryWhere({

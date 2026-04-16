@@ -19,11 +19,10 @@ const useCreateSchedule = () => {
     MESSAGE.CREATE_SCHEDULE_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.error) {
-          message.error(payload.error);
-          return;
-        }
         dispatch(actSaveCreateSchedule(payload.data));
+      },
+      onError: (errorMsg) => {
+        message.error(errorMsg);
       },
     },
   );
@@ -37,11 +36,10 @@ const useUpdateSchedule = () => {
     MESSAGE.UPDATE_SCHEDULE_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.error) {
-          message.error(payload.error);
-          return;
-        }
         dispatch(actSaveUpdateSchedule(payload.data));
+      },
+      onError: (errorMsg) => {
+        message.error(errorMsg);
       },
     },
   );
@@ -83,8 +81,8 @@ const useDeleteSchedule = () => {
     MESSAGE.DELETE_SCHEDULE,
     MESSAGE.DELETE_SCHEDULE_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) message?.error(error);
+      onError: (errorMsg) => {
+        message.error(errorMsg);
       },
     },
   );
@@ -98,12 +96,11 @@ const useRunScheduleNow = () => {
     MESSAGE.RUN_SCHEDULE_NOW,
     MESSAGE.RUN_SCHEDULE_NOW_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message.error(error);
-        } else {
-          message.success(translate("schedule.triggeredBackground"));
-        }
+      onSuccess: () => {
+        message.success(translate("schedule.triggeredBackground"));
+      },
+      onError: (errorMsg) => {
+        message.error(errorMsg);
       },
     },
   );
@@ -116,16 +113,15 @@ const useGetRunningAgentSchedule = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
-      (_event: any, payload: any) => {
-        dispatch(actSetActiveAgentRuns(payload?.data || []));
-        setLoading(false);
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      dispatch(actSetActiveAgentRuns(payload?.data || []));
+      setLoading(false);
+    };
+    window?.electron?.on(MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
+        handler,
       );
     };
   }, []);

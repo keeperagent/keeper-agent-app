@@ -133,7 +133,7 @@ class ScheduleRunner {
     if (scheduleAllocationLimit) {
       return;
     }
-    workflow.runWorkflow(jobEncryptKey || "");
+    workflow.runWorkflow(jobEncryptKey || "").catch(() => {});
 
     const checkTimeoutInterval = setInterval(async () => {
       isJobTimeout = await jobDB.checkJobTimeout(job);

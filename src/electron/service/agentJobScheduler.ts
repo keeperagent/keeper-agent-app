@@ -14,7 +14,7 @@ import { agentProfileDB } from "@/electron/database/agentProfile";
 import { jobDB } from "@/electron/database/job";
 import { preferenceService } from "@/electron/service/preference";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
-import { logEveryWhere, sleep } from "@/electron/service/util";
+import { logEveryWhere } from "@/electron/service/util";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import { JobModel } from "@/electron/database/index";
 import { workflowManager } from "@/electron/simulator/workflow";
@@ -216,7 +216,8 @@ class AgentTaskScheduler {
         prevHandoffToNext = currentHandoffToNext;
         if (
           prevLog?.status === AgentScheduleStatus.ERROR ||
-          prevLog?.status === AgentScheduleStatus.SKIPPED
+          prevLog?.status === AgentScheduleStatus.SKIPPED ||
+          prevLog?.status === AgentScheduleStatus.RETRYING
         ) {
           continue;
         }
@@ -290,16 +291,12 @@ class AgentTaskScheduler {
       if (encryptKeyErr) {
         throw encryptKeyErr;
       }
-      workflow.runWorkflow(
+      await workflow.runWorkflow(
         jobEncryptKey || "",
         overrideListVariable,
         session,
         handoffToNext,
       );
-
-      while (workflow.monitor.isRunning) {
-        await sleep(1000);
-      }
 
       const [updated] = await appLogDB.updateAppLog(logEntry?.id!, {
         status: AgentScheduleStatus.SUCCESS,
@@ -671,6 +668,14 @@ class AgentTaskScheduler {
         message: `AgentTaskScheduler.onUnlock() error: ${err?.message}`,
       });
     }
+  };
+
+  pause = async (scheduleId: number): Promise<void> => {
+    await scheduleDB.updateSchedule({ id: scheduleId, isPaused: true });
+  };
+
+  resume = async (scheduleId: number): Promise<void> => {
+    await scheduleDB.updateSchedule({ id: scheduleId, isPaused: false });
   };
 
   getRunningScheduleIds = (): number[] => {
