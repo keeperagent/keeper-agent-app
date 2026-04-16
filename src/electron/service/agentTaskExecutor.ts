@@ -114,7 +114,7 @@ class AgentTaskExecutor {
 
         await agentTaskDB.updateAgentTask(taskId, {
           status: AgentTaskStatus.DONE,
-          result: { text: resultText },
+          result: { value: resultText },
           completedAt: Date.now(),
         });
         await appLogDB.createAppLog({

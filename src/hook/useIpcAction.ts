@@ -35,14 +35,19 @@ const useIpcAction = <TReq = any, TRes = any>(
   const { onSuccess, deps = [] } = options;
 
   useEffect(() => {
-    window?.electron?.on(resChannel, (_event: any, payload: TRes) => {
+    const handler = (_event: any, payload: TRes) => {
       setLoading(false);
-      setIsSuccess(true);
-      onSuccess?.(payload, dispatch);
-    });
+      const hasError = (payload as any)?.error;
+      setIsSuccess(!hasError);
+      if (!hasError) {
+        onSuccess?.(payload, dispatch);
+      }
+    };
+
+    window?.electron?.on(resChannel, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(resChannel);
+      window?.electron?.removeListener(resChannel, handler);
     };
   }, deps);
 

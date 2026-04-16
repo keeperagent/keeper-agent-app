@@ -83,7 +83,7 @@ const useAgentTaskRealtime = (onChanged: () => void) => {
   useEffect(() => {
     window?.electron?.on(MESSAGE.AGENT_TASK_CHANGED, onChanged);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.AGENT_TASK_CHANGED);
+      window?.electron?.removeListener(MESSAGE.AGENT_TASK_CHANGED, onChanged);
     };
   }, [onChanged]);
 };

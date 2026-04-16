@@ -2912,9 +2912,6 @@ export type IAgentMailbox = {
 
 export enum AgentTaskStatus {
   INIT = "INIT",
-  AWAITING_APPROVAL = "AWAITING_APPROVAL",
-  APPROVED = "APPROVED",
-  ASSIGNED = "ASSIGNED",
   IN_PROGRESS = "IN_PROGRESS",
   DONE = "DONE",
   FAILED = "FAILED",
