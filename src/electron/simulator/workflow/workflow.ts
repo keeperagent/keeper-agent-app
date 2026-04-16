@@ -542,8 +542,12 @@ export class Workflow {
         });
 
         if (flowProfile?.config?.workflowType) {
-          const maxConcurrency =
+          const rawConcurrency =
             (flowProfile?.config as any)?.maxConcurrency || numberOfThread;
+          const maxConcurrency = Math.max(
+            1,
+            Math.min(rawConcurrency, numberOfThread),
+          );
           const nodeId = flowProfile?.nodeID!;
 
           while (

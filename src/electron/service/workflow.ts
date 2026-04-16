@@ -26,7 +26,17 @@ const exportWorkflow = async (params: {
     }
 
     const listWorkflowInfo = res?.map((workflow: IWorkflow) =>
-      _.pick(workflow, ["name", "note", "data"]),
+      _.pick(workflow, [
+        "name",
+        "note",
+        "data",
+        "listVariable",
+        "numberOfThread",
+        "numberOfRound",
+        "windowWidth",
+        "windowHeight",
+        "isFullScreen",
+      ]),
     );
     const fileData = JSON.stringify(listWorkflowInfo);
     const encryptedData = encryptionService.encryptData(fileData, FILE_KEY);

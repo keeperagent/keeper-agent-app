@@ -19,7 +19,7 @@ export default (db: Sequelize) =>
         defaultValue: null,
       },
       data: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         defaultValue: "",
       },
       numberOfThread: {
@@ -53,7 +53,7 @@ export default (db: Sequelize) =>
         defaultValue: "",
       },
       listVariable: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         defaultValue: "[]",
       },
       createAt: { type: DataTypes.INTEGER, allowNull: false },

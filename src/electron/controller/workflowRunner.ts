@@ -181,6 +181,7 @@ export const runWorkflowRunnerController = () => {
           data: [],
           totalData: 0,
         });
+        return;
       }
 
       let eventABI = eventDetail?.inputs
@@ -207,6 +208,7 @@ export const runWorkflowRunnerController = () => {
           data: [],
           totalData: 0,
         });
+        return;
       }
       const [results, totalData] =
         contractSniper?.getSampleResult(sampleSize) || [];
