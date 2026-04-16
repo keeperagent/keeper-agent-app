@@ -971,7 +971,7 @@ const ManageCampaignProfile = (props: IProps) => {
   };
 
   const isStaleData =
-    listCampaignProfile.length > 0 &&
+    listCampaignProfile?.length > 0 &&
     listCampaignProfile[0]?.campaignId !== selectedCampaign?.id;
 
   return (

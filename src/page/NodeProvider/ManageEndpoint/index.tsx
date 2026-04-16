@@ -263,7 +263,7 @@ const NodeEndpoint = (props: any) => {
   };
 
   const isStaleData =
-    listNodeEndpoint.length > 0 &&
+    listNodeEndpoint?.length > 0 &&
     listNodeEndpoint[0]?.groupId !== selectedNodeEndpointGroup?.id;
 
   return (

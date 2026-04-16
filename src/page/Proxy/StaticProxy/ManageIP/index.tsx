@@ -239,7 +239,7 @@ const StaticProxyList = (props: any) => {
   };
 
   const isStaleData =
-    listStaticProxy.length > 0 &&
+    listStaticProxy?.length > 0 &&
     listStaticProxy[0]?.groupId !== selectedStaticProxyGroup?.id;
 
   return (
