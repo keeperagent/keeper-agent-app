@@ -480,7 +480,8 @@ class AgentTaskScheduler {
       );
 
       const lastMessage = response?.messages?.[response.messages.length - 1];
-      return normalizeAgentMessageContent(lastMessage?.content);
+      const rawResult = normalizeAgentMessageContent(lastMessage?.content);
+      return await this.sendNotificationIfNeeded(job, preference, rawResult);
     } finally {
       await cleanup();
     }
@@ -499,10 +500,51 @@ class AgentTaskScheduler {
     }
 
     if (job.notifyOnlyIfAgentSays) {
-      return `If your analysis warrants a notification, send a Telegram message summarizing your findings. Use the Telegram bot token: "${botToken}" and chat ID: "${chatId}". Do not send a message if there is nothing significant to report.`;
+      return `If your analysis warrants a notification, end your response with [NOTIFY] on its own line. If there is nothing significant to report, end with [NO_NOTIFY].`;
     }
 
-    return `After completing your task, send a Telegram message summarizing your findings. Use the Telegram bot token: "${botToken}" and chat ID: "${chatId}".`;
+    return "";
+  };
+
+  private sendNotificationIfNeeded = async (
+    job: IJob,
+    preference: any,
+    result: string,
+  ): Promise<string> => {
+    if (!job.notifyPlatform) {
+      return result;
+    }
+
+    const chatId = preference?.chatIdTelegram?.toString() || "";
+    const botToken = preference?.botTokenTelegram || "";
+
+    if (!chatId || !botToken) {
+      return result;
+    }
+
+    let shouldNotify = false;
+    let cleanedResult = result;
+
+    if (job.notifyOnlyIfAgentSays) {
+      if (/\[NOTIFY\]/i.test(result)) {
+        shouldNotify = true;
+      }
+      cleanedResult = result.replace(/\[(NO_)?NOTIFY\]\s*/gi, "").trim();
+    } else {
+      shouldNotify = true;
+    }
+
+    if (shouldNotify) {
+      try {
+        await telegramBotService.sendMessage(botToken, cleanedResult, chatId);
+      } catch (err: any) {
+        logEveryWhere({
+          message: `AgentTaskScheduler.sendNotificationIfNeeded() error: ${err?.message}`,
+        });
+      }
+    }
+
+    return cleanedResult;
   };
 
   private evaluateCondition = async (

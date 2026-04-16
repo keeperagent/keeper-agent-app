@@ -1,5 +1,4 @@
 import { DynamicTool } from "@langchain/core/tools";
-import { execFile } from "child_process";
 import { existsSync } from "fs";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
@@ -10,13 +9,14 @@ import {
   buildSafeEnv,
   containsSensitivePath,
   getWorkspaceRoot,
+  spawnWithTimeout,
 } from "@/electron/appAgent/baseTool/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
 import { loadPendingCode, removePendingCode } from "./pendingCodeStore";
 
-const TIMEOUT_MS = 60_000;
-const INSTALL_TIMEOUT_MS = 60_000;
+const TIMEOUT_MS = 120_000;
+const INSTALL_TIMEOUT_MS = 120_000;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 // Tracks failed code per agentId to block duplicate retries programmatically
@@ -238,20 +238,9 @@ const isModuleInstalled = (
 };
 
 const runPipInstall = (args: string[], cwd: string): Promise<string> =>
-  new Promise((resolve, reject) => {
-    execFile(
-      "pip3",
-      args,
-      { timeout: INSTALL_TIMEOUT_MS, cwd },
-      (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(stderr?.trim() || error.message));
-        } else {
-          resolve(stdout.trim());
-        }
-      },
-    );
-  });
+  spawnWithTimeout("pip3", args, { timeout: INSTALL_TIMEOUT_MS, cwd }).then(
+    ({ stdout }) => stdout,
+  );
 
 const installModules = async (
   moduleNames: string[],
@@ -345,29 +334,11 @@ export const executePythonTool = (toolContext?: ToolContext) =>
         PYTHONPATH: sitePackagesDir,
       });
 
-      const runScript = (): Promise<{ stdout: string; stderr: string }> =>
-        new Promise((resolve, reject) => {
-          execFile(
-            "python3",
-            [scriptPath],
-            {
-              timeout: TIMEOUT_MS,
-              maxBuffer: 1024 * 1024,
-              cwd: getPyWorkspaceDir(),
-              env: childEnv,
-            },
-            (error, stdout, stderr) => {
-              if (error) {
-                const msg = stderr?.trim() || error.message;
-                reject(new Error(msg));
-              } else {
-                resolve({
-                  stdout: stdout.trim(),
-                  stderr: stderr.trim(),
-                });
-              }
-            },
-          );
+      const runScript = () =>
+        spawnWithTimeout("python3", [scriptPath], {
+          timeout: TIMEOUT_MS,
+          cwd: getPyWorkspaceDir(),
+          env: childEnv,
         });
 
       try {

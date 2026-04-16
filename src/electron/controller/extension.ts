@@ -378,10 +378,14 @@ export const extensionController = () => {
     }
 
     await fs.ensureDir(destinationPath);
+    const resolvedDestination = path.resolve(destinationPath);
     for (const [name, entry] of Object.entries(zip.files)) {
       if (!entry.dir) {
+        const destPath = path.resolve(resolvedDestination, name);
+        if (!destPath.startsWith(resolvedDestination + path.sep)) {
+          throw new Error(`Zip Slip detected: ${name}`);
+        }
         const content = await entry.async("nodebuffer");
-        const destPath = path.join(destinationPath, name);
         await fs.ensureDir(path.dirname(destPath));
         await fs.writeFile(destPath, content);
       }
