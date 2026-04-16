@@ -9,6 +9,8 @@ import { mcpServerDB } from "@/electron/database/mcpServer";
 import { IMcpServer, MCPServerStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { TimeoutCache } from "@/electron/service/timeoutCache";
+import { MESSAGE } from "@/electron/constant";
+import { sendToRenderer } from "@/electron/main";
 
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
 const ONE_MINUTE_MS = 60 * 1000;
@@ -274,7 +276,7 @@ export class McpToolLoader {
                 });
 
                 if (result.isError) {
-                  return `Error: ${JSON.stringify(result.content)}`;
+                  return `Error: ${JSON.stringify(result.content)}. Do NOT retry.`;
                 }
 
                 if (Array.isArray(result.content)) {
@@ -287,7 +289,7 @@ export class McpToolLoader {
 
                 return JSON.stringify(result.content);
               } catch (err: any) {
-                return `Error calling MCP tool "${mcpTool.name}": ${err?.message}`;
+                return `Error calling MCP tool "${mcpTool.name}": ${err?.message}. Do NOT retry.`;
               }
             },
           } as any),
@@ -524,6 +526,10 @@ export class McpToolLoader {
       lastError,
       toolsCount,
     } as IMcpServer);
+
+    sendToRenderer(MESSAGE.MCP_SERVER_STATUS_UPDATED, {
+      data: { id, status, lastError, toolsCount },
+    });
   };
 }
 

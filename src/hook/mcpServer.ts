@@ -1,6 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
 import { MESSAGE } from "@/electron/constant";
 import { IMcpServer } from "@/electron/type";
+import type { AppDispatch } from "@/redux/store";
 import {
   actSaveGetListMcpServer,
   actSaveCreateMcpServer,
@@ -11,6 +13,7 @@ import type { IpcGetListMcpServerPayload } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
 
 const useGetListMcpServer = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const {
     execute: getListMcpServer,
     loading,
@@ -23,6 +26,31 @@ const useGetListMcpServer = () => {
         dispatch(actSaveGetListMcpServer(payload?.data)),
     },
   );
+
+  useEffect(() => {
+    const handler = (_event: any, payload: any) => {
+      const { id, status, lastError, toolsCount } = payload?.data || {};
+      if (id == null) {
+        return;
+      }
+      dispatch(
+        actSaveUpdateMcpServer({
+          id,
+          status,
+          lastError,
+          toolsCount,
+        } as IMcpServer),
+      );
+    };
+    window?.electron?.on(MESSAGE.MCP_SERVER_STATUS_UPDATED, handler);
+    return () => {
+      window?.electron?.removeListener(
+        MESSAGE.MCP_SERVER_STATUS_UPDATED,
+        handler,
+      );
+    };
+  }, []);
+
   return { loading, isSuccess, getListMcpServer };
 };
 
