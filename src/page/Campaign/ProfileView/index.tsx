@@ -970,6 +970,10 @@ const ManageCampaignProfile = (props: IProps) => {
     setCacheEncryptKey(selectedCampaign?.id || 0, value);
   };
 
+  const isStaleData =
+    listCampaignProfile.length > 0 &&
+    listCampaignProfile[0]?.campaignId !== selectedCampaign?.id;
+
   return (
     <PageWrapper>
       <title>Profile</title>
@@ -1177,7 +1181,7 @@ const ManageCampaignProfile = (props: IProps) => {
         virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
-        dataSource={dataSource}
+        dataSource={isStaleData ? [] : dataSource}
         columns={renderColumns(
           listResourceColumn,
           listAdditionalColumn,
@@ -1211,7 +1215,7 @@ const ManageCampaignProfile = (props: IProps) => {
           columnWidth: 30,
         }}
         scroll={{ x: tableWidth, y: 650 }}
-        loading={getDataLoading}
+        loading={getDataLoading || isStaleData}
         onChange={onTableChange}
         size="middle"
         bordered

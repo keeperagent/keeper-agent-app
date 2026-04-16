@@ -282,6 +282,10 @@ const ManageResource = (props: any) => {
     }));
   }, [listResource, page, pageSize]);
 
+  const isStaleData =
+    listResource.length > 0 &&
+    listResource[0]?.groupId !== selectedResourceGroup?.id;
+
   return (
     <PageWrapper>
       <div className="heading">
@@ -379,7 +383,7 @@ const ManageResource = (props: any) => {
         virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
-        dataSource={dataSource}
+        dataSource={isStaleData ? [] : dataSource}
         columns={renderColumns(
           listColumn,
           onOpenModalResource,
@@ -402,7 +406,7 @@ const ManageResource = (props: any) => {
           columnWidth: 30,
         }}
         scroll={{ x: 700, y: 600 }}
-        loading={getDataLoading}
+        loading={getDataLoading || isStaleData}
         onChange={onTableChange}
         size="middle"
         bordered
