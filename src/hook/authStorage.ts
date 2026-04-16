@@ -23,21 +23,19 @@ const useAuthStorage = () => {
  */
 const useRestoreAuth = () => {
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_AUTH_STATE_RES,
-      (_event: any, payload: any) => {
-        store.dispatch(
-          actRestoreAuth({
-            token: payload?.token || null,
-            user: payload?.user || null,
-          }),
-        );
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      store.dispatch(
+        actRestoreAuth({
+          token: payload?.token || null,
+          user: payload?.user || null,
+        }),
+      );
+    };
+    window?.electron?.on(MESSAGE.GET_AUTH_STATE_RES, handler);
     window?.electron?.send(MESSAGE.GET_AUTH_STATE);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GET_AUTH_STATE_RES);
+      window?.electron?.removeListener(MESSAGE.GET_AUTH_STATE_RES, handler);
     };
   }, []);
 };

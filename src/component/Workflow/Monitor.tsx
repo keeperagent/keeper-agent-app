@@ -50,28 +50,25 @@ const Monitor = (props: IProps) => {
   }, [selectedCampaign?.id, selectedWorkflow?.id]);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.SCRIPT_RUN_COMPLETED,
-      (event: any, payload: any) => {
-        const { isRunWithCampaign } = payload;
-        props?.actSetIsRun(false);
-        props?.actClearWhenStop();
-
-        notification.success({
-          message: translateFunc("notification"),
-          description: isRunWithCampaign
-            ? translateFunc("workflow.campaignCompleted")
-            : translateFunc("workflow.workflowCompleted"),
-        });
-        props?.actSaveCampaignProfileStatus({
-          totalProfile,
-          totalUnFinishedProfile: 0,
-        });
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { isRunWithCampaign } = payload;
+      props?.actSetIsRun(false);
+      props?.actClearWhenStop();
+      notification.success({
+        message: translateFunc("notification"),
+        description: isRunWithCampaign
+          ? translateFunc("workflow.campaignCompleted")
+          : translateFunc("workflow.workflowCompleted"),
+      });
+      props?.actSaveCampaignProfileStatus({
+        totalProfile,
+        totalUnFinishedProfile: 0,
+      });
+    };
+    window?.electron?.on(MESSAGE.SCRIPT_RUN_COMPLETED, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.SCRIPT_RUN_COMPLETED);
+      window?.electron?.removeListener(MESSAGE.SCRIPT_RUN_COMPLETED, handler);
     };
   }, []);
 
@@ -84,76 +81,71 @@ const Monitor = (props: IProps) => {
   }, [status]);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.WORKFLOW_THREAD_STOPPED,
-      (event: any, payload: any) => {
-        const { threadID } = payload;
-        props?.actCleanThread({
-          threadID,
-        });
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { threadID } = payload;
+      props?.actCleanThread({ threadID });
+    };
+    window?.electron?.on(MESSAGE.WORKFLOW_THREAD_STOPPED, handler);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.WORKFLOW_THREAD_STOPPED);
+      window?.electron?.removeListener(
+        MESSAGE.WORKFLOW_THREAD_STOPPED,
+        handler,
+      );
     };
   }, []);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.WORKFLOW_BATCH_UPDATE,
-      (event: any, payload: any) => {
-        const {
-          mapThread,
-          mapNodeError,
-          mapMinMaxDuration,
-          mapNodeSlots,
-          isRunning,
-          currentRound,
-          isSleeping,
-        } = payload;
-        // Single Redux dispatch for all thread/error/duration updates
-        props?.actSyncWorkflowData({
-          mapThread,
-          mapError: mapNodeError,
-          mapMinMaxDuration,
-          mapNodeSlots,
-          isRunning,
-          currentRound,
-          isSleeping,
-        });
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const {
+        mapThread,
+        mapNodeError,
+        mapMinMaxDuration,
+        mapNodeSlots,
+        isRunning,
+        currentRound,
+        isSleeping,
+      } = payload;
+      props?.actSyncWorkflowData({
+        mapThread,
+        mapError: mapNodeError,
+        mapMinMaxDuration,
+        mapNodeSlots,
+        isRunning,
+        currentRound,
+        isSleeping,
+      });
+    };
+    window?.electron?.on(MESSAGE.WORKFLOW_BATCH_UPDATE, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.WORKFLOW_BATCH_UPDATE);
+      window?.electron?.removeListener(MESSAGE.WORKFLOW_BATCH_UPDATE, handler);
     };
   }, []);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.WORKFLOW_SLEEPING_STATUS,
-      (event: any, payload: any) => {
-        const { isSleeping } = payload;
-        props?.actSetIsSleeping(isSleeping);
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { isSleeping } = payload;
+      props?.actSetIsSleeping(isSleeping);
+    };
+    window?.electron?.on(MESSAGE.WORKFLOW_SLEEPING_STATUS, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.WORKFLOW_SLEEPING_STATUS);
+      window?.electron?.removeListener(
+        MESSAGE.WORKFLOW_SLEEPING_STATUS,
+        handler,
+      );
     };
   }, []);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.WORKFLOW_HAS_NEW_ROUND,
-      (event: any, payload: any) => {
-        const { round } = payload;
-        props?.actSetCurrentRound(round);
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { round } = payload;
+      props?.actSetCurrentRound(round);
+    };
+    window?.electron?.on(MESSAGE.WORKFLOW_HAS_NEW_ROUND, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.WORKFLOW_HAS_NEW_ROUND);
+      window?.electron?.removeListener(MESSAGE.WORKFLOW_HAS_NEW_ROUND, handler);
     };
   }, []);
 

@@ -48,7 +48,7 @@ const useGetFolderStatistic = (folderType: FolderType) => {
   const { req, res, saveAction } = FOLDER_CONFIG[folderType];
 
   useEffect(() => {
-    window?.electron?.on(res, (_event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       setLoading(false);
       const { data, error, totalFolder, totalSize } = payload;
       if (error) {
@@ -56,10 +56,11 @@ const useGetFolderStatistic = (folderType: FolderType) => {
         return;
       }
       dispatch(saveAction({ listFolder: data, totalFolder, totalSize }));
-    });
+    };
+    window?.electron?.on(res, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(res);
+      window?.electron?.removeListener(res, handler);
     };
   }, []);
 
@@ -76,18 +77,17 @@ const useGetDatabaseFileStatistic = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_DATABASE_FILE_STATISTIC_RES,
-      (_event: any, payload: any) => {
-        setLoading(false);
-        const { data } = payload;
-        dispatch(actSaveDatabaseStatistic(data));
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      setLoading(false);
+      const { data } = payload;
+      dispatch(actSaveDatabaseStatistic(data));
+    };
+    window?.electron?.on(MESSAGE.GET_DATABASE_FILE_STATISTIC_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.GET_DATABASE_FILE_STATISTIC_RES,
+        handler,
       );
     };
   }, []);
@@ -105,17 +105,15 @@ const useGetFolderPath = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_FOLDER_PATH_RES,
-      (_event: any, payload: any) => {
-        setLoading(false);
-        const { data } = payload;
-        dispatch(actSaveFolderPath(data));
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      setLoading(false);
+      const { data } = payload;
+      dispatch(actSaveFolderPath(data));
+    };
+    window?.electron?.on(MESSAGE.GET_FOLDER_PATH_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GET_FOLDER_PATH_RES);
+      window?.electron?.removeListener(MESSAGE.GET_FOLDER_PATH_RES, handler);
     };
   }, []);
 

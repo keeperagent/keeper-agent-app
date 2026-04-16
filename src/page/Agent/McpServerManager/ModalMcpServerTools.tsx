@@ -60,7 +60,7 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
     };
     window?.electron?.on(MESSAGE.GET_MCP_SERVER_TOOLS_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GET_MCP_SERVER_TOOLS_RES);
+      window?.electron?.removeListener(MESSAGE.GET_MCP_SERVER_TOOLS_RES, handler);
     };
   }, [open, serverId, serverName, config]);
 

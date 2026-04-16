@@ -6,20 +6,18 @@ const useCheckMasterPasswordExists = () => {
   const [isSetupMode, setIsSetupMode] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES,
-      (_event: any, payload: any) => {
-        setIsChecking(false);
-        const exists = payload?.data?.exists;
-        setIsSetupMode(!exists);
-      },
-    );
-
+    const handler = (_event: any, payload: any) => {
+      setIsChecking(false);
+      const exists = payload?.data?.exists;
+      setIsSetupMode(!exists);
+    };
+    window?.electron?.on(MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES, handler);
     window?.electron?.send(MESSAGE.CHECK_MASTER_PASSWORD_EXISTS, {});
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES,
+        handler,
       );
     };
   }, []);
@@ -33,20 +31,21 @@ const useSetupMasterPassword = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.SETUP_MASTER_PASSWORD_RES,
-      (_event: any, payload: any) => {
-        setLoading(false);
-        if (payload?.success) {
-          setIsSuccess(true);
-        } else {
-          setErrorMessage(payload?.message);
-        }
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      setLoading(false);
+      if (payload?.success) {
+        setIsSuccess(true);
+      } else {
+        setErrorMessage(payload?.message);
+      }
+    };
+    window?.electron?.on(MESSAGE.SETUP_MASTER_PASSWORD_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.SETUP_MASTER_PASSWORD_RES);
+      window?.electron?.removeListener(
+        MESSAGE.SETUP_MASTER_PASSWORD_RES,
+        handler,
+      );
     };
   }, []);
 
@@ -67,22 +66,23 @@ const useVerifyMasterPassword = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.VERIFY_MASTER_PASSWORD_RES,
-      (_event: any, payload: any) => {
-        setLoading(false);
-        if (payload?.success) {
-          setIsSuccess(true);
-          setErrorMessage(null);
-        } else {
-          setIsFailed(true);
-          setErrorMessage(payload?.message);
-        }
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      setLoading(false);
+      if (payload?.success) {
+        setIsSuccess(true);
+        setErrorMessage(null);
+      } else {
+        setIsFailed(true);
+        setErrorMessage(payload?.message);
+      }
+    };
+    window?.electron?.on(MESSAGE.VERIFY_MASTER_PASSWORD_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.VERIFY_MASTER_PASSWORD_RES);
+      window?.electron?.removeListener(
+        MESSAGE.VERIFY_MASTER_PASSWORD_RES,
+        handler,
+      );
     };
   }, []);
 
@@ -103,21 +103,22 @@ const useResetMasterPassword = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.RESET_MASTER_PASSWORD_RES,
-      (_event: any, payload: any) => {
-        setLoading(false);
-        if (payload?.success) {
-          setIsSuccess(true);
-          setErrorMessage(null);
-        } else {
-          setErrorMessage(payload?.error);
-        }
-      },
-    );
+    const handler = (_event: any, payload: any) => {
+      setLoading(false);
+      if (payload?.success) {
+        setIsSuccess(true);
+        setErrorMessage(null);
+      } else {
+        setErrorMessage(payload?.error);
+      }
+    };
+    window?.electron?.on(MESSAGE.RESET_MASTER_PASSWORD_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.RESET_MASTER_PASSWORD_RES);
+      window?.electron?.removeListener(
+        MESSAGE.RESET_MASTER_PASSWORD_RES,
+        handler,
+      );
     };
   }, []);
 

@@ -229,7 +229,7 @@ const AgentChatView = ({
           data: Array<{ path: string; name: string; extension: string }> | null;
         },
       ) => {
-        window?.electron?.removeAllListeners(MESSAGE.CHOOSE_FILE_RES);
+        window?.electron?.removeListener(MESSAGE.CHOOSE_FILE_RES, handleRes);
         const list = data?.data || [];
         if (list.length) {
           const newFiles = list.map(fileInfoToAttached);
@@ -254,8 +254,9 @@ const AgentChatView = ({
               }
               pending -= 1;
               if (pending <= 0) {
-                window?.electron?.removeAllListeners(
+                window?.electron?.removeListener(
                   MESSAGE.READ_FILE_AS_DATA_URL_RES,
+                  onDataUrl,
                 );
               }
             };
@@ -521,17 +522,25 @@ const AgentChatView = ({
                             {msg.toolCalls && msg.toolCalls.length > 0 ? (
                               <ToolCallGroup
                                 toolCalls={msg.toolCalls}
-                                isActive={!!msg.isLoading || !!msg.executingToolText || !!msg.isAgentProcessing}
+                                isActive={
+                                  !!msg.isLoading ||
+                                  !!msg.executingToolText ||
+                                  !!msg.isAgentProcessing
+                                }
                               />
-                            ) : (msg.isLoading && !msg.content) ? (
+                            ) : msg.isLoading && !msg.content ? (
                               <ExecutingToolBadge>
                                 <span className="spinner" />
-                                {msg.executingToolText || translate("agent.thinking")}
+                                {msg.executingToolText ||
+                                  translate("agent.thinking")}
                               </ExecutingToolBadge>
                             ) : null}
 
                             {msg.content && (
-                              <MessageBody content={msg.content} isUser={false} />
+                              <MessageBody
+                                content={msg.content}
+                                isUser={false}
+                              />
                             )}
                           </div>
                           {(timestamp || !msg.isLoading) && (

@@ -63,21 +63,19 @@ const useCreateProfile = () => {
   const [left, setLeft] = useState(0);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.CREATE_PROFILE_RES,
-      (event: any, payload: any) => {
-        const { data = {} } = payload;
-        if (data?.isDone) {
-          setLoading(false);
-          setIsSuccess(true);
-        } else {
-          setCount(data?.count);
-          setLeft(data?.left);
-        }
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { data = {} } = payload;
+      if (data?.isDone) {
+        setLoading(false);
+        setIsSuccess(true);
+      } else {
+        setCount(data?.count);
+        setLeft(data?.left);
+      }
+    };
+    window?.electron?.on(MESSAGE.CREATE_PROFILE_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.CREATE_PROFILE_RES);
+      window?.electron?.removeListener(MESSAGE.CREATE_PROFILE_RES, handler);
     };
   }, []);
 

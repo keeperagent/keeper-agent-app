@@ -50,8 +50,8 @@ const ConnectWhatsApp = (props: IProps) => {
     });
 
     return () => {
-      window.electron.removeAllListeners(MESSAGE.WHATSAPP_QR);
-      window.electron.removeAllListeners(MESSAGE.WHATSAPP_STATUS);
+      window.electron.removeListener(MESSAGE.WHATSAPP_QR, handleQr);
+      window.electron.removeListener(MESSAGE.WHATSAPP_STATUS, handleStatus);
     };
   }, []);
 

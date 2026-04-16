@@ -11,7 +11,10 @@ import {
   importCampaignConfig,
 } from "@/electron/service/campaign";
 import { exportCampaignProfile } from "@/electron/service/campaignProfile";
-import { deleteFolder } from "@/electron/service/file";
+import {
+  deleteProfileFoldersByIds,
+  deleteProfileRecordsByIds,
+} from "@/electron/service/campaignProfileCleanup";
 import { MESSAGE, PROFILE_TYPE } from "@/electron/constant";
 import {
   AppLogType,
@@ -209,78 +212,37 @@ export const campaignController = () => {
         totalProfile += countByCampaign?.count || 0;
       });
 
-      // delete profile folder
-      const chunkSize = 100;
-      let totalDeletedFolder = 0;
-      await sleep(2000);
-      if (totalProfile === 0) {
-        event.reply(MESSAGE.DELETE_PROFILE_FOLDER_PROGRESS_RES, { data: 100 });
-        event.reply(MESSAGE.DELETE_CAMPAIGN_PROFILE_PROGRESS_RES, {
-          data: 100,
-        });
-      }
-      for (let i = 0; i < listCampaignID?.length; i++) {
+      // collect all profile IDs across campaigns
+      const allProfileIds: number[] = [];
+      for (const campaignId of listCampaignID) {
         const [listProfileId] =
           await campaignProfileDB.getListCampaignProfileIdByCampaign(
-            listCampaignID[i],
+            campaignId,
           );
-        const listIdChunk = _.chunk(listProfileId, chunkSize);
-
-        for (let j = 0; j < listIdChunk?.length; j++) {
-          const idChunk = listIdChunk[j];
-          const [listProfileRes] =
-            await campaignProfileDB.getListCampaignProfile({
-              page: 1,
-              pageSize: idChunk?.length,
-              listId: idChunk,
-            });
-          const listCampaignProfile =
-            listProfileRes?.data as ICampaignProfile[];
-
-          for (let k = 0; k < listCampaignProfile?.length; k++) {
-            const profileFolder = listCampaignProfile[k]?.profileFolderPath;
-            if (!profileFolder) {
-              continue;
-            }
-            await deleteFolder(profileFolder);
-          }
-
-          const progressPercentage = Math.round(
-            (idChunk?.length / totalProfile) * 100,
-          );
-          totalDeletedFolder += idChunk?.length;
-          if (progressPercentage > 1) {
-            event.reply(MESSAGE.DELETE_PROFILE_FOLDER_PROGRESS_RES, {
-              data: Math.round((totalDeletedFolder / totalProfile) * 100),
-            });
-          }
+        if (listProfileId) {
+          allProfileIds.push(...listProfileId);
         }
       }
 
-      // delete profile
-      await sleep(2000);
-      let totalDeletedProfile = 0;
-      for (let i = 0; i < listCampaignID?.length; i++) {
-        const [listProfileId] =
-          await campaignProfileDB.getListCampaignProfileIdByCampaign(
-            listCampaignID[i],
-          );
-        const listIdChunk = _.chunk(listProfileId, chunkSize);
+      await deleteProfileFoldersByIds(
+        allProfileIds,
+        totalProfile,
+        (percent) => {
+          event.reply(MESSAGE.DELETE_PROFILE_FOLDER_PROGRESS_RES, {
+            data: percent,
+          });
+        },
+      );
 
-        for (let i = 0; i < listIdChunk?.length; i++) {
-          const idChunk = listIdChunk[i];
-          await campaignProfileDB.deleteCampaignProfile(idChunk);
-          const progressPercentage = Math.round(
-            (idChunk?.length / totalProfile) * 100,
-          );
-          totalDeletedProfile += idChunk?.length;
-          if (progressPercentage > 1) {
-            event.reply(MESSAGE.DELETE_CAMPAIGN_PROFILE_PROGRESS_RES, {
-              data: Math.round((totalDeletedProfile / totalProfile) * 100),
-            });
-          }
-        }
-      }
+      await deleteProfileRecordsByIds(
+        allProfileIds,
+        totalProfile,
+        (percent) => {
+          event.reply(MESSAGE.DELETE_CAMPAIGN_PROFILE_PROGRESS_RES, {
+            data: percent,
+          });
+        },
+      );
 
       await sleep(2000);
       const deleteJobErr = await jobDB.deleteJob({

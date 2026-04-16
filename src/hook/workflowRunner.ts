@@ -24,21 +24,19 @@ import { useTranslation } from "./useTranslation";
 
 const useStopThread = () => {
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.TERMINATE_THREAD_RES,
-      (event: any, payload: any) => {
-        const { requestId, isDone } = payload;
-        if (isDone) {
-          responseManager.saveResponse(
-            responseManager.getKey(MESSAGE.TERMINATE_THREAD_RES, requestId),
-            isDone,
-          );
-        }
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { requestId, isDone } = payload;
+      if (isDone) {
+        responseManager.saveResponse(
+          responseManager.getKey(MESSAGE.TERMINATE_THREAD_RES, requestId),
+          isDone,
+        );
+      }
+    };
+    window?.electron?.on(MESSAGE.TERMINATE_THREAD_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.TERMINATE_THREAD_RES);
+      window?.electron?.removeListener(MESSAGE.TERMINATE_THREAD_RES, handler);
     };
   }, []);
 
@@ -72,23 +70,25 @@ const useGetSampleContractSniperResult = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
+    const handler = (event: any, payload: any) => {
+      setLoading(false);
+      setIsSuccess(true);
+      dispatch(
+        actSetSampleContractSniperResults({
+          data: payload?.data || [],
+          totalData: payload?.totalData,
+        }),
+      );
+    };
     window?.electron?.on(
       MESSAGE.GET_SAMPLE_CONTRACT_SNIPER_RESULT_RES,
-      (event: any, payload: any) => {
-        setLoading(false);
-        setIsSuccess(true);
-        dispatch(
-          actSetSampleContractSniperResults({
-            data: payload?.data || [],
-            totalData: payload?.totalData,
-          }),
-        );
-      },
+      handler,
     );
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.GET_SAMPLE_CONTRACT_SNIPER_RESULT_RES,
+        handler,
       );
     };
   }, []);
@@ -123,21 +123,18 @@ const useGetPriceCheckingData = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_PRICE_CHECKING_DATA_RES,
-      (event: any, payload: any) => {
-        setLoading(false);
-        setIsSuccess(true);
-        dispatch(
-          actSetPriceCheckingData({
-            data: payload?.data || [],
-          }),
-        );
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      setLoading(false);
+      setIsSuccess(true);
+      dispatch(actSetPriceCheckingData({ data: payload?.data || [] }));
+    };
+    window?.electron?.on(MESSAGE.GET_PRICE_CHECKING_DATA_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GET_PRICE_CHECKING_DATA_RES);
+      window?.electron?.removeListener(
+        MESSAGE.GET_PRICE_CHECKING_DATA_RES,
+        handler,
+      );
     };
   }, []);
 
@@ -162,22 +159,17 @@ const useGetMarketcapCheckingData = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_MARKETCAP_CHECKING_DATA_RES,
-      (event: any, payload: any) => {
-        setLoading(false);
-        setIsSuccess(true);
-        dispatch(
-          actSetMarketcapCheckingData({
-            data: payload?.data || [],
-          }),
-        );
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      setLoading(false);
+      setIsSuccess(true);
+      dispatch(actSetMarketcapCheckingData({ data: payload?.data || [] }));
+    };
+    window?.electron?.on(MESSAGE.GET_MARKETCAP_CHECKING_DATA_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.GET_MARKETCAP_CHECKING_DATA_RES,
+        handler,
       );
     };
   }, []);
@@ -203,25 +195,23 @@ const useStartWorkflow = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.START_WORKFLOW_RES,
-      (event: any, payload: any) => {
-        const { code } = payload;
-        if (code === RESPONSE_CODE.OBJECT_EXISTED) {
-          message.error(translate("workflow.anotherWorkflowUsingBrowser"));
-          dispatch(actSetIsRun(false));
-        } else if (code === RESPONSE_CODE.DUPLICATE_ERROR) {
-          message.warning(translate("workflow.workflowIsRunning"));
-          dispatch(actSetIsRun(true));
-        } else {
-          dispatch(actSetIsRun(true));
-        }
-        setLoading(false);
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { code } = payload;
+      if (code === RESPONSE_CODE.OBJECT_EXISTED) {
+        message.error(translate("workflow.anotherWorkflowUsingBrowser"));
+        dispatch(actSetIsRun(false));
+      } else if (code === RESPONSE_CODE.DUPLICATE_ERROR) {
+        message.warning(translate("workflow.workflowIsRunning"));
+        dispatch(actSetIsRun(true));
+      } else {
+        dispatch(actSetIsRun(true));
+      }
+      setLoading(false);
+    };
+    window?.electron?.on(MESSAGE.START_WORKFLOW_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.START_WORKFLOW_RES);
+      window?.electron?.removeListener(MESSAGE.START_WORKFLOW_RES, handler);
     };
   }, []);
 
@@ -248,17 +238,15 @@ const useStopWorkflow = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.STOP_WORKFLOW_RES,
-      (_event: any, _payload: any) => {
-        setLoading(false);
-        dispatch(actSetIsRun(false));
-        dispatch(actClearWhenStop());
-      },
-    );
+    const handler = (_event: any, _payload: any) => {
+      setLoading(false);
+      dispatch(actSetIsRun(false));
+      dispatch(actClearWhenStop());
+    };
+    window?.electron?.on(MESSAGE.STOP_WORKFLOW_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.STOP_WORKFLOW_RES);
+      window?.electron?.removeListener(MESSAGE.STOP_WORKFLOW_RES, handler);
     };
   }, []);
 
@@ -276,40 +264,39 @@ const useSyncWorkflowData = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.WORKFLOW_SYNC_DATA_TO_UI_RES,
-      (event: any, payload: any) => {
-        const { data } = payload;
-        const {
+    const handler = (event: any, payload: any) => {
+      const { data } = payload;
+      const {
+        mapThread,
+        mapNodeError,
+        isRunning,
+        mapMinMaxDuration,
+        currentRound,
+        isSleeping,
+        mapOpenProfileId,
+      } = data;
+
+      dispatch(
+        actSyncWorkflowData({
+          mapError: mapNodeError,
+          isRunning: isRunning,
           mapThread,
-          mapNodeError,
-          isRunning,
-          mapMinMaxDuration,
-          currentRound,
           isSleeping,
-          mapOpenProfileId,
-        } = data;
+          currentRound,
+          mapMinMaxDuration,
+        } as any),
+      );
+      dispatch(actSetMapOpenProfileId(mapOpenProfileId));
 
-        dispatch(
-          actSyncWorkflowData({
-            mapError: mapNodeError,
-            isRunning: isRunning,
-            mapThread,
-            isSleeping,
-            currentRound,
-            mapMinMaxDuration,
-          } as any),
-        );
-        dispatch(actSetMapOpenProfileId(mapOpenProfileId));
-
-        setLoading(false);
-        setIsSuccess(true);
-      },
-    );
+      setLoading(false);
+      setIsSuccess(true);
+    };
+    window?.electron?.on(MESSAGE.WORKFLOW_SYNC_DATA_TO_UI_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.WORKFLOW_SYNC_DATA_TO_UI_RES,
+        handler,
       );
     };
   }, []);
@@ -332,20 +319,18 @@ const useGetListRunningWorkflow = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_LIST_RUNNING_WORKFLOW_RES,
-      (event: any, payload: any) => {
-        const { data } = payload;
-        dispatch(actSetListRunningWorkflow(data));
-
-        setLoading(false);
-        setIsSuccess(true);
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { data } = payload;
+      dispatch(actSetListRunningWorkflow(data));
+      setLoading(false);
+      setIsSuccess(true);
+    };
+    window?.electron?.on(MESSAGE.GET_LIST_RUNNING_WORKFLOW_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.GET_LIST_RUNNING_WORKFLOW_RES,
+        handler,
       );
     };
   }, []);
@@ -364,16 +349,14 @@ const useStopAllWorkflow = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.STOP_ALL_WORKFLOW_RES,
-      (_event: any, _payload: any) => {
-        setLoading(false);
-        setIsSuccess(true);
-      },
-    );
+    const handler = (_event: any, _payload: any) => {
+      setLoading(false);
+      setIsSuccess(true);
+    };
+    window?.electron?.on(MESSAGE.STOP_ALL_WORKFLOW_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.STOP_ALL_WORKFLOW_RES);
+      window?.electron?.removeListener(MESSAGE.STOP_ALL_WORKFLOW_RES, handler);
     };
   }, []);
 
@@ -391,17 +374,18 @@ const useRunJavaScriptCode = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.RUN_JAVASCRIPT_CODE_RES,
-      (event: any, payload: any) => {
-        const { data } = payload;
-        setResult(data);
-        setLoading(false);
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { data } = payload;
+      setResult(data);
+      setLoading(false);
+    };
+    window?.electron?.on(MESSAGE.RUN_JAVASCRIPT_CODE_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.RUN_JAVASCRIPT_CODE_RES);
+      window?.electron?.removeListener(
+        MESSAGE.RUN_JAVASCRIPT_CODE_RES,
+        handler,
+      );
     };
   }, []);
 

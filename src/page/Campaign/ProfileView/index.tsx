@@ -518,9 +518,6 @@ const ManageCampaignProfile = (props: IProps) => {
     getListResourceGroup({ page: 1, pageSize: 1000 });
 
     return () => {
-      window?.electron?.removeAllListeners(
-        MESSAGE.OPEN_CAMPAIGN_PROFILE_IN_BROWSER_RES,
-      );
       clearInterval(interval);
       clearInterval(fetchColumnStatsInterval);
     };

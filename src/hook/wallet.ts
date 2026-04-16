@@ -13,11 +13,15 @@ import { useTranslation } from "./useTranslation";
 import { useIpcAction } from "./useIpcAction";
 
 const useGetListWallet = () => {
-  const { execute: getListWallet, loading } = useIpcAction<IpcGetListWalletPayload>(
-    MESSAGE.GET_LIST_WALLET,
-    MESSAGE.GET_LIST_WALLET_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveGetListWallet(payload?.data)) },
-  );
+  const { execute: getListWallet, loading } =
+    useIpcAction<IpcGetListWalletPayload>(
+      MESSAGE.GET_LIST_WALLET,
+      MESSAGE.GET_LIST_WALLET_RES,
+      {
+        onSuccess: (payload, dispatch) =>
+          dispatch(actSaveGetListWallet(payload?.data)),
+      },
+    );
   return { loading, getListWallet };
 };
 
@@ -91,16 +95,26 @@ const useDeleteWallet = () => {
     },
   );
   const deleteWallet = (listId: number[]) => execute({ data: listId });
-  return { deleteWallet, loading, isSuccess, hasDependencyError, setHasDependencyError };
+  return {
+    deleteWallet,
+    loading,
+    isSuccess,
+    hasDependencyError,
+    setHasDependencyError,
+  };
 };
 
 const useUpdateWallet = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.UPDATE_WALLET,
     MESSAGE.UPDATE_WALLET_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveUpdateWallet(payload.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveUpdateWallet(payload.data)),
+    },
   );
-  const updateWallet = (data: IWallet, encryptKey: string) => execute({ data, encryptKey });
+  const updateWallet = (data: IWallet, encryptKey: string) =>
+    execute({ data, encryptKey });
   return { updateWallet, loading, isSuccess };
 };
 
@@ -108,9 +122,13 @@ const useCreateWallet = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.CREATE_WALLET,
     MESSAGE.CREATE_WALLET_RES,
-    { onSuccess: (payload, dispatch) => dispatch(actSaveCreateWallet(payload?.data)) },
+    {
+      onSuccess: (payload, dispatch) =>
+        dispatch(actSaveCreateWallet(payload?.data)),
+    },
   );
-  const createWallet = (data: IWallet, encryptKey?: string) => execute({ data, encryptKey });
+  const createWallet = (data: IWallet, encryptKey?: string) =>
+    execute({ data, encryptKey });
   return { createWallet, loading, isSuccess };
 };
 
@@ -123,21 +141,22 @@ const useGenerateRandomWallet = () => {
   const [left, setLeft] = useState(0);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GENERATE_RANDOM_WALLET_RES,
-      (event: any, payload: any) => {
-        const { data = {} } = payload;
-        if (data?.isDone) {
-          setIsSuccess(true);
-          setLoading(false);
-        } else {
-          setCount(data?.count);
-          setLeft(data?.left);
-        }
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { data = {} } = payload;
+      if (data?.isDone) {
+        setIsSuccess(true);
+        setLoading(false);
+      } else {
+        setCount(data?.count);
+        setLeft(data?.left);
+      }
+    };
+    window?.electron?.on(MESSAGE.GENERATE_RANDOM_WALLET_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GENERATE_RANDOM_WALLET_RES);
+      window?.electron?.removeListener(
+        MESSAGE.GENERATE_RANDOM_WALLET_RES,
+        handler,
+      );
     };
   }, []);
 
@@ -154,7 +173,12 @@ const useGenerateRandomWallet = () => {
   }) => {
     setLoading(true);
     setIsSuccess(false);
-    window?.electron?.send(MESSAGE.GENERATE_RANDOM_WALLET, { total, groupId, encryptKey, chainType });
+    window?.electron?.send(MESSAGE.GENERATE_RANDOM_WALLET, {
+      total,
+      groupId,
+      encryptKey,
+      chainType,
+    });
   };
 
   return { generateRandomWallet, loading, isSuccess, count, left };
@@ -167,22 +191,25 @@ const useGenerateWalletFromPhrase = () => {
   const [left, setLeft] = useState(0);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES,
-      (event: any, payload: any) => {
-        const { data = {} } = payload;
-        if (data?.isDone) {
-          setIsSuccess(true);
-          setLoading(false);
-          if (data?.error) message.error(data?.error?.message);
-        } else {
-          setCount(data?.count);
-          setLeft(data?.left);
+    const handler = (event: any, payload: any) => {
+      const { data = {} } = payload;
+      if (data?.isDone) {
+        setIsSuccess(true);
+        setLoading(false);
+        if (data?.error) {
+          message.error(data?.error?.message);
         }
-      },
-    );
+      } else {
+        setCount(data?.count);
+        setLeft(data?.left);
+      }
+    };
+    window?.electron?.on(MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES);
+      window?.electron?.removeListener(
+        MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES,
+        handler,
+      );
     };
   }, []);
 
@@ -201,7 +228,13 @@ const useGenerateWalletFromPhrase = () => {
   }) => {
     setLoading(true);
     setIsSuccess(false);
-    window?.electron?.send(MESSAGE.GENERATE_WALLET_FROM_PHRASE, { total, groupId, phrase, encryptKey, chainType });
+    window?.electron?.send(MESSAGE.GENERATE_WALLET_FROM_PHRASE, {
+      total,
+      groupId,
+      phrase,
+      encryptKey,
+      chainType,
+    });
   };
 
   return { generateWalletFromPhrase, loading, isSuccess, count, left };
