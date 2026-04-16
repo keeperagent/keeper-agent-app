@@ -5,7 +5,7 @@ import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { TOOL_KEYS } from "@/electron/constant";
 
-const MAX_RESULTS = 5;
+const MAX_RESULTS = 7;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const webSearchTavilyTool = () =>
@@ -30,7 +30,7 @@ export const webSearchTavilyTool = () =>
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.tavilyApiKey || null;
         if (keyErr || !apiKey) {
-          return "Error: Tavily API key is not configured. Please set it in Settings > Agent.";
+          return "Error: Tavily API key is not configured. Do NOT retry — configure it in Settings > Agent.";
         }
 
         const wrapper = new TavilySearchAPIWrapper({
@@ -57,7 +57,7 @@ export const webSearchTavilyTool = () =>
         logEveryWhere({
           message: `[Agent] web_search_tavily() error: ${err?.message}`,
         });
-        return err?.message;
+        return `Error: ${err?.message}. Do NOT retry.`;
       }
     },
   });
