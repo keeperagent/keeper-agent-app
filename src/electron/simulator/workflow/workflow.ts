@@ -873,7 +873,9 @@ export class Workflow {
       : { nodes: [], edges: [] };
     const { nodes, edges } = workflowData;
 
-    let numberOfThread = workflowRecord?.numberOfThread || 1;
+    const concurrencyScale = this.currentInstance.isFreeTier ? 0 : 1;
+    let numberOfThread =
+      (workflowRecord?.numberOfThread || 1) * concurrencyScale;
     let numberOfRound = workflowRecord?.numberOfRound || 1;
 
     // if Workflow run inside a Campaign
@@ -883,7 +885,7 @@ export class Workflow {
         return err;
       }
       this.campaign = campaign;
-      numberOfThread = campaign?.numberOfThread || 1;
+      numberOfThread = (campaign?.numberOfThread || 1) * concurrencyScale;
       numberOfRound = campaign?.numberOfRound || 1;
 
       const errUpdateProfile =

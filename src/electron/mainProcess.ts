@@ -46,9 +46,11 @@ import { mcpTokenController } from "./controller/mcpToken";
 import { agentTaskController } from "./controller/agentTask";
 import { appLogController } from "./controller/appLog";
 import { agentTaskDispatcher } from "./service/agentTaskDispatcher";
+import { licenseService } from "./service/licenseService";
 import { keeperMcpServer } from "./mcpServer";
 
 const runMainProcess = () => {
+  licenseService.initialize();
   telegramController();
   runWalletGroupController();
   runWalletController();

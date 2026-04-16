@@ -7,6 +7,7 @@ import {
 } from "@/electron/service/authSafeStorage";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { preferenceService } from "@/electron/service/preference";
+import { licenseService } from "@/electron/service/licenseService";
 
 export const authStorageController = () => {
   // Renderer requests current auth state on startup
@@ -24,6 +25,7 @@ export const authStorageController = () => {
     (_event: IpcMainEvent, payload: { token: string; user: any }) => {
       if (payload?.token) {
         saveAuth(payload.token, payload.user);
+        licenseService.onAuthChange();
       }
     },
   );
@@ -32,6 +34,7 @@ export const authStorageController = () => {
   ipcMain.on(MESSAGE.CLEAR_AUTH_TOKEN, async () => {
     clearAuth();
     masterPasswordManager.clearMasterPassword();
+    licenseService.onAuthChange();
 
     await preferenceService.updateMasterPasswordVerifier("");
   });

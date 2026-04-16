@@ -19,6 +19,7 @@ import { registerLaunchTokenHandlers } from "@/electron/simulator/workflowRunner
 import { registerSwapHandlers } from "@/electron/simulator/workflowRunner/swap";
 import { MESSAGE_LOOP_DONE } from "@/electron/simulator/constant";
 import { ILoopNodeConfig } from "@/electron/type";
+import { licenseService } from "@/electron/service/licenseService";
 import { workflowManager } from "./index";
 
 export class Executor {
@@ -69,6 +70,11 @@ export class Executor {
     workflowType: string,
     flowProfile: IFlowProfile,
   ): Promise<[IFlowProfile | null, Error | null]> => {
+    const nodeQuotaLimit = licenseService.isFreeTier;
+    if (nodeQuotaLimit) {
+      return [flowProfile, new Error("Node execution limit exceeded")];
+    }
+
     if (workflowType === WORKFLOW_TYPE.LOOP) {
       const nodeId = flowProfile?.nodeID || "";
       const numberOfLoop = (flowProfile?.config as ILoopNodeConfig)?.loop || 0;

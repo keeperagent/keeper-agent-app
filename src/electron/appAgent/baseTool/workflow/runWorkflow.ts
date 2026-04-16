@@ -8,6 +8,7 @@ import { ICampaignProfile, IWorkflowVariable } from "@/electron/type";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { licenseService } from "@/electron/service/licenseService";
 
 const schema = z.object({
   campaignId: z.number().describe("Campaign ID"),
@@ -126,6 +127,10 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
         campaignId,
         0,
       );
+      const agentResourceLimit = licenseService.isFreeTier;
+      if (agentResourceLimit) {
+        return safeStringify({ error: RESPONSE_CODE.ERROR });
+      }
       workflow.runWorkflow(resolvedEncryptKey, overrideListVariable);
 
       return safeStringify({

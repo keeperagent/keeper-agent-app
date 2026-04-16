@@ -75,6 +75,7 @@ const OptionWrapper = styled.div`
       font-size: 1rem;
       font-weight: 400;
       display: flex;
+      align-items: center;
     }
 
     .copy-icon {
@@ -116,6 +117,27 @@ const OptionWrapper = styled.div`
   }
 `;
 
+const PortfolioAppWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-left: var(--margin-left-small);
+
+  .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 0.7rem;
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+`;
+
 const RadioWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -127,4 +149,10 @@ const RadioWrapper = styled.div`
   }
 `;
 
-export { WalletViewWrapper, ChainWrapper, OptionWrapper, RadioWrapper };
+export {
+  WalletViewWrapper,
+  ChainWrapper,
+  OptionWrapper,
+  RadioWrapper,
+  PortfolioAppWrapper,
+};

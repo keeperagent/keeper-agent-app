@@ -1,7 +1,4 @@
-import { uid } from "uid/secure";
-import { ipcMain } from "electron";
-import { MESSAGE } from "@/electron/constant";
-import { sendToRenderer } from "@/electron/main";
+import { licenseService } from "@/electron/service/licenseService";
 
 const WORKFLOW_WITHOUT_CAMPAIGN_ID = "WORKFLOW_WITHOUT_CAMPAIGN_ID"; // when Script run without inside Campaign
 const CAMPAIGN_PROFILE_WITHOUT_WITHOUT_SCRIPT =
@@ -23,31 +20,12 @@ export class CurrentInstance {
   }
 
   getIsFreeTier = async () => {
-    // use interval to retry sending until renderer is ready to respond
-    await new Promise<void>((resolve) => {
-      const uniqueID = uid(25);
-      let interval: any = null;
-
-      const handler = (_event: any, payload: any) => {
-        if (payload?.requestId !== uniqueID) {
-          return;
-        }
-
-        ipcMain.removeListener(MESSAGE.GET_USER_PERMISSIONS_RES, handler);
-        if (interval) {
-          clearInterval(interval);
-        }
-
-        this.isFreeTier = payload?.data || false;
-        resolve();
-      };
-
-      ipcMain.on(MESSAGE.GET_USER_PERMISSIONS_RES, handler);
-
-      interval = setInterval(() => {
-        sendToRenderer(MESSAGE.GET_USER_PERMISSIONS, { requestId: uniqueID });
-      }, 1000);
-    });
+    let retries = 0;
+    while (!licenseService.isReady && retries < 20) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      retries++;
+    }
+    this.isFreeTier = licenseService.isFreeTier;
   };
 
   setCurrentIntance = (
