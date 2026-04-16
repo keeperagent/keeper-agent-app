@@ -445,6 +445,9 @@ const ManageWallet = (props: any) => {
     }
   }, [tableViewMode, dataSource]);
 
+  const isStaleData =
+    listWallet.length > 0 && listWallet[0]?.groupId !== selectedWalletGroup?.id;
+
   return (
     <ManageWalletWrapper>
       <div className="heading">
@@ -567,7 +570,7 @@ const ManageWallet = (props: any) => {
         virtual
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
-        dataSource={dataSource}
+        dataSource={isStaleData ? [] : dataSource}
         // @ts-ignore
         columns={renderColumns(
           onEditWallet,
@@ -596,7 +599,7 @@ const ManageWallet = (props: any) => {
           columnWidth: 30,
         }}
         scroll={{ x: 700, y: 600 }}
-        loading={getDataLoading}
+        loading={getDataLoading || isStaleData}
         onChange={onTableChange}
         size="middle"
         bordered

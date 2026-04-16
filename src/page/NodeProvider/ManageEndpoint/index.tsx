@@ -265,6 +265,10 @@ const NodeEndpoint = (props: any) => {
     navigate(`/dashboard/connections?tab=node-provider`);
   };
 
+  const isStaleData =
+    listNodeEndpoint.length > 0 &&
+    listNodeEndpoint[0]?.groupId !== selectedNodeEndpointGroup?.id;
+
   return (
     <PageWrapper>
       <div className="heading">
@@ -350,7 +354,7 @@ const NodeEndpoint = (props: any) => {
       <Table
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
-        dataSource={dataSource}
+        dataSource={isStaleData ? [] : dataSource}
         columns={renderColumns(onEditNodeEndpoint, searchText, translate)}
         pagination={{
           total: totalData,
@@ -363,7 +367,7 @@ const NodeEndpoint = (props: any) => {
           locale: { items_per_page: `/ ${translate("page")}` },
         }}
         scroll={{ x: 900, y: "70vh" }}
-        loading={getDataLoading}
+        loading={getDataLoading || isStaleData}
         onChange={onTableChange}
         size="middle"
       />

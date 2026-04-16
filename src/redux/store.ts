@@ -1,5 +1,10 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import { persistReducer, persistStore, createMigrate } from "redux-persist";
+import {
+  persistReducer,
+  persistStore,
+  createMigrate,
+  createTransform,
+} from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import { migration, CURRENT_REDUX_PERSIST_VERSION } from "@/redux/migration";
 import authReducer from "./auth";
@@ -70,10 +75,36 @@ const reducers = combineReducers({
   AppLog: appLogReducer,
 });
 
+const stripSensitiveListTransform = createTransform(
+  (inboundState: any, key) => {
+    if (key === "Wallet") {
+      const { listWallet, selectedWallet, ...rest } = inboundState;
+      return rest;
+    }
+    if (key === "Resource") {
+      const { listResource, selectedResource, ...rest } = inboundState;
+      return rest;
+    }
+    if (key === "Profile") {
+      const { listProfile, selectedProfile, ...rest } = inboundState;
+      return rest;
+    }
+    if (key === "CampaignProfile") {
+      const { listCampaignProfile, selectedCampaignProfile, ...rest } =
+        inboundState;
+      return rest;
+    }
+    return inboundState;
+  },
+  (outboundState: any) => outboundState,
+  { whitelist: ["Wallet", "Resource", "Profile", "CampaignProfile"] },
+);
+
 const persistedReducer = persistReducer(
   {
     key: "root",
     storage,
+    transforms: [stripSensitiveListTransform],
     whitelist: [
       "Layout",
       "WorkflowRunner",
@@ -81,7 +112,6 @@ const persistedReducer = persistReducer(
       "WalletGroup",
       "ResourceGroup",
       "ProfileGroup",
-      "Profile",
       "Proxy",
       "Workflow",
       "Campaign",
@@ -97,11 +127,15 @@ const persistedReducer = persistReducer(
       "StaticProxyGroup",
       "AgentProfile",
       "AppLog",
+      "Wallet",
+      "Resource",
+      "Profile",
+      "CampaignProfile",
     ],
     migrate: createMigrate(migration, { debug: true }),
     version: CURRENT_REDUX_PERSIST_VERSION,
   },
-  reducers,
+  reducers as any,
 );
 
 export const store = configureStore({

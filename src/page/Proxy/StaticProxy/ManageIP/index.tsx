@@ -238,6 +238,10 @@ const StaticProxyList = (props: any) => {
     navigate(`/dashboard/connections?tab=proxy`);
   };
 
+  const isStaleData =
+    listStaticProxy.length > 0 &&
+    listStaticProxy[0]?.groupId !== selectedStaticProxyGroup?.id;
+
   return (
     <PageWrapper>
       <div className="heading">
@@ -316,7 +320,7 @@ const StaticProxyList = (props: any) => {
       <Table
         rowSelection={rowSelection}
         rowKey={(data) => data?.id!}
-        dataSource={dataSource}
+        dataSource={isStaleData ? [] : dataSource}
         columns={renderColumns(onEditStaticProxy, searchText, translate)}
         pagination={{
           total: totalData,
@@ -329,7 +333,7 @@ const StaticProxyList = (props: any) => {
           locale: { items_per_page: `/ ${translate("page")}` },
         }}
         scroll={{ x: 900, y: "70vh" }}
-        loading={getDataLoading}
+        loading={getDataLoading || isStaleData}
         onChange={onTableChange}
         size="middle"
       />
