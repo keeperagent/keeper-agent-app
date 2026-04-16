@@ -937,7 +937,7 @@ const ManageSchedule = (props: any) => {
           }}
           virtual
           scroll={{ x: 1400, y: "70vh" }}
-          loading={false}
+          loading={isDeleteLoading}
           onChange={onTableChange}
           size="middle"
           expandable={{
