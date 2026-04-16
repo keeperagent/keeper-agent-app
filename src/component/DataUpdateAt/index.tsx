@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tooltip } from "antd";
 import { formatTime } from "@/service/util";
 import { ReloadIcon } from "@/component/Icon";
@@ -10,27 +10,22 @@ type IProps = {
   onRefresh?: () => void;
 };
 
-let interval: any = null;
-
 const DataUpdateAt = (props: IProps) => {
   const { translate, locale } = useTranslation();
   const { timestamp, onRefresh } = props;
   const [timeAgo, setTimeAgo] = useState("");
+  const intervalRef = useRef<any>(null);
 
   useEffect(() => {
     setTimeAgo(formatTime(timestamp, locale));
-    if (interval) {
-      clearInterval(interval);
-    }
+    clearInterval(intervalRef.current);
 
-    interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setTimeAgo(formatTime(timestamp, locale));
     }, 5000);
 
     return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+      clearInterval(intervalRef.current);
     };
   }, [timestamp]);
 

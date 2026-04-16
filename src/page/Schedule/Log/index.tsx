@@ -2,6 +2,7 @@ import {
   useEffect,
   useState,
   useMemo,
+  useRef,
   ComponentType,
   type ReactNode,
 } from "react";
@@ -58,7 +59,7 @@ const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
 let searchTimeOut: any = null;
 let searchScheduleTimeOut: any = null;
-let getDataInterval: any = null;
+
 const { Option } = Select;
 
 type ILogTypeCell = {
@@ -379,6 +380,7 @@ const ManageLog = (props: any) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { search } = location;
+  const getDataIntervalRef = useRef<any>(null);
 
   const { getListAppLog, loading: getDataLoading } = useGetListAppLog();
   const { getListSchedule, loading: isGetListScheduleLoading } =
@@ -452,8 +454,8 @@ const ManageLog = (props: any) => {
       });
     }, 200);
 
-    clearInterval(getDataInterval);
-    getDataInterval = setInterval(() => {
+    clearInterval(getDataIntervalRef.current);
+    getDataIntervalRef.current = setInterval(() => {
       getListAppLog({
         page,
         pageSize,
@@ -466,7 +468,7 @@ const ManageLog = (props: any) => {
 
     return () => {
       clearTimeout(searchTimeOut);
-      clearInterval(getDataInterval);
+      clearInterval(getDataIntervalRef.current);
     };
   }, [searchText, page, pageSize, scheduleId, resolvedJobType]);
 

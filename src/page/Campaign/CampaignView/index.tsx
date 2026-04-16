@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, ComponentType } from "react";
+import { useEffect, useState, useMemo, useRef, ComponentType } from "react";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import _ from "lodash";
 import {
@@ -180,7 +180,6 @@ const renderColumns = (
   },
 ];
 
-let interval: any = null;
 const ManageCampaign = (props: any) => {
   const {
     totalData,
@@ -190,6 +189,7 @@ const ManageCampaign = (props: any) => {
     listRunningWorkflow,
     pageSize = TABLE_PAGE_OPTION[0],
   } = props;
+  const intervalRef = useRef<any>(null);
 
   const [page, onSetPage] = useState(1);
   const [searchText, onSetSearchText] = useState("");
@@ -256,13 +256,13 @@ const ManageCampaign = (props: any) => {
       getListRunningWorkflow();
     }, 5000);
 
-    clearInterval(interval);
-    interval = setInterval(() => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
       getListRunningWorkflow();
     }, 15000);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     };
   }, []);
 

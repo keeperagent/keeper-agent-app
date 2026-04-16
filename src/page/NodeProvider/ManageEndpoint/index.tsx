@@ -1,4 +1,4 @@
-import { useState, useEffect, ComponentType } from "react";
+import { useState, useEffect, useRef, ComponentType } from "react";
 import { Table, PaginationProps, Button, Select, Popconfirm } from "antd";
 import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import { connect } from "react-redux";
@@ -31,8 +31,6 @@ const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 const { Option } = Select;
 let searchNodeEndpointGroupTimeOut: any = null;
 let searchTimeOut: any = null;
-let interval: any = null;
-
 const renderColumns = (
   onEditNodeEndpoint: (group: INodeEndpoint) => void,
   searchText: string,
@@ -103,6 +101,7 @@ const NodeEndpoint = (props: any) => {
   const [selectedRowKeys, onSetSelectedRowKeys] = useState([]);
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const navigate = useNavigate();
+  const intervalRef = useRef<any>(null);
 
   const location = useLocation();
   const { search } = location;
@@ -132,7 +131,7 @@ const NodeEndpoint = (props: any) => {
     getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
 
     return () => {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     };
   }, []);
 
@@ -155,10 +154,8 @@ const NodeEndpoint = (props: any) => {
         groupId: Number(group),
       });
 
-      if (interval) {
-        clearInterval(interval);
-      }
-      interval = setInterval(() => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
         getListNodeEndpoint({
           page,
           pageSize,
@@ -169,7 +166,7 @@ const NodeEndpoint = (props: any) => {
     }, 200);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     };
   }, [searchText, page, pageSize, group, shouldRefetch]);
 

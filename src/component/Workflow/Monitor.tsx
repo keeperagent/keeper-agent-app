@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { notification } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -33,7 +33,6 @@ type IProps = {
   actClearWhenStop: () => void;
 };
 
-let getStatusInterval: any = null;
 let totalProfile = 0;
 let translateFunc: any = null;
 
@@ -42,6 +41,7 @@ const Monitor = (props: IProps) => {
   const { translate } = useTranslation();
   const { getCampaignProfileStatus } = useGetCampaignProfileStatus();
   const { syncWorkflowData } = useSyncWorkflowData();
+  const getStatusIntervalRef = useRef<any>(null);
 
   useEffect(() => {
     if (selectedCampaign?.id && selectedWorkflow?.id) {
@@ -162,21 +162,19 @@ const Monitor = (props: IProps) => {
     const isRunWithoutCampaign = selectedWorkflow && !selectedCampaign;
     const intervalTime = isRunWithoutCampaign ? 2 * 1000 : 5 * 1000;
     if (isRunning && (selectedCampaign || selectedWorkflow)) {
-      if (getStatusInterval !== null) {
-        clearInterval(getStatusInterval);
-      }
-      getStatusInterval = setInterval(() => {
+      clearInterval(getStatusIntervalRef.current);
+      getStatusIntervalRef.current = setInterval(() => {
         getCampaignProfileStatus(
           selectedCampaign?.id || 0,
           selectedWorkflow?.id || 0,
         );
       }, intervalTime);
     } else {
-      clearInterval(getStatusInterval);
+      clearInterval(getStatusIntervalRef.current);
     }
 
     return () => {
-      clearInterval(getStatusInterval);
+      clearInterval(getStatusIntervalRef.current);
     };
   }, [isRunning, selectedCampaign, selectedWorkflow]);
 

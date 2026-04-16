@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useState, ComponentType, ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+  useRef,
+  ComponentType,
+  ReactNode,
+} from "react";
 import {
   PaginationProps,
   Table,
@@ -44,7 +51,6 @@ import ModalConfigLog from "./ModalConfigLog";
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
 let searchTimeOut: any = null;
-let refreshInterval: any = null;
 
 const formatDuration = (startedAt?: number, finishedAt?: number): string => {
   if (!startedAt || !finishedAt) {
@@ -295,6 +301,7 @@ const ActivityLogPage = (props: any) => {
   const [selectedRowKeys, onSetSelectedRowKeys] = useState<number[]>([]);
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
+  const refreshIntervalRef = useRef<any>(null);
 
   useEffect(() => {
     props?.actSetPageName(translate("sidebar.activityLog"));
@@ -320,12 +327,12 @@ const ActivityLogPage = (props: any) => {
     clearTimeout(searchTimeOut);
     searchTimeOut = setTimeout(fetchData, 200);
 
-    clearInterval(refreshInterval);
-    refreshInterval = setInterval(fetchData, 30000);
+    clearInterval(refreshIntervalRef.current);
+    refreshIntervalRef.current = setInterval(fetchData, 30000);
 
     return () => {
       clearTimeout(searchTimeOut);
-      clearInterval(refreshInterval);
+      clearInterval(refreshIntervalRef.current);
     };
   }, [searchText, page, pageSize, logType]);
 

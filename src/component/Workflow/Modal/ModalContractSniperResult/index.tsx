@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Table } from "antd";
 import { connect } from "react-redux";
 import { Node } from "@xyflow/react";
@@ -103,7 +103,6 @@ const renderColumns = (translate: any) => [
 ];
 
 const sampleSize = 300;
-let interval: any = null;
 const ModalContractSniperResult = (props: IProps) => {
   const {
     isModalSampleContractSniperResultOpen,
@@ -116,6 +115,7 @@ const ModalContractSniperResult = (props: IProps) => {
     selectedCampaign,
     selectedWorkflow,
   } = props;
+  const intervalRef = useRef<any>(null);
   const { translate } = useTranslation();
   const [searchText, onSetSearchText] = useState("");
 
@@ -150,17 +150,14 @@ const ModalContractSniperResult = (props: IProps) => {
 
   useEffect(() => {
     if (isModalSampleContractSniperResultOpen) {
-      if (interval) {
-        clearInterval(interval);
-      }
-
-      interval = setInterval(() => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
         onRefresh();
       }, 10 * 1000);
     }
 
     return () => {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     };
   }, [isModalSampleContractSniperResultOpen, selectedNode]);
 

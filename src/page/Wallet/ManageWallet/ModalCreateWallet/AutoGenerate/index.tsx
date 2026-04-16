@@ -34,8 +34,6 @@ type IAutoGenerateProps = {
   actSaveSelectedWalletGroup: (value: IWalletGroup | null) => void;
 };
 
-let interval: any = null;
-
 const AutoGenerate = (props: IAutoGenerateProps) => {
   const { translate, locale } = useTranslation();
   const {
@@ -45,11 +43,13 @@ const AutoGenerate = (props: IAutoGenerateProps) => {
     isModalOpen,
     setShouldRefetch,
   } = props;
+
   const [isRunning, setRunning] = useState(false);
   const [form] = Form.useForm();
   const inputRef = useRef<any>(null);
   const [mode, setMode] = useState(ENCRYPT_MODE.NO_ENSCRYPT);
   const { getListWalletGroup } = useGetListWalletGroup();
+  const intervalRef = useRef<any>(null);
 
   const { generateRandomWallet, loading, isSuccess, count, left } =
     useGenerateRandomWallet();
@@ -116,11 +116,11 @@ const AutoGenerate = (props: IAutoGenerateProps) => {
 
   useEffect(() => {
     if (isRunning) {
-      interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setShouldRefetch(true);
       }, 5000);
     } else {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     }
   }, [isRunning]);
 
