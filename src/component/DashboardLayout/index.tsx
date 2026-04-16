@@ -77,8 +77,10 @@ const DashboardLayout = (props: IProps) => {
       }
     };
 
+    const intervalDuration =
+      errorCount > 0 ? thresholdDurationWhenError : thresholdDuration;
     checkAuth();
-    const timerId = setInterval(checkAuth, thresholdDuration);
+    const timerId = setInterval(checkAuth, intervalDuration);
     return () => clearInterval(timerId);
   }, [lastVerifyTime, errorCount, errorTime]);
 

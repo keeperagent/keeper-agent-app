@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { uid } from "uid/secure";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import {
   actSaveGetOnePreference,
   actSaveUpdatePreference,
@@ -53,6 +53,11 @@ const useUpdatePreference = () => {
           handler,
         );
         setLoading(false);
+        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR || !payload?.data) {
+          setIsSuccess(false);
+          resolve();
+          return;
+        }
         setIsSuccess(true);
         dispatch(actSaveUpdatePreference(payload?.data));
         resolve();

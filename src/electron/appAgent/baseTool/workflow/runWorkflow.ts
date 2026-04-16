@@ -114,6 +114,11 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
         }));
       }
 
+      const agentResourceLimit = licenseService.isFreeTier;
+      if (agentResourceLimit) {
+        return safeStringify({ error: RESPONSE_CODE.ERROR });
+      }
+
       // Reset all campaign profiles before running
       await campaignProfileDB.updateListCampaignProfile(
         true,
@@ -127,10 +132,6 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
         campaignId,
         0,
       );
-      const agentResourceLimit = licenseService.isFreeTier;
-      if (agentResourceLimit) {
-        return safeStringify({ error: RESPONSE_CODE.ERROR });
-      }
       workflow
         .runWorkflow(resolvedEncryptKey, overrideListVariable)
         .catch(() => {});

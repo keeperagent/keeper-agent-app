@@ -202,7 +202,9 @@ const WalletView = (props: any) => {
 
   const onViewPortfolio = (walletAddress: string, portfolioApp: string) => {
     const url = getPortfolioAppUrl(walletAddress, portfolioApp);
-
+    if (!url) {
+      return;
+    }
     window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
       url,
     });

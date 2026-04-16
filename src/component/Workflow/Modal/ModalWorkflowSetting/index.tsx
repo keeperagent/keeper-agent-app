@@ -82,8 +82,10 @@ const ModalWorkflowSetting = (props: IProps) => {
       updateWorkflow({
         numberOfThread,
         numberOfRound,
-        windowWidth: isFullScreen ? 0 : windowWidth,
-        windowHeight: isFullScreen ? 0 : windowHeight,
+        windowWidth: isFullScreen ? selectedWorkflow?.windowWidth : windowWidth,
+        windowHeight: isFullScreen
+          ? selectedWorkflow?.windowHeight
+          : windowHeight,
         isFullScreen,
         id: selectedWorkflow?.id,
       });

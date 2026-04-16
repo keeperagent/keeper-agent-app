@@ -146,12 +146,6 @@ export const runScheduleController = () => {
         });
         return;
       }
-      if (schedule.isPaused) {
-        event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, {
-          error: "Schedule is paused",
-        });
-        return;
-      }
       event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, { error: null });
       agentTaskScheduler.runNow(payload.scheduleId).catch((err) => {
         logEveryWhere({
