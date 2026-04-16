@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, Fragment, ComponentType } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  Fragment,
+  ComponentType,
+} from "react";
 import {
   Table,
   PaginationProps,
@@ -131,8 +138,6 @@ const TABLE_VIEW_MODE = {
 };
 
 let searchTimeOut: any = null;
-let interval: any = null;
-let fetchColumnStatsInterval: any = null;
 
 const renderColumns = (
   listResourceColumn: GroupColumnConfig[],
@@ -367,6 +372,8 @@ type IProps = {
 let previousTableViewMode = "";
 
 const ManageCampaignProfile = (props: IProps) => {
+  const intervalRef = useRef<any>(null);
+  const fetchColumnStatsIntervalRef = useRef<any>(null);
   const { translate, locale } = useTranslation();
   const {
     totalData,
@@ -518,11 +525,8 @@ const ManageCampaignProfile = (props: IProps) => {
     getListResourceGroup({ page: 1, pageSize: 1000 });
 
     return () => {
-      window?.electron?.removeAllListeners(
-        MESSAGE.OPEN_CAMPAIGN_PROFILE_IN_BROWSER_RES,
-      );
-      clearInterval(interval);
-      clearInterval(fetchColumnStatsInterval);
+      clearInterval(intervalRef.current);
+      clearInterval(fetchColumnStatsIntervalRef.current);
     };
   }, []);
 
@@ -541,10 +545,8 @@ const ManageCampaignProfile = (props: IProps) => {
         },
       });
 
-      if (interval) {
-        clearInterval(interval);
-      }
-      interval = setInterval(() => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
         getListCampaignProfile({
           page,
           pageSize,
@@ -561,16 +563,14 @@ const ManageCampaignProfile = (props: IProps) => {
   }, [page, pageSize, searchText, campaignId, encryptKey, selectedCampaign]);
 
   useEffect(() => {
-    if (fetchColumnStatsInterval) {
-      clearInterval(fetchColumnStatsInterval);
-    }
+    clearInterval(fetchColumnStatsIntervalRef.current);
 
     if (!campaignId || !showProfileStatistic) {
       return;
     }
 
     getCampaignProfileColumnStats(Number(campaignId));
-    fetchColumnStatsInterval = setInterval(() => {
+    fetchColumnStatsIntervalRef.current = setInterval(() => {
       getCampaignProfileColumnStats(Number(campaignId));
     }, 5000);
   }, [showProfileStatistic, campaignId]);

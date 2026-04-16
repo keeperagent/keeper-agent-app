@@ -77,15 +77,16 @@ const LogViewer = (props: IProps) => {
     }
     listenerAddedRef.current = true;
 
-    window?.electron?.on(MESSAGE.LOG_BATCH, (_event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const batch = payload?.data;
       if (Array.isArray(batch)) {
         batch.forEach((logItem: any) => props?.actAppendLog(logItem));
       }
-    });
+    };
+    window?.electron?.on(MESSAGE.LOG_BATCH, handler);
 
     return () => {
-      window?.electron?.removeAllListeners?.(MESSAGE.LOG_BATCH);
+      window?.electron?.removeListener?.(MESSAGE.LOG_BATCH, handler);
       listenerAddedRef.current = false;
     };
   }, []);

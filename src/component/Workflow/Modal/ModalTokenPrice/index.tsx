@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { Modal } from "antd";
 import ReactECharts from "echarts-for-react";
@@ -27,8 +27,6 @@ type IProps = {
   isLightMode: boolean;
 };
 
-let interval: any = null;
-
 const ModalTokenPrice = (props: IProps) => {
   const {
     isModalPriceCheckingOpen,
@@ -38,6 +36,7 @@ const ModalTokenPrice = (props: IProps) => {
     priceCheckingData,
     isLightMode,
   } = props;
+  const intervalRef = useRef<any>(null);
   const { translate } = useTranslation();
 
   const [isDisplayChart, setDisplayChart] = useState(false); // wait to component didmount
@@ -47,7 +46,7 @@ const ModalTokenPrice = (props: IProps) => {
 
     return () => {
       setDisplayChart(false);
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     };
   }, []);
 
@@ -68,8 +67,8 @@ const ModalTokenPrice = (props: IProps) => {
     }
 
     getPriceCheckingData({ config });
-    clearInterval(interval);
-    interval = setInterval(() => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
       getPriceCheckingData({ config });
     }, 10000);
   }, [selectedNode, isModalPriceCheckingOpen, selectedWorkflowType]);

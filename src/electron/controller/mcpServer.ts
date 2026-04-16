@@ -46,7 +46,11 @@ export const mcpServerController = () => {
     MESSAGE.CREATE_MCP_SERVER,
     MESSAGE.CREATE_MCP_SERVER_RES,
     async (event, payload) => {
-      const [res] = await mcpServerDB.createMcpServer(payload?.data);
+      const [res, err] = await mcpServerDB.createMcpServer(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_MCP_SERVER_RES, { error: err?.message });
+        return;
+      }
       const withCommandOrUrl =
         res != null
           ? {
@@ -69,7 +73,11 @@ export const mcpServerController = () => {
         lastError: "",
         toolsCount: 0,
       };
-      const [res] = await mcpServerDB.updateMcpServer(data);
+      const [res, err] = await mcpServerDB.updateMcpServer(data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_MCP_SERVER_RES, { error: err?.message });
+        return;
+      }
       mcpToolLoader.clearMcpServerToolsCache(payload?.data?.id!);
       const withCommandOrUrl = {
         ...res,
@@ -86,7 +94,11 @@ export const mcpServerController = () => {
     MESSAGE.DELETE_MCP_SERVER,
     MESSAGE.DELETE_MCP_SERVER_RES,
     async (event, payload) => {
-      const [res] = await mcpServerDB.deleteMcpServer(payload?.data);
+      const [res, err] = await mcpServerDB.deleteMcpServer(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.DELETE_MCP_SERVER_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_MCP_SERVER_RES, {
         data: res,
       });

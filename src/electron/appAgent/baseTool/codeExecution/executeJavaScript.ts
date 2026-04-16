@@ -1,5 +1,4 @@
 import { DynamicTool } from "@langchain/core/tools";
-import { execFile } from "child_process";
 import { existsSync } from "fs";
 import { mkdir, writeFile } from "fs/promises";
 import { builtinModules } from "module";
@@ -11,13 +10,14 @@ import {
   buildSafeEnv,
   containsSensitivePath,
   getWorkspaceRoot,
+  spawnWithTimeout,
 } from "@/electron/appAgent/baseTool/utils";
 import { PlanState, type ToolContext } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
 import { loadPendingCode, removePendingCode } from "./pendingCodeStore";
 
-const TIMEOUT_MS = 60_000;
-const INSTALL_TIMEOUT_MS = 60_000;
+const TIMEOUT_MS = 120_000;
+const INSTALL_TIMEOUT_MS = 120_000;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 // Tracks failed code per agentId to block duplicate retries programmatically
@@ -75,20 +75,11 @@ const installModules = (moduleNames: string[]): Promise<string> => {
   logEveryWhere({
     message: `[Agent] Installing modules [${moduleNames.join(", ")}] in ${cwd}`,
   });
-  return new Promise((resolve, reject) => {
-    execFile(
-      "npm",
-      ["install", ...moduleNames, "--save", "--ignore-scripts"],
-      { timeout: INSTALL_TIMEOUT_MS, cwd },
-      (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(stderr?.trim() || error.message));
-        } else {
-          resolve(stdout.trim());
-        }
-      },
-    );
-  });
+  return spawnWithTimeout(
+    "npm",
+    ["install", ...moduleNames, "--save", "--ignore-scripts"],
+    { timeout: INSTALL_TIMEOUT_MS, cwd },
+  ).then(({ stdout }) => stdout);
 };
 
 // Fallback: extract a single missing module name from a runtime error
@@ -149,29 +140,11 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
         NODE_PATH: getNodePath(),
       });
 
-      const runScript = (): Promise<{ stdout: string; stderr: string }> =>
-        new Promise((resolve, reject) => {
-          execFile(
-            "node",
-            [scriptPath],
-            {
-              timeout: TIMEOUT_MS,
-              maxBuffer: 1024 * 1024,
-              cwd: getJsWorkspaceDir(),
-              env: childEnv,
-            },
-            (error, stdout, stderr) => {
-              if (error) {
-                const msg = stderr?.trim() || error.message;
-                reject(new Error(msg));
-              } else {
-                resolve({
-                  stdout: stdout.trim(),
-                  stderr: stderr.trim(),
-                });
-              }
-            },
-          );
+      const runScript = () =>
+        spawnWithTimeout("node", [scriptPath], {
+          timeout: TIMEOUT_MS,
+          cwd: getJsWorkspaceDir(),
+          env: childEnv,
         });
 
       try {

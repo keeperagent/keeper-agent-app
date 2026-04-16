@@ -1,6 +1,13 @@
 import lodash from "lodash";
 import cronstrue from "cronstrue";
-import { Fragment, useEffect, useMemo, useState, ComponentType } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  ComponentType,
+} from "react";
 import {
   Button,
   PaginationProps,
@@ -95,7 +102,6 @@ const ElapsedCounter = ({ startedAt }: { startedAt: number }) => {
 };
 
 let searchTimeOut: any = null;
-let getDataInterval: any = null;
 
 const TABLE_VIEW_MODE = {
   EXPAND_ROW: "EXPAND_ROW",
@@ -392,8 +398,8 @@ const renderColumns = (
   },
 ];
 
-let interval: any = null;
 const ManageSchedule = (props: any) => {
+  const getDataIntervalRef = useRef<any>(null);
   const {
     totalData,
     listSchedule,
@@ -414,6 +420,7 @@ const ManageSchedule = (props: any) => {
   const [expandedRowKeys, setExpanedRowKeys] = useState<any[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const navigate = useNavigate();
+  const intervalRef = useRef<any>(null);
 
   useEffect(() => {
     if (!tableViewMode) {
@@ -455,8 +462,8 @@ const ManageSchedule = (props: any) => {
       });
     }, 200);
 
-    clearInterval(getDataInterval);
-    getDataInterval = setInterval(() => {
+    clearInterval(getDataIntervalRef.current);
+    getDataIntervalRef.current = setInterval(() => {
       getListSchedule({
         page,
         pageSize,
@@ -468,7 +475,7 @@ const ManageSchedule = (props: any) => {
 
     return () => {
       clearTimeout(searchTimeOut);
-      clearInterval(getDataInterval);
+      clearInterval(getDataIntervalRef.current);
     };
   }, [page, pageSize, searchText, sortField, scheduleId]);
 
@@ -477,12 +484,12 @@ const ManageSchedule = (props: any) => {
       getListRunningWorkflow();
     }, 5000);
 
-    interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       getListRunningWorkflow();
     }, 10000);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     };
   }, []);
 

@@ -104,7 +104,7 @@ export const profileController = () => {
           type: TYPE_NAME.RESOURCE,
         }));
 
-        listResource.push(listResourceInGroup);
+        listResource.push(listResourceInGroup || []);
       }
 
       const listData = generateMix([listWallet, ...listResource]);
@@ -167,7 +167,11 @@ export const profileController = () => {
     MESSAGE.UPDATE_PROFILE,
     MESSAGE.UPDATE_PROFILE_RES,
     async (event, payload) => {
-      const [res] = await profileDB.updateProfile(payload?.data);
+      const [res, err] = await profileDB.updateProfile(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_PROFILE_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_PROFILE_RES, {
         data: res,
       });
@@ -178,7 +182,11 @@ export const profileController = () => {
     MESSAGE.DELETE_PROFILE,
     MESSAGE.DELETE_PROFILE_RES,
     async (event, payload) => {
-      const [res] = await profileDB.deleteProfile(payload?.data);
+      const [res, err] = await profileDB.deleteProfile(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.DELETE_PROFILE_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_PROFILE_RES, {
         data: res,
       });

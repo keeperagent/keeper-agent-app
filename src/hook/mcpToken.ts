@@ -32,7 +32,10 @@ const useGetListMcpToken = () => {
     window?.electron?.on(MESSAGE.MCP_CONNECTIONS_UPDATED, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.MCP_CONNECTIONS_UPDATED);
+      window?.electron?.removeListener(
+        MESSAGE.MCP_CONNECTIONS_UPDATED,
+        handler,
+      );
     };
   }, []);
 

@@ -167,9 +167,18 @@ const ChatRegistry = (props: Props) => {
     );
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.AGENT_PROFILE_STREAM_CHUNK);
-      window?.electron?.removeAllListeners(MESSAGE.AGENT_PROFILE_TOOL_START);
-      window?.electron?.removeAllListeners(MESSAGE.AGENT_PROFILE_TOOL_COMPLETE);
+      window?.electron?.removeListener(
+        MESSAGE.AGENT_PROFILE_STREAM_CHUNK,
+        handler,
+      );
+      window?.electron?.removeListener(
+        MESSAGE.AGENT_PROFILE_TOOL_START,
+        toolStartHandler,
+      );
+      window?.electron?.removeListener(
+        MESSAGE.AGENT_PROFILE_TOOL_COMPLETE,
+        toolCompleteHandler,
+      );
     };
   }, [sessionId]);
 

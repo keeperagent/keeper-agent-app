@@ -10,6 +10,26 @@ const isTrustedSender = (event: IpcMainEvent): boolean => {
   );
 };
 
+export const replyOk = (
+  event: IpcMainEvent,
+  channel: string,
+  data: any,
+  extra?: Record<string, any>,
+) => {
+  event.reply(channel, { data, ...extra });
+};
+
+export const replyErr = (
+  event: IpcMainEvent,
+  channel: string,
+  error: any,
+  extra?: Record<string, any>,
+) => {
+  const message =
+    typeof error === "string" ? error : error?.message || "Unexpected error";
+  event.reply(channel, { error: message, code: RESPONSE_CODE.ERROR, ...extra });
+};
+
 export const onIpc = <T = any>(
   channel: string,
   resChannel: string,

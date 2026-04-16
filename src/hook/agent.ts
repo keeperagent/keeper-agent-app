@@ -156,14 +156,20 @@ const useDashboardAgent = () => {
       if (Array.isArray(data) && data.length > 0) {
         setConversation(data as AgentMessage[]);
       }
-      window?.electron?.removeAllListeners(MESSAGE.CHAT_HISTORY_LOAD_RES);
+      window?.electron?.removeListener(
+        MESSAGE.CHAT_HISTORY_LOAD_RES,
+        handleLoad,
+      );
     };
 
     window?.electron?.on(MESSAGE.CHAT_HISTORY_LOAD_RES, handleLoad);
     window?.electron?.send(MESSAGE.CHAT_HISTORY_LOAD, {});
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.CHAT_HISTORY_LOAD_RES);
+      window?.electron?.removeListener(
+        MESSAGE.CHAT_HISTORY_LOAD_RES,
+        handleLoad,
+      );
     };
   }, []);
 
@@ -525,26 +531,46 @@ const useDashboardAgent = () => {
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW, handlePlanReview);
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_CREATE_SESSION_RES,
+        handleCreateSession,
       );
-      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_RUN_RES);
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_RUN_RES,
+        handleRun,
+      );
+      window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_STREAM_CHUNK,
+        handleStreamChunk,
       );
-      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_TOOL_START);
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_TOOL_START,
+        handleToolStart,
+      );
+      window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE,
+        handleToolComplete,
       );
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_RESET_SESSION_RES,
+        handleReset,
       );
-      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_READY);
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_READY,
+        handleAgentReady,
+      );
+      window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER_RES,
+        handleChangeProvider,
       );
-      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_STOP_RES);
-      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW);
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_STOP_RES,
+        handleStop,
+      );
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW,
+        handlePlanReview,
+      );
     };
   }, [saveMessageToDB]);
 
@@ -578,8 +604,9 @@ const useDashboardAgent = () => {
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_GET_STATUS, { sessionId });
 
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES,
+        handleStatus,
       );
     };
   }, [sessionId, agentReady]);
@@ -788,7 +815,10 @@ const useAgentReadyStats = (active: boolean) => {
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_READY, handleAgentReady);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.DASHBOARD_AGENT_READY);
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_READY,
+        handleAgentReady,
+      );
     };
   }, [dispatch, active]);
 };

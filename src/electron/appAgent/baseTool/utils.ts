@@ -1,4 +1,5 @@
 import { app } from "electron";
+import { spawn } from "child_process";
 import path from "path";
 import { KA_WORKSPACE_FOLDER } from "@/electron/constant";
 
@@ -17,6 +18,62 @@ export const containsSensitivePath = (code: string): boolean =>
 
 export const getWorkspaceRoot = () =>
   path.join(app.getPath("userData"), KA_WORKSPACE_FOLDER);
+
+export const killProcessTree = (pid: number) => {
+  try {
+    if (process.platform === "win32") {
+      spawn("taskkill", ["/F", "/T", "/PID", String(pid)]);
+    } else {
+      process.kill(-pid, "SIGKILL");
+    }
+  } catch (_) {}
+};
+
+export const spawnWithTimeout = (
+  command: string,
+  args: string[],
+  options: { timeout: number; cwd: string; env?: NodeJS.ProcessEnv },
+): Promise<{ stdout: string; stderr: string }> =>
+  new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: options.cwd,
+      env: options.env,
+      detached: process.platform !== "win32",
+    });
+
+    let stdout = "";
+    let stderr = "";
+    const MAX_BUFFER = 1024 * 1024;
+    child.stdout.on("data", (chunk: Buffer) => {
+      if (stdout.length < MAX_BUFFER) {
+        stdout += chunk;
+      }
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      if (stderr.length < MAX_BUFFER) {
+        stderr += chunk;
+      }
+    });
+
+    const timer = setTimeout(() => {
+      killProcessTree(child.pid!);
+      reject(new Error("Process timed out"));
+    }, options.timeout);
+
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) {
+        resolve({ stdout: stdout.trim(), stderr: stderr.trim() });
+      } else {
+        reject(new Error(stderr.trim() || `Process exited with code ${code}`));
+      }
+    });
+
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
 
 const SAFE_ENV_KEYS = ["PATH"];
 

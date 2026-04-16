@@ -57,50 +57,50 @@ const useImportExtension = () => {
   const { translate } = useTranslation();
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.IMPORT_EXTENSION_RES,
-      (event: any, payload: any) => {
-        const {
-          data = {},
-          code,
-          isDone,
-          isSuccess: success,
-          isGettingExtensionId,
-          percentage,
-          error,
-        } = payload;
-        setIsGetExtensionId(Boolean(isGettingExtensionId));
-        if (percentage) setDownloadedPercentage(percentage);
-        if (isDone) {
-          setLoading(false);
-          setIsUploaded(true);
-          setIsSuccess(success);
-        }
-        if (isSuccess) {
-          setErrorMessage("");
-        } else {
-          setErrorMessage(error);
-        }
-        if (code === RESPONSE_CODE.INVALID_FILE_TYPE) {
-          setError((prev) => ({
-            ...prev,
-            [data?.index]: translate("hook.formatFileError"),
-          }));
-        } else if (code === RESPONSE_CODE.NOT_EXTENSION) {
-          setError((prev) => ({
-            ...prev,
-            [data?.index]: translate("hook.notExtension"),
-          }));
-        } else if (code === RESPONSE_CODE.DATABASE_ERROR) {
-          setError((prev) => ({
-            ...prev,
-            [data?.index]: translate("hook.cannotSaveExtension"),
-          }));
-        }
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const {
+        data = {},
+        code,
+        isDone,
+        isSuccess: success,
+        isGettingExtensionId,
+        percentage,
+        error,
+      } = payload;
+      setIsGetExtensionId(Boolean(isGettingExtensionId));
+      if (percentage) {
+        setDownloadedPercentage(percentage);
+      }
+      if (isDone) {
+        setLoading(false);
+        setIsUploaded(true);
+        setIsSuccess(success);
+      }
+      if (isSuccess) {
+        setErrorMessage("");
+      } else {
+        setErrorMessage(error);
+      }
+      if (code === RESPONSE_CODE.INVALID_FILE_TYPE) {
+        setError((prev) => ({
+          ...prev,
+          [data?.index]: translate("hook.formatFileError"),
+        }));
+      } else if (code === RESPONSE_CODE.NOT_EXTENSION) {
+        setError((prev) => ({
+          ...prev,
+          [data?.index]: translate("hook.notExtension"),
+        }));
+      } else if (code === RESPONSE_CODE.DATABASE_ERROR) {
+        setError((prev) => ({
+          ...prev,
+          [data?.index]: translate("hook.cannotSaveExtension"),
+        }));
+      }
+    };
+    window?.electron?.on(MESSAGE.IMPORT_EXTENSION_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.IMPORT_EXTENSION_RES);
+      window?.electron?.removeListener(MESSAGE.IMPORT_EXTENSION_RES, handler);
     };
   }, []);
 
@@ -120,17 +120,18 @@ const useImportExtension = () => {
   };
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.GET_EXTENSION_ID_ON_BROWSER_RES,
-      (event: any, payload: any) => {
-        const { isGetIdSuccess, res } = payload;
-        setIsGetExtensionIdSuccess(isGetIdSuccess);
-        if (isGetIdSuccess) dispatch(actSaveGetListExtension(res));
-      },
-    );
+    const handler = (event: any, payload: any) => {
+      const { isGetIdSuccess, res } = payload;
+      setIsGetExtensionIdSuccess(isGetIdSuccess);
+      if (isGetIdSuccess) {
+        dispatch(actSaveGetListExtension(res));
+      }
+    };
+    window?.electron?.on(MESSAGE.GET_EXTENSION_ID_ON_BROWSER_RES, handler);
     return () => {
-      window?.electron?.removeAllListeners(
+      window?.electron?.removeListener(
         MESSAGE.GET_EXTENSION_ID_ON_BROWSER_RES,
+        handler,
       );
     };
   }, []);

@@ -103,8 +103,10 @@ const UploadFile = (props: UploadFileProps) => {
         setListFile(tempListFile);
       }
 
-      // Clean up listener
-      window?.electron?.removeAllListeners(MESSAGE.CHOOSE_FILE_RES);
+      window?.electron?.removeListener(
+        MESSAGE.CHOOSE_FILE_RES,
+        handleFileSelection,
+      );
     };
 
     window?.electron?.on(MESSAGE.CHOOSE_FILE_RES, handleFileSelection);

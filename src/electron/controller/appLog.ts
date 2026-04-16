@@ -7,8 +7,15 @@ export const appLogController = () => {
     MESSAGE.GET_LIST_APP_LOG,
     MESSAGE.GET_LIST_APP_LOG_RES,
     async (event: any, payload: any) => {
-      const { page, pageSize, searchText, logType, scheduleId, taskId, jobType } =
-        payload || {};
+      const {
+        page,
+        pageSize,
+        searchText,
+        logType,
+        scheduleId,
+        taskId,
+        jobType,
+      } = payload || {};
       const [result] = await appLogDB.getListAppLog({
         page: page || 1,
         pageSize: pageSize || 20,
@@ -27,7 +34,11 @@ export const appLogController = () => {
     MESSAGE.CREATE_APP_LOG_RES,
     async (event: any, payload: any) => {
       const { data } = payload || {};
-      const [result] = await appLogDB.createAppLog(data || {});
+      const [result, err] = await appLogDB.createAppLog(data || {});
+      if (err) {
+        event.reply(MESSAGE.CREATE_APP_LOG_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_APP_LOG_RES, { data: result });
     },
   );
@@ -37,7 +48,11 @@ export const appLogController = () => {
     MESSAGE.DELETE_APP_LOG_RES,
     async (event: any, payload: any) => {
       const listId: number[] = payload?.data || [];
-      const [result] = await appLogDB.deleteAppLog(listId);
+      const [result, err] = await appLogDB.deleteAppLog(listId);
+      if (err) {
+        event.reply(MESSAGE.DELETE_APP_LOG_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_APP_LOG_RES, { data: result });
     },
   );

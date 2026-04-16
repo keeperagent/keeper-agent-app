@@ -6,7 +6,7 @@ import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { TOOL_KEYS } from "@/electron/constant";
 
-const MAX_RESULTS = 5;
+const MAX_RESULTS = 7;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const findSimilarExaTool = () =>
@@ -31,7 +31,7 @@ export const findSimilarExaTool = () =>
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.exaApiKey || null;
         if (keyErr || !apiKey) {
-          return "Error: Exa API key is not configured. Please set it in Settings > Agent.";
+          return "Error: Exa API key is not configured. Do NOT retry — configure it in Settings > Agent.";
         }
 
         const exaClient = new Exa(apiKey);
@@ -59,7 +59,7 @@ export const findSimilarExaTool = () =>
         logEveryWhere({
           message: `[Agent] find_similar_exa() error: ${err?.message}`,
         });
-        return err?.message;
+        return `Error: ${err?.message}. Do NOT retry.`;
       }
     },
   });

@@ -81,7 +81,11 @@ export const agentSkillController = () => {
         return;
       }
 
-      const [res] = await agentSkillDB.createAgentSkill(data);
+      const [res, err] = await agentSkillDB.createAgentSkill(data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_AGENT_SKILL_RES, { error: err?.message });
+        return;
+      }
       if (res?.folderName) {
         await saveSkillFolder(folderName, filePath);
       }
@@ -100,11 +104,12 @@ export const agentSkillController = () => {
       const filePath = data?.filePath;
 
       if (!filePath) {
-        const [res] = await agentSkillDB.updateAgentSkill(data);
-        event.reply(MESSAGE.UPDATE_AGENT_SKILL_RES, {
-          data: res,
-        });
-        // Recreate agents so skill enable/disable takes effect immediately
+        const [res, err] = await agentSkillDB.updateAgentSkill(data);
+        if (err) {
+          event.reply(MESSAGE.UPDATE_AGENT_SKILL_RES, { error: err?.message });
+          return;
+        }
+        event.reply(MESSAGE.UPDATE_AGENT_SKILL_RES, { data: res });
         recreateAllAgents();
         return;
       }
@@ -142,7 +147,11 @@ export const agentSkillController = () => {
       }
 
       const [oldSkill] = await agentSkillDB.getOneAgentSkill(data?.id!);
-      const [res] = await agentSkillDB.updateAgentSkill(data);
+      const [res, err] = await agentSkillDB.updateAgentSkill(data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_AGENT_SKILL_RES, { error: err?.message });
+        return;
+      }
       await saveSkillFolder(folderName, filePath);
       if (oldSkill?.folderName) {
         await deleteSkillDir(oldSkill.folderName);
@@ -167,7 +176,11 @@ export const agentSkillController = () => {
         }
       }
 
-      const [res] = await agentSkillDB.deleteAgentSkill(ids);
+      const [res, err] = await agentSkillDB.deleteAgentSkill(ids);
+      if (err) {
+        event.reply(MESSAGE.DELETE_AGENT_SKILL_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_AGENT_SKILL_RES, {
         data: res,
       });

@@ -7,15 +7,13 @@ const useChooseFolder = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    window?.electron?.on(
-      MESSAGE.CHOOSE_FOLDER_RES,
-      (_event: any, _payload: any) => {
-        setLoading(false);
-      },
-    );
+    const handler = (_event: any, _payload: any) => {
+      setLoading(false);
+    };
+    window?.electron?.on(MESSAGE.CHOOSE_FOLDER_RES, handler);
 
     return () => {
-      window?.electron?.removeAllListeners(MESSAGE.CHOOSE_FOLDER_RES);
+      window?.electron?.removeListener(MESSAGE.CHOOSE_FOLDER_RES, handler);
     };
   }, []);
 

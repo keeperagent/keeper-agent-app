@@ -25,7 +25,7 @@ export const webExtractTavilyTool = () =>
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.tavilyApiKey || null;
         if (keyErr || !apiKey) {
-          return "Error: Tavily API key is not configured. Please set it in Settings > Agent.";
+          return "Error: Tavily API key is not configured. Do NOT retry — configure it in Settings > Agent.";
         }
 
         const wrapper = new TavilyExtractAPIWrapper({
@@ -48,7 +48,7 @@ export const webExtractTavilyTool = () =>
         logEveryWhere({
           message: `[Agent] web_extract_tavily() error: ${err?.message}`,
         });
-        return err?.message;
+        return `Error: ${err?.message}. Do NOT retry.`;
       }
     },
   });

@@ -13,7 +13,7 @@ export const getDbPath = (): string => {
     const isExist = fs.pathExistsSync(_dbPath);
     if (!isExist) {
       logEveryWhere({ message: `Create database file, path: ${_dbPath}` });
-      fs.openSync(_dbPath, "w", 0o666);
+      fs.openSync(_dbPath, "w", 0o600);
     }
   }
   return _dbPath;

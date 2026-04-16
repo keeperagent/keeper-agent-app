@@ -43,10 +43,15 @@ export const nodeEndpointGroupController = () => {
     MESSAGE.CREATE_NODE_ENDPOINT_GROUP,
     MESSAGE.CREATE_NODE_ENDPOINT_GROUP_RES,
     async (event, payload) => {
-      const [res] = await nodeEndpointGroupDB.createNodeEndpointGroup(
+      const [res, err] = await nodeEndpointGroupDB.createNodeEndpointGroup(
         payload?.data,
       );
-
+      if (err) {
+        event.reply(MESSAGE.CREATE_NODE_ENDPOINT_GROUP_RES, {
+          error: err?.message,
+        });
+        return;
+      }
       event.reply(MESSAGE.CREATE_NODE_ENDPOINT_GROUP_RES, {
         data: res,
       });
@@ -57,10 +62,15 @@ export const nodeEndpointGroupController = () => {
     MESSAGE.UPDATE_NODE_ENDPOINT_GROUP,
     MESSAGE.UPDATE_NODE_ENDPOINT_GROUP_RES,
     async (event, payload) => {
-      const [res] = await nodeEndpointGroupDB.updateNodeEndpointGroup(
+      const [res, err] = await nodeEndpointGroupDB.updateNodeEndpointGroup(
         payload?.data,
       );
-
+      if (err) {
+        event.reply(MESSAGE.UPDATE_NODE_ENDPOINT_GROUP_RES, {
+          error: err?.message,
+        });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_NODE_ENDPOINT_GROUP_RES, {
         data: res,
       });
@@ -71,9 +81,15 @@ export const nodeEndpointGroupController = () => {
     MESSAGE.DELETE_NODE_ENDPOINT_GROUP,
     MESSAGE.DELETE_NODE_ENDPOINT_GROUP_RES,
     async (event, payload) => {
-      const [res] = await nodeEndpointGroupDB.deleteNodeEndpointGroup(
+      const [res, err] = await nodeEndpointGroupDB.deleteNodeEndpointGroup(
         payload?.data,
       );
+      if (err) {
+        event.reply(MESSAGE.DELETE_NODE_ENDPOINT_GROUP_RES, {
+          error: err?.message,
+        });
+        return;
+      }
       event.reply(MESSAGE.DELETE_NODE_ENDPOINT_GROUP_RES, {
         data: res,
       });

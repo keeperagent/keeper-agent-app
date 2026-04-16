@@ -22,7 +22,10 @@ const useSaveNodeSecret = () => {
 
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== requestId) return;
-        window?.electron?.removeAllListeners(MESSAGE.UPSERT_NODE_SECRET_RES);
+        window?.electron?.removeListener(
+          MESSAGE.UPSERT_NODE_SECRET_RES,
+          handler,
+        );
         setLoading(false);
         resolve();
       };
@@ -53,7 +56,7 @@ const useGetNodeSecret = () => {
 
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== requestId) return;
-        window?.electron?.removeAllListeners(MESSAGE.GET_NODE_SECRET_RES);
+        window?.electron?.removeListener(MESSAGE.GET_NODE_SECRET_RES, handler);
         setLoading(false);
         resolve(Boolean(payload?.hasEncryptKey));
       };
