@@ -83,7 +83,11 @@ export const runWalletGroupController = () => {
     MESSAGE.CREATE_WALLET_GROUP,
     MESSAGE.CREATE_WALLET_GROUP_RES,
     async (event, payload) => {
-      const [res] = await walletGroupDB.createWalletGroup(payload?.data);
+      const [res, err] = await walletGroupDB.createWalletGroup(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_WALLET_GROUP_RES, { error: err?.message });
+        return;
+      }
       if (payload?.isQuickMapCampaign) {
         const [profileGroup] = await profileGroupDB.createProfileGroup({
           walletGroupId: res?.id,
@@ -93,7 +97,7 @@ export const runWalletGroupController = () => {
           profileGroupId: profileGroup?.id,
           name: res?.name || "",
           isFullScreen: true,
-          proxyType: PROFILE_TYPE.ALL_PROFILE,
+          profileType: PROFILE_TYPE.ALL_PROFILE,
           numberOfThread: 1,
           numberOfRound: 1,
           reloadDuration: 3,
@@ -111,8 +115,11 @@ export const runWalletGroupController = () => {
     MESSAGE.UPDATE_WALLET_GROUP,
     MESSAGE.UPDATE_WALLET_GROUP_RES,
     async (event, payload) => {
-      const [res] = await walletGroupDB.updateWalletGroup(payload?.data);
-
+      const [res, err] = await walletGroupDB.updateWalletGroup(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_WALLET_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_WALLET_GROUP_RES, {
         data: res,
       });

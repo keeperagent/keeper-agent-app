@@ -57,7 +57,11 @@ export const settingController = () => {
     MESSAGE.DELETE_AGENT_SETTING,
     MESSAGE.DELETE_AGENT_SETTING_RES,
     async (event, payload) => {
-      const [res] = await settingDB.deleteSetting(payload?.data || []);
+      const [res, err] = await settingDB.deleteSetting(payload?.data || []);
+      if (err) {
+        event.reply(MESSAGE.DELETE_AGENT_SETTING_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_AGENT_SETTING_RES, {
         data: res,
       });

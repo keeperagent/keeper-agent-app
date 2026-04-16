@@ -84,8 +84,14 @@ export const runWorkflowController = () => {
     MESSAGE.CREATE_WORKFLOW_RES,
     async (event, payload) => {
       const { requestId } = payload;
-      const [res] = await workflowDB.createWorkflow(payload?.data);
-
+      const [res, err] = await workflowDB.createWorkflow(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_WORKFLOW_RES, {
+          error: err?.message,
+          requestId,
+        });
+        return;
+      }
       event.reply(MESSAGE.CREATE_WORKFLOW_RES, {
         data: res,
         requestId,

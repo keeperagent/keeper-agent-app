@@ -60,7 +60,11 @@ export const staticProxyController = () => {
     MESSAGE.DELETE_PROXY,
     MESSAGE.DELETE_PROXY_RES,
     async (event, payload) => {
-      const [res] = await staticProxyDB.deleteStaticProxy(payload?.data);
+      const [res, err] = await staticProxyDB.deleteStaticProxy(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.DELETE_PROXY_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_PROXY_RES, {
         data: res,
       });

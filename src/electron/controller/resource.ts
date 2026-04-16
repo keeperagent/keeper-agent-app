@@ -113,7 +113,11 @@ export const resourceController = () => {
         );
       }
 
-      const [res] = await resourceDB.createResource(encryptedData);
+      const [res, createErr] = await resourceDB.createResource(encryptedData);
+      if (createErr) {
+        event.reply(MESSAGE.CREATE_RESOURCE_RES, { error: createErr?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_RESOURCE_RES, {
         data: res,
       });
@@ -140,7 +144,11 @@ export const resourceController = () => {
         encryptedData = encryptResource(encryptedData, config, encryptKey);
       }
 
-      const [res] = await resourceDB.updateResource(encryptedData);
+      const [res, err] = await resourceDB.updateResource(encryptedData);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_RESOURCE_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_RESOURCE_RES, {
         data: res,
       });
@@ -151,7 +159,11 @@ export const resourceController = () => {
     MESSAGE.DELETE_RESOURCE,
     MESSAGE.DELETE_RESOURCE_RES,
     async (event, payload) => {
-      const [res] = await resourceDB.deleteResource(payload?.data);
+      const [res, err] = await resourceDB.deleteResource(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.DELETE_RESOURCE_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_RESOURCE_RES, {
         data: res,
       });

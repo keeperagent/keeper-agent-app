@@ -92,7 +92,11 @@ export const runWalletController = () => {
         encryptedData = encryptWallet(encryptedData, encryptKey);
       }
 
-      const [res] = await walletDB.updateWallet(encryptedData);
+      const [res, err] = await walletDB.updateWallet(encryptedData);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_WALLET_RES, { error: err?.message });
+        return;
+      }
       let wallet: IWallet = res as IWallet;
       if (wallet && encryptKey) {
         wallet = decryptWallet(wallet, encryptKey);
@@ -114,7 +118,11 @@ export const runWalletController = () => {
         encryptedData = encryptWallet(encryptedData, encryptKey);
       }
 
-      const [res] = await walletDB.createWallet(encryptedData);
+      const [res, err] = await walletDB.createWallet(encryptedData);
+      if (err) {
+        event.reply(MESSAGE.CREATE_WALLET_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_WALLET_RES, {
         data: res,
       });

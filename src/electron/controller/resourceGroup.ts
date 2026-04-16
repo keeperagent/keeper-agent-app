@@ -51,8 +51,13 @@ export const runResourceGroupController = () => {
     MESSAGE.CREATE_RESOURCE_GROUP,
     MESSAGE.CREATE_RESOURCE_GROUP_RES,
     async (event, payload) => {
-      const [res] = await resourceGroupDB.createResourceGroup(payload?.data);
-
+      const [res, err] = await resourceGroupDB.createResourceGroup(
+        payload?.data,
+      );
+      if (err) {
+        event.reply(MESSAGE.CREATE_RESOURCE_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_RESOURCE_GROUP_RES, {
         data: res,
       });
@@ -63,8 +68,13 @@ export const runResourceGroupController = () => {
     MESSAGE.UPDATE_RESOURCE_GROUP,
     MESSAGE.UPDATE_RESOURCE_GROUP_RES,
     async (event, payload) => {
-      const [res] = await resourceGroupDB.updateResourceGroup(payload?.data);
-
+      const [res, err] = await resourceGroupDB.updateResourceGroup(
+        payload?.data,
+      );
+      if (err) {
+        event.reply(MESSAGE.UPDATE_RESOURCE_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_RESOURCE_GROUP_RES, {
         data: res,
       });

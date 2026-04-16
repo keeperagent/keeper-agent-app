@@ -173,13 +173,18 @@ export const campaignController = () => {
     MESSAGE.UPDATE_CAMPAIGN_RES,
     async (event, payload) => {
       const campaign = payload?.data as ICampaign;
-      const [res] = await campaignDB.updateCampaign({
+      const [res, err] = await campaignDB.updateCampaign({
         ...campaign,
         listColumnForCalculate: JSON.stringify(
           campaign?.listColumnForCalculate || [],
         ),
         columnOrder: JSON.stringify(campaign?.columnOrder || []) as any,
       });
+
+      if (err) {
+        event.reply(MESSAGE.UPDATE_CAMPAIGN_RES, { error: err?.message });
+        return;
+      }
 
       if (campaign.profileType === PROFILE_TYPE.CUSTOM_SELECT) {
         await campaignProfileDB.updateActiveStatus([], false, campaign?.id!);

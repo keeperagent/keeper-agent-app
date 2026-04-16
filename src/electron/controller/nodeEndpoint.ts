@@ -81,7 +81,11 @@ export const nodeEndpointController = () => {
     MESSAGE.DELETE_NODE_ENDPOINT,
     MESSAGE.DELETE_NODE_ENDPOINT_RES,
     async (event, payload) => {
-      const [res] = await nodeEndpointDB.deleteNodeEndpoint(payload?.data);
+      const [res, err] = await nodeEndpointDB.deleteNodeEndpoint(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.DELETE_NODE_ENDPOINT_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_NODE_ENDPOINT_RES, {
         data: res,
       });

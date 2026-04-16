@@ -60,7 +60,11 @@ export const agentProfileController = () => {
     MESSAGE.CREATE_AGENT_PROFILE_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [res] = await agentProfileDB.createAgentProfile(data);
+      const [res, err] = await agentProfileDB.createAgentProfile(data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_AGENT_PROFILE_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_AGENT_PROFILE_RES, { data: res });
     },
   );
@@ -70,7 +74,11 @@ export const agentProfileController = () => {
     MESSAGE.UPDATE_AGENT_PROFILE_RES,
     async (event, payload) => {
       const { data } = payload;
-      const [res] = await agentProfileDB.updateAgentProfile(data);
+      const [res, err] = await agentProfileDB.updateAgentProfile(data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_AGENT_PROFILE_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_AGENT_PROFILE_RES, { data: res });
     },
   );
@@ -88,7 +96,13 @@ export const agentProfileController = () => {
       });
       const [unassignedCount] =
         await agentTaskDB.unassignTasksByAgentIds(listId);
-      const [res] = await agentProfileDB.deleteAgentProfile(listId);
+      const [res, deleteErr] = await agentProfileDB.deleteAgentProfile(listId);
+      if (deleteErr) {
+        event.reply(MESSAGE.DELETE_AGENT_PROFILE_RES, {
+          error: deleteErr?.message,
+        });
+        return;
+      }
       if (unassignedCount > 0) {
         sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       }

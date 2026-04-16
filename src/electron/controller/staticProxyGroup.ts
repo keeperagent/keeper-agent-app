@@ -45,10 +45,13 @@ export const staticProxyGroupController = () => {
     MESSAGE.CREATE_PROXY_GROUP,
     MESSAGE.CREATE_PROXY_GROUP_RES,
     async (event, payload) => {
-      const [res] = await staticProxyGroupDB.createStaticProxyGroup(
+      const [res, err] = await staticProxyGroupDB.createStaticProxyGroup(
         payload?.data,
       );
-
+      if (err) {
+        event.reply(MESSAGE.CREATE_PROXY_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_PROXY_GROUP_RES, {
         data: res,
       });
@@ -59,10 +62,13 @@ export const staticProxyGroupController = () => {
     MESSAGE.UPDATE_PROXY_GROUP,
     MESSAGE.UPDATE_PROXY_GROUP_RES,
     async (event, payload) => {
-      const [res] = await staticProxyGroupDB.updateStaticProxyGroup(
+      const [res, err] = await staticProxyGroupDB.updateStaticProxyGroup(
         payload?.data,
       );
-
+      if (err) {
+        event.reply(MESSAGE.UPDATE_PROXY_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_PROXY_GROUP_RES, {
         data: res,
       });

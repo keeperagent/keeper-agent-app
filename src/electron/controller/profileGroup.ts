@@ -80,8 +80,11 @@ export const profileGroupController = () => {
     MESSAGE.CREATE_PROFILE_GROUP,
     MESSAGE.CREATE_PROFILE_GROUP_RES,
     async (event, payload) => {
-      const [res] = await profileGroupDB.createProfileGroup(payload?.data);
-
+      const [res, err] = await profileGroupDB.createProfileGroup(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_PROFILE_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.CREATE_PROFILE_GROUP_RES, {
         data: res,
       });
@@ -92,8 +95,11 @@ export const profileGroupController = () => {
     MESSAGE.UPDATE_PROFILE_GROUP,
     MESSAGE.UPDATE_PROFILE_GROUP_RES,
     async (event, payload) => {
-      const [res] = await profileGroupDB.updateProfileGroup(payload?.data);
-
+      const [res, err] = await profileGroupDB.updateProfileGroup(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.UPDATE_PROFILE_GROUP_RES, { error: err?.message });
+        return;
+      }
       event.reply(MESSAGE.UPDATE_PROFILE_GROUP_RES, {
         data: res,
       });
