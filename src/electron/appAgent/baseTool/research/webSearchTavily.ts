@@ -5,27 +5,40 @@ import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { TOOL_KEYS } from "@/electron/constant";
 
-const MAX_RESULTS = 7;
+const MAX_RESULTS = 5;
+const MAX_CONTENT_LENGTH = 400;
+const MIN_SCORE = 0.3;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const webSearchTavilyTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
     name: TOOL_KEYS.WEB_SEARCH_TAVILY,
     description:
-      "Search the web using Tavily for current information, news, facts, and general queries. " +
-      "Returns structured results with titles, URLs, and content snippets. " +
-      "Best for factual lookups, recent events, and general web search.",
+      "Search the web for real-time or recent information — news, current prices, live events, recently published content. " +
+      "Use only when data is genuinely live or too recent to be in training knowledge. " +
+      "Returns a synthesized answer plus source links.",
     schema: z.object({
-      query: z.string().describe("The search query to look up on the web"),
+      query: z
+        .string()
+        .describe(
+          "Concise search-engine keywords — not a full sentence or question",
+        ),
       maxResults: z
         .number()
         .positive()
         .default(MAX_RESULTS)
         .optional()
         .describe("Maximum number of results to return (default 5)"),
+      searchDepth: z
+        .enum(["basic", "advanced"])
+        .default("basic")
+        .optional()
+        .describe(
+          "'basic' for simple factual queries (faster); 'advanced' for deep research",
+        ),
     }),
     func: async (input) => {
-      const { query, maxResults = MAX_RESULTS } = input;
+      const { query, maxResults = MAX_RESULTS, searchDepth = "basic" } = input;
       try {
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.tavilyApiKey || null;
@@ -37,13 +50,39 @@ export const webSearchTavilyTool = () =>
           tavilyApiKey: apiKey,
         });
 
-        const results = await wrapper.rawResults({
+        const rawData = await wrapper.rawResults({
           query,
           maxResults,
           includeAnswer: true,
-        });
+          searchDepth,
+        } as any);
 
-        const output = JSON.stringify(results);
+        // Answer field first — LLM should read this before scanning individual results
+        const answer = rawData?.answer || null;
+        const rawItems: any[] = Array.isArray(rawData?.results)
+          ? rawData.results
+          : [];
+
+        // Filter low-relevance results, trim content per item
+        const items = rawItems
+          .filter((item: any) => (item?.score ?? 1) >= MIN_SCORE)
+          .map((item: any) => ({
+            title: item.title,
+            url: item.url,
+            content:
+              typeof item.content === "string"
+                ? item.content.slice(0, MAX_CONTENT_LENGTH)
+                : undefined,
+            score: item.score,
+          }));
+
+        const structured: Record<string, any> = {};
+        if (answer) {
+          structured.answer = answer;
+        }
+        structured.results = items;
+
+        const output = JSON.stringify(structured);
         const truncated =
           output.length > MAX_OUTPUT_LENGTH
             ? output.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"

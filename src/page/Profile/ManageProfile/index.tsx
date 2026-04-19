@@ -408,7 +408,7 @@ const ManageProfile = (props: any) => {
   };
 
   const isStaleData =
-    listProfile.length > 0 &&
+    listProfile?.length > 0 &&
     listProfile[0]?.groupId !== selectedProfileGroup?.id;
 
   return (

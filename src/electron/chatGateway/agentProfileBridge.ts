@@ -158,6 +158,16 @@ class AgentProfileBridge {
       session.toolContext.update({ encryptKey });
     }
 
+    session.toolContext.update({
+      onStepAdvanced: (stepContent: string, todos: any[]) => {
+        ipcEvent.reply(MESSAGE.AGENT_PROFILE_STEP_ADVANCED, {
+          sessionId,
+          stepContent,
+          todos,
+        });
+      },
+    });
+
     let finalOutput = "";
 
     try {
@@ -173,7 +183,7 @@ class AgentProfileBridge {
         {
           configurable: { thread_id: session.threadId },
           version: "v2",
-          recursionLimit: 20,
+          recursionLimit: 100,
           signal: abortController.signal,
         },
       );
@@ -273,6 +283,10 @@ class AgentProfileBridge {
     } finally {
       this.activeRuns.delete(sessionId);
       this.abortControllers.delete(sessionId);
+      const runSession = this.sessions.get(sessionId);
+      if (runSession) {
+        runSession.toolContext.update({ onStepAdvanced: undefined });
+      }
     }
   };
 

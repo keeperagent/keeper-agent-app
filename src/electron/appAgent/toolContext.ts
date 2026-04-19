@@ -11,7 +11,7 @@ export enum PlanState {
 }
 
 export interface IPendingCode {
-  language: "javascript" | "python";
+  language: "javascript";
   code: string;
 }
 
@@ -30,8 +30,14 @@ interface IToolContextData {
   requestPlanApproval?: (plan: string) => Promise<boolean>;
   // Set for registry agents so mailbox tools know the sender ID. Undefined for the main agent
   agentProfileId?: number;
-  // Code written by write_javascript/write_python, consumed by execute_javascript/execute_python
+  // Code written by write_javascript, consumed by execute_javascript
   pendingCode?: IPendingCode;
+  // Active todo step type — drives tool scoping in StepScopingMiddleware
+  currentStepType?: string | null;
+  // Called by StepScopingMiddleware when a task auto-advances a todo step to completed
+  onStepAdvanced?: (stepContent: string, todos: any[]) => void;
+  // Called by bridge.ts at the start of each run to reset cross-turn middleware state
+  resetStepState?: () => void;
 }
 
 /**
@@ -102,6 +108,15 @@ export class ToolContext {
     if (data.pendingCode !== undefined) {
       this.data.pendingCode = data.pendingCode;
     }
+    if ("currentStepType" in data) {
+      this.data.currentStepType = data.currentStepType;
+    }
+    if ("onStepAdvanced" in data) {
+      this.data.onStepAdvanced = data.onStepAdvanced;
+    }
+    if ("resetStepState" in data) {
+      this.data.resetStepState = data.resetStepState;
+    }
   }
 
   get nodeEndpointGroupId(): number | undefined {
@@ -167,5 +182,19 @@ export class ToolContext {
 
   clearPendingCode(): void {
     this.data.pendingCode = undefined;
+  }
+
+  get currentStepType(): string | null | undefined {
+    return this.data.currentStepType;
+  }
+
+  get onStepAdvanced():
+    | ((stepContent: string, todos: any[]) => void)
+    | undefined {
+    return this.data.onStepAdvanced;
+  }
+
+  get resetStepState(): (() => void) | undefined {
+    return this.data.resetStepState;
   }
 }

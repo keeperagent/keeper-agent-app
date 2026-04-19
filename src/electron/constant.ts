@@ -440,6 +440,7 @@ export const MESSAGE = {
   DASHBOARD_AGENT_CHANGE_PROVIDER_RES: "DASHBOARD_AGENT_CHANGE_PROVIDER_RES",
   DASHBOARD_AGENT_PLAN_REVIEW: "DASHBOARD_AGENT_PLAN_REVIEW",
   DASHBOARD_AGENT_PLAN_APPROVAL: "DASHBOARD_AGENT_PLAN_APPROVAL",
+  DASHBOARD_AGENT_STEP_ADVANCED: "DASHBOARD_AGENT_STEP_ADVANCED",
 
   // Chat History (persistent agent memory across sessions)
   CHAT_HISTORY_SAVE_MESSAGE: "CHAT_HISTORY_SAVE_MESSAGE",
@@ -520,6 +521,7 @@ export const MESSAGE = {
   AGENT_PROFILE_STOP_RES: "AGENT_PROFILE_STOP_RES",
   AGENT_PROFILE_RESET_SESSION: "AGENT_PROFILE_RESET_SESSION",
   AGENT_PROFILE_RESET_SESSION_RES: "AGENT_PROFILE_RESET_SESSION_RES",
+  AGENT_PROFILE_STEP_ADVANCED: "AGENT_PROFILE_STEP_ADVANCED",
 
   // Keeper MCP Token
   GET_LIST_MCP_TOKEN: "GET_LIST_MCP_TOKEN",
@@ -1118,6 +1120,7 @@ export const TOOL_KEYS = {
   TASK_MANAGEMENT_AGENT: "task_management_agent",
   TEAM_MAILBOX_AGENT: "team_mailbox_agent",
   DATA_MANAGEMENT_AGENT: "data_management_agent",
+  VISUALIZATION_AGENT: "visualization_agent",
   // Built-in tools
   LS: "ls",
   READ_FILE: "read_file",
@@ -1126,6 +1129,7 @@ export const TOOL_KEYS = {
   FIND: "find",
   EXECUTE: "execute",
   TASK: "task",
+  WRITE_TODOS: "write_todos",
   // Transaction tools
   SWAP_ON_JUPITER: "swap_on_jupiter",
   SWAP_ON_KYBERSWAP: "swap_on_kyberswap",
@@ -1147,9 +1151,7 @@ export const TOOL_KEYS = {
   QUERY_RESOURCES: "query_resources",
   // Code execution
   WRITE_JAVASCRIPT: "write_javascript",
-  WRITE_PYTHON: "write_python",
   EXECUTE_JAVASCRIPT: "execute_javascript",
-  EXECUTE_PYTHON: "execute_python",
   // Workflow tools
   SEARCH_CAMPAIGNS: "search_campaigns",
   SEARCH_WORKFLOWS: "search_workflows",
@@ -1180,12 +1182,16 @@ export const TOOL_KEYS = {
   READ_MESSAGES: "read_messages",
   ACKNOWLEDGE_MESSAGE: "acknowledge_message",
   // Planning tools
-  DRAFT_PLAN: "draft_plan",
-  SUBMIT_PLAN: "submit_plan",
+  REQUEST_APPROVAL: "request_approval",
+  CONFIRM_APPROVAL: "confirm_approval",
   // Team tools
   CREATE_AGENT_TEAM: "create_agent_team",
   GET_TEAM_PROGRESS: "get_team_progress",
   DELEGATE_TASK: "delegate_task",
+  // Visualization tools
+  RENDER_CHART: "render_chart",
+  // Calculator
+  CALCULATE: "calculate",
 } as const;
 
 export const TOOL_DISPLAY_NAMES: Record<string, string> = {
@@ -1207,6 +1213,10 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.FIND]: "Find files",
   [TOOL_KEYS.EXECUTE]: "Run command",
   [TOOL_KEYS.TASK]: "Run subagent",
+  [TOOL_KEYS.WRITE_TODOS]: "Todo list",
+
+  // Calculator
+  [TOOL_KEYS.CALCULATE]: "Calculate",
 
   // Transaction tools
   [TOOL_KEYS.SWAP_ON_JUPITER]: "Swap on Jupiter",
@@ -1231,9 +1241,7 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
 
   // Code execution
   [TOOL_KEYS.WRITE_JAVASCRIPT]: "Write JavaScript",
-  [TOOL_KEYS.WRITE_PYTHON]: "Write Python",
   [TOOL_KEYS.EXECUTE_JAVASCRIPT]: "Execute JavaScript",
-  [TOOL_KEYS.EXECUTE_PYTHON]: "Execute Python",
 
   // Workflow tools
   [TOOL_KEYS.SEARCH_CAMPAIGNS]: "Search campaigns",
@@ -1270,13 +1278,17 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.ACKNOWLEDGE_MESSAGE]: "Acknowledge message",
 
   // Planning tools
-  [TOOL_KEYS.DRAFT_PLAN]: "Draft plan",
-  [TOOL_KEYS.SUBMIT_PLAN]: "Submit plan",
+  [TOOL_KEYS.REQUEST_APPROVAL]: "Request approval",
+  [TOOL_KEYS.CONFIRM_APPROVAL]: "Confirm approval",
 
   // Team tools
   [TOOL_KEYS.CREATE_AGENT_TEAM]: "Create agent team",
   [TOOL_KEYS.GET_TEAM_PROGRESS]: "Get team progress",
   [TOOL_KEYS.DELEGATE_TASK]: "Delegate task",
+
+  // Visualization
+  [TOOL_KEYS.VISUALIZATION_AGENT]: "Visualization subagent",
+  [TOOL_KEYS.RENDER_CHART]: "Render chart",
 };
 
 export const getToolDisplayName = (toolName: string): string =>

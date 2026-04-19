@@ -1,7 +1,6 @@
 // Tool names whose presence in a memory line signals a behavioral injection attempt.
 const DANGEROUS_TOOL_NAMES = [
   "execute_javascript",
-  "execute_python",
   "run_workflow",
   "broadcast_transaction",
   "swap_on_jupiter",

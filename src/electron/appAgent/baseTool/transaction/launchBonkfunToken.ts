@@ -33,35 +33,36 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
         .describe("Token symbol/ticker"),
       imageUrl: z
         .string()
-        .optional()
         .describe(
-          "URL or local file path to token image. If not provided, uses the first image in attached files.",
+          "URL or local file path to token image. Pass empty string to use the first image in attached files.",
         ),
-      description: z.string().optional().describe("Token description"),
-      twitter: z.string().optional().describe("Twitter handle or URL"),
-      telegram: z.string().optional().describe("Telegram group or URL"),
-      website: z.string().optional().describe("Website URL"),
+      description: z
+        .string()
+        .describe("Token description. Pass empty string if none."),
+      twitter: z
+        .string()
+        .describe("Twitter handle or URL. Pass empty string if none."),
+      telegram: z
+        .string()
+        .describe("Telegram group or URL. Pass empty string if none."),
+      website: z.string().describe("Website URL. Pass empty string if none."),
       buyAmountSol: z
         .number()
         .nonnegative()
-        .optional()
-        .describe("SOL to buy immediately after launch"),
+        .describe(
+          "SOL to buy immediately after launch. Pass 0 to skip initial buy.",
+        ),
       slippagePercentage: z
         .number()
         .nonnegative()
-        .optional()
-        .describe("Slippage % for the initial buy"),
-      unitLimit: z.string().optional().default("250000").describe("Gas limit"),
+        .describe("Slippage % for the initial buy. Pass 0 for default."),
+      unitLimit: z.string().describe("Gas limit (default: '250000')."),
       unitPrice: z
         .string()
-        .optional()
-        .default("100")
-        .describe("Gas price in microLamports"),
+        .describe("Gas price in microLamports (default: '100')."),
       launchCurrency: z
         .enum(["SOL", "USD1"])
-        .default("SOL")
-        .optional()
-        .describe("Launch pool currency: SOL or USD1"),
+        .describe("Launch pool currency: SOL or USD1 (default: 'SOL')."),
     }),
     func: async ({
       tokenName,
@@ -77,10 +78,13 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
       unitPrice,
       launchCurrency = "SOL",
     }) => {
+      console.log(
+        `[launch_bonkfun_token] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
+      );
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot launch token in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot launch token in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -236,11 +240,9 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
         throw error;
       }
 
-      logEveryWhere({
-        message: `Bonk.fun token launched: ${tokenName} (${symbol}), Token Address: ${tokenAddress}, Transaction Hash: ${txHash}`,
-      });
+      toolContext?.resetPlanState();
 
-      return safeStringify({
+      const toolResult = safeStringify({
         success: true,
         tokenName,
         symbol,
@@ -248,5 +250,10 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
         transactionHash: txHash,
         wallet: decryptedWallet.address,
       });
+
+      logEveryWhere({
+        message: `[launch_bonkfun_token] tool result: ${toolResult}`,
+      });
+      return toolResult;
     },
   });

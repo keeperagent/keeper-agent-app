@@ -446,7 +446,8 @@ const ManageWallet = (props: any) => {
   }, [tableViewMode, dataSource]);
 
   const isStaleData =
-    listWallet.length > 0 && listWallet[0]?.groupId !== selectedWalletGroup?.id;
+    listWallet?.length > 0 &&
+    listWallet[0]?.groupId !== selectedWalletGroup?.id;
 
   return (
     <ManageWalletWrapper>

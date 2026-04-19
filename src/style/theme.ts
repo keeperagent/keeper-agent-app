@@ -3,6 +3,7 @@ export interface ITheme {
   colorBgSecondary: string;
   colorBgTransparent: string;
   colorBgTransparentLight: string;
+  colorBgNested: string;
   colorBgTag: string;
   colorBorder: string;
   colorBorderInput: string;
@@ -39,6 +40,7 @@ const lightTheme: ITheme = {
   colorBgSecondary: "rgb(255, 255, 255)",
   colorBgTransparent: "rgba(133, 122, 233, 0.15)",
   colorBgTransparentLight: "rgba(133, 122, 233, 0.03)",
+  colorBgNested: "rgba(99, 102, 241, 0.05)",
   colorBgTag: "#f2f2f2",
   colorBorder: "#e8e8e8",
   colorBorderInput: "rgb(79, 70, 229)",
@@ -75,6 +77,7 @@ const darkTheme: ITheme = {
   colorBgSecondary: "rgb(20, 20, 20)",
   colorBgTransparent: "rgba(0, 0, 0, 0.7)",
   colorBgTransparentLight: "rgba(0, 0, 0, 0.3)",
+  colorBgNested: "rgba(255, 255, 255, 0.035)",
   colorBgTag: "rgba(15, 15, 15, 0.7)",
   colorBorder: "rgba(80, 80, 80, 0.5)",
   colorBorderInput: "rgba(80, 80, 80, 0.7)",

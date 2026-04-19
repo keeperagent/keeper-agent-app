@@ -107,6 +107,11 @@ const useDashboardAgent = () => {
 
   const sessionIdRef = useRef<string | null>(sessionId);
   const streamingContentRef = useRef<string>("");
+  const preTurnContentRef = useRef<string>("");
+  // Tracks full todo list across write_todos calls — agent sometimes drops earlier items
+  const mergedTodosRef = useRef<Map<string, { status: string; type?: string }>>(
+    new Map(),
+  );
   // Tracks nested tool call depth so inner tool completions don't clear the badge
   const toolDepthRef = useRef<number>(0);
   const dispatchRef = useRef(dispatch);
@@ -250,6 +255,7 @@ const useDashboardAgent = () => {
         setLoading(false);
         setStreamingContent("");
         streamingContentRef.current = "";
+        preTurnContentRef.current = "";
         setExecutingTool(null);
         toolDepthRef.current = 0;
         setToolCallStates([]);
@@ -260,16 +266,72 @@ const useDashboardAgent = () => {
       const result = data || {};
       const normalizedSteps = normalizeSteps(result?.steps || []);
 
+      // Mark any tool calls still RUNNING as ERROR (e.g. tool schema validation failed mid-run)
+      for (const [runId, toolCall] of toolCallMapRef.current.entries()) {
+        if (toolCall.state === ToolCallStateStatus.RUNNING) {
+          toolCallMapRef.current.set(runId, {
+            ...toolCall,
+            state: ToolCallStateStatus.ERROR,
+          });
+        }
+      }
+
+      // Auto-complete any remaining in_progress todos (communicate steps have no subagent task)
+      if (mergedTodosRef.current.size > 0) {
+        let hasInProgress = false;
+        for (const [content, meta] of mergedTodosRef.current.entries()) {
+          if (meta.status === "in_progress") {
+            mergedTodosRef.current.set(content, {
+              ...meta,
+              status: "completed",
+            });
+            hasInProgress = true;
+          }
+        }
+        if (hasInProgress) {
+          let lastWriteTodosRunId: string | null = null;
+          for (const [mapRunId, mapEntry] of toolCallMapRef.current.entries()) {
+            if (mapEntry.toolName === "write_todos") {
+              lastWriteTodosRunId = mapRunId;
+            }
+          }
+          if (lastWriteTodosRunId) {
+            const lastWriteTodosEntry =
+              toolCallMapRef.current.get(lastWriteTodosRunId)!;
+            const mergedArray = Array.from(
+              mergedTodosRef.current.entries(),
+            ).map(([content, { status, type }]) => ({ content, status, type }));
+            toolCallMapRef.current.set(lastWriteTodosRunId, {
+              ...lastWriteTodosEntry,
+              input: { todos: mergedArray },
+            });
+          }
+        }
+      }
+
       // Snapshot completed tool calls before clearing, so they can be attached to the message
       const completedToolCalls = Array.from(toolCallMapRef.current.values());
 
-      // Append remaining streamed content as a final AI message
-      // (earlier chunks were flushed on tool_start as separate messages)
-      const remainingContent = streamingContentRef.current || "";
-      if (remainingContent.trim()) {
+      // Combine deferred pre-turn text with remaining streamed content
+      // Pre-turn text was deferred so tool calls appear before it in the UI
+      const preTurnContent = preTurnContentRef.current;
+      preTurnContentRef.current = "";
+      const remainingContent =
+        result?.output || streamingContentRef.current || "";
+      const finalContent = [preTurnContent, remainingContent]
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join("\n\n");
+
+      // Clear streaming state before appending to conversation to prevent
+      // a render window where both the streaming bubble and final message are visible
+      streamingContentRef.current = "";
+      setStreamingContent("");
+
+      if (finalContent) {
         const assistantMessage: AgentMessage = {
           role: ChatRole.AI,
-          content: remainingContent,
+          content: finalContent,
           timestamp: Date.now(),
           toolCalls:
             completedToolCalls.length > 0 ? completedToolCalls : undefined,
@@ -334,6 +396,7 @@ const useDashboardAgent = () => {
       setLoading(false);
       setStreamingContent("");
       streamingContentRef.current = "";
+      preTurnContentRef.current = "";
       setExecutingTool(null);
       toolDepthRef.current = 0;
       setToolCallStates([]);
@@ -370,17 +433,10 @@ const useDashboardAgent = () => {
         input,
       } = payload || {};
       if (payloadSessionId === sessionIdRef.current && toolName) {
-        // Flush any accumulated streaming text as a completed message
-        // so the tool execution indicator appears as a separate step
+        // Defer any accumulated streaming text — save it to preTurnContentRef
+        // so it appears after the tool call group instead of before it
         if (streamingContentRef.current.trim()) {
-          const partialMessage: AgentMessage = {
-            role: ChatRole.AI,
-            content: streamingContentRef.current,
-            timestamp: Date.now(),
-          };
-          setConversation((prev) => [...prev, partialMessage]);
-          // Save the partial message so it's not lost if app closes during tool execution
-          saveMessageToDB(partialMessage);
+          preTurnContentRef.current = streamingContentRef.current.trim();
           streamingContentRef.current = "";
           setStreamingContent("");
         }
@@ -390,10 +446,24 @@ const useDashboardAgent = () => {
 
         // Track this tool call as a structured state entry
         const resolvedRunId = runId || `${toolName}_${Date.now()}`;
+        // Normalize input: LangChain sometimes wraps tool input as {input: '<json>'} string
+        let normalizedInput: Record<string, unknown> = input || {};
+        if (typeof (normalizedInput as any)?.input === "string") {
+          try {
+            const parsed = JSON.parse((normalizedInput as any).input);
+            if (
+              parsed &&
+              typeof parsed === "object" &&
+              !Array.isArray(parsed)
+            ) {
+              normalizedInput = parsed;
+            }
+          } catch {}
+        }
         const newToolCall: ToolCallState = {
           runId: resolvedRunId,
           toolName,
-          input: input || {},
+          input: normalizedInput,
           state: ToolCallStateStatus.RUNNING,
         };
         toolCallMapRef.current.set(resolvedRunId, newToolCall);
@@ -414,8 +484,26 @@ const useDashboardAgent = () => {
           const existing = toolCallMapRef.current.get(runId)!;
           const isError = isErrorResult(result);
 
+          let patchedInput = existing.input;
+          if (toolName === "write_todos") {
+            const inputTodos: any[] = (existing.input as any)?.todos || [];
+            for (const item of inputTodos) {
+              if (item.content) {
+                mergedTodosRef.current.set(item.content, {
+                  status: item.status || "pending",
+                  type: item.type,
+                });
+              }
+            }
+            const mergedArray = Array.from(
+              mergedTodosRef.current.entries(),
+            ).map(([content, { status, type }]) => ({ content, status, type }));
+            patchedInput = { todos: mergedArray };
+          }
+
           toolCallMapRef.current.set(runId, {
             ...existing,
+            input: patchedInput,
             state: isError
               ? ToolCallStateStatus.ERROR
               : ToolCallStateStatus.DONE,
@@ -477,6 +565,42 @@ const useDashboardAgent = () => {
       }
     };
 
+    const handleStepAdvanced = (_event: any, payload: any) => {
+      const { sessionId: payloadSessionId, todos } = payload || {};
+      if (payloadSessionId === sessionIdRef.current && Array.isArray(todos)) {
+        for (const item of todos) {
+          if (item.content) {
+            mergedTodosRef.current.set(item.content, {
+              status: item.status || "pending",
+              type: item.type,
+            });
+          }
+        }
+        let lastWriteTodosRunId: string | null = null;
+        for (const [mapRunId, mapEntry] of toolCallMapRef.current.entries()) {
+          if (mapEntry.toolName === "write_todos") {
+            lastWriteTodosRunId = mapRunId;
+          }
+        }
+        if (lastWriteTodosRunId) {
+          const lastWriteTodosEntry =
+            toolCallMapRef.current.get(lastWriteTodosRunId)!;
+          const mergedTodos = Array.from(mergedTodosRef.current.entries()).map(
+            ([content, meta]) => ({
+              content,
+              status: meta.status,
+              type: meta.type,
+            }),
+          );
+          toolCallMapRef.current.set(lastWriteTodosRunId, {
+            ...lastWriteTodosEntry,
+            input: { todos: mergedTodos },
+          });
+          setToolCallStates(Array.from(toolCallMapRef.current.values()));
+        }
+      }
+    };
+
     const handleStop = (_event: any, payload: any) => {
       const { error: errMessage } = payload || {};
       if (errMessage) {
@@ -529,6 +653,10 @@ const useDashboardAgent = () => {
     );
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_STOP_RES, handleStop);
     window?.electron?.on(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW, handlePlanReview);
+    window?.electron?.on(
+      MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED,
+      handleStepAdvanced,
+    );
 
     return () => {
       window?.electron?.removeListener(
@@ -570,6 +698,10 @@ const useDashboardAgent = () => {
       window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW,
         handlePlanReview,
+      );
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED,
+        handleStepAdvanced,
       );
     };
   }, [saveMessageToDB]);
@@ -689,10 +821,12 @@ const useDashboardAgent = () => {
       setError(null);
       setStreamingContent("");
       streamingContentRef.current = "";
+      preTurnContentRef.current = "";
       setExecutingTool(null);
       toolDepthRef.current = 0;
       setToolCallStates([]);
       toolCallMapRef.current.clear();
+      mergedTodosRef.current.clear();
       window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
         sessionId: sessionIdRef.current,
         input,
@@ -712,6 +846,7 @@ const useDashboardAgent = () => {
     setError(null);
     setStreamingContent("");
     streamingContentRef.current = "";
+    preTurnContentRef.current = "";
     setExecutingTool(null);
     setPlanReview(null);
     toolDepthRef.current = 0;
@@ -753,16 +888,6 @@ const useDashboardAgent = () => {
         return;
       }
       setPlanReview(null);
-
-      if (approved) {
-        const echoMessage: AgentMessage = {
-          role: ChatRole.AI,
-          content: `**✓ Plan approved**\n\n${currentPlanReview.plan}`,
-          timestamp: Date.now(),
-        };
-        setConversation((prev) => [...prev, echoMessage]);
-        saveMessageToDB(echoMessage);
-      }
 
       window?.electron?.send(MESSAGE.DASHBOARD_AGENT_PLAN_APPROVAL, {
         sessionId: currentPlanReview.sessionId,

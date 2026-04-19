@@ -4,13 +4,13 @@ import { safeStringify } from "@/electron/appAgent/utils";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
 
-export const submitPlanTool = (toolContext: ToolContext) =>
+export const confirmApprovalTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
-    name: TOOL_KEYS.SUBMIT_PLAN,
+    name: TOOL_KEYS.CONFIRM_APPROVAL,
     description:
-      "Present your execution plan to the user and wait for approval before proceeding. " +
-      "Must be called after draft_plan and before running any transaction, code, or workflow. " +
-      "Include in the plan: what will be executed, which wallets/amounts/tokens/scripts/workflows are involved, and the expected outcome. " +
+      "Present your execution summary to the user and wait for approval before proceeding. " +
+      "Must be called after request_approval and before running any transaction, code, or workflow. " +
+      "Include: what will be executed, which wallets/amounts/tokens/scripts/workflows are involved, and the expected outcome. " +
       "All execution tools remain blocked until the user approves.",
     schema: z.object({
       plan: z
@@ -21,6 +21,13 @@ export const submitPlanTool = (toolContext: ToolContext) =>
         ),
     }),
     func: async ({ plan }) => {
+      if (toolContext.planState !== PlanState.DRAFTED) {
+        return safeStringify({
+          status: "error",
+          message: "You must call request_approval first before confirming.",
+        });
+      }
+
       const requestApproval = toolContext.requestPlanApproval;
 
       if (requestApproval) {

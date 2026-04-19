@@ -159,11 +159,19 @@ const ChatRegistry = (props: Props) => {
       setActiveToolName(null);
     };
 
+    const stepAdvancedHandler = (_event: any, _data: any) => {
+      // No todo UI in this view — handler registered for completeness
+    };
+
     window?.electron?.on(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, handler);
     window?.electron?.on(MESSAGE.AGENT_PROFILE_TOOL_START, toolStartHandler);
     window?.electron?.on(
       MESSAGE.AGENT_PROFILE_TOOL_COMPLETE,
       toolCompleteHandler,
+    );
+    window?.electron?.on(
+      MESSAGE.AGENT_PROFILE_STEP_ADVANCED,
+      stepAdvancedHandler,
     );
 
     return () => {
@@ -178,6 +186,10 @@ const ChatRegistry = (props: Props) => {
       window?.electron?.removeListener(
         MESSAGE.AGENT_PROFILE_TOOL_COMPLETE,
         toolCompleteHandler,
+      );
+      window?.electron?.removeListener(
+        MESSAGE.AGENT_PROFILE_STEP_ADVANCED,
+        stepAdvancedHandler,
       );
     };
   }, [sessionId]);

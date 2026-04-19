@@ -283,7 +283,7 @@ const ManageResource = (props: any) => {
   }, [listResource, page, pageSize]);
 
   const isStaleData =
-    listResource.length > 0 &&
+    listResource?.length > 0 &&
     listResource[0]?.groupId !== selectedResourceGroup?.id;
 
   return (

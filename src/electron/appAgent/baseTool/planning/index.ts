@@ -1,2 +1,2 @@
-export { draftPlanTool } from "./draftPlan";
-export { submitPlanTool } from "./submitPlan";
+export { requestApprovalTool } from "./draftPlan";
+export { confirmApprovalTool } from "./submitPlan";

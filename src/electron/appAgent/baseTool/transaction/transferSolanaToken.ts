@@ -50,45 +50,43 @@ CRITICAL - Confirmation Required:
         ),
       tokenAddress: z
         .string()
-        .optional()
         .describe(
-          "SPL token mint address to transfer. Omit or leave empty for native SOL.",
+          "SPL token mint address to transfer. Pass empty string for native SOL.",
         ),
       amountStrategy: z
         .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
         .describe("How to distribute amounts across target wallets."),
       amount: z
         .number()
-        .positive()
-        .optional()
-        .describe("Per-wallet amount (required for EQUAL_PER_WALLET)."),
+        .min(0)
+        .describe(
+          "Per-wallet amount (required for EQUAL_PER_WALLET). Pass 0 if not applicable.",
+        ),
       totalAmount: z
         .number()
-        .positive()
-        .optional()
+        .min(0)
         .describe(
-          "Total amount to split across all target wallets (required for TOTAL_SPLIT_RANDOM).",
+          "Total amount to split across all target wallets (required for TOTAL_SPLIT_RANDOM). Pass 0 if not applicable.",
         ),
       minAmount: z
         .number()
-        .positive()
-        .optional()
+        .min(0)
         .describe(
-          "Minimum per-wallet amount (optional for RANDOM_PER_WALLET).",
+          "Minimum per-wallet amount (for RANDOM_PER_WALLET). Pass 0 if not applicable.",
         ),
       maxAmount: z
         .number()
-        .positive()
-        .optional()
+        .min(0)
         .describe(
-          "Maximum per-wallet amount (required for RANDOM_PER_WALLET).",
+          "Maximum per-wallet amount (required for RANDOM_PER_WALLET). Pass 0 if not applicable.",
         ),
       balanceTimeoutMs: z
         .number()
         .positive()
         .default(15000)
-        .optional()
-        .describe("Timeout (ms) when fetching wallet balances."),
+        .describe(
+          "Timeout (ms) when fetching wallet balances (default: 15000).",
+        ),
     }),
     func: async ({
       sourceWalletAddress,
@@ -100,10 +98,13 @@ CRITICAL - Confirmation Required:
       maxAmount,
       balanceTimeoutMs = 15000,
     }) => {
+      console.log(
+        `[transfer_solana_token] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
+      );
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot execute transfer in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot execute transfer in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -384,7 +385,11 @@ CRITICAL - Confirmation Required:
         .filter((r) => r.txHash)
         .reduce((sum, r) => sum + r.amount, 0);
 
-      return safeStringify({
+      if (successCount > 0) {
+        toolContext?.resetPlanState();
+      }
+
+      const toolResult = safeStringify({
         chain: "Solana",
         token: isNative ? "SOL" : tokenAddress,
         sourceWallet: sourceWalletAddress,
@@ -406,5 +411,10 @@ CRITICAL - Confirmation Required:
         ...(targetWallets.length > 5 &&
           failedEntries.length > 0 && { failures: failedEntries }),
       });
+
+      logEveryWhere({
+        message: `[transfer_solana_token] tool result: ${toolResult}`,
+      });
+      return toolResult;
     },
   });

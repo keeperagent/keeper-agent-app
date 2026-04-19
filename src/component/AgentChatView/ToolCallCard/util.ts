@@ -5,6 +5,7 @@ export type ToolRendererConfig = {
   icon: string;
   label?: string;
   summaryFields?: string[];
+  skipFields?: string[];
 };
 
 const toolRenderers: Record<string, ToolRendererConfig> = {
@@ -16,7 +17,14 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
   [TOOL_KEYS.SCHEDULER_AGENT]: { icon: "⏱️", summaryFields: [] },
   [TOOL_KEYS.TASK_MANAGEMENT_AGENT]: { icon: "📌", summaryFields: [] },
   [TOOL_KEYS.TEAM_MAILBOX_AGENT]: { icon: "💬", summaryFields: [] },
+  [TOOL_KEYS.VISUALIZATION_AGENT]: { icon: "📊", summaryFields: [] },
 
+  [TOOL_KEYS.WRITE_TODOS]: {
+    icon: "📋",
+    label: "Todo list",
+    summaryFields: [],
+    skipFields: ["todos"],
+  },
   [TOOL_KEYS.LS]: { icon: "📁", summaryFields: ["path"] },
   [TOOL_KEYS.READ_FILE]: { icon: "📄", summaryFields: ["path"] },
   [TOOL_KEYS.WRITE_FILE]: { icon: "✏️", summaryFields: ["path"] },
@@ -30,11 +38,23 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
 
   [TOOL_KEYS.SWAP_ON_JUPITER]: {
     icon: "🪐",
-    summaryFields: ["inputMint", "outputMint", "amount"],
+    summaryFields: [
+      "inputMint",
+      "outputMint",
+      "amount",
+      "totalAmount",
+      "maxAmount",
+    ],
   },
   [TOOL_KEYS.SWAP_ON_KYBERSWAP]: {
     icon: "💱",
-    summaryFields: ["tokenIn", "tokenOut", "amount"],
+    summaryFields: [
+      "tokenIn",
+      "tokenOut",
+      "amount",
+      "totalAmount",
+      "maxAmount",
+    ],
   },
   [TOOL_KEYS.TRANSFER_SOLANA_TOKEN]: {
     icon: "💸",
@@ -81,9 +101,7 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
   [TOOL_KEYS.QUERY_RESOURCES]: { icon: "🔍", summaryFields: ["query"] },
 
   [TOOL_KEYS.WRITE_JAVASCRIPT]: { icon: "📜", summaryFields: [] },
-  [TOOL_KEYS.WRITE_PYTHON]: { icon: "🐍", summaryFields: [] },
   [TOOL_KEYS.EXECUTE_JAVASCRIPT]: { icon: "▶️", summaryFields: [] },
-  [TOOL_KEYS.EXECUTE_PYTHON]: { icon: "▶️", summaryFields: [] },
 
   [TOOL_KEYS.SEARCH_CAMPAIGNS]: { icon: "📂", summaryFields: ["query"] },
   [TOOL_KEYS.SEARCH_WORKFLOWS]: { icon: "⚙️", summaryFields: ["query"] },
@@ -144,14 +162,21 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
   [TOOL_KEYS.READ_MESSAGES]: { icon: "📥", summaryFields: [] },
   [TOOL_KEYS.ACKNOWLEDGE_MESSAGE]: { icon: "✅", summaryFields: ["messageId"] },
 
-  [TOOL_KEYS.DRAFT_PLAN]: { icon: "📝", summaryFields: ["title"] },
-  [TOOL_KEYS.SUBMIT_PLAN]: { icon: "📨", summaryFields: ["title"] },
+  [TOOL_KEYS.CALCULATE]: { icon: "🔢", summaryFields: ["expression"] },
+  [TOOL_KEYS.REQUEST_APPROVAL]: { icon: "🔐", summaryFields: [] },
+  [TOOL_KEYS.CONFIRM_APPROVAL]: { icon: "✅", summaryFields: ["plan"] },
 
   [TOOL_KEYS.CREATE_AGENT_TEAM]: { icon: "👥", summaryFields: ["name"] },
   [TOOL_KEYS.GET_TEAM_PROGRESS]: { icon: "📊", summaryFields: ["teamId"] },
   [TOOL_KEYS.DELEGATE_TASK]: {
     icon: "➡️",
     summaryFields: ["taskId", "agentId"],
+  },
+
+  [TOOL_KEYS.RENDER_CHART]: {
+    icon: "📈",
+    summaryFields: [],
+    skipFields: ["option"],
   },
 };
 
@@ -195,16 +220,19 @@ const unwrapInput = (
 };
 
 const formatFieldValue = (field: string, value: unknown): string => {
-  // For url arrays (web_extract urls field), show just the first domain
+  // For url arrays (web_extract urls field), show domain + path of first URL
   if (field === "urls" && Array.isArray(value)) {
     const firstUrl = value[0];
     if (typeof firstUrl === "string") {
       try {
-        return new URL(firstUrl).hostname.replace(/^www\./, "");
+        const parsed = new URL(firstUrl);
+        const path = parsed.pathname.replace(/\/$/, "");
+        const label = path ? `${parsed.hostname}${path}` : parsed.hostname;
+        return label.replace(/^www\./, "");
       } catch {}
     }
   }
-  return truncateValue(value);
+  return truncateValue(value, 1000);
 };
 
 // Returns up to 4 key/value pairs from the input for summary display in the card header
@@ -220,7 +248,11 @@ export const getSummaryPairs = (
   // Priority fields first
   for (const field of priorityFields) {
     if (field in input && pairs.length < 4) {
-      const value = formatFieldValue(field, input[field]);
+      const rawVal = input[field];
+      if (typeof rawVal === "number" && rawVal === 0) {
+        continue;
+      }
+      const value = formatFieldValue(field, rawVal);
       if (value) {
         pairs.push({ key: field, value });
       }
@@ -230,6 +262,7 @@ export const getSummaryPairs = (
   // Fill remaining from other fields (skip large/internal ones)
   const skipKeys = new Set([
     ...priorityFields,
+    ...(config?.skipFields || []),
     "context",
     "metadata",
     "sessionId",
@@ -237,7 +270,8 @@ export const getSummaryPairs = (
     "limit",
     "start",
     "end",
-    ...(CODE_TOOL_NAMES.has(toolName) ? ["input", "code"] : []),
+    "input", // always skip the LangChain wrapper key
+    ...(CODE_TOOL_NAMES.has(toolName) ? ["code"] : []),
   ]);
   for (const [key, value] of Object.entries(input)) {
     if (pairs.length >= 4) {
@@ -249,7 +283,7 @@ export const getSummaryPairs = (
     if (typeof value === "boolean" || typeof value === "number") {
       continue;
     }
-    const str = truncateValue(value, 2000);
+    const str = truncateValue(value, 3000);
     if (str) {
       pairs.push({ key, value: str });
     }
@@ -265,33 +299,82 @@ export const SEARCH_TOOL_NAMES = new Set<string>([
   TOOL_KEYS.FIND_SIMILAR_EXA,
 ]);
 
+// Internal LangChain auxiliary tools that duplicate visible tool calls — hide from UI
+export const HIDDEN_TOOL_NAMES = new Set<string>([
+  "ExaSearchResults",
+  "TavilySearchResults",
+]);
+
 export type ResultItem = { title: string; url: string };
 export const parseResultItems = (
   toolName: string,
   result?: string,
+  input?: Record<string, unknown>,
 ): ResultItem[] => {
-  if (!result || !SEARCH_TOOL_NAMES.has(toolName as any)) {
+  if (!SEARCH_TOOL_NAMES.has(toolName as any)) {
     return [];
   }
 
-  try {
-    const parsed = JSON.parse(result);
-    // Tavily / Exa format: { results: [{ title, url }] }
-    if (parsed?.results && Array.isArray(parsed.results)) {
-      return parsed.results
-        .filter((item: any) => item?.url)
-        .slice(0, 6)
-        .map((item: any) => ({ title: item.title || item.url, url: item.url }));
-    }
-  } catch {}
+  if (result) {
+    try {
+      const parsed = JSON.parse(result);
+      // Tavily format: { results: [{ title, url }] }
+      if (parsed?.results && Array.isArray(parsed.results)) {
+        const items = parsed.results
+          .filter((item: any) => item?.url)
+          .slice(0, 6)
+          .map((item: any) => ({
+            title: item.title || extractDomain(item.url),
+            url: item.url,
+          }));
+        if (items.length > 0) {
+          return items;
+        }
+      }
+      // Exa format: bare array [{ url, title, ... }]
+      if (Array.isArray(parsed)) {
+        const items = parsed
+          .filter((item: any) => item?.url)
+          .slice(0, 6)
+          .map((item: any) => ({
+            title: item.title || extractDomain(item.url),
+            url: item.url,
+          }));
+        if (items.length > 0) {
+          return items;
+        }
+      }
+    } catch {}
+  }
+
+  // web_extract returns plain text — fall back to the input URLs so they render as clickable items
+  if (toolName === TOOL_KEYS.WEB_EXTRACT_TAVILY && input) {
+    const unwrapped = unwrapInput(input);
+    const raw = unwrapped.urls ?? (unwrapped.url ? [unwrapped.url] : []);
+    const urlArray = (Array.isArray(raw) ? raw : [raw]) as string[];
+    return urlArray
+      .filter((url) => typeof url === "string" && url)
+      .slice(0, 6)
+      .map((url) => {
+        try {
+          const parsed = new URL(url);
+          const path = parsed.pathname.replace(/\/$/, "");
+          const title = path
+            ? `${parsed.hostname.replace(/^www\./, "")}${path}`
+            : parsed.hostname.replace(/^www\./, "");
+          return { title, url };
+        } catch {
+          return { title: url, url };
+        }
+      });
+  }
+
   return [];
 };
 
 const CODE_TOOL_NAMES = new Set<string>([
   TOOL_KEYS.WRITE_JAVASCRIPT,
-  TOOL_KEYS.WRITE_PYTHON,
   TOOL_KEYS.EXECUTE_JAVASCRIPT,
-  TOOL_KEYS.EXECUTE_PYTHON,
 ]);
 
 export const getCodeContent = (
@@ -303,11 +386,7 @@ export const getCodeContent = (
     return null;
   }
   // For execute tools, prefer executedCode from result (actual code that ran)
-  if (
-    (toolName === TOOL_KEYS.EXECUTE_JAVASCRIPT ||
-      toolName === TOOL_KEYS.EXECUTE_PYTHON) &&
-    result
-  ) {
+  if (toolName === TOOL_KEYS.EXECUTE_JAVASCRIPT && result) {
     try {
       const parsed = JSON.parse(result);
       if (parsed?.executedCode && typeof parsed.executedCode === "string") {
@@ -332,16 +411,24 @@ export const getCodeContent = (
 };
 
 export const looksLikeMarkdown = (text: string): boolean => {
-  return /(?:^|\n)#{1,6}\s|\*\*[^*]+\*\*|(?:^|\n)\s*[-*]\s|\[.+\]\(.+\)/.test(
+  return /(?:^|\n)#{1,6}\s|\*\*[^*]+\*\*|(?:^|\n)\s*[-*]\s|\[.+\]\(.+\)|(?:^|\n)\s*\|.+\|/.test(
     text,
   );
 };
 
-export const getCodeLanguage = (toolName: string): "javascript" | "python" => {
-  return toolName === TOOL_KEYS.EXECUTE_PYTHON ||
-    toolName === TOOL_KEYS.WRITE_PYTHON
-    ? "python"
-    : "javascript";
+export const normalizeUrl = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    return (parsed.origin + parsed.pathname)
+      .replace(/\/$/, "")
+      .toLowerCase()
+      .replace(/^(https?:\/\/)www\./, "$1");
+  } catch {
+    return url
+      .replace(/\/$/, "")
+      .toLowerCase()
+      .replace(/^(https?:\/\/)www\./, "$1");
+  }
 };
 
 export const extractDomain = (url: string): string => {
@@ -355,6 +442,25 @@ export const extractDomain = (url: string): string => {
 export const getFaviconUrl = (url: string): string => {
   const domain = extractDomain(url);
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+};
+
+export type TodoItem = { content: string; status: string; type?: string };
+
+export const parseTodos = (
+  input: Record<string, unknown>,
+): TodoItem[] | null => {
+  const unwrapped = unwrapInput(input);
+  const todos = unwrapped?.todos;
+  if (!Array.isArray(todos) || todos.length === 0) {
+    return null;
+  }
+  return todos
+    .filter((item: any) => typeof item?.content === "string" && item.content)
+    .map((item: any) => ({
+      content: item.content as string,
+      status: (item.status as string) || "pending",
+      type: item.type as string | undefined,
+    }));
 };
 
 export const getGroupSummary = (toolCalls: ToolCallState[]): string => {
@@ -378,11 +484,16 @@ export const getGroupSummary = (toolCalls: ToolCallState[]): string => {
     0,
   );
 
-  if (searchCount > 0 && totalResults > 0) {
-    return `Searched · ${totalResults} result${totalResults !== 1 ? "s" : ""}`;
-  }
   if (searchCount > 0) {
-    return `Searched ${searchCount} source${searchCount !== 1 ? "s" : ""}`;
+    const firstSearchTool = toolCalls.find((toolCall) =>
+      SEARCH_TOOL_NAMES.has(toolCall.toolName as any),
+    );
+    const query = firstSearchTool
+      ? getSummaryPairs(firstSearchTool.toolName, firstSearchTool.input)[0]
+          ?.value || ""
+      : "";
+    const truncated = query.length > 60 ? query.slice(0, 60) + "…" : query;
+    return truncated ? `Searched · ${truncated}` : "Searched";
   }
   return `Used ${toolCalls.length} tool${toolCalls.length !== 1 ? "s" : ""}`;
 };

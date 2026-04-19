@@ -47,10 +47,13 @@ The transaction data must be base64-encoded. The tool handles signing with each 
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary instructions).`,
     schema: broadcastTransactionSolanaSchema,
     func: async ({ transactionData }) => {
+      console.log(
+        `[broadcast_transaction_solana] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
+      );
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot broadcast transaction in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot broadcast transaction in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -213,7 +216,11 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
       ).length;
       const failedEntries = results.filter((result) => result.error);
 
-      return safeStringify({
+      if (successCount > 0) {
+        toolContext?.resetPlanState();
+      }
+
+      const toolResult = safeStringify({
         chain: "Solana",
         summary: {
           total: wallets.length,
@@ -230,5 +237,10 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
         ...(wallets.length > 5 &&
           failedEntries.length > 0 && { failures: failedEntries }),
       });
+
+      logEveryWhere({
+        message: `[broadcast_transaction_solana] tool result: ${toolResult}`,
+      });
+      return toolResult;
     },
   });
