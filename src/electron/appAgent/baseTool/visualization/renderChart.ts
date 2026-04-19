@@ -25,25 +25,78 @@ export const renderChartTool = () =>
         .describe("Chart height in pixels (default 400)"),
     }),
     func: async ({ option, height = 400 }) => {
-      try {
-        let parsed: unknown;
-        if (typeof option !== "string") {
-          parsed = option;
-        } else {
+      let parsed: unknown;
+
+      if (typeof option !== "string") {
+        parsed = option;
+      } else {
+        try {
+          parsed = JSON.parse(option);
+        } catch {
           try {
-            parsed = JSON.parse(option);
+            parsed = JSON.parse(jsonrepair(option));
           } catch {
-            try {
-              parsed = JSON.parse(jsonrepair(option));
-            } catch {
-              parsed = new Function(`return (${option})`)();
-            }
+            return "Error: option is not valid JSON and could not be repaired. Provide a valid JSON ECharts option object.";
           }
         }
-
-        return JSON.stringify({ __type: "chart", option: parsed, height });
-      } catch {
-        return "Error: option must be a valid ECharts option object.";
       }
+
+      if (
+        parsed === null ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed)
+      ) {
+        return "Error: option must be a JSON object, not a primitive or array.";
+      }
+
+      const VALID_ECHART_KEYS = new Set([
+        "title",
+        "legend",
+        "grid",
+        "xAxis",
+        "yAxis",
+        "polar",
+        "radiusAxis",
+        "angleAxis",
+        "radar",
+        "dataZoom",
+        "visualMap",
+        "tooltip",
+        "axisPointer",
+        "toolbox",
+        "brush",
+        "geo",
+        "parallel",
+        "parallelAxis",
+        "singleAxis",
+        "timeline",
+        "graphic",
+        "calendar",
+        "dataset",
+        "aria",
+        "series",
+        "color",
+        "backgroundColor",
+        "textStyle",
+        "animation",
+        "animationDuration",
+        "animationEasing",
+        "animationDelay",
+      ]);
+      const REQUIRED_ECHART_KEYS = new Set(["series"]);
+
+      const keys = Object.keys(parsed as object);
+      const unknownKeys = keys.filter((k) => !VALID_ECHART_KEYS.has(k));
+      if (unknownKeys.length > 0) {
+        return `Error: option contains unrecognized ECharts keys: ${unknownKeys.join(", ")}. Ensure the object is a valid ECharts option.`;
+      }
+      const missingKeys = [...REQUIRED_ECHART_KEYS].filter(
+        (k) => !keys.includes(k),
+      );
+      if (missingKeys.length > 0) {
+        return `Error: option is missing required ECharts keys: ${missingKeys.join(", ")}.`;
+      }
+
+      return JSON.stringify({ __type: "chart", option: parsed, height });
     },
   });

@@ -253,6 +253,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
 
       // Capture step type from write_todos args BEFORE zod strips the `type` field
       if (toolName === "write_todos") {
+        const argsKey = request?.toolCall?.args != null ? "args" : "kwargs";
         let todos: any[] =
           request?.toolCall?.args?.todos ||
           request?.toolCall?.kwargs?.todos ||
@@ -299,7 +300,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
           (t: any) => t.id && !todoIds.has(t.id) && t.status === "completed",
         );
         todos = [...mergedTodos, ...dropped];
-        request.toolCall.args = { ...request.toolCall.args, todos };
+        request.toolCall[argsKey] = { ...request.toolCall[argsKey], todos };
         lastKnownTodos = todos;
 
         const newActiveContent = todos.find(
@@ -670,7 +671,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
         );
         const currentPlanState = toolContext.planState;
         const transactionNextStep = (() => {
-          if (!currentPlanState || currentPlanState === "idle") {
+          if (!currentPlanState) {
             return "Your next action MUST be: call request_approval now.";
           }
           if (currentPlanState === "drafted") {

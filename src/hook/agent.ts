@@ -585,9 +585,16 @@ const useDashboardAgent = () => {
         if (lastWriteTodosRunId) {
           const lastWriteTodosEntry =
             toolCallMapRef.current.get(lastWriteTodosRunId)!;
+          const mergedTodos = Array.from(mergedTodosRef.current.entries()).map(
+            ([content, meta]) => ({
+              content,
+              status: meta.status,
+              type: meta.type,
+            }),
+          );
           toolCallMapRef.current.set(lastWriteTodosRunId, {
             ...lastWriteTodosEntry,
-            input: { todos },
+            input: { todos: mergedTodos },
           });
           setToolCallStates(Array.from(toolCallMapRef.current.values()));
         }

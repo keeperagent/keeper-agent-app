@@ -182,6 +182,12 @@ const applyTheme = (
         const xLabel = xAxisObj?.name || "X";
         const yLabel = yAxisObj?.name || "Y";
         base.formatter = (params: any) => {
+          const escHtml = (str: string) =>
+            str
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
           const name = params.name || params.seriesName || "";
           const value = Array.isArray(params.value) ? params.value : [];
           const fmt = (v: any) =>
@@ -189,13 +195,13 @@ const applyTheme = (
               ? Math.abs(v) >= 1000
                 ? v.toLocaleString()
                 : v.toFixed(2)
-              : (v ?? "");
+              : escHtml(String(v ?? ""));
           const lines: string[] = [];
           if (name) {
-            lines.push(`<b>${name}</b>`);
+            lines.push(`<b>${escHtml(name)}</b>`);
           }
-          lines.push(`${xLabel}: ${fmt(value[0])}`);
-          lines.push(`${yLabel}: ${fmt(value[1])}`);
+          lines.push(`${escHtml(xLabel)}: ${fmt(value[0])}`);
+          lines.push(`${escHtml(yLabel)}: ${fmt(value[1])}`);
           if (value[2] != null) {
             lines.push(`Size: ${fmt(value[2])}`);
           }
@@ -552,7 +558,14 @@ type Props = {
   isLightMode: boolean;
 };
 
+const MIN_CHART_HEIGHT = 200;
+const MAX_CHART_HEIGHT = 1200;
+
 const ChartResult = ({ option, height = 400, isLightMode }: Props) => {
+  const clampedHeight = Number.isFinite(height)
+    ? Math.min(Math.max(height, MIN_CHART_HEIGHT), MAX_CHART_HEIGHT)
+    : 400;
+
   const themedOption = useMemo(
     () => applyTheme(option, isLightMode),
     [option, isLightMode],
@@ -571,7 +584,7 @@ const ChartResult = ({ option, height = 400, isLightMode }: Props) => {
     >
       <ReactECharts
         option={themedOption}
-        style={{ height: `${height}px`, width: "100%" }}
+        style={{ height: `${clampedHeight}px`, width: "100%" }}
         notMerge
         lazyUpdate
       />

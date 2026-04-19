@@ -83,6 +83,7 @@ CRITICAL - Confirmation Required:
       balanceTimeoutMs: z
         .number()
         .positive()
+        .default(15000)
         .describe(
           "Timeout (ms) when fetching wallet balances (default: 15000).",
         ),

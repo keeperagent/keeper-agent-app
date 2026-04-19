@@ -735,8 +735,12 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
           }),
       });
 
+      const firstTxHash = results.find((r) => r.txHash)?.txHash;
+      const txHashSummary = firstTxHash
+        ? ` tx=${firstTxHash.slice(0, 8)}...`
+        : "";
       logEveryWhere({
-        message: `[swap_on_kyberswap] tool result: ${toolResult}`,
+        message: `[swap_on_kyberswap] done chain=${capitalizeFirstLetter(chainKey)} dir=${swapDirection} total=${wallets.length} success=${successCount} failed=${failedEntries.length} amount=${totalSwapped}${txHashSummary}`,
       });
       return toolResult;
     },

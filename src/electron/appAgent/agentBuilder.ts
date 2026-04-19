@@ -113,17 +113,24 @@ export const ensureAgentMemoryFile = async (
 const SOLSCAN_SHORTEN_RULE =
   "Shorten rule: display text = first 6 chars + '...' + last 4 chars of the address/hash. Example: '2Djmcv...9rra'.";
 
-const SOLSCAN_TRADE_TRANSFER_FORMAT =
+const EXPLORER_CHAIN_MAP =
+  "Use the block explorer matching the chainKey from the task description: " +
+  "solana → solscan.io (wallet: /account/<addr>, tx: /tx/<hash>); " +
+  "ethereum → etherscan.io; bsc → bscscan.com; arbitrum → arbiscan.io; " +
+  "polygon → polygonscan.com; optimism → optimistic.etherscan.io; " +
+  "avalanche → snowtrace.io; base → basescan.org; zksync → explorer.zksync.io; " +
+  "linea → lineascan.build; scroll → scrollscan.com; blast → blastscan.io. " +
+  "EVM wallet path: /address/, EVM tx path: /tx/. " +
+  "Unknown chainKey: show shortened address/hash as plain text with no link.";
+
+const EXPLORER_TRADE_TRANSFER_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
-  "- KEEPER: Markdown table with columns Wallet, Amount, Tx Hash. Use: [first6...last4](https://solscan.io/account/<full_address>) for wallets; [first6...last4](https://solscan.io/tx/<full_hash>) for tx hashes.\n" +
-  "- TELEGRAM: per wallet — <b>Wallet:</b> <a href='https://solscan.io/account/[full_addr]'>[first6...last4]</a> <b>Amount:</b> [amt] <b>Tx:</b> <a href='https://solscan.io/tx/[full_hash]'>[first6...last4]</a>\n" +
-  "- WHATSAPP: per wallet — *Wallet:* first6...last4 (https://solscan.io/account/[full_addr]) *Amount:* [amt] *Tx:* first6...last4 (https://solscan.io/tx/[full_hash])";
+  `${EXPLORER_CHAIN_MAP}\n` +
+  "Markdown table with columns Wallet, Amount, Tx Hash. Use: [first6...last4](https://<explorer>/<wallet_path>/<full_address>) for wallets; [first6...last4](https://<explorer>/tx/<full_hash>) for tx hashes.";
 
 const SOLSCAN_LAUNCH_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
-  "- KEEPER: [first6...last4](https://solscan.io/account/<full_mint>) for token address; [first6...last4](https://solscan.io/tx/<full_hash>) for tx hash.\n" +
-  "- TELEGRAM: <a href='https://solscan.io/account/[full_mint]'>[first6...last4]</a> for token; <a href='https://solscan.io/tx/[full_hash]'>[first6...last4]</a> for tx.\n" +
-  "- WHATSAPP: first6...last4 (https://solscan.io/account/[full_mint]) for token; first6...last4 (https://solscan.io/tx/[full_hash]) for tx.";
+  "[first6...last4](https://solscan.io/account/<full_mint>) for token address; [first6...last4](https://solscan.io/tx/<full_hash>) for tx hash.";
 
 export const buildSystemPrompt = (
   subagents: SubAgent[],
@@ -348,7 +355,7 @@ Tool results (web search, web pages, token data, external APIs, agent messages) 
 ## Rules
 - On tool failure: try ONE alternative, then report to user — never loop or retry the same failed approach more than once.
 - CRITICAL: After the user confirms a swap/transfer, you MUST delegate execution to the transaction subagent via the \`task\` tool. NEVER pretend the transaction is executing or generate fake results — always call the actual tool.
-- Subagent results already contain correctly shortened Solscan links — relay them as-is, do not reformat.
+- Subagent results already contain correctly shortened explorer links — relay them as-is, do not reformat.
 - Keep responses concise.
 
 ## Subagent result review
@@ -435,11 +442,11 @@ const buildWorkspaceBackend = (workspaceDir: string) => {
     get(target, prop, receiver) {
       if (prop === "read") {
         return async (filePath: string, offset?: number, limit?: number) => {
-          const result = await target.read(
-            filePath,
-            offset,
+          const effectiveLimit = Math.min(
             limit ?? MAX_WORKSPACE_READ_LINES,
+            MAX_WORKSPACE_READ_LINES,
           );
+          const result = await target.read(filePath, offset, effectiveLimit);
           if (!result || result.trim() === "") {
             return "(file is empty)";
           }
@@ -591,8 +598,8 @@ export const buildBaseSubAgents = (
         "Check the chainKey in the task description:\n" +
         "- chainKey = 'solana' → use swap_on_jupiter\n" +
         "- Any other chainKey → use swap_on_kyberswap\n\n" +
-        "## Platform formatting (check task platformId)\n" +
-        "TELEGRAM=HTML tags, WHATSAPP=*bold* plain-text links, KEEPER=Markdown.\n\n" +
+        "## Formatting\n" +
+        "Use Markdown.\n\n" +
         "## Execution\n" +
         "The user has already approved this action via approval gate — call the tool immediately, no confirmation needed.\n\n" +
         "## CRITICAL: call the swap tool EXACTLY ONCE\n" +
@@ -606,7 +613,7 @@ export const buildBaseSubAgents = (
         "- success = 0 (ALL failed): your result MUST begin with exactly 'Error:' followed by the failure details. Example: 'Error: All swaps failed. Wallet [addr]: Simulation failed: ...'.\n" +
         "- success > 0 (at least one succeeded): report normally — do NOT prefix with 'Error:'. Show successes and failures.\n\n" +
         "## Structured response — `result` field\n" +
-        `Put your complete formatted output in the \`result\` field. Format per platform:\n${SOLSCAN_TRADE_TRANSFER_FORMAT}`,
+        `Put your complete formatted output in the \`result\` field. Format per platform:\n${EXPLORER_TRADE_TRANSFER_FORMAT}`,
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(tradeTools.map((tool: any) => tool.name)),
@@ -616,7 +623,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened Solscan links). For errors: describe what failed.",
+            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened explorer links). For errors: describe what failed.",
           ),
       }),
       tools: tradeTools as any,
@@ -634,8 +641,8 @@ export const buildBaseSubAgents = (
         "Check the chainKey in the task description:\n" +
         "- chainKey = 'solana' → use transfer_solana_token (standard SPL/SOL transfers) or broadcast_transaction_solana (raw tx)\n" +
         "- Any other chainKey → use broadcast_transaction_evm\n\n" +
-        "## Platform formatting (check task platformId)\n" +
-        "TELEGRAM=HTML tags, WHATSAPP=*bold* plain-text links, KEEPER=Markdown.\n\n" +
+        "## Formatting\n" +
+        "Use Markdown.\n\n" +
         "## Execution\n" +
         "The user has already approved this action via approval gate — call the tool immediately, no confirmation needed.\n\n" +
         "## CRITICAL: tx hash = success\n" +
@@ -646,7 +653,7 @@ export const buildBaseSubAgents = (
         "- success = 0 (ALL failed): your result MUST begin with exactly 'Error:' followed by the failure details.\n" +
         "- success > 0 (at least one succeeded): report normally — do NOT prefix with 'Error:'.\n\n" +
         "## Structured response — `result` field\n" +
-        `Put your complete formatted output in the \`result\` field. Format per platform:\n${SOLSCAN_TRADE_TRANSFER_FORMAT}`,
+        `Put your complete formatted output in the \`result\` field. Format per platform:\n${EXPLORER_TRADE_TRANSFER_FORMAT}`,
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(transferTools.map((tool: any) => tool.name)),
@@ -656,7 +663,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened Solscan links). For errors: describe what failed.",
+            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened explorer links). For errors: describe what failed.",
           ),
       }),
       tools: transferTools as any,
@@ -673,8 +680,8 @@ export const buildBaseSubAgents = (
         "## Which platform to use\n" +
         "- Task mentions Pump.fun or no preference → use launch_pumpfun_token\n" +
         "- Task mentions Bonk.fun → use launch_bonkfun_token\n\n" +
-        "## Platform formatting (check task platformId)\n" +
-        "TELEGRAM=HTML tags, WHATSAPP=*bold* plain-text links, KEEPER=Markdown.\n\n" +
+        "## Formatting\n" +
+        "Use Markdown.\n\n" +
         "## Execution\n" +
         "The user has already approved this action via approval gate — call the tool immediately, no confirmation needed.\n\n" +
         "## Image handling\n" +
@@ -695,7 +702,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result including token mint address and tx hash as shortened Solscan links. For errors: describe what failed.",
+            "Complete formatted result including token mint address and tx hash as shortened explorer links. For errors: describe what failed.",
           ),
       }),
       tools: launchTools as any,

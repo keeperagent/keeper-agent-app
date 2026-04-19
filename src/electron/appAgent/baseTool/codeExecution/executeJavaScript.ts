@@ -226,18 +226,20 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
             ? redactedOutput.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"
             : redactedOutput;
 
-        // Success — clear pending code and failed cache
+        // Success — consume approval so it cannot be reused
         removePendingCode(agentId);
         toolContext?.clearPendingCode();
+        toolContext?.resetPlanState();
         agentFailedCodes.delete(normalizedCode);
         logEveryWhere({
           message: `[Agent] execute_javascript: success (${stdout.length} chars)`,
         });
         return JSON.stringify({ output: truncated, executedCode: code });
       } catch (err: any) {
-        // Cache the failed code to block duplicate retries
+        // Cache the failed code to block duplicate retries; consume approval
         removePendingCode(agentId);
         toolContext?.clearPendingCode();
+        toolContext?.resetPlanState();
         agentFailedCodes.add(normalizedCode);
         failedCodeCache.set(agentId, agentFailedCodes);
         logEveryWhere({
