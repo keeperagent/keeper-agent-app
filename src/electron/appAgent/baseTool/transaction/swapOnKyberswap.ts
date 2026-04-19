@@ -33,11 +33,9 @@ const swapOnKyberswapSchema = z
   .object({
     swapDirection: z
       .enum(["BUY", "SELL"])
-      .default("BUY")
-      .describe("BUY = native -> ERC20, SELL = ERC20 -> native"),
+      .describe("BUY = native -> ERC20, SELL = ERC20 -> native (default: BUY)"),
     inputTokenAddress: z
       .string()
-      .optional()
       .refine(
         (val) => {
           if (!val || val.trim() === "") return true;
@@ -45,120 +43,111 @@ const swapOnKyberswapSchema = z
         },
         {
           message:
-            "Must be a valid EVM address (0x + 40 hex chars). Omit for BUY.",
+            "Must be a valid EVM address (0x + 40 hex chars). Pass empty string for BUY.",
         },
       )
-      .describe("ERC20 address. SELL only — omit for BUY."),
+      .describe("ERC20 address. SELL only — pass empty string for BUY."),
     outputTokenAddress: z
       .string()
-      .optional()
-      .describe("ERC20 address. BUY only — omit for SELL."),
+      .describe("ERC20 address. BUY only — pass empty string for SELL."),
     amountStrategy: z
       .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
-      .optional()
       .describe("Amount allocation strategy across wallets"),
     amount: z
       .number()
-      .positive("amount must be > 0")
-      .optional()
-      .describe("Per-wallet amount (for EQUAL_PER_WALLET)"),
+      .min(0)
+      .describe(
+        "Per-wallet amount (for EQUAL_PER_WALLET). Pass 0 if not applicable.",
+      ),
     totalAmount: z
       .number()
-      .positive("totalAmount must be > 0")
-      .optional()
+      .min(0)
       .describe(
-        "Total amount to split across wallets (for TOTAL_SPLIT_RANDOM)",
+        "Total amount to split across wallets (for TOTAL_SPLIT_RANDOM). Pass 0 if not applicable.",
       ),
     minAmount: z
       .number()
-      .nonnegative("minAmount must be >= 0")
-      .optional()
-      .describe("Min per-wallet amount (for RANDOM_PER_WALLET)"),
+      .nonnegative()
+      .describe(
+        "Min per-wallet amount (for RANDOM_PER_WALLET). Pass 0 if not applicable.",
+      ),
     maxAmount: z
       .number()
-      .positive("maxAmount must be > 0")
-      .optional()
-      .describe("Max per-wallet amount (REQUIRED for RANDOM_PER_WALLET)"),
+      .min(0)
+      .describe(
+        "Max per-wallet amount (REQUIRED for RANDOM_PER_WALLET). Pass 0 if not applicable.",
+      ),
     sellPercentage: z
       .union([z.literal("all"), z.literal("half"), z.number().min(0).max(100)])
-      .optional()
-      .describe("SELL only. 'all'=100%, 'half'=50%, or 0-100."),
+      .describe("SELL only. 'all'=100%, 'half'=50%, or 0-100. Pass 0 for BUY."),
     balanceTimeoutMs: z
       .number()
       .int()
       .positive()
-      .default(15000)
-      .describe("Balance fetch timeout in ms"),
+      .describe("Balance fetch timeout in ms (default: 15000)"),
     slippage: z
       .number()
       .min(0)
       .max(100)
-      .default(2)
-      .describe("Slippage tolerance %"),
+      .describe("Slippage tolerance % (default: 2)"),
     priceImpact: z
       .number()
       .min(0)
       .max(100)
-      .default(5)
-      .describe("Max price impact %"),
+      .describe("Max price impact % (default: 5)"),
     deadlineInSecond: z
       .number()
       .int()
       .positive()
-      .default(10)
-      .describe("Tx deadline in seconds"),
+      .describe("Tx deadline in seconds (default: 10)"),
     gasLimit: z
       .number()
       .int()
       .nonnegative()
-      .optional()
-      .default(0)
-      .describe("Gas limit. 0 = auto-estimate."),
+      .describe("Gas limit. Pass 0 for auto-estimate (default: 0)."),
     transactionType: z
       .enum([EVM_TRANSACTION_TYPE.LEGACY, EVM_TRANSACTION_TYPE.EIP_1559])
-      .default(EVM_TRANSACTION_TYPE.LEGACY)
-      .describe("LEGACY or EIP_1559"),
+      .describe(`LEGACY or EIP_1559 (default: ${EVM_TRANSACTION_TYPE.LEGACY})`),
     gasPrice: z
       .number()
       .int()
       .nonnegative()
-      .optional()
-      .default(0)
-      .describe("Gas price in gwei (LEGACY). 0 = auto."),
+      .describe("Gas price in gwei (LEGACY). Pass 0 for auto (default: 0)."),
     maxFeePerGas: z
       .number()
       .int()
       .nonnegative()
-      .optional()
-      .describe("Max fee per gas in gwei (EIP_1559). Auto if omitted."),
+      .describe("Max fee per gas in gwei (EIP_1559). Pass 0 for auto."),
     maxPriorityFeePerGas: z
       .number()
       .int()
       .nonnegative()
-      .optional()
-      .describe("Max priority fee in gwei (EIP_1559). Auto if omitted."),
+      .describe("Max priority fee in gwei (EIP_1559). Pass 0 for auto."),
     shouldWaitTransactionComfirmed: z
       .boolean()
-      .default(true)
-      .describe("Wait for tx confirmation"),
+      .describe("Wait for tx confirmation (default: true)"),
     includedSources: z
       .string()
-      .optional()
-      .describe("Included liquidity sources (comma-separated)"),
+      .describe(
+        "Included liquidity sources (comma-separated). Pass empty string for all.",
+      ),
     excludedSources: z
       .string()
-      .optional()
-      .describe("Excluded liquidity sources (comma-separated)"),
+      .describe(
+        "Excluded liquidity sources (comma-separated). Pass empty string for none.",
+      ),
   })
   .refine(
     (data) => {
-      if (data.amountStrategy === "RANDOM_PER_WALLET") {
-        return data.maxAmount !== undefined && data.maxAmount > 0;
+      if (data.amountStrategy === "RANDOM_PER_WALLET" && !data.sellPercentage) {
+        const effectiveMax = data.maxAmount ?? data.amount;
+        return effectiveMax !== undefined && effectiveMax > 0;
       }
       return true;
     },
     {
-      message: "maxAmount is required when amountStrategy is RANDOM_PER_WALLET",
+      message:
+        "maxAmount (or amount) is required when amountStrategy is RANDOM_PER_WALLET",
       path: ["maxAmount"],
     },
   ) as z.ZodTypeAny;
@@ -226,10 +215,13 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
       includedSources = "",
       excludedSources = "",
     }) => {
+      console.log(
+        `[swap_on_kyberswap] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
+      );
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot execute swap in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot execute swap in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -490,9 +482,16 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
 
       // Prefer total split when a total amount is provided
       const effectiveTotalAmount = totalAmount;
-      const resolvedAmountStrategy = effectiveTotalAmount
-        ? "TOTAL_SPLIT_RANDOM"
-        : amountStrategy;
+      let resolvedAmountStrategy = amountStrategy;
+      if (effectiveTotalAmount) {
+        resolvedAmountStrategy = "TOTAL_SPLIT_RANDOM";
+      } else if (!resolvedAmountStrategy) {
+        if (amount) {
+          resolvedAmountStrategy = "EQUAL_PER_WALLET";
+        } else if (maxAmount) {
+          resolvedAmountStrategy = "RANDOM_PER_WALLET";
+        }
+      }
 
       // Handle sellPercentage for SELL direction
       let sellPercentageValue: number | null = null;
@@ -530,13 +529,14 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
         }
 
         if (resolvedAmountStrategy === "RANDOM_PER_WALLET") {
-          if (!maxAmount || maxAmount <= 0) {
+          const effectiveMax = maxAmount || amount;
+          if (!effectiveMax || effectiveMax <= 0) {
             throw new Error(
-              "maxAmount is required and must be > 0 for RANDOM_PER_WALLET strategy",
+              "maxAmount (or amount) is required and must be > 0 for RANDOM_PER_WALLET strategy",
             );
           }
           const min = minAmount || 0;
-          const max = Math.max(maxAmount, min);
+          const max = Math.max(effectiveMax, min);
           if (max === min) {
             return Array(count).fill(min);
           }
@@ -698,7 +698,11 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
       const failedEntries = results.filter((r) => r.error);
       const totalSwapped = actualPerWalletAmounts.reduce((a, b) => a + b, 0);
 
-      return {
+      if (successCount > 0) {
+        toolContext?.resetPlanState();
+      }
+
+      const toolResult = safeStringify({
         chain: capitalizeFirstLetter(chainKey),
         swapDirection,
         inputToken: isBuy
@@ -729,6 +733,11 @@ Display: native token symbol for native amounts, "tokens" for token amounts. NEV
               error: r.error,
             })),
           }),
-      };
+      });
+
+      logEveryWhere({
+        message: `[swap_on_kyberswap] tool result: ${toolResult}`,
+      });
+      return toolResult;
     },
   });

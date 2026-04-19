@@ -19,7 +19,7 @@ export {
   broadcastTransactionEvmTool,
   broadcastTransactionSolanaTool,
 } from "./transaction";
-export { executeJavaScriptTool, executePythonTool } from "./codeExecution";
+export { executeJavaScriptTool } from "./codeExecution";
 export {
   searchCampaignsTool,
   searchWorkflowsTool,
@@ -45,9 +45,11 @@ export {
   getTeamProgressTool,
   delegateTaskTool,
 } from "./agentTeam";
-export { draftPlanTool, submitPlanTool } from "./planning";
+export { requestApprovalTool, confirmApprovalTool } from "./planning";
 export {
   sendMessageTool,
   readMessagesTool,
   acknowledgeMessageTool,
 } from "./agentMailbox";
+export { renderChartTool } from "./visualization";
+export { calculateTool } from "./calculate";

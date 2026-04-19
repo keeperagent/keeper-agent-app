@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { guard } from "@keeperagent/crypto-key-guard";
@@ -24,6 +24,9 @@ import {
   fileToAttached,
 } from "./util";
 import { ToolCallGroup } from "./ToolCallCard";
+import { TOOL_KEYS } from "@/electron/constant";
+import { parseResultItems, normalizeUrl } from "./ToolCallCard/util";
+import { ToolCallStateStatus } from "./util";
 import ChatComposer from "./ChatComposer";
 import PlanReview from "./PlanReview";
 
@@ -155,6 +158,7 @@ const AgentChatView = ({
   const planReviewRef = useRef<HTMLDivElement | null>(null);
   const prevMessagesLenRef = useRef<number>(0);
   const prevHasPlanReviewRef = useRef(false);
+  const prevLoadingRef = useRef(false);
   const conversationClearedRef = useRef(false);
 
   const onCopyMessage = (content: string, index: number) => {
@@ -359,6 +363,8 @@ const AgentChatView = ({
       conversationClearedRef.current = true;
     }
 
+    const justFinished = prevLoadingRef.current && !loading;
+
     if (currentLen > prevMessagesLenRef.current) {
       if (conversationClearedRef.current) {
         conversationEndRef.current?.scrollIntoView({ block: "end" });
@@ -374,9 +380,15 @@ const AgentChatView = ({
         behavior: "instant",
         block: "end",
       });
+    } else if (justFinished) {
+      conversationEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
     }
 
     prevMessagesLenRef.current = currentLen;
+    prevLoadingRef.current = loading;
   }, [messages, loading]);
 
   useEffect(() => {
@@ -387,6 +399,24 @@ const AgentChatView = ({
       });
     }
     prevHasPlanReviewRef.current = hasPlanReview;
+  }, [messages]);
+
+  const globalExtractStateMap = useMemo(() => {
+    const map = new Map<string, ToolCallStateStatus>();
+    for (const msg of messages) {
+      if (!msg.toolCalls) {
+        continue;
+      }
+      for (const tc of msg.toolCalls) {
+        if (tc.toolName !== TOOL_KEYS.WEB_EXTRACT_TAVILY) {
+          continue;
+        }
+        parseResultItems(tc.toolName, tc.result, tc.input).forEach((item) => {
+          map.set(normalizeUrl(item.url), tc.state);
+        });
+      }
+    }
+    return map;
   }, [messages]);
 
   const handleSend = () => {
@@ -527,6 +557,7 @@ const AgentChatView = ({
                                   !!msg.executingToolText ||
                                   !!msg.isAgentProcessing
                                 }
+                                extractStateMap={globalExtractStateMap}
                               />
                             ) : msg.isLoading && !msg.content ? (
                               <ExecutingToolBadge>

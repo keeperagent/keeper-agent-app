@@ -28,30 +28,27 @@ Display: use "SOL" for native, "tokens" for SPL. NEVER show token addresses afte
     schema: z.object({
       tokenAddress: z
         .string()
-        .optional()
         .describe(
-          "SPL mint address, 'SOL', or omit for native balance. Prompt address overrides context.",
+          "SPL mint address, or empty string '' for native SOL balance. Prompt address overrides context.",
         ),
       timeoutMs: z
         .number()
         .positive()
-        .default(DEFAULT_TIMEOUT_MS)
-        .optional()
-        .describe("Per-request timeout in ms"),
+        .describe(`Per-request timeout in ms (default: ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
-        .default(DEFAULT_TOP_N)
-        .optional()
-        .describe("Number of wallets in top/bottom lists"),
+        .describe(
+          `Number of wallets in top/bottom lists (default: ${DEFAULT_TOP_N})`,
+        ),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
-        .default(DEFAULT_MAX_WALLETS_IN_RESPONSE)
-        .optional()
-        .describe("Max wallet entries in response"),
+        .describe(
+          `Max wallet entries in response (default: ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
+        ),
     }),
     func: async ({
       tokenAddress: tokenAddressParam,
@@ -162,6 +159,9 @@ Display: use "SOL" for native, "tokens" for SPL. NEVER show token addresses afte
       const solanaProvider = new SolanaProvider();
       // Normalize "SOL" to mean native token. Model-provided value takes priority over context.
       const tokenAddress = tokenAddressParam || toolContext?.tokenAddress;
+      console.log(
+        `[get_solana_token_balance] input: tokenAddressParam="${tokenAddressParam}" toolContext.tokenAddress="${toolContext?.tokenAddress}" walletCount=${wallets.length}`,
+      );
       const normalizedTokenAddress =
         tokenAddress?.trim().toUpperCase() === "SOL"
           ? ""
@@ -225,7 +225,7 @@ Display: use "SOL" for native, "tokens" for SPL. NEVER show token addresses afte
       const balancesSample = results.slice(0, maxBalances);
       const omittedCount = Math.max(0, results.length - maxBalances);
 
-      return safeStringify({
+      const toolResult = safeStringify({
         chain: "Solana",
         token: resolvedTokenAddress || "SOL",
         tokenType: resolvedTokenAddress ? "SPL" : "SOL",
@@ -238,5 +238,7 @@ Display: use "SOL" for native, "tokens" for SPL. NEVER show token addresses afte
         balances: balancesSample,
         omittedCount,
       });
+      console.log(`[get_solana_token_balance] result: ${toolResult}`);
+      return toolResult;
     },
   });

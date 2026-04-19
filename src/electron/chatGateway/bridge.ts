@@ -526,6 +526,7 @@ class AgentChatBridge {
     }
 
     let finalOutput = "";
+    const textBuffers = new Map<string, string>();
     const steps: Array<{
       toolName: string;
       args: unknown;
@@ -544,10 +545,11 @@ class AgentChatBridge {
     try {
       const { agent } = await this.getOrCreateAgent(session);
 
-      // Reset plan state at the start of each run — each new user message requires a fresh plan approval
+      // Reset plan state and step-scoping state at the start of each run
       session.toolContext.resetPlanState();
+      session.toolContext.resetStepState?.();
 
-      // Wire plan approval callback for IPC sessions (desktop app)
+      // Wire plan approval and step-advanced callbacks for IPC sessions (desktop app)
       if (options?.ipcEvent) {
         session.toolContext.update({
           requestPlanApproval: (plan: string) =>
@@ -558,6 +560,13 @@ class AgentChatBridge {
                 plan,
               });
             }),
+          onStepAdvanced: (stepContent: string, todos: any[]) => {
+            options.ipcEvent!.reply(MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED, {
+              sessionId,
+              stepContent,
+              todos,
+            });
+          },
         });
       }
 
@@ -608,7 +617,7 @@ class AgentChatBridge {
         {
           configurable: { thread_id: session.threadId },
           version: "v2",
-          recursionLimit: 20,
+          recursionLimit: 100,
           signal: abortController.signal,
         },
       );
@@ -618,7 +627,7 @@ class AgentChatBridge {
           break;
         }
 
-        // Streaming text chunks
+        // Streaming text chunks — buffer per run_id, flush only if no tool calls
         if (
           evt.event === "on_chat_model_stream" &&
           evt.data?.chunk?.content &&
@@ -640,12 +649,8 @@ class AgentChatBridge {
               .join("");
           }
           if (text) {
-            finalOutput += text;
-            options?.onChunk?.(text);
-            options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_STREAM_CHUNK, {
-              sessionId,
-              chunk: text,
-            });
+            const runId = evt.run_id || "default";
+            textBuffers.set(runId, (textBuffers.get(runId) || "") + text);
           }
         }
 
@@ -678,15 +683,37 @@ class AgentChatBridge {
           });
         }
 
-        // Context token tracking
-        if (
-          evt.event === "on_chat_model_end" &&
-          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
-        ) {
-          const inputTokens =
-            evt.data?.output?.usage_metadata?.input_tokens || 0;
-          if (inputTokens > 0) {
-            session.contextTokens = inputTokens;
+        // Model end — flush buffered text if no tool calls, discard if preamble.
+        // No namespace filter here — the buffer only contains text from top-level
+        // stream events that passed the "|" filter, so subagent end events will
+        // simply find an empty buffer and do nothing.
+        if (evt.event === "on_chat_model_end") {
+          const runId = evt.run_id || "default";
+          const bufferedText = textBuffers.get(runId) || "";
+          textBuffers.delete(runId);
+
+          const output = evt.data?.output;
+          const hasToolCalls =
+            Array.isArray(output?.tool_calls) && output.tool_calls.length > 0;
+
+          if (bufferedText && !hasToolCalls) {
+            finalOutput += bufferedText;
+            options?.onChunk?.(bufferedText);
+            options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_STREAM_CHUNK, {
+              sessionId,
+              chunk: bufferedText,
+            });
+          } else if (bufferedText && hasToolCalls) {
+          }
+
+          // Only track context tokens for top-level model calls
+          if (
+            !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
+          ) {
+            const inputTokens = output?.usage_metadata?.input_tokens || 0;
+            if (inputTokens > 0) {
+              session.contextTokens = inputTokens;
+            }
           }
         }
 
@@ -737,6 +764,11 @@ class AgentChatBridge {
     } finally {
       this.activeRuns.delete(sessionId);
       this.abortControllers.delete(sessionId);
+      // Clear the per-run IPC callback so stale closures don't fire in subsequent non-IPC runs
+      const runSession = this.sessions.get(sessionId);
+      if (runSession) {
+        runSession.toolContext.update({ onStepAdvanced: undefined });
+      }
     }
   };
 
@@ -953,7 +985,7 @@ class AgentChatBridge {
     try {
       const contextHeader =
         "CURRENT CONTEXT (for agent use only — do not surface these values in user-facing replies):";
-      const inputWithContext = `${userText}\n\n${contextHeader}\n${JSON.stringify({ platformId: adapter.platformId })}`;
+      const inputWithContext = `${userText}\n\n${contextHeader}\n${JSON.stringify({ platformId: adapter.platformId, currentDate: new Date().toLocaleString("sv") })}`;
       const result = await this.runAgent(sessionKey, inputWithContext, {
         onToolStart: async (toolName, subagentType) => {
           logEveryWhere({

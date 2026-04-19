@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { Tooltip } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, TOOL_KEYS } from "@/electron/constant";
 import CodeEditor from "@/component/CodeEditor";
+import ChartResult from "@/component/AgentChatView/ChartResult";
 import {
   ArrowRightIcon,
   CheckCircleIcon,
@@ -18,11 +20,26 @@ import {
   getFaviconUrl,
   getGroupSummary,
   getCodeContent,
-  getCodeLanguage,
   looksLikeMarkdown,
+  parseTodos,
+  normalizeUrl,
   SEARCH_TOOL_NAMES,
+  HIDDEN_TOOL_NAMES,
 } from "./util";
 import { ToolCallGroupWrapper } from "./style";
+
+const tryParseChart = (result?: string) => {
+  if (!result) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(result);
+    if (parsed?.__type === "chart" && parsed.option) {
+      return parsed as { option: Record<string, unknown>; height?: number };
+    }
+  } catch {}
+  return null;
+};
 
 const openExternalUrl = (url: string): void => {
   try {
@@ -35,40 +52,99 @@ const openExternalUrl = (url: string): void => {
 
 type ToolCallRowProps = {
   toolCall: ToolCallState;
+  extractStateMap?: Map<string, ToolCallStateStatus>;
 };
 
-const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
+const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
   const summaryPairs = getSummaryPairs(toolCall.toolName, toolCall.input);
-  const resultItems = parseResultItems(toolCall.toolName, toolCall.result);
+  const resultItems = parseResultItems(
+    toolCall.toolName,
+    toolCall.result,
+    toolCall.input,
+  );
   const isSearchTool = SEARCH_TOOL_NAMES.has(toolCall.toolName as any);
+  const isTaskTool = toolCall.toolName === TOOL_KEYS.TASK;
   const codeContent = getCodeContent(
     toolCall.toolName,
     toolCall.input,
     toolCall.result,
   );
-  const codeLanguage = getCodeLanguage(toolCall.toolName);
+  const chartData =
+    toolCall.toolName === TOOL_KEYS.RENDER_CHART &&
+    toolCall.state === ToolCallStateStatus.DONE
+      ? tryParseChart(toolCall.result)
+      : null;
+  const todos =
+    toolCall.toolName === TOOL_KEYS.WRITE_TODOS
+      ? parseTodos(toolCall.input)
+      : null;
+  const completedCount = todos
+    ? todos.filter((todo) => todo.status === "completed").length
+    : 0;
+  const totalCount = todos ? todos.length : 0;
+
+  const toolIcon = (() => {
+    if (toolCall.toolName === TOOL_KEYS.CONFIRM_APPROVAL && toolCall.result) {
+      try {
+        const parsed = JSON.parse(toolCall.result);
+        if (parsed?.status === "rejected") return "✗";
+      } catch {}
+    }
+    return getToolIcon(toolCall.toolName);
+  })();
 
   // For search tools use the first summary value (query/url) as the primary visible label
+  // For task tools show the subagent name formatted as a label
   const primaryLabel =
     isSearchTool && summaryPairs.length > 0
       ? summaryPairs[0].value
-      : getToolLabel(toolCall.toolName);
+      : isTaskTool && summaryPairs.length > 0
+        ? getToolLabel(summaryPairs[0].value)
+        : getToolLabel(toolCall.toolName);
 
-  // Remaining fields shown as secondary summary (non-search tools only)
+  // For task tools show only the description as secondary (skip subagent_type which is already in primaryLabel)
   const secondarySummary = isSearchTool
     ? ""
-    : summaryPairs.map((pair) => pair.value).join(" · ");
+    : isTaskTool
+      ? summaryPairs
+          .slice(1)
+          .map((pair) => pair.value)
+          .join(" · ")
+      : summaryPairs.map((pair) => pair.value).join(" · ");
 
   return (
     <div className="tool-row">
-      <span className="tool-icon">{getToolIcon(toolCall.toolName)}</span>
+      <span
+        className={`tool-icon${toolIcon === "✗" ? " tool-icon--error" : ""}`}
+      >
+        {toolIcon}
+      </span>
 
       <div className="tool-row-header">
         <div className="tool-row-top">
-          <span className="tool-name">{primaryLabel}</span>
+          <span
+            className={`tool-name${toolCall.state === ToolCallStateStatus.RUNNING ? " tool-name--running" : ""}`}
+          >
+            {isTaskTool
+              ? (() => {
+                  const suffix = [" subagent", " agent"].find((s) =>
+                    primaryLabel.toLowerCase().endsWith(s),
+                  );
+                  return suffix ? (
+                    <Fragment>
+                      {primaryLabel.slice(0, -suffix.length)}
+                      <span className="tool-name-dim">{suffix}</span>
+                    </Fragment>
+                  ) : (
+                    primaryLabel
+                  );
+                })()
+              : primaryLabel}
+          </span>
+
           <div className="tool-status">
             {toolCall.state === ToolCallStateStatus.RUNNING && (
-              <span className="spinner-sm" />
+              <span className="pulse-dot" />
             )}
 
             {toolCall.state === ToolCallStateStatus.DONE &&
@@ -78,8 +154,23 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
                 </span>
               )}
 
+            {todos && todos.length > 0 && (
+              <span className="todo-counter">
+                {completedCount}/{totalCount} done
+              </span>
+            )}
+
             {toolCall.state === ToolCallStateStatus.ERROR && (
-              <span className="error-mark">✗</span>
+              <Tooltip
+                title={
+                  <div style={{ maxHeight: "25rem", overflowY: "auto" }}>
+                    {toolCall.result || "Unknown error"}
+                  </div>
+                }
+                placement="top"
+              >
+                <span className="error-mark">✗</span>
+              </Tooltip>
             )}
           </div>
         </div>
@@ -99,7 +190,7 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
       {codeContent && (
         <CodeEditor
           value={codeContent}
-          language={codeLanguage}
+          language="javascript"
           readOnly
           height="auto"
           fontSize={12}
@@ -109,26 +200,85 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
 
       {resultItems.length > 0 && (
         <div className="result-items">
-          {resultItems.map((resultItem, index) => (
-            <div
-              key={index}
-              className="result-item"
-              onClick={() => openExternalUrl(resultItem.url)}
-            >
-              <img
-                className="result-favicon"
-                src={getFaviconUrl(resultItem.url)}
-                alt=""
-                onError={(event) => {
-                  (event.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <span className="result-title">{resultItem.title}</span>
-              <span className="result-domain">
-                {extractDomain(resultItem.url)}
-              </span>
-            </div>
-          ))}
+          {resultItems.map((resultItem, index) => {
+            const extractState = extractStateMap?.get(
+              normalizeUrl(resultItem.url),
+            );
+            return (
+              <div
+                key={index}
+                className="result-item"
+                onClick={() => openExternalUrl(resultItem.url)}
+              >
+                <img
+                  className="result-favicon"
+                  src={getFaviconUrl(resultItem.url)}
+                  alt=""
+                  onError={(event) => {
+                    (event.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+                <span className="result-title">{resultItem.title}</span>
+
+                {extractState === ToolCallStateStatus.RUNNING && (
+                  <span className="extract-spinner" />
+                )}
+                {extractState === ToolCallStateStatus.DONE && (
+                  <span className="extract-done" />
+                )}
+
+                <span className="result-domain">
+                  {extractDomain(resultItem.url)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {chartData && (
+        <ChartResult option={chartData.option} height={chartData.height} />
+      )}
+
+      {todos && todos.length > 0 && (
+        <div
+          className={`todo-list${todos.every((todo) => todo.status === "completed") ? " todo-list--all-complete" : ""}`}
+        >
+          {[...todos]
+            .sort((todoA, todoB) => {
+              const statusOrder: Record<string, number> = {
+                completed: 0,
+                in_progress: 1,
+                pending: 2,
+                error: 3,
+              };
+              return (
+                (statusOrder[todoA.status] ?? 99) -
+                (statusOrder[todoB.status] ?? 99)
+              );
+            })
+            .map((todo, index) => (
+              <div
+                key={index}
+                className={`todo-item todo-item--${todo.status}`}
+              >
+                <span className="todo-status">
+                  {todo.status === "completed" && (
+                    <span className="todo-check">✓</span>
+                  )}
+                  {todo.status === "in_progress" && (
+                    <span className="spinner-sm" />
+                  )}
+                  {todo.status === "pending" && (
+                    <span className="todo-pending">○</span>
+                  )}
+                  {todo.status === "error" && (
+                    <span className="todo-error">✗</span>
+                  )}
+                </span>
+                <span className="todo-content">{todo.content}</span>
+              </div>
+            ))}
         </div>
       )}
     </div>
@@ -138,16 +288,29 @@ const ToolCallRow = ({ toolCall }: ToolCallRowProps) => {
 type ToolCallGroupProps = {
   toolCalls: ToolCallState[];
   isActive?: boolean;
+  extractStateMap?: Map<string, ToolCallStateStatus>;
 };
 
-const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
+const ToolCallGroup = ({
+  toolCalls,
+  isActive,
+  extractStateMap: globalExtractStateMap,
+}: ToolCallGroupProps) => {
+  const latestWriteTodosRunId = toolCalls.findLast(
+    (tc) => tc.toolName === TOOL_KEYS.WRITE_TODOS,
+  )?.runId;
   const anyRunning = toolCalls.some(
     (toolCall) => toolCall.state === ToolCallStateStatus.RUNNING,
+  );
+  const hasChart = toolCalls.some(
+    (toolCall) =>
+      toolCall.toolName === TOOL_KEYS.RENDER_CHART &&
+      tryParseChart(toolCall.result),
   );
   const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
-    if (!anyRunning && !isActive) {
+    if (!anyRunning && !isActive && !hasChart) {
       const timer = setTimeout(() => setExpanded(false), 5000);
       return () => clearTimeout(timer);
     }
@@ -155,9 +318,20 @@ const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
     if (anyRunning || isActive) {
       setExpanded(true);
     }
-  }, [anyRunning, isActive]);
+  }, [anyRunning, isActive, hasChart]);
 
   const summaryText = getGroupSummary(toolCalls);
+
+  // Merge web_extract display into web_search result items when both exist in the same group
+  const hasWebSearch = toolCalls.some(
+    (tc) =>
+      (tc.toolName === TOOL_KEYS.WEB_SEARCH_TAVILY ||
+        tc.toolName === TOOL_KEYS.WEB_SEARCH_EXA) &&
+      parseResultItems(tc.toolName, tc.result, tc.input).length > 0,
+  );
+
+  const extractStateMap =
+    globalExtractStateMap || new Map<string, ToolCallStateStatus>();
 
   const handleToggle = () => {
     setExpanded((prev) => !prev);
@@ -167,8 +341,6 @@ const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
     <ToolCallGroupWrapper expanded={expanded}>
       <div className="group-header" onClick={handleToggle}>
         <div className="group-summary">
-          {anyRunning && <span className="spinner" />}
-
           <span className="summary-text">{summaryText}</span>
 
           <div className="icon-wrapper">
@@ -180,9 +352,33 @@ const ToolCallGroup = ({ toolCalls, isActive }: ToolCallGroupProps) => {
       <div className="group-content">
         <div className="group-content-inner">
           <div className="group-body">
-            {toolCalls.map((toolCall) => (
-              <ToolCallRow key={toolCall.runId} toolCall={toolCall} />
-            ))}
+            {toolCalls
+              .filter((toolCall) => {
+                if (HIDDEN_TOOL_NAMES.has(toolCall.toolName)) {
+                  return false;
+                }
+                if (
+                  hasWebSearch &&
+                  toolCall.toolName === TOOL_KEYS.WEB_EXTRACT_TAVILY
+                ) {
+                  return false;
+                }
+                if (
+                  toolCall.toolName === TOOL_KEYS.WRITE_TODOS &&
+                  latestWriteTodosRunId &&
+                  toolCall.runId !== latestWriteTodosRunId
+                ) {
+                  return false;
+                }
+                return true;
+              })
+              .map((toolCall) => (
+                <ToolCallRow
+                  key={toolCall.runId}
+                  toolCall={toolCall}
+                  extractStateMap={extractStateMap}
+                />
+              ))}
           </div>
 
           {!anyRunning && isActive && (

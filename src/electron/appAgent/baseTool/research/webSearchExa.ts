@@ -6,16 +6,16 @@ import { getLlmSetting } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { TOOL_KEYS } from "@/electron/constant";
 
-const MAX_RESULTS = 7;
+const MAX_RESULTS = 5;
 const MAX_OUTPUT_LENGTH = 10_000;
 
 export const webSearchExaTool = () =>
   new DynamicStructuredTool<z.ZodObject<any>>({
     name: TOOL_KEYS.WEB_SEARCH_EXA,
     description:
-      "Search the web using Exa for semantic/neural search. " +
-      "Best for finding conceptually similar content, deep research, and discovering related projects or articles. " +
-      "Unlike keyword search, Exa understands the meaning behind queries.",
+      "Semantic/neural web search — understands concepts and meaning, not just keywords. " +
+      "Best for finding conceptually related content, research papers, and similar projects. " +
+      "Use only when keyword search would miss the intent; not for simple factual or real-time lookups.",
     schema: z.object({
       query: z
         .string()
@@ -48,12 +48,36 @@ export const webSearchExaTool = () =>
 
         const result = await exaTool.invoke(query);
 
-        const output =
+        const raw =
           typeof result === "string" ? result : JSON.stringify(result);
-        const truncated =
-          output.length > MAX_OUTPUT_LENGTH
-            ? output.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"
-            : output;
+
+        // Trim per-result text/highlights before truncating so the JSON stays valid
+        // and URL/title fields remain parseable for the UI result display.
+        let truncated = raw;
+        try {
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed) ? parsed : parsed?.results;
+          if (Array.isArray(items)) {
+            const trimmed = items.map((item: any) => ({
+              ...item,
+              text: item.text ? item.text.slice(0, 800) : undefined,
+              highlights: undefined,
+              highlightScores: undefined,
+            }));
+            const compact = Array.isArray(parsed)
+              ? JSON.stringify(trimmed)
+              : JSON.stringify({ ...parsed, results: trimmed });
+            truncated =
+              compact.length > MAX_OUTPUT_LENGTH
+                ? compact.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"
+                : compact;
+          }
+        } catch {
+          truncated =
+            raw.length > MAX_OUTPUT_LENGTH
+              ? raw.slice(0, MAX_OUTPUT_LENGTH) + "\n...(truncated)"
+              : raw;
+        }
 
         logEveryWhere({
           message: `[Agent] web_search_exa: success for "${query}"`,

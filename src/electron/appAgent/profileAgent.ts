@@ -9,7 +9,7 @@ import {
 import { mcpToolLoader } from "./mcpTool";
 import { ToolContext } from "./toolContext";
 import { createLLM } from "./llm";
-import { draftPlanTool, submitPlanTool } from "./baseTool";
+import { requestApprovalTool, confirmApprovalTool } from "./baseTool";
 import {
   KeeperAgent,
   CreateProfileAgentOptions,
@@ -135,7 +135,10 @@ export const createAgentFromProfile = async (
     model: llm,
     systemPrompt,
     backend,
-    tools: [draftPlanTool(toolContext), submitPlanTool(toolContext)] as any,
+    tools: [
+      requestApprovalTool(toolContext),
+      confirmApprovalTool(toolContext),
+    ] as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

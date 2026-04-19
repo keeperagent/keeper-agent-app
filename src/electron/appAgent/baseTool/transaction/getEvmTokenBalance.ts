@@ -32,30 +32,27 @@ Display: native token symbol for native, "tokens" for ERC20. NEVER show token ad
     schema: z.object({
       tokenAddress: z
         .string()
-        .optional()
         .describe(
-          "ERC20 contract address (0x format), or omit for native balance. Prompt address overrides context.",
+          "ERC20 contract address (0x format), or empty string '' for native balance. Prompt address overrides context.",
         ),
       timeoutMs: z
         .number()
         .positive()
-        .default(DEFAULT_TIMEOUT_MS)
-        .optional()
-        .describe("Per-request timeout in ms"),
+        .describe(`Per-request timeout in ms (default: ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
-        .default(DEFAULT_TOP_N)
-        .optional()
-        .describe("Number of wallets in top/bottom lists"),
+        .describe(
+          `Number of wallets in top/bottom lists (default: ${DEFAULT_TOP_N})`,
+        ),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
-        .default(DEFAULT_MAX_WALLETS_IN_RESPONSE)
-        .optional()
-        .describe("Max wallet entries in response"),
+        .describe(
+          `Max wallet entries in response (default: ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
+        ),
     }),
     func: async ({
       tokenAddress: tokenAddressParam,

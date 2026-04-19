@@ -1,7 +1,11 @@
 import { Op } from "sequelize";
 import { redact } from "@keeperagent/crypto-key-guard";
 import { logEveryWhere } from "@/electron/service/util";
-import { ChatPlatform, ChatRole, IChatMessage } from "@/electron/chatGateway/types";
+import {
+  ChatPlatform,
+  ChatRole,
+  IChatMessage,
+} from "@/electron/chatGateway/types";
 import { ChatHistoryModel } from "./index";
 
 type AgentContext = {
@@ -19,11 +23,13 @@ class ChatHistoryDB {
     msg: IChatMessage,
   ): Promise<[IChatMessage | null, Error | null]> {
     try {
-      // Layer 3: strip crypto secrets from message content before persisting
-      const { text } = redact(msg.content);
+      // Redact secrets only from user messages — AI messages contain tx hashes
+      // which are indistinguishable from private keys by pattern alone
+      const content =
+        msg.role === ChatRole.HUMAN ? redact(msg.content).text : msg.content;
       const data = await ChatHistoryModel.create({
         ...msg,
-        content: text,
+        content,
       });
       return [data.toJSON() as IChatMessage, null];
     } catch (err: any) {

@@ -7,6 +7,7 @@ export enum BaseToolGroup {
   AGENT_TASK_MANAGEMENT = "agent_task_management",
   AGENT_ORCHESTRATION = "agent_orchestration",
   DATA_MANAGEMENT = "data_management",
+  VISUALIZATION = "visualization",
 }
 
 export type BaseToolRegistryItem = {
@@ -31,9 +32,7 @@ export const BASE_TOOL_KEYS = {
   BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
   BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
   WRITE_JAVASCRIPT: "write_javascript",
-  WRITE_PYTHON: "write_python",
   EXECUTE_JAVASCRIPT: "execute_javascript",
-  EXECUTE_PYTHON: "execute_python",
   SEARCH_CAMPAIGNS: "search_campaigns",
   SEARCH_WORKFLOWS: "search_workflows",
   RUN_WORKFLOW: "run_workflow",
@@ -55,8 +54,8 @@ export const BASE_TOOL_KEYS = {
   CREATE_AGENT_TASK: "create_agent_task",
   UPDATE_AGENT_TASK: "update_agent_task",
   DELETE_AGENT_TASK: "delete_agent_task",
-  DRAFT_PLAN: "draft_plan",
-  SUBMIT_PLAN: "submit_plan",
+  REQUEST_APPROVAL: "request_approval",
+  CONFIRM_APPROVAL: "confirm_approval",
   SEND_MESSAGE: "send_message",
   READ_MESSAGES: "read_messages",
   ACKNOWLEDGE_MESSAGE: "acknowledge_message",
@@ -68,6 +67,8 @@ export const BASE_TOOL_KEYS = {
   BULK_ADD_RESOURCES: "bulk_add_resources",
   BULK_UPDATE_RESOURCES: "bulk_update_resources",
   QUERY_RESOURCES: "query_resources",
+  RENDER_CHART: "render_chart",
+  CALCULATE: "calculate",
 };
 
 export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
@@ -280,20 +281,20 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     description: "Permanently delete an agent task by ID",
     group: BaseToolGroup.AGENT_TASK_MANAGEMENT,
   },
-  // Planning Mode Tools
+  // Approval Gate Tools
   {
-    key: BASE_TOOL_KEYS.DRAFT_PLAN,
-    name: "Draft plan",
+    key: BASE_TOOL_KEYS.REQUEST_APPROVAL,
+    name: "Request approval",
     description:
-      "Research and prepare before running any transaction, code, or workflow",
+      "Enter approval mode before running any transaction, code, or workflow",
     group: BaseToolGroup.AGENT_ORCHESTRATION,
     locked: true,
   },
   {
-    key: BASE_TOOL_KEYS.SUBMIT_PLAN,
-    name: "Submit plan",
+    key: BASE_TOOL_KEYS.CONFIRM_APPROVAL,
+    name: "Confirm approval",
     description:
-      "Present execution plan to the user and wait for approval before any execution",
+      "Present execution summary to the user and wait for approval before any execution",
     group: BaseToolGroup.AGENT_ORCHESTRATION,
     locked: true,
   },
@@ -351,24 +352,10 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     group: BaseToolGroup.CODE_EXECUTION,
   },
   {
-    key: BASE_TOOL_KEYS.WRITE_PYTHON,
-    name: "Write Python",
-    description:
-      "Draft Python code for user review before execution",
-    group: BaseToolGroup.CODE_EXECUTION,
-  },
-  {
     key: BASE_TOOL_KEYS.EXECUTE_JAVASCRIPT,
     name: "Execute JavaScript",
     description:
       "Run JavaScript / Node.js code to call APIs or automate custom logic",
-    group: BaseToolGroup.CODE_EXECUTION,
-  },
-  {
-    key: BASE_TOOL_KEYS.EXECUTE_PYTHON,
-    name: "Execute Python",
-    description:
-      "Run Python scripts to call APIs, process data, or automate any custom logic",
     group: BaseToolGroup.CODE_EXECUTION,
   },
   // Data Group Tools
@@ -414,6 +401,23 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     description: "Generate and assign wallets to an existing wallet group",
     group: BaseToolGroup.DATA_MANAGEMENT,
   },
+  // Visualization Tools
+  {
+    key: BASE_TOOL_KEYS.RENDER_CHART,
+    name: "Render chart",
+    description:
+      "Render an interactive ECharts chart directly in the UI from an option object",
+    group: BaseToolGroup.VISUALIZATION,
+  },
+  // Calculator
+  {
+    key: BASE_TOOL_KEYS.CALCULATE,
+    name: "Calculator",
+    description:
+      "Evaluate math expressions reliably — use for USD→native conversion, token value, percentage amounts, and any other arithmetic",
+    group: BaseToolGroup.TRANSACTION,
+    locked: true,
+  },
 ];
 
 export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
@@ -425,4 +429,5 @@ export const BASE_TOOL_GROUP_LABELS: Record<BaseToolGroup, string> = {
   [BaseToolGroup.RESEARCH]: "Research",
   [BaseToolGroup.AGENT_TASK_MANAGEMENT]: "Agent task management",
   [BaseToolGroup.AGENT_ORCHESTRATION]: "Agent orchestration",
+  [BaseToolGroup.VISUALIZATION]: "Visualization",
 };

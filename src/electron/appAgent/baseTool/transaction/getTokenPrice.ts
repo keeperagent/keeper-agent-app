@@ -154,8 +154,6 @@ Native token symbol matching: if user says "bnb price" but chainKey is "base", i
       timeoutMs: z
         .number()
         .positive()
-        .default(DEFAULT_TIMEOUT_MS)
-        .optional()
         .describe("Request timeout in milliseconds"),
     }),
     func: async ({

@@ -10,7 +10,6 @@ import {
   stopWorkflowTool,
   runWorkflowTool,
   executeJavaScriptTool,
-  executePythonTool,
   swapOnJupiterTool,
   swapOnKyberswapTool,
   transferSolanaTokenTool,
@@ -239,33 +238,6 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         return DENIED_RESPONSE;
       }
       return wrapText((await executeJsInstance.invoke({ code })).toString());
-    },
-  );
-
-  const executePythonInstance = executePythonTool();
-  server.registerTool(
-    "execute_python",
-    {
-      description: executePythonInstance.description,
-      inputSchema: {
-        code: z
-          .string()
-          .describe("Python code to execute. Use print() to output results."),
-      },
-    },
-    async ({ code }) => {
-      const approval = await showApprovalDialog(
-        displayName,
-        "execute_python",
-        "Execute Python code",
-        `code: ${code}`,
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      return wrapText(
-        (await executePythonInstance.invoke({ code })).toString(),
-      );
     },
   );
 

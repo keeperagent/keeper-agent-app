@@ -96,7 +96,12 @@ const AgentView = (props: any) => {
     const mapped: DisplayMessage[] = (conversation || [])
       .filter((msg) => !(msg?.role || "").toLowerCase().includes(ChatRole.TOOL))
       .map((msg) => {
-        const { text: content } = sanitizeForDisplay(msg?.content || "", true);
+        const isUserMessage =
+          (msg?.role || "").toLowerCase() === ChatRole.HUMAN;
+        const { text: content } = sanitizeForDisplay(
+          msg?.content || "",
+          isUserMessage,
+        );
         const msgWithRaw = msg as typeof msg & {
           raw?: {
             additional_kwargs?: { timestamp?: number };
@@ -202,6 +207,7 @@ const AgentView = (props: any) => {
 
     const context = {
       platformId: ChatPlatform.KEEPER,
+      currentDate: new Date().toLocaleString("sv"),
       chainKey,
       tokenAddress,
       nodeEndpointGroupId,

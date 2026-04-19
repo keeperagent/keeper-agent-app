@@ -48,10 +48,13 @@ const BUILTIN_MODULES = new Set(
 );
 
 const extractRequiredModules = (code: string): string[] => {
-  const matches = [...code.matchAll(/require\(['"]([^'"]+)['"]\)/g)];
+  const requireMatches = [...code.matchAll(/require\(['"]([^'"]+)['"]\)/g)];
+  const importMatches = [
+    ...code.matchAll(/^\s*import\s+(?:[^'"]*from\s+)?['"]([^'"]+)['"]/gm),
+  ];
   return [
     ...new Set(
-      matches
+      [...requireMatches, ...importMatches]
         .map((match) => match[1])
         .filter((name) => !BUILTIN_MODULES.has(name)),
     ),
@@ -97,22 +100,29 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
       "Execute JavaScript code in a Node.js environment and return the output. " +
       "Only stdout is captured — use console.log() for output. stderr is included prefixed with [stderr]. " +
       "The code has a 60-second timeout. " +
-      "Do NOT retry if the same error occurs — report it instead. " +
-      "Input: the complete JavaScript code string to execute.",
-    func: async (input: string) => {
+      "Do NOT retry if the same error occurs — report it instead.",
+    func: async (_input: string) => {
       const agentId = String(toolContext?.agentProfileId || "main");
       // Module-level store is shared across all agent contexts (main + subagents)
       const stored = loadPendingCode(agentId);
-      const code =
+      const pendingCode =
         stored?.language === "javascript"
           ? stored.code
           : toolContext?.pendingCode?.language === "javascript"
             ? toolContext.pendingCode.code
-            : input;
+            : null;
+      if (!pendingCode) {
+        return safeStringify({
+          error:
+            "No approved code found. The main agent must call write_javascript first and get user approval via confirm_approval before executing.",
+          status: "blocked_no_approved_code",
+        });
+      }
+      const code = pendingCode;
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot execute code in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot execute code in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -135,7 +145,7 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
           status: "blocked_duplicate_retry",
         });
       }
-      const scriptPath = path.join(workspaceDir, `agent_script_${agentId}.cjs`);
+      const scriptPath = path.join(workspaceDir, `agent_script_${agentId}.mjs`);
       const childEnv = await buildSafeEnv(getWorkspaceRoot(), {
         NODE_PATH: getNodePath(),
       });
@@ -148,8 +158,7 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
         });
 
       try {
-        const wrappedCode = `(async () => {\n${code}\n})().catch(e => { console.error(e.message || e); process.exit(1); });`;
-        await writeFile(scriptPath, wrappedCode, "utf-8");
+        await writeFile(scriptPath, code, "utf-8");
 
         // Pre-check: install all missing modules at once before running
         const requiredModules = extractRequiredModules(code);

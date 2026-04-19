@@ -18,7 +18,6 @@ const CONFIRMATION_TIMEOUT = 30000;
 const broadcastTransactionEvmSchema = z.object({
   toAddress: z
     .string()
-    .optional()
     .refine(
       (val) => {
         if (!val || val.trim() === "") {
@@ -28,11 +27,11 @@ const broadcastTransactionEvmSchema = z.object({
       },
       {
         message:
-          "Must be a valid EVM address (0x followed by 40 hex characters). Omit for contract deployment.",
+          "Must be a valid EVM address (0x followed by 40 hex characters). Pass empty string for contract deployment.",
       },
     )
     .describe(
-      "Target contract or address for the transaction. Omit for contract deployment.",
+      "Target contract or address for the transaction. Pass empty string for contract deployment.",
     ),
   transactionData: z
     .string()
@@ -44,8 +43,6 @@ const broadcastTransactionEvmSchema = z.object({
     ),
   transactionValue: z
     .string()
-    .default("0")
-    .optional()
     .refine(
       (val) => {
         if (!val) {
@@ -57,7 +54,9 @@ const broadcastTransactionEvmSchema = z.object({
         message: "Must be a non-negative integer string representing wei.",
       },
     )
-    .describe("Value to send in wei (as string). Defaults to '0'."),
+    .describe(
+      "Value to send in wei (as string). Pass '0' if sending no ETH value.",
+    ),
 });
 
 export const broadcastTransactionEvmTool = (
@@ -70,10 +69,13 @@ The transaction data must be hex-encoded (0x-prefixed). Gas limit and gas price 
 Use this for custom on-chain operations that are not covered by other tools (e.g. custom contract interactions, arbitrary calldata).`,
     schema: broadcastTransactionEvmSchema,
     func: async ({ toAddress, transactionData, transactionValue = "0" }) => {
+      console.log(
+        `[broadcast_transaction_evm] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
+      );
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot broadcast transaction in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot broadcast transaction in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -238,7 +240,11 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
       ).length;
       const failedEntries = results.filter((result) => result.error);
 
-      return safeStringify({
+      if (successCount > 0) {
+        toolContext?.resetPlanState();
+      }
+
+      const toolResult = safeStringify({
         chain: capitalizeFirstLetter(chainKey),
         summary: {
           total: wallets.length,
@@ -255,5 +261,10 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
         ...(wallets.length > 5 &&
           failedEntries.length > 0 && { failures: failedEntries }),
       });
+
+      logEveryWhere({
+        message: `[broadcast_transaction_evm] tool result: ${toolResult}`,
+      });
+      return toolResult;
     },
   });

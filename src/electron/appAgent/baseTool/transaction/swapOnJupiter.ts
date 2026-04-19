@@ -22,11 +22,9 @@ const swapOnJupiterSchema = z
   .object({
     swapDirection: z
       .enum(["BUY", "SELL"])
-      .default("BUY")
-      .describe("BUY = SOL -> token, SELL = token -> SOL"),
+      .describe("BUY = SOL -> token, SELL = token -> SOL (default: BUY)"),
     inputTokenAddress: z
       .string()
-      .optional()
       .refine(
         (val) => {
           if (!val || val.trim() === "") return true;
@@ -39,86 +37,77 @@ const swapOnJupiterSchema = z
         },
         {
           message:
-            "Must be a valid SPL mint address. Omit for BUY (input is always SOL).",
+            "Must be a valid SPL mint address. Pass empty string for BUY (input is always SOL).",
         },
       )
-      .describe("SPL mint address. SELL only — omit for BUY."),
+      .describe("SPL mint address. SELL only — pass empty string for BUY."),
     outputTokenAddress: z
       .string()
-      .optional()
-      .describe("SPL mint address. BUY only — omit for SELL."),
+      .describe("SPL mint address. BUY only — pass empty string for SELL."),
     amountStrategy: z
       .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
-      .optional()
       .describe("Amount allocation strategy across wallets"),
     amount: z
       .number()
-      .positive()
-      .optional()
-      .describe("Per-wallet amount (for EQUAL_PER_WALLET)"),
+      .min(0)
+      .describe(
+        "Per-wallet amount (for EQUAL_PER_WALLET). Pass 0 if not applicable.",
+      ),
     totalAmount: z
       .number()
-      .positive()
-      .optional()
+      .min(0)
       .describe(
-        "Total amount to split across wallets (for TOTAL_SPLIT_RANDOM)",
+        "Total amount to split across wallets (for TOTAL_SPLIT_RANDOM). Pass 0 if not applicable.",
       ),
     minAmount: z
       .number()
-      .positive()
-      .optional()
-      .describe("Min per-wallet amount (for RANDOM_PER_WALLET)"),
+      .nonnegative()
+      .describe(
+        "Min per-wallet amount (for RANDOM_PER_WALLET). Pass 0 if not applicable.",
+      ),
     maxAmount: z
       .number()
-      .positive()
-      .optional()
-      .describe("Max per-wallet amount (REQUIRED for RANDOM_PER_WALLET)"),
+      .min(0)
+      .describe(
+        "Max per-wallet amount (REQUIRED for RANDOM_PER_WALLET). Pass 0 if not applicable.",
+      ),
     sellPercentage: z
       .union([z.enum(["all", "half"]), z.number().min(0).max(100)])
-      .optional()
-      .describe("SELL only. 'all'=100%, 'half'=50%, or 0-100."),
+      .describe("SELL only. 'all'=100%, 'half'=50%, or 0-100. Pass 0 for BUY."),
     balanceTimeoutMs: z
       .number()
       .positive()
-      .default(15000)
-      .optional()
-      .describe("Balance fetch timeout in ms"),
+      .describe("Balance fetch timeout in ms (default: 15000)"),
     slippagePercentage: z
       .number()
       .min(0)
       .max(50)
-      .default(0)
-      .optional()
-      .describe("Slippage %. 0 = dynamic slippage."),
+      .describe("Slippage %. 0 = dynamic slippage (default: 0)."),
     maxPriceImpactPercentage: z
       .number()
       .min(0.1)
       .max(50)
-      .default(5)
-      .optional()
-      .describe("Max price impact % before aborting"),
+      .describe("Max price impact % before aborting (default: 5)"),
     pritorityFeeMicroLamport: z
       .number()
       .min(0)
       .max(0.5)
-      .default(0)
-      .optional()
-      .describe("Max priority fee in micro-lamports"),
+      .describe("Max priority fee in micro-lamports (default: 0)"),
     shouldWaitTransactionComfirmed: z
       .boolean()
-      .default(true)
-      .optional()
-      .describe("Wait for tx confirmation"),
+      .describe("Wait for tx confirmation (default: true)"),
   })
   .refine(
     (data) => {
-      if (data.amountStrategy === "RANDOM_PER_WALLET") {
-        return data.maxAmount !== undefined && data.maxAmount > 0;
+      if (data.amountStrategy === "RANDOM_PER_WALLET" && !data.sellPercentage) {
+        const effectiveMax = data.maxAmount ?? data.amount;
+        return effectiveMax !== undefined && effectiveMax > 0;
       }
       return true;
     },
     {
-      message: "maxAmount is required when amountStrategy is RANDOM_PER_WALLET",
+      message:
+        "maxAmount (or amount) is required when amountStrategy is RANDOM_PER_WALLET",
       path: ["maxAmount"],
     },
   ) as z.ZodTypeAny;
@@ -157,10 +146,13 @@ Display: SOL for native, "tokens" for token amounts. NEVER show balance after sw
       pritorityFeeMicroLamport = 0,
       shouldWaitTransactionComfirmed = true,
     }) => {
+      console.log(
+        `[swap_on_jupiter] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
+      );
       if (toolContext?.planState !== PlanState.APPROVED) {
         return safeStringify({
           error:
-            "Cannot execute swap in planning mode. Call submit_plan with your execution plan first to get user approval.",
+            "Cannot execute swap in planning mode. Call confirm_approval with your execution plan first to get user approval.",
           status: "blocked_planning_mode",
         });
       }
@@ -476,13 +468,14 @@ Display: SOL for native, "tokens" for token amounts. NEVER show balance after sw
         }
 
         if (resolvedAmountStrategy === "RANDOM_PER_WALLET") {
-          if (!maxAmount || maxAmount <= 0) {
+          const effectiveMax = maxAmount || amount;
+          if (!effectiveMax || effectiveMax <= 0) {
             throw new Error(
-              "maxAmount is required and must be > 0 for RANDOM_PER_WALLET strategy",
+              "maxAmount (or amount) is required and must be > 0 for RANDOM_PER_WALLET strategy",
             );
           }
           const min = minAmount || 0;
-          const max = Math.max(maxAmount, min);
+          const max = Math.max(effectiveMax, min);
           if (max === min) {
             return Array(count).fill(min);
           }
@@ -627,7 +620,13 @@ Display: SOL for native, "tokens" for token amounts. NEVER show balance after sw
       const failedEntries = results.filter((r) => r.error);
       const totalSwapped = actualPerWalletAmounts.reduce((a, b) => a + b, 0);
 
-      return safeStringify({
+      // Consume the approval after execution — any retry attempt will be blocked
+      // at the planState check, preventing double-spend without re-approval
+      if (successCount > 0) {
+        toolContext?.resetPlanState();
+      }
+
+      const toolResult = safeStringify({
         chain: "Solana",
         swapDirection,
         inputToken: isBuy ? "SOL" : effectiveInputTokenAddress?.trim(),
@@ -653,5 +652,10 @@ Display: SOL for native, "tokens" for token amounts. NEVER show balance after sw
         ...(wallets.length > 5 &&
           failedEntries.length > 0 && { failures: failedEntries }),
       });
+
+      logEveryWhere({
+        message: `[swap_on_jupiter] tool result: ${toolResult}`,
+      });
+      return toolResult;
     },
   });
