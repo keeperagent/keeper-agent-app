@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TOOL_KEYS } from "@/electron/constant";
 import {
   ArrowRightIcon,
@@ -7,24 +7,24 @@ import {
 } from "@/component/Icon";
 import { type ToolCallState, ToolCallStateStatus } from "../util";
 import {
-  parseResultItems,
+  parseWebSearchResultItems,
   getGroupSummary,
   tryParseChart,
   HIDDEN_TOOL_NAMES,
 } from "./util";
-import { ToolCallGroupWrapper } from "./style";
+import { Wrapper } from "./style";
 import ToolCallRow from "./ToolCallRow";
 
 type ToolCallGroupProps = {
   toolCalls: ToolCallState[];
   isActive?: boolean;
-  extractStateMap?: Map<string, ToolCallStateStatus>;
+  extractWebStateMap?: Map<string, ToolCallStateStatus>;
 };
 
 const ToolCallGroup = ({
   toolCalls,
   isActive,
-  extractStateMap: globalExtractStateMap,
+  extractWebStateMap: globalExtractWebStateMap,
 }: ToolCallGroupProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -57,19 +57,49 @@ const ToolCallGroup = ({
     (toolCall) =>
       (toolCall.toolName === TOOL_KEYS.WEB_SEARCH_TAVILY ||
         toolCall.toolName === TOOL_KEYS.WEB_SEARCH_EXA) &&
-      parseResultItems(toolCall.toolName, toolCall.result, toolCall.input)
-        .length > 0,
+      parseWebSearchResultItems(
+        toolCall.toolName,
+        toolCall.result,
+        toolCall.input,
+      ).length > 0,
   );
 
-  const extractStateMap =
-    globalExtractStateMap || new Map<string, ToolCallStateStatus>();
+  const extractWebStateMap =
+    globalExtractWebStateMap || new Map<string, ToolCallStateStatus>();
+
+  const visibleToolCalls = useMemo(
+    () =>
+      toolCalls.filter((toolCall) => {
+        if (HIDDEN_TOOL_NAMES.has(toolCall.toolName)) {
+          return false;
+        }
+
+        if (
+          hasWebSearch &&
+          toolCall.toolName === TOOL_KEYS.WEB_EXTRACT_TAVILY
+        ) {
+          return false;
+        }
+
+        if (
+          toolCall.toolName === TOOL_KEYS.WRITE_TODOS &&
+          latestWriteTodosRunId &&
+          toolCall.runId !== latestWriteTodosRunId
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+    [toolCalls, hasWebSearch, latestWriteTodosRunId],
+  );
 
   const handleToggle = () => {
     setExpanded((prev) => !prev);
   };
 
   return (
-    <ToolCallGroupWrapper expanded={expanded}>
+    <Wrapper expanded={expanded}>
       <div className="group-header" onClick={handleToggle}>
         <div className="group-summary">
           <span className="summary-text">{summaryText}</span>
@@ -83,36 +113,13 @@ const ToolCallGroup = ({
       <div className="group-content">
         <div className="group-content-inner">
           <div className="group-body">
-            {toolCalls
-              .filter((toolCall) => {
-                if (HIDDEN_TOOL_NAMES.has(toolCall.toolName)) {
-                  return false;
-                }
-
-                if (
-                  hasWebSearch &&
-                  toolCall.toolName === TOOL_KEYS.WEB_EXTRACT_TAVILY
-                ) {
-                  return false;
-                }
-
-                if (
-                  toolCall.toolName === TOOL_KEYS.WRITE_TODOS &&
-                  latestWriteTodosRunId &&
-                  toolCall.runId !== latestWriteTodosRunId
-                ) {
-                  return false;
-                }
-
-                return true;
-              })
-              .map((toolCall) => (
-                <ToolCallRow
-                  key={toolCall.runId}
-                  toolCall={toolCall}
-                  extractStateMap={extractStateMap}
-                />
-              ))}
+            {visibleToolCalls.map((toolCall) => (
+              <ToolCallRow
+                key={toolCall.runId}
+                toolCall={toolCall}
+                extractWebStateMap={extractWebStateMap}
+              />
+            ))}
           </div>
 
           {!anyRunning && isActive && (
@@ -134,7 +141,7 @@ const ToolCallGroup = ({
           )}
         </div>
       </div>
-    </ToolCallGroupWrapper>
+    </Wrapper>
   );
 };
 

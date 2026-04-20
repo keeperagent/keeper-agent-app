@@ -3,27 +3,32 @@ import { Tooltip } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { TOOL_KEYS } from "@/electron/constant";
-import { useOpenExternalLink } from "@/hook";
 import CodeEditor from "@/component/CodeEditor";
 import { type ToolCallState, ToolCallStateStatus } from "../../util";
 import {
   getToolIcon,
   getToolLabel,
   getSummaryPairs,
-  parseResultItems,
-  extractDomain,
-  getFaviconUrl,
+  parseWebSearchResultItems,
   getCodeContent,
   looksLikeMarkdown,
   parseTodos,
-  normalizeUrl,
   tryParseChart,
   SEARCH_TOOL_NAMES,
   TodoItemStatus,
 } from "../util";
 import ChartResult from "../ChartResult";
 import TodoList from "../TodoList";
+import WebSearchResult from "../WebSearchResult";
 import { ToolCallRowWrapper } from "./style";
+
+const parseIsRejected = (result: string | undefined): boolean => {
+  try {
+    return JSON.parse(result || "")?.status === "rejected";
+  } catch {
+    return false;
+  }
+};
 
 const formatTaskToolPrimaryLabel = (label: string) => {
   const suffix = [" subagent", " agent"].find((suffix) =>
@@ -43,14 +48,12 @@ const formatTaskToolPrimaryLabel = (label: string) => {
 
 type ToolCallRowProps = {
   toolCall: ToolCallState;
-  extractStateMap?: Map<string, ToolCallStateStatus>;
+  extractWebStateMap?: Map<string, ToolCallStateStatus>;
 };
 
-const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
-  const { openExternalLink } = useOpenExternalLink();
-
+const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
   const summaryPairs = getSummaryPairs(toolCall.toolName, toolCall.input);
-  const resultItems = parseResultItems(
+  const webSearchResultItems = parseWebSearchResultItems(
     toolCall.toolName,
     toolCall.result,
     toolCall.input,
@@ -74,19 +77,11 @@ const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
   const completedCount = todos
     ? todos.filter((todo) => todo.status === TodoItemStatus.COMPLETED).length
     : 0;
-  const totalCount = todos?.length || 0;
 
-  const toolIcon = (() => {
-    if (toolCall.toolName === TOOL_KEYS.CONFIRM_APPROVAL && toolCall.result) {
-      try {
-        const parsed = JSON.parse(toolCall.result);
-        if (parsed?.status === "rejected") {
-          return "✗";
-        }
-      } catch {}
-    }
-    return getToolIcon(toolCall.toolName);
-  })();
+  const isRejected =
+    toolCall.toolName === TOOL_KEYS.CONFIRM_APPROVAL &&
+    parseIsRejected(toolCall.result);
+  const toolIcon = isRejected ? "✗" : getToolIcon(toolCall.toolName);
 
   let primaryLabel = "";
   if (isSearchTool && summaryPairs.length > 0) {
@@ -109,9 +104,7 @@ const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
 
   return (
     <ToolCallRowWrapper>
-      <span
-        className={`tool-icon${toolIcon === "✗" ? " tool-icon--error" : ""}`}
-      >
+      <span className={`tool-icon${isRejected ? " tool-icon--error" : ""}`}>
         {toolIcon}
       </span>
 
@@ -131,15 +124,15 @@ const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
             )}
 
             {toolCall.state === ToolCallStateStatus.DONE &&
-              resultItems.length > 0 && (
+              webSearchResultItems.length > 0 && (
                 <span className="result-count">
-                  {resultItems.length} results
+                  {webSearchResultItems.length} results
                 </span>
               )}
 
             {todos && todos.length > 0 && (
               <span className="todo-counter">
-                {completedCount}/{totalCount} done
+                {completedCount}/{todos?.length || 0} done
               </span>
             )}
 
@@ -181,50 +174,18 @@ const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
         />
       )}
 
-      {resultItems.length > 0 && (
-        <div className="result-items">
-          {resultItems.map((resultItem, index) => {
-            const extractState = extractStateMap?.get(
-              normalizeUrl(resultItem.url),
-            );
-
-            return (
-              <div
-                key={index}
-                className="result-item"
-                onClick={() => openExternalLink(resultItem.url)}
-              >
-                <img
-                  className="result-favicon"
-                  src={getFaviconUrl(resultItem.url)}
-                  alt=""
-                  onError={(event) => {
-                    (event.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-                <span className="result-title">{resultItem.title}</span>
-
-                {extractState === ToolCallStateStatus.RUNNING && (
-                  <span className="extract-spinner" />
-                )}
-                {extractState === ToolCallStateStatus.DONE && (
-                  <span className="extract-done" />
-                )}
-
-                <span className="result-domain">
-                  {extractDomain(resultItem.url)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+      {webSearchResultItems.length > 0 && (
+        <WebSearchResult
+          items={webSearchResultItems}
+          extractWebStateMap={extractWebStateMap}
+        />
       )}
 
       {chartData && (
         <ChartResult option={chartData.option} height={chartData.height} />
       )}
 
-      {todos && todos.length > 0 && <TodoList todos={todos} />}
+      {todos && todos?.length > 0 && <TodoList todos={todos} />}
     </ToolCallRowWrapper>
   );
 };

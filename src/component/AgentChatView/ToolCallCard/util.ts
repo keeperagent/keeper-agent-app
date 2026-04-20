@@ -308,12 +308,13 @@ export const HIDDEN_TOOL_NAMES = new Set<string>([
   "TavilySearchResults",
 ]);
 
-export type ResultItem = { title: string; url: string };
-export const parseResultItems = (
+export type WebSearchResultItem = { title: string; url: string };
+
+export const parseWebSearchResultItems = (
   toolName: string,
   result?: string,
   input?: Record<string, unknown>,
-): ResultItem[] => {
+): WebSearchResultItem[] => {
   if (!SEARCH_TOOL_NAMES.has(toolName as any)) {
     return [];
   }

@@ -6,7 +6,7 @@ const spin = keyframes`
   to   { transform: rotate(360deg); }
 `;
 
-export const ToolCallGroupWrapper = styled.div<{ expanded: boolean }>`
+export const Wrapper = styled.div<{ expanded: boolean }>`
   display: flex;
   flex-direction: column;
   margin-bottom: ${({ expanded }) => (expanded ? "0.8rem" : "0.4rem")};
@@ -148,5 +148,4 @@ export const ToolCallGroupWrapper = styled.div<{ expanded: boolean }>`
       margin-left: 0.3rem;
     }
   }
-
 `;
