@@ -42,9 +42,10 @@ import {
   useGetListAppLog,
   useGetListSchedule,
   useTranslation,
+  sendOpenExternalLink,
 } from "@/hook";
 import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
-import { MESSAGE, SCHEDULE_LOG_ACTION } from "@/electron/constant";
+import { SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import {
   PageWrapper,
   NameWrapper,
@@ -81,7 +82,7 @@ const resultMarkdownComponents = {
       onClick={(e) => {
         e.preventDefault();
         if (href) {
-          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
+          sendOpenExternalLink(href);
         }
       }}
     >

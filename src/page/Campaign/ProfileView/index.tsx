@@ -81,6 +81,7 @@ import {
   useDeleteCampaignProfile,
   useGetListResourceGroup,
   useTranslation,
+  sendOpenExternalLink,
   useOpenCampaignProfileInBrowser,
   useCloseCampaignProfileInBrowser,
   useUpdateCampaignProfile,
@@ -682,10 +683,7 @@ const ManageCampaignProfile = (props: IProps) => {
 
   const onViewPortfolio = (walletAddress: string, portfolioApp: string) => {
     const url = getPortfolioAppUrl(walletAddress, portfolioApp);
-
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url,
-    });
+    sendOpenExternalLink(url);
   };
 
   const rowSelection = {

@@ -2,7 +2,8 @@ import { Fragment } from "react";
 import { Tooltip } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { MESSAGE, TOOL_KEYS } from "@/electron/constant";
+import { TOOL_KEYS } from "@/electron/constant";
+import { useOpenExternalLink } from "@/hook";
 import CodeEditor from "@/component/CodeEditor";
 import { type ToolCallState, ToolCallStateStatus } from "../../util";
 import {
@@ -23,15 +24,6 @@ import {
 import ChartResult from "../ChartResult";
 import TodoList from "../TodoList";
 import { ToolCallRowWrapper } from "./style";
-
-const openExternalUrl = (url: string): void => {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-      window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url });
-    }
-  } catch {}
-};
 
 const formatTaskToolPrimaryLabel = (label: string) => {
   const suffix = [" subagent", " agent"].find((suffix) =>
@@ -55,6 +47,8 @@ type ToolCallRowProps = {
 };
 
 const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
+  const { openExternalLink } = useOpenExternalLink();
+
   const summaryPairs = getSummaryPairs(toolCall.toolName, toolCall.input);
   const resultItems = parseResultItems(
     toolCall.toolName,
@@ -198,7 +192,7 @@ const ToolCallRow = ({ toolCall, extractStateMap }: ToolCallRowProps) => {
               <div
                 key={index}
                 className="result-item"
-                onClick={() => openExternalUrl(resultItem.url)}
+                onClick={() => openExternalLink(resultItem.url)}
               >
                 <img
                   className="result-favicon"

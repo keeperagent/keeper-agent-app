@@ -5,7 +5,12 @@ import { useLazyQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import { QuerySignIn, QueryLoginAppWithGoogle } from "@/api/auth";
-import { useTranslation, useGetPreference, useAuthStorage } from "@/hook";
+import {
+  useTranslation,
+  useGetPreference,
+  useAuthStorage,
+  useOpenExternalLink,
+} from "@/hook";
 import { DASHBOARD_LIGHT_MODE_KEY, RESPONSE_CODE } from "@/config/constant";
 import { actSetIsFullscreen } from "@/redux/workflowRunner";
 import {
@@ -31,6 +36,7 @@ const LoginForm = (props: any) => {
   const { getPreference } = useGetPreference();
   const { saveAuthToken } = useAuthStorage();
   const navigate = useNavigate();
+  const { openExternalLink } = useOpenExternalLink();
 
   useEffect(() => {
     if (token) {
@@ -196,21 +202,15 @@ const LoginForm = (props: any) => {
   };
 
   const onOpenLoginWithGoogleLink = () => {
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url: `${LANDING_PAGE_URL}/app-login`,
-    });
+    openExternalLink(`${LANDING_PAGE_URL}/app-login`);
   };
 
   const onOpenSignupPage = () => {
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url: `${LANDING_PAGE_URL}/sign-up`,
-    });
+    openExternalLink(`${LANDING_PAGE_URL}/sign-up`);
   };
 
   const onOpenForgotPasswordPage = () => {
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url: `${LANDING_PAGE_URL}/forgot-password`,
-    });
+    openExternalLink(`${LANDING_PAGE_URL}/forgot-password`);
   };
 
   return (

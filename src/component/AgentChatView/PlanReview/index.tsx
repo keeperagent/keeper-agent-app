@@ -1,8 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "antd";
-import { useTranslation } from "@/hook";
-import { MESSAGE } from "@/electron/constant";
+import { useTranslation, sendOpenExternalLink } from "@/hook";
 import { Wrapper } from "./style";
 
 const markdownComponents = {
@@ -11,9 +10,7 @@ const markdownComponents = {
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        if (href) {
-          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
-        }
+        sendOpenExternalLink(href);
       }}
     >
       {children}

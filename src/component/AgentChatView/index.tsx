@@ -2,13 +2,16 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { guard } from "@keeperagent/crypto-key-guard";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, TOOL_KEYS } from "@/electron/constant";
 import { Alert, message } from "antd";
 import copy from "copy-to-clipboard";
-import { useTranslation, useSaveClipboardImage } from "@/hook";
+import {
+  useTranslation,
+  useSaveClipboardImage,
+  sendOpenExternalLink,
+} from "@/hook";
 import { CopyIcon, CheckIcon, PaperPlaneIcon } from "@/component/Icon";
 import { ChatRole } from "@/electron/chatGateway/types";
-import { TOOL_KEYS } from "@/electron/constant";
 import {
   AgentChatViewWrapper,
   DropOverlay,
@@ -63,9 +66,7 @@ const markdownComponents = {
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        if (href) {
-          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
-        }
+        sendOpenExternalLink(href);
       }}
     >
       {children}

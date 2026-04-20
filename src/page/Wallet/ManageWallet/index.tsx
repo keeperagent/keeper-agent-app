@@ -34,13 +34,14 @@ import {
   useTranslation,
   useUpdateWallet,
   useGetWalletGroupDependency,
+  useOpenExternalLink,
 } from "@/hook";
 import {
   formatTime,
   getPortfolioAppImg,
   getPortfolioAppUrl,
 } from "@/service/util";
-import { PORTFOLIO_APP_NAME, MESSAGE, SORT_ORDER } from "@/electron/constant";
+import { PORTFOLIO_APP_NAME, SORT_ORDER } from "@/electron/constant";
 import {
   actSaveSelectedWalletGroup,
   actSetModalDependencyOpen,
@@ -196,6 +197,7 @@ const ManageWallet = (props: any) => {
   const { getOneWalletGroup, loading: isSelectLoading } =
     useGetOneWalletGroup();
   const { updateWallet } = useUpdateWallet();
+  const { openExternalLink } = useOpenExternalLink();
 
   useEffect(() => {
     if (
@@ -420,10 +422,7 @@ const ManageWallet = (props: any) => {
   const onViewPortfolio = (walletAddress: string) => {
     const { portfolioApp } = selectedWalletGroup;
     const url = getPortfolioAppUrl(walletAddress, portfolioApp);
-
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url,
-    });
+    openExternalLink(url);
   };
 
   const dataSource: any[] = useMemo(() => {

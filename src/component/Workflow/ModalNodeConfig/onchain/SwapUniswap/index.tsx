@@ -21,7 +21,6 @@ import {
   CHAIN_TYPE,
   WALLET_VARIABLE,
   EVM_TRANSACTION_TYPE,
-  MESSAGE,
 } from "@/electron/constant";
 import { ArrowUpRightIcon } from "@/component/Icon";
 import {
@@ -29,7 +28,11 @@ import {
   DEFAULT_EXTENSION_TIMEOUT,
 } from "@/electron/simulator/constant";
 import { NODE_STATUS } from "@/electron/constant";
-import { useTranslation, useGetListNodeEndpointGroup } from "@/hook";
+import {
+  useTranslation,
+  useGetListNodeEndpointGroup,
+  useOpenExternalLink,
+} from "@/hook";
 import { getChainConfig } from "@/service/util";
 import {
   Wrapper,
@@ -38,7 +41,10 @@ import {
   ChainLabelWrapper,
   ContractWrapper,
 } from "./style";
-import { TAB, TAB_NAME_EN } from "@/component/Workflow/ModalNodeConfig/common/util";
+import {
+  TAB,
+  TAB_NAME_EN,
+} from "@/component/Workflow/ModalNodeConfig/common/util";
 import CommonSetting from "@/component/Workflow/ModalNodeConfig/common/CommonSetting";
 import SkipSetting from "@/component/Workflow/ModalNodeConfig/common/SkipSetting";
 import WorkflowVariable from "@/component/Workflow/WorkflowVariable";
@@ -81,6 +87,7 @@ const SwapUniswap = (props: Props) => {
   const [isSkip, setIsSkip] = useState(false);
   const [chainId, setChainId] = useState(1);
   const [form] = Form.useForm();
+  const { openExternalLink } = useOpenExternalLink();
 
   const { getListNodeEndpointGroup, loading: isSelectLoading } =
     useGetListNodeEndpointGroup();
@@ -296,15 +303,6 @@ const SwapUniswap = (props: Props) => {
     return listChainId?.map((chainId) => _.find(CHAIN_CONFIG, { chainId }));
   }, [isPancakeswap]);
 
-  const onOpenLink = (link?: string) => {
-    if (!link) {
-      return;
-    }
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url: link,
-    });
-  };
-
   return (
     <Wrapper>
       <Tabs
@@ -414,8 +412,9 @@ const SwapUniswap = (props: Props) => {
                                 <span
                                   className="icon"
                                   onClick={() =>
-                                    onOpenLink(
-                                      mapPancakeswapContractUrl.get(chainId),
+                                    openExternalLink(
+                                      mapPancakeswapContractUrl.get(chainId) ||
+                                        "",
                                     )
                                   }
                                 >
@@ -441,7 +440,7 @@ const SwapUniswap = (props: Props) => {
                                 <span
                                   className="icon"
                                   onClick={() =>
-                                    onOpenLink(
+                                    openExternalLink(
                                       mapUniswapContractUrl.get(chainId),
                                     )
                                   }

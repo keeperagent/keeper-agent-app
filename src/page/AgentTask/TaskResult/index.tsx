@@ -3,18 +3,8 @@ import { useState, useEffect, Fragment } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
-import { MESSAGE } from "@/electron/constant";
-import { useTranslation } from "@/hook/useTranslation";
+import { useTranslation, sendOpenExternalLink } from "@/hook";
 import { Wrapper } from "./style";
-
-const isHttpUrl = (url: string): boolean => {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
 
 const markdownComponents = {
   a: ({ href, children }: { href?: string; children?: ReactNode }) => (
@@ -22,8 +12,8 @@ const markdownComponents = {
       href={href}
       onClick={(event) => {
         event.preventDefault();
-        if (href && isHttpUrl(href)) {
-          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
+        if (href) {
+          sendOpenExternalLink(href);
         }
       }}
     >
