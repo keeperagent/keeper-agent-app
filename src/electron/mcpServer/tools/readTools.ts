@@ -11,9 +11,9 @@ import {
   findSimilarExaTool,
   getSolanaTokenBalanceTool,
   getEvmTokenBalanceTool,
-} from "@/electron/appAgent/baseTool";
-import { listAgentSchedulesTool } from "@/electron/appAgent/baseTool/scheduler";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+} from "@/electron/agentCore/baseTool";
+import { listAgentSchedulesTool } from "@/electron/agentCore/baseTool/scheduler";
+import { ToolContext } from "@/electron/agentCore/toolContext";
 import { registerAgentTaskReadTools } from "./agentTaskTools";
 
 const wrapText = (text: string) => ({

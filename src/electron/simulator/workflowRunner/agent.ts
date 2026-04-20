@@ -18,10 +18,10 @@ import {
   createAgentFromProfile,
   createLLM,
   ToolContext,
-} from "@/electron/appAgent";
+} from "@/electron/agentCore";
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { ILlmSetting } from "@/electron/type";
-import { getLlmSetting } from "@/electron/appAgent/utils";
+import { getLlmSetting } from "@/electron/agentCore/utils";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import {

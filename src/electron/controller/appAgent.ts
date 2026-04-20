@@ -5,7 +5,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { agentChatBridge } from "@/electron/chatGateway/bridge";
 import { agentProfileChatBridge } from "@/electron/chatGateway/agentProfileBridge";
 import { LLMProvider } from "@/electron/type";
-import type { IAttachedFileContext } from "@/electron/appAgent";
+import type { IAttachedFileContext } from "@/electron/agentCore";
 import type {
   IpcAgentCreateSessionPayload,
   IpcAgentRunPayload,
@@ -16,8 +16,8 @@ import type {
   IpcCheckModelCapabilityPayload,
 } from "@/electron/ipcTypes";
 import { checkModelCapability } from "@/electron/service/modelCapability";
-import { hasApiKey } from "@/electron/appAgent";
-import { experienceRecorder } from "@/electron/appAgent/experienceEngine/experienceRecorder";
+import { hasApiKey } from "@/electron/agentCore";
+import { experienceRecorder } from "@/electron/agentCore/experienceEngine/experienceRecorder";
 
 const CONTEXT_HEADER = "CURRENT CONTEXT (use these values";
 

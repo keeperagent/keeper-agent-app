@@ -5,8 +5,8 @@ import {
   createKeeperAgent,
   createAgentFromProfile,
   createLLM,
-} from "@/electron/appAgent";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+} from "@/electron/agentCore";
+import { ToolContext } from "@/electron/agentCore/toolContext";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { scheduleDB } from "@/electron/database/schedule";
 import { appLogDB } from "@/electron/database/appLog";

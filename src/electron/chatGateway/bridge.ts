@@ -22,14 +22,14 @@ import {
   type KeeperAgent,
   ToolContext,
   type IAttachedFileContext,
-} from "@/electron/appAgent";
+} from "@/electron/agentCore";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
-import { looksLikeEncryptKey, isErrorResult } from "@/electron/appAgent/utils";
+import { looksLikeEncryptKey, isErrorResult } from "@/electron/agentCore/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
-import { experienceRetriever } from "@/electron/appAgent/experienceEngine/experienceRetriever";
-import { experienceRecorder } from "@/electron/appAgent/experienceEngine/experienceRecorder";
+import { experienceRetriever } from "@/electron/agentCore/experienceEngine/experienceRetriever";
+import { experienceRecorder } from "@/electron/agentCore/experienceEngine/experienceRecorder";
 import { LLMProvider } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
@@ -410,7 +410,7 @@ class AgentChatBridge {
       .catch(() => {});
   };
 
-  // IPC Session Management (used by appAgent controller)
+  // IPC Session Management (used by agentCore controller)
   prewarmSession = (provider: LLMProvider): string => {
     const sessionKey = this.sessionKey(ChatPlatform.KEEPER, "default");
     const session: AgentSession = {
