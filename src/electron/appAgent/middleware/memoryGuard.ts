@@ -25,7 +25,7 @@ export const createMemoryWriteGuardMiddleware = () =>
 
       if (sanitizedContent !== originalContent) {
         logEveryWhere({
-          message: `[MemoryWriteGuard] Stripped injected content from memory write to ${filePath}, originalContent: ${originalContent}`,
+          message: `[MemoryWriteGuard] Stripped injected content from memory write to ${filePath}, originalContent: ${originalContent?.slice(0, 500)}...`,
         });
       }
 

@@ -3,6 +3,7 @@
 
 class ResponseManager {
   private resolvers = new Map<string, (value: any) => void>();
+  private earlyResponses = new Map<string, any>();
 
   getKey(message: string, requestId: number | string): string {
     return `${message}:${requestId}`;
@@ -13,10 +14,18 @@ class ResponseManager {
     if (resolve) {
       this.resolvers.delete(key);
       resolve(value);
+    } else {
+      this.earlyResponses.set(key, value);
     }
   }
 
   getResponse(key: string): Promise<any> {
+    if (this.earlyResponses.has(key)) {
+      const value = this.earlyResponses.get(key);
+      this.earlyResponses.delete(key);
+      return Promise.resolve(value);
+    }
+
     return new Promise((resolve) => {
       this.resolvers.set(key, resolve);
     });
@@ -25,6 +34,7 @@ class ResponseManager {
   cancelAll() {
     this.resolvers.forEach((resolve) => resolve(undefined));
     this.resolvers.clear();
+    this.earlyResponses.clear();
   }
 }
 

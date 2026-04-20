@@ -37,9 +37,15 @@ export const createExecuteGuardMiddleware = (toolContext: ToolContext) =>
         return handler(request);
       }
       if (toolContext.planState !== PlanState.APPROVED) {
-        throw new Error(
-          "Shell execution requires planning mode approval. Call request_approval first, then confirm_approval for user approval.",
-        );
+        logEveryWhere({
+          message: `[ExecuteGuard] Blocked execute — planState="${toolContext.planState}"`,
+        });
+        return new ToolMessage({
+          content:
+            "Error: Shell execution requires user approval. Call `request_approval` first, then `confirm_approval`, and only after approval is granted proceed with execution.",
+          tool_call_id: request?.toolCall?.id || "",
+          status: "error",
+        });
       }
       return handler(request);
     },

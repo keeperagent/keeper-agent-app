@@ -16,10 +16,12 @@ export const createSkillReadGuardMiddleware = (enabledFolders: Set<string>) =>
         return handler(request);
       }
 
-      const folder = filePath.replace(/^\/skills\//, "").split("/")[0];
-      if (!folder || enabledFolders.has(folder)) {
+      const normalized = filePath.replace(/\/+/g, "/");
+      const folder = normalized.replace(/^\/skills\//, "").split("/")[0];
+      if (folder && enabledFolders.has(folder)) {
         return handler(request);
       }
+
       const available = [...enabledFolders].join(", ") || "none";
       throw new Error(
         `Skill '${folder}' does not exist, do not retry with other folder names. Available skills: [${available}]`,

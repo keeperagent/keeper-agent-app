@@ -13,7 +13,7 @@ export const getDbPath = (): string => {
     const isExist = fs.pathExistsSync(dbPath);
     if (!isExist) {
       logEveryWhere({ message: `Create database file, path: ${dbPath}` });
-      fs.openSync(dbPath, "w", 0o600);
+      fs.writeFileSync(dbPath, "", { mode: 0o600 });
     }
   }
   return dbPath;
@@ -28,7 +28,7 @@ export const getVecDbPath = (): string => {
       logEveryWhere({
         message: `Create vec database file, path: ${vecDbPath}`,
       });
-      fs.openSync(vecDbPath, "w", 0o600);
+      fs.writeFileSync(vecDbPath, "", { mode: 0o600 });
     }
   }
   return vecDbPath;

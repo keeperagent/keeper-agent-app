@@ -1,4 +1,8 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import {
+  HumanMessage,
+  SystemMessage,
+  type MessageContent,
+} from "@langchain/core/messages";
 import { LLMProvider } from "@/electron/type";
 import { createBackgroundLLM } from "../llm";
 import { logEveryWhere } from "@/electron/service/util";
@@ -26,6 +30,15 @@ export type RecordInput = {
 };
 
 class ExperienceRecorder {
+  private extractMessageText = (content: MessageContent): string => {
+    if (typeof content === "string") {
+      return content;
+    }
+    return content
+      .map((block) => (block.type === "text" ? block.text : ""))
+      .join("")
+      .trim();
+  };
   private generateFailureReflection = async (
     userMessage: string,
     toolCallSequence: string | null,
@@ -49,7 +62,7 @@ class ExperienceRecorder {
         ),
         new HumanMessage(context),
       ]);
-      return (result.content as string).trim();
+      return this.extractMessageText(result.content).trim();
     } catch {
       return errorMsg
         ? `Failed with error: ${errorMsg.slice(0, 150)}`
@@ -81,7 +94,7 @@ class ExperienceRecorder {
         new HumanMessage(userMessage),
       ]);
 
-      return (result.content as string).trim();
+      return this.extractMessageText(result.content).trim();
     } catch {
       return userMessage.slice(0, 200);
     }
@@ -109,13 +122,15 @@ class ExperienceRecorder {
           `
           SELECT ae.id, v.distance
           FROM (
-            SELECT rowid, vec_distance_cosine(intentVector, ?) AS distance
-            FROM agent_experiences_vec
+            SELECT aev.rowid, vec_distance_cosine(aev.intentVector, ?) AS distance
+            FROM agent_experiences_vec aev
+            JOIN agent_experiences ae ON ae.id = aev.rowid
+            WHERE ae.schemaVersion = ?
             ORDER BY distance
             LIMIT 1
           ) v
           JOIN agent_experiences ae ON ae.id = v.rowid
-          WHERE ae.schemaVersion = ? AND v.distance < ?
+          WHERE v.distance < ?
         `,
           [queryBuffer, CURRENT_TOOL_SCHEMA_VERSION, MERGE_DISTANCE_THRESHOLD],
         );
@@ -164,13 +179,15 @@ class ExperienceRecorder {
         `
         SELECT ae.*, v.distance
         FROM (
-          SELECT rowid, vec_distance_cosine(intentVector, ?) AS distance
-          FROM agent_experiences_vec
+          SELECT aev.rowid, vec_distance_cosine(aev.intentVector, ?) AS distance
+          FROM agent_experiences_vec aev
+          JOIN agent_experiences ae ON ae.id = aev.rowid
+          WHERE ae.schemaVersion = ?
           ORDER BY distance
           LIMIT 1
         ) v
         JOIN agent_experiences ae ON ae.id = v.rowid
-        WHERE ae.schemaVersion = ? AND v.distance < ?
+        WHERE v.distance < ?
       `,
         [intentBuffer, CURRENT_TOOL_SCHEMA_VERSION, MERGE_DISTANCE_THRESHOLD],
       );
