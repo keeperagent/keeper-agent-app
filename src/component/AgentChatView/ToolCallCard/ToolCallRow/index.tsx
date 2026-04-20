@@ -74,9 +74,6 @@ const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
     toolCall.toolName === TOOL_KEYS.WRITE_TODOS
       ? parseTodos(toolCall.input)
       : null;
-  const completedCount = todos
-    ? todos.filter((todo) => todo.status === TodoItemStatus.COMPLETED).length
-    : 0;
 
   const isRejected =
     toolCall.toolName === TOOL_KEYS.CONFIRM_APPROVAL &&
@@ -132,7 +129,12 @@ const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
 
             {todos && todos.length > 0 && (
               <span className="todo-counter">
-                {completedCount}/{todos?.length || 0} done
+                {
+                  todos.filter(
+                    (todo) => todo.status === TodoItemStatus.COMPLETED,
+                  ).length
+                }
+                /{todos.length} done
               </span>
             )}
 

@@ -4,17 +4,32 @@ import fs from "fs-extra";
 import { logEveryWhere } from "@/electron/service/util";
 
 const DB_FILE_NAME = "ka_app.db";
+const VEC_DB_FILE_NAME = "ka_vec.db";
 
-let _dbPath: string | null = null;
-
+let dbPath: string | null = null;
 export const getDbPath = (): string => {
-  if (!_dbPath) {
-    _dbPath = path.join(app.getPath("userData"), DB_FILE_NAME);
-    const isExist = fs.pathExistsSync(_dbPath);
+  if (!dbPath) {
+    dbPath = path.join(app.getPath("userData"), DB_FILE_NAME);
+    const isExist = fs.pathExistsSync(dbPath);
     if (!isExist) {
-      logEveryWhere({ message: `Create database file, path: ${_dbPath}` });
-      fs.openSync(_dbPath, "w", 0o600);
+      logEveryWhere({ message: `Create database file, path: ${dbPath}` });
+      fs.writeFileSync(dbPath, "", { mode: 0o600 });
     }
   }
-  return _dbPath;
+  return dbPath;
+};
+
+let vecDbPath: string | null = null;
+export const getVecDbPath = (): string => {
+  if (!vecDbPath) {
+    vecDbPath = path.join(app.getPath("userData"), VEC_DB_FILE_NAME);
+    const isExist = fs.pathExistsSync(vecDbPath);
+    if (!isExist) {
+      logEveryWhere({
+        message: `Create vec database file, path: ${vecDbPath}`,
+      });
+      fs.writeFileSync(vecDbPath, "", { mode: 0o600 });
+    }
+  }
+  return vecDbPath;
 };

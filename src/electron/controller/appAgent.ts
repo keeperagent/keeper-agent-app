@@ -17,6 +17,7 @@ import type {
 } from "@/electron/ipcTypes";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { hasApiKey } from "@/electron/appAgent";
+import { experienceRecorder } from "@/electron/appAgent/experienceEngine/experienceRecorder";
 
 const CONTEXT_HEADER = "CURRENT CONTEXT (use these values";
 
@@ -173,7 +174,24 @@ export const agentController = () => {
         const result = await agentChatBridge.runAgent(sessionId, input, {
           ipcEvent: event,
           attachedFiles: parsedCtx.attachedFiles,
+          rawUserMessage: input,
         });
+
+        // Record experience non-blocking
+        experienceRecorder
+          .record({
+            runId: result.runId,
+            userMessage: input,
+            toolCallSequence:
+              result.steps.length > 0
+                ? JSON.stringify(result.steps.map((step) => step.toolName))
+                : null,
+            todoTemplate: result.todoTemplate,
+            isSuccess: !result.isError && !result.stopped,
+            errorMsg: result.errorMsg,
+            provider: session.provider,
+          })
+          .catch(() => {});
 
         createResponse(event, MESSAGE.DASHBOARD_AGENT_RUN_RES, {
           data: {
@@ -182,6 +200,8 @@ export const agentController = () => {
             stopped: result.stopped,
             isError: result.isError,
             errorMsg: result.errorMsg,
+            runId: result.runId,
+            todoTemplate: result.todoTemplate,
           },
           sessionId,
         });

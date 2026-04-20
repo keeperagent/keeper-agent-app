@@ -33,12 +33,19 @@ protocol.registerSchemesAsPrivileged([
 
 const installDevExtensions = async () => {
   const {
-    default: installExtension,
+    installExtension,
     REDUX_DEVTOOLS,
   } = require("electron-devtools-installer");
 
   installExtension([REDUX_DEVTOOLS])
-    .then((name: any) => console.log(`Added Extension:  ${name}`))
+    .then((exts: any) =>
+      console.log(
+        `Added Extension: ${[exts]
+          .flat()
+          .map((ext: any) => ext?.name)
+          .join(", ")}`,
+      ),
+    )
     .catch((err: any) => console.log("An error occurred: ", err?.message));
 };
 

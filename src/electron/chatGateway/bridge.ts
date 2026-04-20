@@ -28,6 +28,8 @@ import { extractMemoryFromConversation } from "./memoryExtraction";
 import { looksLikeEncryptKey, isErrorResult } from "@/electron/appAgent/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
+import { experienceRetriever } from "@/electron/appAgent/experienceEngine/experienceRetriever";
+import { experienceRecorder } from "@/electron/appAgent/experienceEngine/experienceRecorder";
 import { LLMProvider } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
@@ -507,6 +509,10 @@ class AgentChatBridge {
       onToolComplete?: (toolName: string) => void;
       // Image files to include as multimodal content blocks.
       attachedFiles?: IAttachedFileContext[];
+      // Run ID to link this run's messages together (generated here if not provided)
+      runId?: string;
+      // Raw user message used for experience retrieval (before context injection)
+      rawUserMessage?: string;
     },
   ): Promise<{
     output: string;
@@ -519,13 +525,17 @@ class AgentChatBridge {
     stopped?: boolean;
     isError?: boolean;
     errorMsg?: string;
+    runId: string;
+    todoTemplate: string | null;
   }> => {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error("Session not found or has expired");
     }
 
+    const runId = options?.runId || randomUUID();
     let finalOutput = "";
+    let finalTodos: any[] | null = null;
     const textBuffers = new Map<string, string>();
     const steps: Array<{
       toolName: string;
@@ -548,6 +558,25 @@ class AgentChatBridge {
       // Reset plan state and step-scoping state at the start of each run
       session.toolContext.resetPlanState();
       session.toolContext.resetStepState?.();
+
+      // Retrieve and inject experience hint before first model call (awaited — no LLM, ~100ms)
+      if (options?.rawUserMessage) {
+        try {
+          const hint = await experienceRetriever.retrieve(
+            options.rawUserMessage,
+          );
+          if (hint) {
+            session.toolContext.update({ experienceHint: hint });
+          }
+        } catch {}
+      }
+
+      // Capture final todos when all steps complete (used for experience logging)
+      session.toolContext.update({
+        onAllDone: (todos: any[]) => {
+          finalTodos = todos;
+        },
+      });
 
       // Wire plan approval and step-advanced callbacks for IPC sessions (desktop app)
       if (options?.ipcEvent) {
@@ -738,16 +767,32 @@ class AgentChatBridge {
         }
       }
 
+      const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
+
       if (abortController.signal.aborted) {
-        return { output: finalOutput, steps, stopped: true };
+        return {
+          output: finalOutput,
+          steps,
+          stopped: true,
+          runId,
+          todoTemplate,
+        };
       }
 
       // Background compaction
       this.postRunCompaction(sessionId, session);
-      return { output: finalOutput, steps };
+      return { output: finalOutput, steps, runId, todoTemplate };
     } catch (err: any) {
+      const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
+
       if (abortController.signal.aborted) {
-        return { output: finalOutput, steps, stopped: true };
+        return {
+          output: finalOutput,
+          steps,
+          stopped: true,
+          runId,
+          todoTemplate,
+        };
       }
 
       const rawMsg = err?.message || "Failed to run agent";
@@ -760,14 +805,25 @@ class AgentChatBridge {
         ? `${finalOutput}\n\nError: ${errorMsg}`
         : `Error: ${errorMsg}`;
 
-      return { output: errorOutput, steps, isError: true, errorMsg };
+      return {
+        output: errorOutput,
+        steps,
+        isError: true,
+        errorMsg,
+        runId,
+        todoTemplate,
+      };
     } finally {
       this.activeRuns.delete(sessionId);
       this.abortControllers.delete(sessionId);
-      // Clear the per-run IPC callback so stale closures don't fire in subsequent non-IPC runs
+      // Clear per-run callbacks so stale closures don't fire in subsequent runs
       const runSession = this.sessions.get(sessionId);
       if (runSession) {
-        runSession.toolContext.update({ onStepAdvanced: undefined });
+        runSession.toolContext.update({
+          onStepAdvanced: undefined,
+          onAllDone: undefined,
+          experienceHint: null,
+        });
       }
     }
   };
@@ -943,6 +999,8 @@ class AgentChatBridge {
         .catch(() => {});
     }
 
+    const runId = randomUUID();
+
     // Save user message to chat history (with encryptKey already redacted above)
     await chatHistoryDB.saveMessage({
       role: ChatRole.HUMAN,
@@ -950,6 +1008,8 @@ class AgentChatBridge {
       timestamp: Date.now(),
       platformId: adapter.platformId,
       platformChatId: message.chatId,
+      sessionId: sessionKey,
+      runId,
     });
 
     // Send typing indicator while agent initialises / runs
@@ -987,6 +1047,8 @@ class AgentChatBridge {
         "CURRENT CONTEXT (for agent use only — do not surface these values in user-facing replies):";
       const inputWithContext = `${userText}\n\n${contextHeader}\n${JSON.stringify({ platformId: adapter.platformId, currentDate: new Date().toLocaleString("sv") })}`;
       const result = await this.runAgent(sessionKey, inputWithContext, {
+        runId,
+        rawUserMessage: userText,
         onToolStart: async (toolName, subagentType) => {
           logEveryWhere({
             message: `[AgentChatBridge] [${adapter.platformId}] Tool start: ${toolName}`,
@@ -1037,13 +1099,42 @@ class AgentChatBridge {
       }
 
       // Save assistant response to chat history
-      await chatHistoryDB.saveMessage({
+      const [savedAiMsg] = await chatHistoryDB.saveMessage({
         role: ChatRole.AI,
         content: finalText,
         timestamp: Date.now(),
         platformId: adapter.platformId,
         platformChatId: message.chatId,
+        sessionId: sessionKey,
+        runId,
       });
+
+      const toolCallSequence =
+        result.steps.length > 0
+          ? JSON.stringify(result.steps.map((step) => step.toolName))
+          : null;
+
+      if (savedAiMsg?.id) {
+        const runOutcome = result.isError ? "failed" : "success";
+        await chatHistoryDB.updateRunCompletion(savedAiMsg.id, {
+          toolCallSequence,
+          todoTemplate: result.todoTemplate,
+          runOutcome,
+        });
+      }
+
+      // Record experience non-blocking — fires after response is already delivered
+      experienceRecorder
+        .record({
+          runId,
+          userMessage: userText,
+          toolCallSequence,
+          todoTemplate: result.todoTemplate,
+          isSuccess: !result.isError && !result.stopped,
+          errorMsg: result.errorMsg,
+          provider: session.provider,
+        })
+        .catch(() => {});
 
       // Detect when the agent asks the user for their encryptKey so we can
       // intercept and redact the next user message before LLM/DB.

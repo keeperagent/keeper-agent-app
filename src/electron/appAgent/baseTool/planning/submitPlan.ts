@@ -3,6 +3,7 @@ import { z } from "zod/v3";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { logEveryWhere } from "@/electron/service/util";
 
 export const confirmApprovalTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
@@ -34,15 +35,22 @@ export const confirmApprovalTool = (toolContext: ToolContext) =>
         // Desktop app: send IPC to wait for user approval
         const approved = await requestApproval(plan);
         if (!approved) {
+          logEveryWhere({
+            message: `[Approval] Rejected by user | plan: ${plan.slice(0, 500)}`,
+          });
           return safeStringify({
             status: "rejected",
             message:
               "User rejected the plan. Planning mode remains active. You may revise and submit a new plan.",
           });
         }
+
         toolContext.update({
           planState: PlanState.APPROVED,
           approvedPlan: plan,
+        });
+        logEveryWhere({
+          message: `[Approval] Confirmed → execution unlocked | plan: ${plan.slice(0, 500)}`,
         });
         return safeStringify({
           status: "approved",

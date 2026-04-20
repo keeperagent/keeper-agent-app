@@ -39,6 +39,11 @@ export type IChatMessage = {
   timestamp: number;
   platformId?: ChatPlatform;
   platformChatId?: string;
+  sessionId?: string | null;
+  runId?: string | null;
+  toolCallSequence?: string | null;
+  todoTemplate?: string | null;
+  runOutcome?: string | null;
 };
 
 /** A live incoming message from a chat platform to the agent bridge. */

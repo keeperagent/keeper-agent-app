@@ -1,53 +1,40 @@
-import { sleep } from "./util";
-
-// used to get response from electron backend, to prevent too many component register the same event listener in electron.on(), which cause leak of memory
-// client send message to electron -> electron save result in @responseManager -> client get result from @responseManager
+// Prevents multiple components from registering the same electron.on() listener.
+// Flow: client sends IPC → electron saves result via saveResponse → client awaits via getResponse.
 
 class ResponseManager {
-  private mapResponse: { [key: string]: any };
-  private shouldStop: boolean;
-  private mapWaitingKey: { [key: string]: boolean };
-
-  constructor() {
-    this.mapResponse = {};
-    this.shouldStop = false;
-    this.mapWaitingKey = {};
-  }
+  private resolvers = new Map<string, (value: any) => void>();
+  private earlyResponses = new Map<string, any>();
 
   getKey(message: string, requestId: number | string): string {
     return `${message}:${requestId}`;
   }
 
   saveResponse(key: string, value: any) {
-    this.mapResponse[key] = value;
+    const resolve = this.resolvers.get(key);
+    if (resolve) {
+      this.resolvers.delete(key);
+      resolve(value);
+    } else {
+      this.earlyResponses.set(key, value);
+    }
   }
 
-  async getResponse(key: string): Promise<any> {
-    this.mapWaitingKey[key] = true;
-    return await new Promise(async (resolve) => {
-      while (this.mapResponse[key] === undefined && !this.shouldStop) {
-        console.log("wait 50ms to get response");
-        await sleep(50);
-      }
+  getResponse(key: string): Promise<any> {
+    if (this.earlyResponses.has(key)) {
+      const value = this.earlyResponses.get(key);
+      this.earlyResponses.delete(key);
+      return Promise.resolve(value);
+    }
 
-      delete this.mapWaitingKey[key];
-      resolve(this.mapResponse[key]);
+    return new Promise((resolve) => {
+      this.resolvers.set(key, resolve);
     });
   }
 
-  removeKey(key: string) {
-    delete this.mapResponse[key];
-  }
-
-  async removeAllKey() {
-    this.shouldStop = true;
-    this.mapResponse = {};
-
-    while (Object.keys(this.mapWaitingKey).length > 0) {
-      console.error("wait 50s for all running key completed");
-      await sleep(50);
-    }
-    this.shouldStop = false;
+  cancelAll() {
+    this.resolvers.forEach((resolve) => resolve(undefined));
+    this.resolvers.clear();
+    this.earlyResponses.clear();
   }
 }
 
