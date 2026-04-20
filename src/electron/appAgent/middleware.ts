@@ -1,6 +1,7 @@
 import { createMiddleware } from "langchain";
 import { AIMessage, ToolMessage } from "@langchain/core/messages";
 import { restore } from "@keeperagent/crypto-key-guard";
+import { TodoItemStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "./toolContext";
 import { sanitizeMemoryContent } from "./memorySanitizer";
@@ -272,7 +273,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
 
         // Detect step change to reset retry counts
         const prevActiveContent = lastKnownTodos.find(
-          (t: any) => t.status === "in_progress",
+          (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
         )?.content;
 
         // New plan detection: if none of the incoming IDs match any known ID, reset to avoid
@@ -288,30 +289,38 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
 
         // Prevent status regression (completed → non-completed) and re-add dropped completed items
         // Only re-add "completed" items — never re-add in_progress/pending from a previous plan
-        const mergedTodos = todos.map((t: any) => {
-          const known = lastKnownTodos.find((k: any) => k.id && k.id === t.id);
-          if (known?.status === "completed" && t.status !== "completed") {
-            return { ...t, status: "completed" };
+        const mergedTodos = todos.map((item: any) => {
+          const known = lastKnownTodos.find(
+            (knownItem: any) => knownItem.id && knownItem.id === item.id,
+          );
+          if (
+            known?.status === TodoItemStatus.COMPLETED &&
+            item.status !== TodoItemStatus.COMPLETED
+          ) {
+            return { ...item, status: TodoItemStatus.COMPLETED };
           }
-          return t;
+          return item;
         });
         const todoIds = new Set(mergedTodos.map((t: any) => t.id));
         const dropped = lastKnownTodos.filter(
-          (t: any) => t.id && !todoIds.has(t.id) && t.status === "completed",
+          (item: any) =>
+            item.id &&
+            !todoIds.has(item.id) &&
+            item.status === TodoItemStatus.COMPLETED,
         );
         todos = [...mergedTodos, ...dropped];
         request.toolCall[argsKey] = { ...request.toolCall[argsKey], todos };
         lastKnownTodos = todos;
 
         const newActiveContent = todos.find(
-          (t: any) => t.status === "in_progress",
+          (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
         )?.content;
         if (prevActiveContent !== newActiveContent) {
           taskCallCounts.clear();
         }
 
         const inProgressItems = todos.filter(
-          (todo: any) => todo.status === "in_progress",
+          (todo: any) => todo.status === TodoItemStatus.IN_PROGRESS,
         );
         if (inProgressItems.length > 1) {
           const titles = inProgressItems
@@ -424,7 +433,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
         // Block task call if no step is currently in_progress (retry after auto-advance)
         const hasPlan = lastKnownTodos.length > 0;
         const hasActiveStep = lastKnownTodos.some(
-          (t: any) => t.status === "in_progress",
+          (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
         );
         if (hasPlan && !hasActiveStep) {
           logEveryWhere({
@@ -577,12 +586,14 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
 
         if (!taskFailed) {
           const inProgressIndex = lastKnownTodos.findIndex(
-            (t: any) => t.status === "in_progress",
+            (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
           );
           if (inProgressIndex !== -1) {
             const completedStep = lastKnownTodos[inProgressIndex];
-            lastKnownTodos = lastKnownTodos.map((t: any, index: number) =>
-              index === inProgressIndex ? { ...t, status: "completed" } : t,
+            lastKnownTodos = lastKnownTodos.map((item: any, index: number) =>
+              index === inProgressIndex
+                ? { ...item, status: TodoItemStatus.COMPLETED }
+                : item,
             );
             toolContext.update({ currentStepType: null });
             taskCallCounts.clear();
@@ -604,7 +615,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
             });
             toolContext.onStepAdvanced?.(completedStep.content, lastKnownTodos);
             const allDone = lastKnownTodos.every(
-              (t: any) => t.status === "completed",
+              (item: any) => item.status === TodoItemStatus.COMPLETED,
             );
             const note = allDone
               ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. All steps are complete — give your final response.`
@@ -629,7 +640,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
       ]);
       const hasTodoPlan = lastKnownTodos.length > 0;
       const hasInProgress = lastKnownTodos.some(
-        (todo: any) => todo.status === "in_progress",
+        (todo: any) => todo.status === TodoItemStatus.IN_PROGRESS,
       );
       if (
         hasTodoPlan &&
@@ -657,7 +668,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
 
       // Inject reminder if any todos are still in_progress
       const inProgressTodos = lastKnownTodos.filter(
-        (t: any) => t.status === "in_progress",
+        (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
       );
       if (inProgressTodos.length > 0) {
         const names = inProgressTodos
@@ -717,7 +728,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
       // Inject reminder when plan has pending todos but nothing is in_progress
       // (happens right after auto-advance — prevents the LLM from retrying task before calling write_todos)
       const hasPendingTodos = lastKnownTodos.some(
-        (t: any) => t.status !== "completed",
+        (item: any) => item.status !== TodoItemStatus.COMPLETED,
       );
       if (
         lastKnownTodos.length > 0 &&
@@ -725,7 +736,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
         hasPendingTodos
       ) {
         const nextTodo = lastKnownTodos.find(
-          (t: any) => t.status !== "completed",
+          (item: any) => item.status !== TodoItemStatus.COMPLETED,
         );
         const nextName = nextTodo?.content || "the next step";
         logEveryWhere({
@@ -801,12 +812,16 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
       // Auto-advance communicate steps when LLM gives a text response (no tool calls)
       if (!lastAiMsg?.tool_calls?.length) {
         const communicateIndex = lastKnownTodos.findIndex(
-          (t: any) => t.status === "in_progress" && t.type === "communicate",
+          (item: any) =>
+            item.status === TodoItemStatus.IN_PROGRESS &&
+            item.type === "communicate",
         );
         if (communicateIndex !== -1) {
           const completedStep = lastKnownTodos[communicateIndex];
-          lastKnownTodos = lastKnownTodos.map((t: any, index: number) =>
-            index === communicateIndex ? { ...t, status: "completed" } : t,
+          lastKnownTodos = lastKnownTodos.map((item: any, index: number) =>
+            index === communicateIndex
+              ? { ...item, status: TodoItemStatus.COMPLETED }
+              : item,
           );
           toolContext.update({ currentStepType: null });
           taskCallCounts.clear();

@@ -12,6 +12,10 @@ import {
   type ToolCallState,
   ToolCallStateStatus,
 } from "@/component/AgentChatView/util";
+import {
+  normalizeTodoItemStatus,
+  TodoItemStatus,
+} from "@/component/AgentChatView/ToolCallCard/util";
 
 const looksLikeEncryptKey = (text: string): boolean => {
   if (text.length > 128) {
@@ -109,9 +113,9 @@ const useDashboardAgent = () => {
   const streamingContentRef = useRef<string>("");
   const preTurnContentRef = useRef<string>("");
   // Tracks full todo list across write_todos calls — agent sometimes drops earlier items
-  const mergedTodosRef = useRef<Map<string, { status: string; type?: string }>>(
-    new Map(),
-  );
+  const mergedTodosRef = useRef<
+    Map<string, { status: TodoItemStatus; type?: string }>
+  >(new Map());
   // Tracks nested tool call depth so inner tool completions don't clear the badge
   const toolDepthRef = useRef<number>(0);
   const dispatchRef = useRef(dispatch);
@@ -280,10 +284,10 @@ const useDashboardAgent = () => {
       if (mergedTodosRef.current.size > 0) {
         let hasInProgress = false;
         for (const [content, meta] of mergedTodosRef.current.entries()) {
-          if (meta.status === "in_progress") {
+          if (meta.status === TodoItemStatus.IN_PROGRESS) {
             mergedTodosRef.current.set(content, {
               ...meta,
-              status: "completed",
+              status: TodoItemStatus.COMPLETED,
             });
             hasInProgress = true;
           }
@@ -490,7 +494,7 @@ const useDashboardAgent = () => {
             for (const item of inputTodos) {
               if (item.content) {
                 mergedTodosRef.current.set(item.content, {
-                  status: item.status || "pending",
+                  status: normalizeTodoItemStatus(item.status),
                   type: item.type,
                 });
               }
@@ -571,7 +575,7 @@ const useDashboardAgent = () => {
         for (const item of todos) {
           if (item.content) {
             mergedTodosRef.current.set(item.content, {
-              status: item.status || "pending",
+              status: normalizeTodoItemStatus(item.status),
               type: item.type,
             });
           }

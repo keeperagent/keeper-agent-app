@@ -1,24 +1,19 @@
-import { useMemo } from "react";
-import { connect } from "react-redux";
-import ReactECharts from "echarts-for-react";
-import { RootState } from "@/redux/store";
-
 const CHART_COLORS = [
-  "#6366F1", // indigo
-  "#F97316", // orange
-  "#8B5CF6", // violet
-  "#10B981", // emerald
-  "#3B82F6", // blue
-  "#F59E0B", // amber
-  "#EC4899", // pink
-  "#14B8A6", // teal
-  "#A78BFA", // lavender
-  "#34D399", // mint
+  "#6366F1",
+  "#F97316",
+  "#8B5CF6",
+  "#10B981",
+  "#3B82F6",
+  "#F59E0B",
+  "#EC4899",
+  "#14B8A6",
+  "#A78BFA",
+  "#34D399",
 ];
 
 const NON_COLOR_SERIES_TYPES = new Set(["candlestick", "k"]);
 
-const buildTheme = (isLightMode: boolean) => ({
+export const buildTheme = (isLightMode: boolean) => ({
   text: isLightMode ? "#1e293b" : "#e2e8f0",
   subText: isLightMode ? "#64748b" : "#94a3b8",
   grid: isLightMode ? "rgba(99,102,241,0.04)" : "rgba(255,255,255,0.06)",
@@ -28,31 +23,24 @@ const buildTheme = (isLightMode: boolean) => ({
   pieBorder: isLightMode ? "#ffffff" : "#111827",
 });
 
-const resolveChartFontFamily = (): string => {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return '"JetBrains Mono", monospace';
-  }
-  const resolved = getComputedStyle(document.documentElement)
-    .getPropertyValue("--text-font-primary")
-    .trim();
-  return resolved || '"JetBrains Mono", monospace';
-};
+export type ChartTheme = ReturnType<typeof buildTheme>;
 
-const hexToRgba = (hex: string, alpha: number): string => {
+export const hexToRgba = (hex: string, alpha: number): string => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const forceAxisTheme = (
+export const forceAxisTheme = (
   axisConfig: any,
-  theme: ReturnType<typeof buildTheme>,
+  theme: ChartTheme,
   isYAxis = false,
 ) => {
   if (!axisConfig || typeof axisConfig !== "object") {
     return axisConfig;
   }
+
   return {
     ...axisConfig,
     axisLabel: {
@@ -83,7 +71,7 @@ const forceAxisTheme = (
   };
 };
 
-const applyTheme = (
+export const applyTheme = (
   rawOption: Record<string, unknown>,
   isLightMode: boolean,
 ): Record<string, unknown> => {
@@ -93,28 +81,28 @@ const applyTheme = (
   option.backgroundColor = "transparent";
   option.color = CHART_COLORS;
 
-  const fontFamily = resolveChartFontFamily();
+  const fontFamily = '"JetBrains Mono", monospace';
   option.textStyle = {
     fontFamily,
-    ...((option.textStyle as Record<string, unknown>) || {}),
+    ...(option.textStyle || {}),
   };
 
-  const hasTitle = !!option.title;
+  const hasTitle = Boolean(option.title);
   if (option.title) {
     const titles = Array.isArray(option.title) ? option.title : [option.title];
     option.title = titles.map((titleItem: any) => ({
+      ...titleItem,
       top: 8,
       left: "center",
-      ...titleItem,
       textStyle: {
+        ...titleItem.textStyle,
         fontSize: 14,
         fontWeight: 600,
-        ...titleItem.textStyle,
         color: theme.text,
       },
       subtextStyle: {
-        fontSize: 12,
         ...titleItem.subtextStyle,
+        fontSize: 12,
         color: theme.subText,
       },
     }));
@@ -125,12 +113,11 @@ const applyTheme = (
       ? option.legend
       : [option.legend];
     option.legend = legends.map((legendItem: any) => ({
+      ...legendItem,
       padding: [4, 16],
       itemGap: 16,
       itemWidth: 14,
       itemHeight: 14,
-      ...legendItem,
-      // Force bottom positioning after spread so LLM's top/left/right can't override
       top: "auto",
       bottom: 8,
       textStyle: {
@@ -144,7 +131,7 @@ const applyTheme = (
   const isScatterChart =
     Array.isArray(rawOption.series) &&
     (rawOption.series as any[]).some(
-      (s: any) => s?.type === "scatter" || s?.type === "effectScatter",
+      (item: any) => item?.type === "scatter" || item?.type === "effectScatter",
     );
 
   if (option.tooltip) {
@@ -153,32 +140,31 @@ const applyTheme = (
       : [option.tooltip];
     option.tooltip = tooltips.map((tooltipItem: any) => {
       const base: any = {
+        ...tooltipItem,
         trigger: isScatterChart ? "item" : "axis",
         axisPointer: {
           type: "cross",
           crossStyle: { color: theme.grid, width: 1 },
         },
-        ...tooltipItem,
         backgroundColor: theme.tooltipBg,
         borderColor: theme.tooltipBorder,
         borderRadius: 8,
         padding: [8, 12],
         textStyle: {
-          fontSize: 12,
           ...tooltipItem.textStyle,
+          fontSize: 12,
           color: theme.text,
         },
         extraCssText: `box-shadow: 0 8px 32px rgba(0,0,0,${isLightMode ? 0.12 : 0.4}); backdrop-filter: blur(8px);`,
       };
 
-      // Inject a readable formatter for scatter/bubble charts when none provided
       if (isScatterChart && !tooltipItem.formatter) {
         const xAxisObj = Array.isArray(rawOption.xAxis)
-          ? (rawOption.xAxis as any[])[0]
-          : (rawOption.xAxis as any);
+          ? rawOption.xAxis[0]
+          : rawOption.xAxis;
         const yAxisObj = Array.isArray(rawOption.yAxis)
-          ? (rawOption.yAxis as any[])[0]
-          : (rawOption.yAxis as any);
+          ? rawOption.yAxis[0]
+          : rawOption.yAxis;
         const xLabel = xAxisObj?.name || "X";
         const yLabel = yAxisObj?.name || "Y";
         base.formatter = (params: any) => {
@@ -190,12 +176,12 @@ const applyTheme = (
               .replace(/"/g, "&quot;");
           const name = params.name || params.seriesName || "";
           const value = Array.isArray(params.value) ? params.value : [];
-          const fmt = (v: any) =>
-            typeof v === "number"
-              ? Math.abs(v) >= 1000
-                ? v.toLocaleString()
-                : v.toFixed(2)
-              : escHtml(String(v ?? ""));
+          const fmt = (value: any) =>
+            typeof value === "number"
+              ? Math.abs(value) >= 1000
+                ? value.toLocaleString()
+                : value.toFixed(2)
+              : escHtml(String(value || ""));
           const lines: string[] = [];
           if (name) {
             lines.push(`<b>${escHtml(name)}</b>`);
@@ -215,7 +201,6 @@ const applyTheme = (
 
   if (option.xAxis !== undefined) {
     if (Array.isArray(option.xAxis)) {
-      // Multiple xAxis at same position causes label duplication — alternate bottom/top
       option.xAxis = option.xAxis.map((axis: any, idx: number) =>
         forceAxisTheme(
           { position: idx === 0 ? "bottom" : "top", ...axis },
@@ -230,7 +215,6 @@ const applyTheme = (
 
   if (option.yAxis !== undefined) {
     if (Array.isArray(option.yAxis)) {
-      // Cap at 2 yAxes — 3+ causes overlapping labels with no clean fix
       const capped = option.yAxis.slice(0, 2);
       option.yAxis = capped.map((axis: any, idx: number) =>
         forceAxisTheme(
@@ -239,10 +223,10 @@ const applyTheme = (
           true,
         ),
       );
-      // Reassign any series pointing at a dropped axis (index ≥ 2) to axis 1
+
       if (Array.isArray(option.series)) {
-        option.series = (option.series as any[]).map((seriesItem: any) =>
-          (seriesItem?.yAxisIndex ?? 0) >= 2
+        option.series = option.series.map((seriesItem: any) =>
+          (seriesItem?.yAxisIndex || 0) >= 2
             ? { ...seriesItem, yAxisIndex: 1 }
             : seriesItem,
         );
@@ -259,11 +243,11 @@ const applyTheme = (
       center: ["50%", "52%"],
       ...radar,
       axisName: {
+        ...radar.axisName,
         color: theme.subText,
         fontSize: 11,
         formatter: (name: string) =>
           name && name.length > 14 ? name.slice(0, 13) + "…" : name,
-        ...radar.axisName,
       },
       splitLine: {
         ...radar.splitLine,
@@ -286,12 +270,16 @@ const applyTheme = (
   }
 
   if (!option.grid) {
-    const hasLegend = !!option.legend;
+    const hasLegend = Boolean(option.legend);
     const yAxes = option.yAxis
-      ? ((Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis]) as any[])
+      ? Array.isArray(option.yAxis)
+        ? option.yAxis
+        : [option.yAxis]
       : [];
     const xAxes = option.xAxis
-      ? ((Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis]) as any[])
+      ? Array.isArray(option.xAxis)
+        ? option.xAxis
+        : [option.xAxis]
       : [];
     const hasYAxisName = yAxes.some((axis: any) => axis?.name);
     const hasXAxisName = xAxes.some((axis: any) => axis?.name);
@@ -305,19 +293,18 @@ const applyTheme = (
     };
   }
 
-  const isHorizontalBar = (() => {
-    const xAxisObj = Array.isArray(rawOption.xAxis)
-      ? (rawOption.xAxis as any[])[0]
-      : (rawOption.xAxis as any);
-    const yAxisObj = Array.isArray(rawOption.yAxis)
-      ? (rawOption.yAxis as any[])[0]
-      : (rawOption.yAxis as any);
-    return xAxisObj?.type === "value" && yAxisObj?.type === "category";
-  })();
+  const xAxisObj = Array.isArray(rawOption.xAxis)
+    ? rawOption.xAxis[0]
+    : rawOption.xAxis;
+  const yAxisObj = Array.isArray(rawOption.yAxis)
+    ? rawOption.yAxis[0]
+    : rawOption.yAxis;
+  const isHorizontalBar =
+    xAxisObj?.type === "value" && yAxisObj?.type === "category";
 
   const totalRadarPolygons = Array.isArray(option.series)
-    ? (option.series as any[])
-        .filter((s) => s?.type === "radar")
+    ? option.series
+        .filter((item) => item?.type === "radar")
         .reduce(
           (sum: number, radarSeries: any) =>
             sum +
@@ -336,30 +323,30 @@ const applyTheme = (
       const seriesColor = CHART_COLORS[colorIndex % CHART_COLORS.length];
       colorIndex += 1;
 
-      const { color: _ic, ...safeItemStyle } = (seriesItem.itemStyle ||
-        {}) as any;
-      const { color: _lc, ...safeLineStyle } = (seriesItem.lineStyle ||
-        {}) as any;
-      const { color: _ac, ...safeAreaStyle } = (seriesItem.areaStyle ||
-        {}) as any;
+      const { color: _itemColor, ...safeItemStyle } =
+        seriesItem.itemStyle || {};
+      const { color: _lineColor, ...safeLineStyle } =
+        seriesItem.lineStyle || {};
+      const { color: _areaColor, ...safeAreaStyle } =
+        seriesItem.areaStyle || {};
 
-      const result: any = { ...seriesItem, itemStyle: safeItemStyle };
+      const result = { ...seriesItem, itemStyle: safeItemStyle };
 
       if (seriesItem.type === "line") {
         result.smooth = seriesItem.smooth ?? true;
-        result.symbol = seriesItem.symbol ?? "circle";
-        result.symbolSize = seriesItem.symbolSize ?? 6;
+        result.symbol = seriesItem.symbol || "circle";
+        result.symbolSize = seriesItem.symbolSize || 6;
         result.lineStyle = {
+          ...safeLineStyle,
           width: 3,
           shadowBlur: 12,
           shadowColor: hexToRgba(seriesColor, 0.3),
           shadowOffsetY: 6,
-          ...safeLineStyle,
         };
         result.itemStyle = {
+          ...safeItemStyle,
           borderWidth: 2,
           borderColor: theme.pieBorder,
-          ...safeItemStyle,
         };
         result.areaStyle = {
           ...safeAreaStyle,
@@ -382,11 +369,11 @@ const applyTheme = (
           ? [999, 999, 999, 999]
           : [10, 10, 0, 0];
         result.itemStyle = {
+          ...safeItemStyle,
           borderRadius: barRadius,
           shadowBlur: 8,
           shadowColor: hexToRgba(seriesColor, 0.2),
           shadowOffsetY: 4,
-          ...safeItemStyle,
         };
         result.barMaxWidth = seriesItem.barMaxWidth ?? 36;
       }
@@ -401,20 +388,20 @@ const applyTheme = (
         if (seriesItem.avoidLabelOverlap === undefined) {
           result.avoidLabelOverlap = true;
         }
-        result.minAngle = seriesItem.minAngle ?? 2;
+        result.minAngle = seriesItem.minAngle || 2;
         result.labelLine = {
+          ...(seriesItem.labelLine || {}),
           length: 10,
           length2: 12,
           smooth: true,
-          ...(seriesItem.labelLine || {}),
         };
         result.itemStyle = {
+          ...safeItemStyle,
           borderRadius: 8,
           borderWidth: 3,
           borderColor: theme.pieBorder,
           shadowBlur: 12,
           shadowColor: hexToRgba(seriesColor, 0.15),
-          ...safeItemStyle,
         };
         const rawLabel = (seriesItem.label || {}) as any;
         const {
@@ -424,12 +411,12 @@ const applyTheme = (
           ...safeLabel
         } = rawLabel;
         result.label = {
+          ...safeLabel,
           show: true,
           position: "outside",
           formatter: "{b}\n{d}%",
           fontSize: 12,
           lineHeight: 16,
-          ...safeLabel,
           color: theme.text,
           textBorderWidth: 0,
         };
@@ -442,9 +429,8 @@ const applyTheme = (
         const entityCount = rawData.length;
         const singleEntry = entityCount <= 1;
         const fillAlpha = totalRadarPolygons <= 1 ? 0.25 : 0.13;
-
-        result.symbol = seriesItem.symbol ?? "circle";
-        result.symbolSize = seriesItem.symbolSize ?? 5;
+        result.symbol = seriesItem.symbol || "circle";
+        result.symbolSize = seriesItem.symbolSize || 5;
 
         result.data = rawData.map((entry: any, entryIndex: number) => {
           const palette = singleEntry
@@ -454,23 +440,24 @@ const applyTheme = (
             typeof entry === "object" && entry !== null && !Array.isArray(entry)
               ? entry
               : { value: entry };
-          const { color: _eic, ...safeEntryItemStyle } = (entryObj.itemStyle ||
-            {}) as any;
-          const { color: _elc, ...safeEntryLineStyle } = (entryObj.lineStyle ||
-            {}) as any;
-          const { color: _eac, ...safeEntryAreaStyle } = (entryObj.areaStyle ||
-            {}) as any;
+          const { color: _eic, ...safeEntryItemStyle } =
+            entryObj.itemStyle || {};
+          const { color: _elc, ...safeEntryLineStyle } =
+            entryObj.lineStyle || {};
+          const { color: _eac, ...safeEntryAreaStyle } =
+            entryObj.areaStyle || {};
+
           return {
             ...entryObj,
             lineStyle: {
-              width: 2.5,
               ...safeEntryLineStyle,
+              width: 2.5,
               color: palette,
             },
             itemStyle: {
+              ...safeEntryItemStyle,
               borderWidth: 2,
               borderColor: theme.pieBorder,
-              ...safeEntryItemStyle,
               color: palette,
             },
             areaStyle: {
@@ -488,53 +475,53 @@ const applyTheme = (
         const rawData: any[] = Array.isArray(seriesItem.data)
           ? seriesItem.data
           : [];
-        // Normalize object-format data {x, y, value/size} → [x, y, size] arrays
+
         const normalized = rawData.map((point: any) => {
           if (Array.isArray(point)) {
             return point;
           }
           if (typeof point === "object" && point !== null) {
-            const x = point.x ?? point.value?.[0] ?? 0;
-            const y = point.y ?? point.value?.[1] ?? 0;
+            const x = point.x || point.value?.[0] || 0;
+            const y = point.y || point.value?.[1] || 0;
             const size =
-              point.size ??
-              point.symbolSize ??
-              point.value?.[2] ??
-              point.marketCap ??
-              point.cap ??
+              point.size ||
+              point.symbolSize ||
+              point.value?.[2] ||
+              point.marketCap ||
+              point.cap ||
               0;
             return [x, y, size];
           }
+
           return point;
         });
 
-        // Auto symbolSize function when data has a 3rd element (bubble size)
         const hasBubbleSize = normalized.some(
           (point: any) =>
             Array.isArray(point) && point.length >= 3 && point[2] > 0,
         );
         if (hasBubbleSize && typeof seriesItem.symbolSize !== "number") {
           const sizes = normalized.map((point: any) =>
-            Array.isArray(point) ? (point[2] ?? 0) : 0,
+            Array.isArray(point) ? point[2] : 0,
           );
           const maxSize = Math.max(...sizes) || 1;
           result.symbolSize = (dataItem: any) => {
-            const rawSize = Array.isArray(dataItem) ? (dataItem[2] ?? 0) : 0;
+            const rawSize = Array.isArray(dataItem) ? dataItem[2] : 0;
             return 26 + (rawSize / maxSize) * 82;
           };
         } else if (seriesItem.symbolSize === undefined) {
           result.symbolSize = 32;
         }
 
-        // Assign a distinct palette color per data point, preserving name for tooltip
         result.data = normalized.map((point: any, pointIndex: number) => {
           const originalPoint = rawData[pointIndex];
           const name =
-            originalPoint?.name ??
-            originalPoint?.label ??
-            originalPoint?.coin ??
-            originalPoint?.symbol ??
+            originalPoint?.name ||
+            originalPoint?.label ||
+            originalPoint?.coin ||
+            originalPoint?.symbol ||
             "";
+
           return {
             name,
             value: point,
@@ -551,47 +538,3 @@ const applyTheme = (
 
   return option;
 };
-
-type Props = {
-  option: Record<string, unknown>;
-  height?: number;
-  isLightMode: boolean;
-};
-
-const MIN_CHART_HEIGHT = 200;
-const MAX_CHART_HEIGHT = 1200;
-
-const ChartResult = ({ option, height = 400, isLightMode }: Props) => {
-  const clampedHeight = Number.isFinite(height)
-    ? Math.min(Math.max(height, MIN_CHART_HEIGHT), MAX_CHART_HEIGHT)
-    : 400;
-
-  const themedOption = useMemo(
-    () => applyTheme(option, isLightMode),
-    [option, isLightMode],
-  );
-
-  return (
-    <div
-      style={{
-        marginTop: 8,
-        width: "100%",
-        background: isLightMode ? "rgba(99, 102, 241, 0.05)" : "#13111c",
-        borderRadius: 16,
-        padding: "20px 16px 12px",
-        border: `1px solid ${isLightMode ? "var(--color-border)" : "#251a2a"}`,
-      }}
-    >
-      <ReactECharts
-        option={themedOption}
-        style={{ height: `${clampedHeight}px`, width: "100%" }}
-        notMerge
-        lazyUpdate
-      />
-    </div>
-  );
-};
-
-export default connect((state: RootState) => ({
-  isLightMode: state?.Layout?.isLightMode ?? true,
-}))(ChartResult);

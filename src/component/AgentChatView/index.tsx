@@ -8,6 +8,7 @@ import copy from "copy-to-clipboard";
 import { useTranslation, useSaveClipboardImage } from "@/hook";
 import { CopyIcon, CheckIcon, PaperPlaneIcon } from "@/component/Icon";
 import { ChatRole } from "@/electron/chatGateway/types";
+import { TOOL_KEYS } from "@/electron/constant";
 import {
   AgentChatViewWrapper,
   DropOverlay,
@@ -23,9 +24,8 @@ import {
   fileInfoToAttached,
   fileToAttached,
 } from "./util";
-import { ToolCallGroup } from "./ToolCallCard";
-import { TOOL_KEYS } from "@/electron/constant";
 import { parseResultItems, normalizeUrl } from "./ToolCallCard/util";
+import ToolCallGroup from "./ToolCallCard";
 import { ToolCallStateStatus } from "./util";
 import ChatComposer from "./ChatComposer";
 import PlanReview from "./PlanReview";
