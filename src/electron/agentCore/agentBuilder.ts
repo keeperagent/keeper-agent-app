@@ -90,7 +90,7 @@ export type CreateProfileAgentOptions = {
   toolContext?: ToolContext;
 };
 
-export type KeeperAgent = {
+export type MainAgent = {
   agent: DeepAgent;
   cleanup: () => Promise<void>;
   toolContext: ToolContext;

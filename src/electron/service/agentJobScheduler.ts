@@ -2,7 +2,7 @@ import cron from "node-cron";
 import _ from "lodash";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import {
-  createKeeperAgent,
+  createMainAgent,
   createAgentFromProfile,
   createLLM,
 } from "@/electron/agentCore";
@@ -450,7 +450,7 @@ class AgentTaskScheduler {
         toolContext,
       });
     } else {
-      agentCreator = await createKeeperAgent({
+      agentCreator = await createMainAgent({
         provider: job.llmProvider as LLMProvider,
         toolContext,
         memoryFile,

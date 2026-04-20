@@ -1,5 +1,5 @@
 /**
- * AgentChatBridge — Connects chat platforms (Telegram, desktop UI, etc.) to the KeeperAgent.
+ * AgentChatBridge — Connects chat platforms (Telegram, desktop UI, etc.) to the MainAgent.
  * Each platform registers an IChatAdapter. Incoming user messages are routed to the agent, and the agent's response is streamed back through the same adapter.
  * Manages one agent session per (platformId + chatId), with streaming, tool status updates, and background memory compaction.
  */
@@ -15,11 +15,11 @@ import { MemorySaver } from "@langchain/langgraph";
 import fs from "fs-extra";
 import { redact, guard } from "@keeperagent/crypto-key-guard";
 import {
-  createKeeperAgent,
+  createMainAgent,
   createBackgroundLLM,
   hasApiKey,
   getModelName,
-  type KeeperAgent,
+  type MainAgent,
   ToolContext,
   type IAttachedFileContext,
 } from "@/electron/agentCore";
@@ -89,7 +89,7 @@ const truncateToolResultForIpc = (
 export type AgentSession = {
   checkpointer: MemorySaver;
   threadId: string;
-  keeper: KeeperAgent | null;
+  keeper: MainAgent | null;
   initPromise: Promise<void> | null;
   provider: LLMProvider;
   contextTokens: number;
@@ -234,7 +234,7 @@ class AgentChatBridge {
         return;
       }
 
-      const keeper = await createKeeperAgent({
+      const keeper = await createMainAgent({
         checkpointer: session.checkpointer,
         provider: session.provider,
         toolContext: session.toolContext,
@@ -270,14 +270,14 @@ class AgentChatBridge {
 
   private getOrCreateAgent = async (
     session: AgentSession,
-  ): Promise<KeeperAgent> => {
+  ): Promise<MainAgent> => {
     if (session.initPromise) {
       await session.initPromise;
       session.initPromise = null;
     }
     if (session.keeper) return session.keeper;
 
-    const keeper = await createKeeperAgent({
+    const keeper = await createMainAgent({
       checkpointer: session.checkpointer,
       provider: session.provider,
       toolContext: session.toolContext,

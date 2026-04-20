@@ -11,7 +11,7 @@ import { ToolContext } from "./toolContext";
 import { createLLM } from "./llm";
 import { requestApprovalTool, confirmApprovalTool } from "./baseTool";
 import {
-  KeeperAgent,
+  MainAgent,
   CreateProfileAgentOptions,
   buildBaseSubAgents,
   buildSystemPrompt,
@@ -28,7 +28,7 @@ import {
 
 export const createAgentFromProfile = async (
   options: CreateProfileAgentOptions,
-): Promise<KeeperAgent> => {
+): Promise<MainAgent> => {
   const { profile, checkpointer, toolContext: providedToolContext } = options;
 
   const provider = (profile.llmProvider as LLMProvider) || LLMProvider.CLAUDE;

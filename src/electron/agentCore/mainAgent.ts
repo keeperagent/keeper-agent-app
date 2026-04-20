@@ -20,7 +20,7 @@ import {
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import {
   DEFAULT_MEMORY_FILE,
-  KeeperAgent,
+  MainAgent,
   CreateAgentOptions,
   buildBaseSubAgents,
   buildSystemPrompt,
@@ -41,9 +41,9 @@ import {
   createTodoIdSchemaMiddleware,
 } from "./middleware";
 
-export const createKeeperAgent = async (
+export const createMainAgent = async (
   options?: CreateAgentOptions,
-): Promise<KeeperAgent> => {
+): Promise<MainAgent> => {
   const provider = options?.provider || LLMProvider.CLAUDE;
   const llm = await createLLM(provider, options?.temperature || 0);
 
