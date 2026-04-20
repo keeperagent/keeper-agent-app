@@ -37,7 +37,8 @@ import {
   createSkillReadGuardMiddleware,
   createExecuteGuardMiddleware,
   createConfirmApprovalGuardMiddleware,
-  createStepScopingMiddleware,
+  createTodoDispatcherMiddleware,
+  createTodoIdSchemaMiddleware,
 } from "./middleware";
 
 export const createKeeperAgent = async (
@@ -123,6 +124,7 @@ export const createKeeperAgent = async (
     subagents,
     checkpointer: options?.checkpointer || false,
     middleware: [
+      createTodoIdSchemaMiddleware(),
       createTaskSkillRedirectMiddleware(allowedTaskTypes),
       createSecretRestoreMiddleware(toolContext),
       createMemoryWriteGuardMiddleware(),
@@ -130,7 +132,7 @@ export const createKeeperAgent = async (
       createSkillReadGuardMiddleware(enabledFolders),
       createExecuteGuardMiddleware(toolContext),
       createConfirmApprovalGuardMiddleware(toolContext),
-      createStepScopingMiddleware(toolContext),
+      createTodoDispatcherMiddleware(toolContext),
     ],
   });
 

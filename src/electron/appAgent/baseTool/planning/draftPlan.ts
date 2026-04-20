@@ -3,6 +3,7 @@ import { z } from "zod/v3";
 import { safeStringify } from "@/electron/appAgent/utils";
 import { ToolContext, PlanState } from "@/electron/appAgent/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { logEveryWhere } from "@/electron/service/util";
 
 export const requestApprovalTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
@@ -15,6 +16,9 @@ export const requestApprovalTool = (toolContext: ToolContext) =>
     schema: z.object({}),
     func: async () => {
       toolContext.update({ planState: PlanState.DRAFTED });
+      logEveryWhere({
+        message: "[Approval] Request sent → waiting for confirmation",
+      });
       return safeStringify({
         status: "approval_mode_active",
         message:

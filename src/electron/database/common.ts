@@ -4,7 +4,7 @@ import fs from "fs-extra";
 import { logEveryWhere } from "@/electron/service/util";
 
 const DB_FILE_NAME = "ka_app.db";
-const VEC_DB_FILE_NAME = "ka_app_vec.db";
+const VEC_DB_FILE_NAME = "ka_vec.db";
 
 let dbPath: string | null = null;
 export const getDbPath = (): string => {
