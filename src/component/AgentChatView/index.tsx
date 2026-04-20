@@ -2,10 +2,14 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { guard } from "@keeperagent/crypto-key-guard";
-import { MESSAGE } from "@/electron/constant";
+import { MESSAGE, TOOL_KEYS } from "@/electron/constant";
 import { Alert, message } from "antd";
 import copy from "copy-to-clipboard";
-import { useTranslation, useSaveClipboardImage } from "@/hook";
+import {
+  useTranslation,
+  useSaveClipboardImage,
+  sendOpenExternalLink,
+} from "@/hook";
 import { CopyIcon, CheckIcon, PaperPlaneIcon } from "@/component/Icon";
 import { ChatRole } from "@/electron/chatGateway/types";
 import {
@@ -23,9 +27,8 @@ import {
   fileInfoToAttached,
   fileToAttached,
 } from "./util";
-import { ToolCallGroup } from "./ToolCallCard";
-import { TOOL_KEYS } from "@/electron/constant";
-import { parseResultItems, normalizeUrl } from "./ToolCallCard/util";
+import { parseWebSearchResultItems, normalizeUrl } from "./ToolCallCard/util";
+import ToolCallGroup from "./ToolCallCard";
 import { ToolCallStateStatus } from "./util";
 import ChatComposer from "./ChatComposer";
 import PlanReview from "./PlanReview";
@@ -63,9 +66,7 @@ const markdownComponents = {
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        if (href) {
-          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
-        }
+        sendOpenExternalLink(href);
       }}
     >
       {children}
@@ -401,18 +402,23 @@ const AgentChatView = ({
     prevHasPlanReviewRef.current = hasPlanReview;
   }, [messages]);
 
-  const globalExtractStateMap = useMemo(() => {
+  const globalExtractWebStateMap = useMemo(() => {
     const map = new Map<string, ToolCallStateStatus>();
     for (const msg of messages) {
       if (!msg.toolCalls) {
         continue;
       }
-      for (const tc of msg.toolCalls) {
-        if (tc.toolName !== TOOL_KEYS.WEB_EXTRACT_TAVILY) {
+
+      for (const toolCall of msg.toolCalls) {
+        if (toolCall.toolName !== TOOL_KEYS.WEB_EXTRACT_TAVILY) {
           continue;
         }
-        parseResultItems(tc.toolName, tc.result, tc.input).forEach((item) => {
-          map.set(normalizeUrl(item.url), tc.state);
+        parseWebSearchResultItems(
+          toolCall.toolName,
+          toolCall.result,
+          toolCall.input,
+        ).forEach((item) => {
+          map.set(normalizeUrl(item.url), toolCall.state);
         });
       }
     }
@@ -553,11 +559,11 @@ const AgentChatView = ({
                               <ToolCallGroup
                                 toolCalls={msg.toolCalls}
                                 isActive={
-                                  !!msg.isLoading ||
-                                  !!msg.executingToolText ||
-                                  !!msg.isAgentProcessing
+                                  Boolean(msg.isLoading) ||
+                                  Boolean(msg.executingToolText) ||
+                                  Boolean(msg.isAgentProcessing)
                                 }
-                                extractStateMap={globalExtractStateMap}
+                                extractWebStateMap={globalExtractWebStateMap}
                               />
                             ) : msg.isLoading && !msg.content ? (
                               <ExecutingToolBadge>

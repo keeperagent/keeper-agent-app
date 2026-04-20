@@ -21,14 +21,17 @@ import {
   CHAIN_TYPE,
   WALLET_VARIABLE,
   EVM_TRANSACTION_TYPE,
-  MESSAGE,
 } from "@/electron/constant";
 import {
   NODE_ACTION,
   DEFAULT_EXTENSION_TIMEOUT,
 } from "@/electron/simulator/constant";
 import { NODE_STATUS } from "@/electron/constant";
-import { useTranslation, useGetListNodeEndpointGroup } from "@/hook";
+import {
+  useTranslation,
+  useGetListNodeEndpointGroup,
+  useOpenExternalLink,
+} from "@/hook";
 import { getChainConfig } from "@/service/util";
 import { ArrowUpRightIcon } from "@/component/Icon";
 import {
@@ -38,7 +41,10 @@ import {
   ChainLabelWrapper,
   ContractWrapper,
 } from "./style";
-import { TAB, TAB_NAME_EN } from "@/component/Workflow/ModalNodeConfig/common/util";
+import {
+  TAB,
+  TAB_NAME_EN,
+} from "@/component/Workflow/ModalNodeConfig/common/util";
 import CommonSetting from "@/component/Workflow/ModalNodeConfig/common/CommonSetting";
 import SkipSetting from "@/component/Workflow/ModalNodeConfig/common/SkipSetting";
 import WorkflowVariable from "@/component/Workflow/WorkflowVariable";
@@ -78,6 +84,7 @@ const SwapKyberswap = (props: Props) => {
   const [isInputNativeToken, setIsInputNativeToken] = useState(false);
   const [isOutputNativeToken, setIsOutputNativeToken] = useState(false);
   const [chainKey, setChainKey] = useState("");
+  const { openExternalLink } = useOpenExternalLink();
   const [form] = Form.useForm();
 
   const { getListNodeEndpointGroup, loading: isSelectLoading } =
@@ -292,15 +299,6 @@ const SwapKyberswap = (props: Props) => {
     form.validateFields(["inputTokenAddress", "outputTokenAddress"]);
   };
 
-  const onOpenLink = (link?: string) => {
-    if (!link) {
-      return;
-    }
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url: link,
-    });
-  };
-
   return (
     <Wrapper>
       <Tabs
@@ -411,7 +409,7 @@ const SwapKyberswap = (props: Props) => {
                               <span
                                 className="icon"
                                 onClick={() =>
-                                  onOpenLink(
+                                  openExternalLink(
                                     mapKyberswapContractUrl.get(chainKey),
                                   )
                                 }

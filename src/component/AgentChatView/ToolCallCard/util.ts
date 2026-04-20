@@ -1,5 +1,8 @@
 import { getToolDisplayName, TOOL_KEYS } from "@/electron/constant";
+import { TodoItemStatus } from "@/electron/type";
 import { type ToolCallState, ToolCallStateStatus } from "../util";
+
+export { TodoItemStatus };
 
 export type ToolRendererConfig = {
   icon: string;
@@ -305,12 +308,13 @@ export const HIDDEN_TOOL_NAMES = new Set<string>([
   "TavilySearchResults",
 ]);
 
-export type ResultItem = { title: string; url: string };
-export const parseResultItems = (
+export type WebSearchResultItem = { title: string; url: string };
+
+export const parseWebSearchResultItems = (
   toolName: string,
   result?: string,
   input?: Record<string, unknown>,
-): ResultItem[] => {
+): WebSearchResultItem[] => {
   if (!SEARCH_TOOL_NAMES.has(toolName as any)) {
     return [];
   }
@@ -444,7 +448,20 @@ export const getFaviconUrl = (url: string): string => {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 };
 
-export type TodoItem = { content: string; status: string; type?: string };
+export type TodoItem = {
+  content: string;
+  status: TodoItemStatus;
+  type?: string;
+};
+
+const TODO_ITEM_STATUS_SET = new Set<string>(Object.values(TodoItemStatus));
+
+export const normalizeTodoItemStatus = (raw: unknown): TodoItemStatus => {
+  if (typeof raw === "string" && TODO_ITEM_STATUS_SET.has(raw)) {
+    return raw as TodoItemStatus;
+  }
+  return TodoItemStatus.PENDING;
+};
 
 export const parseTodos = (
   input: Record<string, unknown>,
@@ -458,9 +475,24 @@ export const parseTodos = (
     .filter((item: any) => typeof item?.content === "string" && item.content)
     .map((item: any) => ({
       content: item.content as string,
-      status: (item.status as string) || "pending",
+      status: normalizeTodoItemStatus(item.status),
       type: item.type as string | undefined,
     }));
+};
+
+export const tryParseChart = (
+  result?: string,
+): { option: Record<string, unknown>; height?: number } | null => {
+  if (!result) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(result);
+    if (parsed?.__type === "chart" && parsed.option) {
+      return parsed as { option: Record<string, unknown>; height?: number };
+    }
+  } catch {}
+  return null;
 };
 
 export const getGroupSummary = (toolCalls: ToolCallState[]): string => {
@@ -478,11 +510,6 @@ export const getGroupSummary = (toolCalls: ToolCallState[]): string => {
   const searchCount = toolCalls.filter((toolCall) =>
     SEARCH_TOOL_NAMES.has(toolCall.toolName as any),
   ).length;
-  const totalResults = toolCalls.reduce(
-    (sum, toolCall) =>
-      sum + parseResultItems(toolCall.toolName, toolCall.result).length,
-    0,
-  );
 
   if (searchCount > 0) {
     const firstSearchTool = toolCalls.find((toolCall) =>

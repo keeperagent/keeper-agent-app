@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { MESSAGE } from "@/electron/constant";
+import { useOpenExternalLink } from "@/hook";
 import { HoverLinkWrapper } from "./style";
 
 type IProps = {
@@ -22,14 +22,13 @@ const HoverLink = (props: IProps) => {
   } = props;
 
   const navigate = useNavigate();
+  const { openExternalLink } = useOpenExternalLink();
 
   const onOpenLink = () => {
     if (!isOpenNewTab) {
       navigate(link);
     } else {
-      window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-        url: link,
-      });
+      openExternalLink(link);
     }
   };
 

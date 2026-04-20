@@ -36,9 +36,13 @@ import { SettingIcon } from "@/component/Icon";
 import { RootState } from "@/redux/store";
 import { actSetPageName } from "@/redux/layout";
 import { actSetAppLogPageSize } from "@/redux/appLog";
-import { useGetListAppLog, useDeleteAppLog, useTranslation } from "@/hook";
+import {
+  useGetListAppLog,
+  useDeleteAppLog,
+  useTranslation,
+  sendOpenExternalLink,
+} from "@/hook";
 import { TABLE_PAGE_OPTION, EMPTY_STRING } from "@/config/constant";
-import { MESSAGE } from "@/electron/constant";
 import {
   PageWrapper,
   ActorCellWrapper,
@@ -132,24 +136,13 @@ const renderLogStatus = (log: IAppLog) => {
   );
 };
 
-const isHttpUrl = (url: string): boolean => {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
-
 const resultMarkdownComponents = {
   a: ({ href, children }: { href?: string; children?: ReactNode }) => (
     <a
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        if (href && isHttpUrl(href)) {
-          window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, { url: href });
-        }
+        sendOpenExternalLink(href);
       }}
     >
       {children}

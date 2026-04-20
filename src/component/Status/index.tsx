@@ -1,5 +1,5 @@
 import { NewTabIcon } from "@/component/Icon";
-import { MESSAGE } from "@/electron/constant";
+import { useOpenExternalLink } from "@/hook";
 import { StatusWrapper } from "./style";
 
 interface StatusProps {
@@ -16,11 +16,7 @@ const Status = (props: StatusProps) => {
   const { content, isSuccess, style, isLarge, onClick, externalLink, icon } =
     props;
 
-  const onOpenLink = () => {
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url: externalLink,
-    });
-  };
+  const { openExternalLink } = useOpenExternalLink();
 
   return (
     <StatusWrapper isSuccess={isSuccess} style={{ ...style }} isLarge={isLarge}>
@@ -31,7 +27,7 @@ const Status = (props: StatusProps) => {
       </span>
 
       {externalLink && (
-        <div className="link" onClick={onOpenLink}>
+        <div className="link" onClick={() => openExternalLink(externalLink)}>
           <NewTabIcon />
         </div>
       )}

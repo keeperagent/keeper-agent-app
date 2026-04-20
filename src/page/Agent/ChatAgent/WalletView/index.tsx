@@ -14,7 +14,8 @@ import {
 import { connect } from "react-redux";
 import copy from "copy-to-clipboard";
 import { RootState } from "@/redux/store";
-import { CHAIN_TYPE, MESSAGE } from "@/electron/constant";
+import { CHAIN_TYPE } from "@/electron/constant";
+import { useOpenExternalLink } from "@/hook";
 import {
   useGetListCampaign,
   useGetListCampaignProfile,
@@ -77,6 +78,8 @@ const WalletView = (props: any) => {
   const { translate, locale } = useTranslation();
   const [form] = Form.useForm();
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  const { openExternalLink } = useOpenExternalLink();
 
   const { getListNodeEndpointGroup, loading: isSelectLoading } =
     useGetListNodeEndpointGroup();
@@ -202,12 +205,7 @@ const WalletView = (props: any) => {
 
   const onViewPortfolio = (walletAddress: string, portfolioApp: string) => {
     const url = getPortfolioAppUrl(walletAddress, portfolioApp);
-    if (!url) {
-      return;
-    }
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url,
-    });
+    openExternalLink(url);
   };
 
   return (

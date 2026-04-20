@@ -1,14 +1,8 @@
 import { WORKFLOW_TYPE } from "@/electron/constant";
-import { MESSAGE } from "@/electron/constant";
+import { sendOpenExternalLink } from "@/hook";
 import { DescriptionWrapper } from "./style";
 
 const getNodeContent = (workflowType: string, translate?: any) => {
-  const onOpenLink = (url: string) => {
-    window?.electron?.send(MESSAGE.OPEN_EXTERNAL_LINK, {
-      url,
-    });
-  };
-
   switch (workflowType) {
     // Lanch token
     case WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN: {
@@ -313,14 +307,14 @@ const getNodeContent = (workflowType: string, translate?: any) => {
               {translate("guide.openUrl.example")}{" "}
               <span
                 className="link"
-                onClick={() => onOpenLink("https://app.uniswap.org/")}
+                onClick={() => sendOpenExternalLink("https://app.uniswap.org/")}
               >
                 https://app.uniswap.org/
               </span>{" "}
               {translate("or")}{" "}
               <span
                 className="link"
-                onClick={() => onOpenLink("https://chainlist.org")}
+                onClick={() => sendOpenExternalLink("https://chainlist.org")}
               >
                 https://chainlist.org
               </span>{" "}

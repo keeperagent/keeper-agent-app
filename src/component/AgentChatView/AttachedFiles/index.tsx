@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Modal } from "antd";
 import { CloseIcon } from "@/component/Icon";
 import { useTranslation, useReadFileAsDataUrl } from "@/hook";
@@ -33,6 +33,7 @@ const AttachedFiles = ({ files, onRemove }: AttachedFilesProps) => {
       setPreviewSrc(file.previewUrl);
       return;
     }
+
     const dataUrl = await readFileAsDataUrl(file.path);
     if (dataUrl) {
       setPreviewName(file.name);
@@ -40,10 +41,12 @@ const AttachedFiles = ({ files, onRemove }: AttachedFilesProps) => {
     }
   };
 
-  if (files.length === 0) return null;
+  if (files.length === 0) {
+    return null;
+  }
 
   return (
-    <>
+    <Fragment>
       <AttachedFilesWrapper>
         {files.map((file, index) => (
           <AttachedFileCard key={`${file.path}-${index}`}>
@@ -105,7 +108,7 @@ const AttachedFiles = ({ files, onRemove }: AttachedFilesProps) => {
           />
         )}
       </Modal>
-    </>
+    </Fragment>
   );
 };
 

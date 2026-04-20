@@ -2919,6 +2919,13 @@ export enum AgentTaskStatus {
   CANCELLED = "CANCELLED",
 }
 
+export enum TodoItemStatus {
+  COMPLETED = "completed",
+  IN_PROGRESS = "in_progress",
+  PENDING = "pending",
+  ERROR = "error",
+}
+
 export enum AgentTaskPriority {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
