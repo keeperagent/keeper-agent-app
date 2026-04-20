@@ -620,6 +620,8 @@ export type IpcChatHistorySaveMessagePayload = {
   role?: string;
   content?: string;
   timestamp?: number;
+  sessionId?: string | null;
+  runId?: string | null;
 };
 
 export type IpcChatHistoryLoadPayload = {

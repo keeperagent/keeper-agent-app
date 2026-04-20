@@ -11,23 +11,28 @@ const ALWAYS_ALLOWED_TOOLS = new Set([
   "write_todos",
   "request_approval",
   "confirm_approval",
-  "read_file",
-  "write_file",
-  "edit_file",
-  "ls",
-  "glob",
-  "grep",
 ]);
 
 // Extra tools unlocked per step type (on top of ALWAYS_ALLOWED_TOOLS)
 const STEP_EXTRA_TOOLS: Record<string, string[]> = {
-  research: ["task"],
-  visualize: ["task"],
-  code: ["task", "write_javascript", "execute", "execute_javascript"],
+  research: ["task", "read_file", "ls", "glob", "grep"],
+  visualize: ["task", "read_file"],
+  code: [
+    "task",
+    "write_javascript",
+    "execute",
+    "execute_javascript",
+    "read_file",
+    "write_file",
+    "edit_file",
+    "ls",
+    "glob",
+    "grep",
+  ],
   transaction: ["task"],
-  workflow: ["task"],
+  workflow: ["task", "read_file"],
   communicate: [],
-  manage: ["task"],
+  manage: ["task", "read_file"],
 };
 
 // When `task` is called, which subagent_type is expected for each step type
@@ -236,6 +241,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
   let nextTodoId = 1;
   let taskCallCounts = new Map<string, number>(); // subagent_type → calls in current step
   let completedStepResults: { stepName: string; content: string }[] = [];
+  let planLocked = false;
 
   toolContext.update({
     resetStepState: () => {
@@ -243,6 +249,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
       nextTodoId = 1;
       taskCallCounts.clear();
       completedStepResults = [];
+      planLocked = false;
     },
   });
 
@@ -259,6 +266,30 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
           request?.toolCall?.args?.todos ||
           request?.toolCall?.kwargs?.todos ||
           [];
+
+        // Block new items once execution has started (plan locked after first in_progress)
+        if (planLocked) {
+          const newItems = todos.filter(
+            (t: any) =>
+              !t.id || !lastKnownTodos.some((k: any) => k.id === t.id),
+          );
+          if (newItems.length > 0) {
+            const existingList = lastKnownTodos
+              .map((t: any) => `${t.id}:"${String(t.content).slice(0, 50)}"`)
+              .join(", ");
+            logEveryWhere({
+              message: `[StepScoping] Blocked write_todos — plan locked, attempted to add ${newItems.length} new item(s)`,
+            });
+            return new ToolMessage({
+              content:
+                `Error: Plan is locked once execution has started. You cannot add new steps mid-run. ` +
+                `Only update the status of your existing steps: {${existingList}}. ` +
+                `If you need additional work done, add it as a sub-task within the current step.`,
+              tool_call_id: request?.toolCall?.id || "",
+              status: "error",
+            });
+          }
+        }
 
         // Auto-assign stable IDs to items that arrive without one
         todos = todos.map((t: any) => {
@@ -317,6 +348,17 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
         )?.content;
         if (prevActiveContent !== newActiveContent) {
           taskCallCounts.clear();
+        }
+
+        // Lock the plan once any step goes in_progress — no new items allowed after this
+        if (
+          !planLocked &&
+          todos.some((t: any) => t.status === TodoItemStatus.IN_PROGRESS)
+        ) {
+          planLocked = true;
+          logEveryWhere({
+            message: "[StepScoping] Plan locked — execution started",
+          });
         }
 
         const inProgressItems = todos.filter(
@@ -617,6 +659,9 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
             const allDone = lastKnownTodos.every(
               (item: any) => item.status === TodoItemStatus.COMPLETED,
             );
+            if (allDone) {
+              toolContext.onAllDone?.(lastKnownTodos);
+            }
             const note = allDone
               ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. All steps are complete — give your final response.`
               : `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. Call write_todos to mark the next step as in_progress.`;
@@ -632,7 +677,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
       }
 
       // Enforce: if write_todos was called at least once but no item is in_progress, block execution tools
-      const PLANNING_EXEMPT_TOOLS = new Set([
+      const BETWEEN_STEPS_ALLOWED_TOOLS = new Set([
         "write_todos",
         "request_approval",
         "confirm_approval",
@@ -646,7 +691,7 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
         hasTodoPlan &&
         !hasInProgress &&
         !ALWAYS_ALLOWED_TOOLS.has(toolName) &&
-        !PLANNING_EXEMPT_TOOLS.has(toolName)
+        !BETWEEN_STEPS_ALLOWED_TOOLS.has(toolName)
       ) {
         logEveryWhere({
           message: `[StepScoping] Blocked "${toolName}" — todo plan exists but no step is in_progress`,
@@ -666,6 +711,29 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
     wrapModelCall: async (request: any, handler: any) => {
       let updatedRequest = request;
 
+      // Inject experience hint once on the first model call of a run, then clear it
+      const hint = toolContext.experienceHint;
+      if (hint) {
+        toolContext.update({ experienceHint: null });
+        const currentSystem = updatedRequest?.systemMessage;
+        if (typeof currentSystem === "string") {
+          updatedRequest = {
+            ...updatedRequest,
+            systemMessage: currentSystem + "\n\n" + hint,
+          };
+        } else if (Array.isArray(currentSystem) && currentSystem.length > 0) {
+          const last = currentSystem[currentSystem.length - 1];
+          const updatedLast =
+            typeof last === "string"
+              ? last + "\n\n" + hint
+              : { ...last, content: (last?.content || "") + "\n\n" + hint };
+          updatedRequest = {
+            ...updatedRequest,
+            systemMessage: [...currentSystem.slice(0, -1), updatedLast],
+          };
+        }
+      }
+
       // Inject reminder if any todos are still in_progress
       const inProgressTodos = lastKnownTodos.filter(
         (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
@@ -675,10 +743,10 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
           .map((t: any) => `"${t.content || t.title || "unknown"}"`)
           .join(", ");
         const isCommunicate = inProgressTodos.every(
-          (t: any) => t.type === "communicate",
+          (item: any) => item.type === "communicate",
         );
         const isTransaction = inProgressTodos.some(
-          (t: any) => t.type === "transaction",
+          (item: any) => item.type === "transaction",
         );
         const currentPlanState = toolContext.planState;
         const transactionNextStep = (() => {
@@ -829,6 +897,12 @@ export const createStepScopingMiddleware = (toolContext: ToolContext) => {
             message: `[StepScoping] Auto-advanced communicate "${completedStep.content}" → completed`,
           });
           toolContext.onStepAdvanced?.(completedStep.content, lastKnownTodos);
+          const allDone = lastKnownTodos.every(
+            (item: any) => item.status === TodoItemStatus.COMPLETED,
+          );
+          if (allDone) {
+            toolContext.onAllDone?.(lastKnownTodos);
+          }
         }
         return;
       }

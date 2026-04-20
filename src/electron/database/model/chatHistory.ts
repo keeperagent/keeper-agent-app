@@ -46,9 +46,37 @@ export default (db: Sequelize) =>
         allowNull: false,
         defaultValue: "",
       },
+      sessionId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
+      runId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
+      toolCallSequence: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+      },
+      todoTemplate: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+      },
+      runOutcome: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       timestamps: false,
-      indexes: [{ fields: ["platformId", "platformChatId", "isSummary"] }],
+      indexes: [
+        { fields: ["platformId", "platformChatId", "isSummary"] },
+        { fields: ["runId"] },
+      ],
     },
   );

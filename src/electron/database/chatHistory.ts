@@ -202,7 +202,24 @@ class ChatHistoryDB {
     }
   }
 
-  /** Returns the id of the last non-summary message. Used as the summaryUpTo cutoff. */
+  // Updates the final AI row of a run with toolCallSequence, todoTemplate, and runOutcome
+  async updateRunCompletion(
+    id: number,
+    data: {
+      toolCallSequence: string | null;
+      todoTemplate: string | null;
+      runOutcome: string | null;
+    },
+  ): Promise<void> {
+    try {
+      await ChatHistoryModel.update(data, { where: { id } });
+    } catch (err: any) {
+      logEveryWhere({
+        message: `ChatHistoryDB.updateRunCompletion error: ${err?.message}`,
+      });
+    }
+  }
+
   async getLastMessageId(
     platformId: ChatPlatform,
     platformChatId: string,

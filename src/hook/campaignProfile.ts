@@ -48,7 +48,6 @@ const useDeleteCampaignProfile = () => {
 };
 
 // Uses responseManager (requestId correlation) for concurrent update safety
-// — not compatible with the shared listener in useIpcAction.
 let isUpdateCampaignProfileRegistered = false;
 const useUpdateCampaignProfile = () => {
   const dispatch = useDispatch();

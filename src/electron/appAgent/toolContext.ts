@@ -38,6 +38,10 @@ interface IToolContextData {
   onStepAdvanced?: (stepContent: string, todos: any[]) => void;
   // Called by bridge.ts at the start of each run to reset cross-turn middleware state
   resetStepState?: () => void;
+  // Called by StepScopingMiddleware when all todo steps are completed
+  onAllDone?: (todos: any[]) => void;
+  // Experience hint injected once into the first model call of a run
+  experienceHint?: string | null;
 }
 
 /**
@@ -116,6 +120,12 @@ export class ToolContext {
     }
     if ("resetStepState" in data) {
       this.data.resetStepState = data.resetStepState;
+    }
+    if ("onAllDone" in data) {
+      this.data.onAllDone = data.onAllDone;
+    }
+    if ("experienceHint" in data) {
+      this.data.experienceHint = data.experienceHint;
     }
   }
 
@@ -196,5 +206,13 @@ export class ToolContext {
 
   get resetStepState(): (() => void) | undefined {
     return this.data.resetStepState;
+  }
+
+  get onAllDone(): ((todos: any[]) => void) | undefined {
+    return this.data.onAllDone;
+  }
+
+  get experienceHint(): string | null | undefined {
+    return this.data.experienceHint;
   }
 }

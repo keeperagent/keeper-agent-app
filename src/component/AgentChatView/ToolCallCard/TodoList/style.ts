@@ -34,8 +34,8 @@ export const Wrapper = styled.div<{ allComplete: boolean }>`
   }
 
   .spinner-sm {
-    width: 1.3rem;
-    height: 1.3rem;
+    width: 1rem;
+    height: 1rem;
     border: 1.5px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
     border-top-color: ${({ theme }: { theme: ITheme }) =>
       theme?.colorPrimary || "#1677ff"};

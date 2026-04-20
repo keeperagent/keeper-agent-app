@@ -1,8 +1,8 @@
 import { DataTypes, Sequelize } from "sequelize";
 import sqlite3 from "@vscode/sqlite3";
+import { logEveryWhere } from "@/electron/service/util";
 import { runMigration } from "./migration";
 import { getDbPath } from "./common";
-import { logEveryWhere } from "@/electron/service/util";
 
 // Static imports for model factories
 import campaignFactory from "./model/campaign";
@@ -33,7 +33,6 @@ import agentMailboxFactory from "./model/agentMailbox";
 import appLogFactory from "./model/appLog";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
-
 const db = new Sequelize({
   dialect: "sqlite",
   dialectModule: sqlite3,
@@ -393,7 +392,6 @@ export const dbReady: Promise<void> = (async () => {
   }
 
   await runMigration();
-  logEveryWhere({ message: `list model: ${Object.keys(db.models)}` });
 })();
 
 export { db };
