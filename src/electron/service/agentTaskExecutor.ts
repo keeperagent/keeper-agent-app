@@ -11,7 +11,7 @@ import { appLogDB } from "@/electron/database/appLog";
 import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
-import { createAgentFromProfile, ToolContext } from "@/electron/appAgent";
+import { createAgentFromProfile, ToolContext } from "@/electron/agentCore";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 
 const DEFAULT_TASK_TIMEOUT_MINUTES = 30;

@@ -6,7 +6,7 @@ import {
   BASE_TOOL_REGISTRY,
   BASE_TOOL_GROUP_LABELS,
   BaseToolGroup,
-} from "@/electron/appAgent/baseTool/registry";
+} from "@/electron/agentCore/baseTool/registry";
 import ToolItem from "./ToolItem";
 import { Wrapper } from "./style";
 

@@ -35,7 +35,7 @@ import {
   useTranslation,
   useCheckModelCapability,
 } from "@/hook";
-import { BASE_TOOL_REGISTRY } from "@/electron/appAgent/baseTool/registry";
+import { BASE_TOOL_REGISTRY } from "@/electron/agentCore/baseTool/registry";
 import { LlmProviderPicker, PasswordInput } from "@/component";
 import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
 import { getChainConfig, IChainConfig } from "@/service/util";

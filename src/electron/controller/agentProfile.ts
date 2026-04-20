@@ -9,7 +9,7 @@ import { AppLogModel } from "@/electron/database";
 import { AppLogActorType } from "@/electron/type";
 import { sendToRenderer } from "@/electron/main";
 import { getMemoryDir } from "@/electron/service/agentSkill";
-import { MEMORY_TEMPLATE } from "@/electron/appAgent";
+import { MEMORY_TEMPLATE } from "@/electron/agentCore";
 import { agentProfileChatBridge } from "@/electron/chatGateway/agentProfileBridge";
 import type {
   IpcGetListAgentProfilePayload,

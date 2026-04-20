@@ -523,7 +523,7 @@ export type IpcGetAgentAnalyticsPayload = {
   fromTimestamp: number;
 };
 
-// AppAgent
+// AgentCore
 export type IpcAgentCreateSessionPayload = {
   provider?: LLMProvider;
 };

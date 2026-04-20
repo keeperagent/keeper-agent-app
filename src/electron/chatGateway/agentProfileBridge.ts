@@ -8,9 +8,9 @@ import { randomUUID } from "crypto";
 import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { redact } from "@keeperagent/crypto-key-guard";
-import { createAgentFromProfile } from "@/electron/appAgent";
-import type { KeeperAgent } from "@/electron/appAgent";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+import { createAgentFromProfile } from "@/electron/agentCore";
+import type { MainAgent } from "@/electron/agentCore";
+import { ToolContext } from "@/electron/agentCore/toolContext";
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { logEveryWhere } from "@/electron/service/util";
 import { mainWindow } from "@/electron/main";
@@ -25,7 +25,7 @@ type ProfileSession = {
   profile: IAgentProfile;
   checkpointer: MemorySaver;
   threadId: string;
-  keeper: KeeperAgent | null;
+  keeper: MainAgent | null;
   initPromise: Promise<void> | null;
   toolContext: ToolContext;
   conversationHistory: Array<{ role: ChatRole; content: string }>;
@@ -112,7 +112,7 @@ class AgentProfileBridge {
 
   private getOrCreateKeeper = async (
     session: ProfileSession,
-  ): Promise<KeeperAgent> => {
+  ): Promise<MainAgent> => {
     if (session.initPromise) {
       await session.initPromise;
       session.initPromise = null;

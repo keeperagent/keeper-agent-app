@@ -1,5 +1,5 @@
 import { Switch, Tooltip } from "antd";
-import { BaseToolRegistryItem } from "@/electron/appAgent/baseTool/registry";
+import { BaseToolRegistryItem } from "@/electron/agentCore/baseTool/registry";
 import { useTranslation } from "@/hook";
 import { Wrapper } from "./style";
 

@@ -1,7 +1,7 @@
 import { MESSAGE } from "@/electron/constant";
 import { mcpServerDB } from "@/electron/database/mcpServer";
 import { IMcpServer } from "@/electron/type";
-import { mcpToolLoader } from "@/electron/appAgent/mcpTool";
+import { mcpToolLoader } from "@/electron/agentCore/mcpTool";
 import type {
   IpcGetListMcpServerPayload,
   IpcCreateMcpServerPayload,

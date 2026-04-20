@@ -3,7 +3,7 @@ import { z } from "zod";
 import { containsSecret } from "@keeperagent/crypto-key-guard";
 import { IMcpToken } from "@/electron/type";
 import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
-import { ToolContext } from "@/electron/appAgent/toolContext";
+import { ToolContext } from "@/electron/agentCore/toolContext";
 import {
   createWalletGroupTool,
   generateWalletsForGroupTool,
@@ -17,7 +17,7 @@ import {
   launchBonkfunTokenTool,
   broadcastTransactionEvmTool,
   broadcastTransactionSolanaTool,
-} from "@/electron/appAgent/baseTool";
+} from "@/electron/agentCore/baseTool";
 import {
   createAgentScheduleTool,
   updateAgentScheduleTool,
@@ -25,7 +25,7 @@ import {
   pauseAgentScheduleTool,
   resumeAgentScheduleTool,
   runAgentScheduleNowTool,
-} from "@/electron/appAgent/baseTool/scheduler";
+} from "@/electron/agentCore/baseTool/scheduler";
 import { registerAgentTaskWriteTools } from "./agentTaskTools";
 
 const wrapText = (text: string) => ({

@@ -94,7 +94,7 @@ npm run package-win          # x64
 ```
 src/
 ├── electron/                # Main process
-│   ├── appAgent/            # AI agent (skills, tools, subagents)
+│   ├── agentCore/           # AI agent (skills, tools, subagents)
 │   ├── controller/          # IPC handlers & session management
 │   ├── database/            # Sequelize models & migrations
 │   ├── simulator/           # Browser automation & on-chain execution

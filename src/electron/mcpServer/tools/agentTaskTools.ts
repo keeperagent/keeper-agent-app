@@ -10,7 +10,7 @@ import {
   getAgentTaskTool,
   createAgentTaskTool,
   updateAgentTaskTool,
-} from "@/electron/appAgent/baseTool/agentTask";
+} from "@/electron/agentCore/baseTool/agentTask";
 import { appLogDB } from "@/electron/database/appLog";
 import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
 
