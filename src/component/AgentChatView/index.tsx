@@ -464,6 +464,15 @@ const AgentChatView = ({
   const hasPlanReview = messages.some((msg) => !!msg.planReview);
   const showEmptyState = Boolean(emptyState) && messages.length === 0;
 
+  const userMessageHistory = useMemo(
+    () =>
+      messages
+        .filter((msg) => msg.role === ChatRole.HUMAN || msg.role === "user")
+        .map((msg) => msg.content)
+        .filter(Boolean),
+    [messages],
+  );
+
   return (
     <AgentChatViewWrapper
       onDragOver={onAgentViewDragOver}
@@ -651,6 +660,7 @@ const AgentChatView = ({
           layoutMode={layoutMode}
           onSetLayoutMode={onSetLayoutMode}
           sendButtonRef={sendButtonRef}
+          messageHistory={userMessageHistory}
         />
 
         {showPaperPlane && paperPlanePosition && (
