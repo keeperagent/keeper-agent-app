@@ -11,3 +11,4 @@ export {
 export { createMemoryWriteGuardMiddleware } from "./memoryGuard";
 export { createTodoIdSchemaMiddleware } from "./todoIdSchema";
 export { createTodoDispatcherMiddleware } from "./todoDispatcher";
+export { createMcpToolFilterMiddleware } from "./mcpToolFilter";
