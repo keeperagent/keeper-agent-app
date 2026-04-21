@@ -23,6 +23,10 @@ import {
   useTranslation,
 } from "@/hook";
 import {
+  useGetCacheEncryptKey,
+  useSetCacheEncryptKey,
+} from "@/hook/encryptKeyCache";
+import {
   ICampaign,
   ICampaignProfile,
   INodeEndpointGroup,
@@ -79,14 +83,20 @@ const WalletView = (props: any) => {
   const [form] = Form.useForm();
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
-  const { openExternalLink } = useOpenExternalLink();
-
   const { getListNodeEndpointGroup, loading: isSelectLoading } =
     useGetListNodeEndpointGroup();
   const { getListCampaign, loading: isSelectCampaignLoading } =
     useGetListCampaign();
   const { getListCampaignProfile, loading: getListCampaignProfileLoading } =
     useGetListCampaignProfile();
+  const {
+    getCacheEncryptKey,
+    cachedEncryptKey,
+    hasEncryptKey,
+    loading: isGetCacheEncryptKeyLoading,
+  } = useGetCacheEncryptKey();
+  const { openExternalLink } = useOpenExternalLink();
+  const { setCacheEncryptKey } = useSetCacheEncryptKey();
 
   useEffect(() => {
     getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
@@ -97,15 +107,26 @@ const WalletView = (props: any) => {
 
   useEffect(() => {
     if (campaignId) {
+      setEncryptKey("");
+      form.setFieldsValue({ encryptKey: "" });
+      getCacheEncryptKey(campaignId);
+    }
+  }, [campaignId]);
+
+  useEffect(() => {
+    if (isGetCacheEncryptKeyLoading) {
+      return;
+    }
+    setEncryptKey(cachedEncryptKey || "");
+  }, [isGetCacheEncryptKeyLoading, cachedEncryptKey]);
+
+  useEffect(() => {
+    if (campaignId) {
       getListCampaignProfile({ page: 1, pageSize: 50, campaignId, encryptKey });
     } else {
       props?.actSaveListProfileId([]);
     }
   }, [campaignId, encryptKey]);
-
-  useEffect(() => {
-    form.setFieldsValue({ encryptKey });
-  }, [encryptKey]);
 
   const listValidNodeEndpointGroup = useMemo(() => {
     const chainConfig =
@@ -170,6 +191,7 @@ const WalletView = (props: any) => {
 
   const onChangeEncryptKey = (value: string) => {
     setEncryptKey(value);
+    setCacheEncryptKey(campaignId || 0, value);
   };
 
   const onChangeIsAllWallet = (value: number) => {
@@ -404,6 +426,8 @@ const WalletView = (props: any) => {
                 placeholder={translate("wallet.encryptKey")}
                 onChange={onChangeEncryptKey}
                 extendClass="encryptKey-agent"
+                initialValue={hasEncryptKey ? "•" : ""}
+                shouldHideValue={true}
               />
             </Form.Item>
           </Col>
