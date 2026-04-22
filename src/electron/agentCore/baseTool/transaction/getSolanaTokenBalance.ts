@@ -10,6 +10,7 @@ import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { logEveryWhere } from "@/electron/service/util";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
@@ -153,9 +154,6 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
       const solanaProvider = new SolanaProvider();
       // Normalize "SOL" to mean native token. Model-provided value takes priority over context.
       const tokenAddress = tokenAddressParam || toolContext?.tokenAddress;
-      console.log(
-        `[get_solana_token_balance] input: tokenAddressParam="${tokenAddressParam}" toolContext.tokenAddress="${toolContext?.tokenAddress}" walletCount=${wallets.length}`,
-      );
       const normalizedTokenAddress =
         tokenAddress?.trim().toUpperCase() === "SOL"
           ? ""
@@ -232,7 +230,9 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
         balances: balancesSample,
         omittedCount,
       });
-      console.log(`[get_solana_token_balance] result: ${toolResult}`);
+      logEveryWhere({
+        message: `[get_solana_token_balance] result: ${toolResult}`,
+      });
       return toolResult;
     },
   });

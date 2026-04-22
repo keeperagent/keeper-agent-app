@@ -12,6 +12,7 @@ import {
 import { Pricing } from "@/electron/simulator/category/pricing";
 import { PRICE_DATA_SOURCE } from "@/electron/constant";
 import { TOOL_KEYS } from "@/electron/constant";
+import { logEveryWhere } from "@/electron/service/util";
 
 // Map chainKey to chainId for DexScreener
 const mapChainKeyToChainId: Record<string, number> = {
@@ -232,7 +233,7 @@ export const getTokenPriceTool = () => {
             });
           }
 
-          return safeStringify({
+          const nativeResult = safeStringify({
             success: true,
             price: price,
             nativeTokenSymbol: nativeTokenSymbol || null,
@@ -241,6 +242,10 @@ export const getTokenPriceTool = () => {
             message:
               "Note: We only support getting native token price for the current chain. To get native token price for other chains, please switch to that chain in the app first.",
           });
+          logEveryWhere({
+            message: `[get_token_price] result: ${nativeResult}`,
+          });
+          return nativeResult;
         }
 
         // Use DexScreener for non-native tokens - requires chainId
@@ -268,7 +273,7 @@ export const getTokenPriceTool = () => {
           dataSource: PRICE_DATA_SOURCE.DEXSCREENER,
           tokenAddress,
           chainId,
-          timeout: timeoutMs / 1000, // Convert to seconds
+          timeout: timeoutMs / 1000,
         });
 
         if (err) {
@@ -288,13 +293,15 @@ export const getTokenPriceTool = () => {
           });
         }
 
-        return safeStringify({
+        const tokenResult = safeStringify({
           success: true,
           price: price,
           chain: capitalizeFirstLetter(chainKey),
           tokenAddress,
           unit: "USD",
         });
+        logEveryWhere({ message: `[get_token_price] result: ${tokenResult}` });
+        return tokenResult;
       } catch (err: any) {
         return safeStringify({
           success: false,
