@@ -14,14 +14,15 @@ export const confirmApprovalTool = (toolContext: ToolContext) =>
       "Include: what will be executed, which wallets/amounts/tokens/scripts/workflows are involved, and the expected outcome. " +
       "All execution tools remain blocked until the user approves.",
     schema: z.object({
-      plan: z
+      summary: z
         .string()
         .min(1)
         .describe(
           "Clear summary of what will be executed: operations, wallets, amounts, tokens, expected outcome.",
         ),
     }),
-    func: async ({ plan }) => {
+    func: async ({ summary }) => {
+      const plan = summary;
       if (toolContext.planState !== PlanState.DRAFTED) {
         return safeStringify({
           status: "error",

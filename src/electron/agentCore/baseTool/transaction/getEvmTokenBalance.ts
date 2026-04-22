@@ -22,36 +22,27 @@ const DEFAULT_MAX_WALLETS_IN_RESPONSE = 50;
 export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.GET_EVM_TOKEN_BALANCE,
-    description: `Get native token or ERC20 balances across campaign wallets on EVM chains.
-ONLY use when chainKey from context is an EVM chain. For Solana use get_solana_token_balance.
-
-tokenAddress: omit for native balance (ETH, BNB, etc.), or pass ERC20 contract address (0x format). Extract token address from user prompt — these are contract addresses, NOT wallet addresses. Wallets come from campaign profiles.
-
-Read-only, no confirmation needed. Returns per-wallet balances, totals, and top/lowest lists.
-Display: native token symbol for native, "tokens" for ERC20. NEVER show token addresses after amounts.`,
+    description:
+      "Get native or ERC20 token balances across campaign wallets on EVM chains. EVM only — use get_solana_token_balance for Solana. Read-only, no confirmation needed.",
     schema: z.object({
       tokenAddress: z
         .string()
-        .describe(
-          "ERC20 contract address (0x format), or empty string '' for native balance. Prompt address overrides context.",
-        ),
+        .describe("ERC20 address or empty for native balance"),
       timeoutMs: z
         .number()
         .positive()
-        .describe(`Per-request timeout in ms (default: ${DEFAULT_TIMEOUT_MS})`),
+        .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
-        .describe(
-          `Number of wallets in top/bottom lists (default: ${DEFAULT_TOP_N})`,
-        ),
+        .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
         .describe(
-          `Max wallet entries in response (default: ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
+          `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
         ),
     }),
     func: async ({

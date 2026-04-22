@@ -217,7 +217,8 @@ const buildPendingReminder = (
   completedStepResults: { stepName: string; content: string }[],
 ): string => {
   const nextTodo = lastKnownTodos.find(
-    (item: any) => item.status !== TodoItemStatus.COMPLETED,
+    (item: any) =>
+      item.status !== TodoItemStatus.COMPLETED && item.status !== "rejected",
   );
   const nextName = nextTodo?.content || "the next step";
   const currentPlan = lastKnownTodos
@@ -615,13 +616,42 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. All steps are complete — give your final response.`
         : `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. Call write_todos to mark the next step as in_progress.`;
 
+      const storedContent =
+        resultContent.length > 2000
+          ? resultContent.slice(0, 2000) + "...[truncated]"
+          : resultContent;
+
       return new ToolMessage({
-        content: resultContent + note,
+        content: storedContent + note,
         tool_call_id: taskResult?.tool_call_id || request?.toolCall?.id || "",
       });
     }
 
     return taskResult;
+  };
+
+  const handleConfirmApproval = async (
+    request: any,
+    handler: any,
+  ): Promise<any> => {
+    const result = await handleGateChecks(request, handler);
+    try {
+      const content = typeof result?.content === "string" ? result.content : "";
+      const parsed = JSON.parse(content);
+      if (parsed.status === "rejected") {
+        lastKnownTodos = lastKnownTodos.map((item: any) =>
+          item.status === TodoItemStatus.IN_PROGRESS
+            ? { ...item, status: "rejected" }
+            : item,
+        );
+        planLocked = false;
+        toolContext.update({ currentStepType: null });
+        logEveryWhere({
+          message: `[TodoDispatcher] Plan rejected — marked step as rejected, released plan lock`,
+        });
+      }
+    } catch {}
+    return result;
   };
 
   const handleGateChecks = async (request: any, handler: any): Promise<any> => {
@@ -678,6 +708,9 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       if (toolName === "task") {
         return handleTask(request, handler);
       }
+      if (toolName === "confirm_approval") {
+        return handleConfirmApproval(request, handler);
+      }
       return handleGateChecks(request, handler);
     },
 
@@ -715,7 +748,9 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       // Inject reminder when plan has pending todos but nothing is in_progress
       // (happens right after auto-advance — prevents the LLM from retrying task before calling write_todos)
       const hasPendingTodos = lastKnownTodos.some(
-        (item: any) => item.status !== TodoItemStatus.COMPLETED,
+        (item: any) =>
+          item.status !== TodoItemStatus.COMPLETED &&
+          item.status !== "rejected",
       );
       if (
         lastKnownTodos.length > 0 &&
@@ -723,7 +758,9 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         hasPendingTodos
       ) {
         const nextTodo = lastKnownTodos.find(
-          (item: any) => item.status !== TodoItemStatus.COMPLETED,
+          (item: any) =>
+            item.status !== TodoItemStatus.COMPLETED &&
+            item.status !== "rejected",
         );
         logEveryWhere({
           message: `[TodoDispatcher] Pending reminder — nextStep="${nextTodo?.content || "the next step"}" completedStepResults=${completedStepResults.length}`,
@@ -734,22 +771,31 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         );
       }
 
-      // Filter tools to only those relevant to the current step type
-      const stepType = toolContext.currentStepType;
+      // Filter tools based on current execution state
       if (
-        !stepType ||
         !Array.isArray(updatedRequest?.tools) ||
         updatedRequest.tools.length === 0
       ) {
         return handler(updatedRequest);
       }
 
-      const scopeForType = STEP_EXTRA_TOOLS[stepType];
-      if (!scopeForType) {
-        return handler(updatedRequest);
+      const stepType = toolContext.currentStepType;
+      let allowed: Set<string>;
+
+      if (stepType && STEP_EXTRA_TOOLS[stepType]) {
+        // Active step: only tools scoped to this step type
+        allowed = new Set([
+          ...ALWAYS_ALLOWED_TOOLS,
+          ...STEP_EXTRA_TOOLS[stepType],
+        ]);
+      } else if (lastKnownTodos.length > 0) {
+        // Between steps: plan exists but nothing in_progress
+        allowed = BETWEEN_STEPS_ALLOWED_TOOLS;
+      } else {
+        // No todos yet: only write_todos + read_file (memory read at startup is legitimate)
+        allowed = new Set(["write_todos", "read_file"]);
       }
 
-      const allowed = new Set([...ALWAYS_ALLOWED_TOOLS, ...scopeForType]);
       const filteredTools = updatedRequest.tools.filter((tool: any) =>
         allowed.has(getToolName(tool)),
       );

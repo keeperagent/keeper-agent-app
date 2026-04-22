@@ -33,7 +33,8 @@ const swapOnKyberswapSchema = z
   .object({
     swapDirection: z
       .enum(["BUY", "SELL"])
-      .describe("BUY = native -> ERC20, SELL = ERC20 -> native (default: BUY)"),
+      .default("BUY")
+      .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
       .refine(
@@ -84,7 +85,8 @@ const swapOnKyberswapSchema = z
       .number()
       .int()
       .positive()
-      .describe("Balance fetch timeout in ms (default: 15000)"),
+      .default(15000)
+      .describe("Timeout in ms (default 15000)"),
     slippage: z
       .number()
       .min(0)
@@ -179,18 +181,8 @@ export const swapOnKyberswapTool = (
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.SWAP_ON_KYBERSWAP,
-    description: `Swap tokens on EVM chains via Kyberswap. BUY = native -> ERC20, SELL = ERC20 -> native.
-ONLY use when chainKey is an EVM chain. For Solana use swap_on_jupiter.
-
-Token Address: extract from user prompt first, fallback to context tokenAddress. Prompt ALWAYS overrides context. These are contract addresses, NOT wallet addresses.
-
-BUY: amount in native token or USD (convert via native token price). Percentages NOT allowed.
-SELL: use sellPercentage for "sell all/half/X%", or amount in tokens/USD (convert via token price).
-
-Strategies: EQUAL_PER_WALLET (amount), RANDOM_PER_WALLET (maxAmount required), TOTAL_SPLIT_RANDOM (totalAmount).
-"buy total X" = TOTAL_SPLIT_RANDOM. "buy randomly" = RANDOM_PER_WALLET.
-
-Display: native token symbol for native amounts, "tokens" for token amounts. NEVER show balance after swaps.`,
+    description:
+      "Swap tokens on EVM chains via Kyberswap. BUY = native→ERC20, SELL = ERC20→native. Strategies: EQUAL_PER_WALLET, RANDOM_PER_WALLET, TOTAL_SPLIT_RANDOM. EVM only — use swap_on_jupiter for Solana.",
     schema: swapOnKyberswapSchema,
     func: async ({
       swapDirection = "BUY",

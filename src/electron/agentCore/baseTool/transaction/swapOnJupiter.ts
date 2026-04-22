@@ -22,7 +22,7 @@ const swapOnJupiterSchema = z
   .object({
     swapDirection: z
       .enum(["BUY", "SELL"])
-      .describe("BUY = SOL -> token, SELL = token -> SOL (default: BUY)"),
+      .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
       .refine(
@@ -77,25 +77,25 @@ const swapOnJupiterSchema = z
     balanceTimeoutMs: z
       .number()
       .positive()
-      .describe("Balance fetch timeout in ms (default: 15000)"),
+      .describe("Timeout in ms (default 15000)"),
     slippagePercentage: z
       .number()
       .min(0)
       .max(50)
-      .describe("Slippage %. 0 = dynamic slippage (default: 0)."),
+      .describe("Slippage % — 0 = dynamic (default 0)"),
     maxPriceImpactPercentage: z
       .number()
       .min(0.1)
       .max(50)
-      .describe("Max price impact % before aborting (default: 5)"),
+      .describe("Max price impact % (default 5)"),
     pritorityFeeMicroLamport: z
       .number()
       .min(0)
       .max(0.5)
-      .describe("Max priority fee in micro-lamports (default: 0)"),
+      .describe("Priority fee in micro-lamports (default 0)"),
     shouldWaitTransactionComfirmed: z
       .boolean()
-      .describe("Wait for tx confirmation (default: true)"),
+      .describe("Wait for tx confirmation (default true)"),
   })
   .refine(
     (data) => {
@@ -117,18 +117,8 @@ export const swapOnJupiterTool = (
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.SWAP_ON_JUPITER,
-    description: `Swap tokens on Solana via Jupiter. BUY = SOL -> token, SELL = token -> SOL.
-ONLY use when chainKey is "solana". For EVM chains use swap_on_kyberswap.
-
-Token Address: extract from user prompt first, fallback to context tokenAddress. Prompt ALWAYS overrides context. These are mint addresses, NOT wallet addresses.
-
-BUY: amount in SOL or USD (convert via native token price). Percentages NOT allowed for BUY.
-SELL: use sellPercentage for "sell all/half/X%", or amount in tokens/USD (convert via token price).
-
-Strategies: EQUAL_PER_WALLET (amount), RANDOM_PER_WALLET (maxAmount required), TOTAL_SPLIT_RANDOM (totalAmount).
-"buy total X SOL" = TOTAL_SPLIT_RANDOM. "buy randomly" = RANDOM_PER_WALLET.
-
-Display: SOL for native, "tokens" for token amounts. NEVER show balance after swaps.`,
+    description:
+      "Swap tokens on Solana via Jupiter. BUY = SOL→token, SELL = token→SOL. Strategies: EQUAL_PER_WALLET, RANDOM_PER_WALLET, TOTAL_SPLIT_RANDOM. Solana only — use swap_on_kyberswap for EVM.",
     schema: swapOnJupiterSchema,
     func: async ({
       swapDirection = "BUY",

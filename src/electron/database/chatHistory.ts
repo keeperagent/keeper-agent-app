@@ -8,15 +8,8 @@ import {
 } from "@/electron/chatGateway/types";
 import { ChatHistoryModel } from "./index";
 
-type AgentContext = {
-  summary: IChatMessage | null;
-  messages: IChatMessage[];
-};
-
-// How many messages to return for UI display
-export const RECENT_MESSAGES_LIMIT = 40;
-// How many verbatim messages to inject into agent context
-export const AGENT_CONTEXT_LIMIT = 20;
+const RECENT_MESSAGES_LIMIT = 40;
+const COMPACTION_KEEP_COUNT = 20;
 
 class ChatHistoryDB {
   async saveMessage(
@@ -68,54 +61,6 @@ class ChatHistoryDB {
   }
 
   /**
-   * Returns the context to inject into the agent's system prompt:
-   * - the latest summary (if any) covering older messages
-   * - the most recent AGENT_CONTEXT_LIMIT verbatim messages after the summary cutoff
-   */
-  async getAgentContext(
-    platformId: ChatPlatform,
-    platformChatId: string,
-  ): Promise<[AgentContext, Error | null]> {
-    try {
-      const summaryRow = (await ChatHistoryModel.findOne({
-        where: { isSummary: true, platformId, platformChatId },
-        order: [["timestamp", "DESC"]],
-        raw: true,
-      })) as any;
-
-      const summaryUpTo: number = summaryRow?.summaryUpTo || 0;
-
-      const recentRows = await ChatHistoryModel.findAll({
-        where: {
-          isSummary: false,
-          platformId,
-          platformChatId,
-          ...(summaryUpTo > 0 ? { id: { [Op.gt]: summaryUpTo } } : {}),
-        },
-        order: [["timestamp", "DESC"]],
-        limit: AGENT_CONTEXT_LIMIT,
-        raw: true,
-      });
-
-      // Reverse so the agent receives messages in chronological (oldest-first) order
-      const messages = (recentRows as any[] as IChatMessage[]).reverse();
-
-      return [
-        {
-          summary: summaryRow ? (summaryRow as IChatMessage) : null,
-          messages,
-        },
-        null,
-      ];
-    } catch (err: any) {
-      logEveryWhere({
-        message: `ChatHistoryDB.getAgentContext error: ${err?.message}`,
-      });
-      return [{ summary: null, messages: [] }, err];
-    }
-  }
-
-  /**
    * Get messages that should be included in a new summary.
    * Returns all unsummarised messages up to (but not including) the most recent
    * AGENT_CONTEXT_LIMIT messages, so fresh context remains verbatim.
@@ -145,8 +90,8 @@ class ChatHistoryDB {
         raw: true,
       })) as any[] as IChatMessage[];
 
-      // Keep the most recent AGENT_CONTEXT_LIMIT messages verbatim — summarise everything older
-      const toSummarize = allRows.slice(0, -AGENT_CONTEXT_LIMIT);
+      // Keep the most recent messages verbatim — summarise everything older
+      const toSummarize = allRows.slice(0, -COMPACTION_KEEP_COUNT);
       return [toSummarize, null];
     } catch (err: any) {
       logEveryWhere({

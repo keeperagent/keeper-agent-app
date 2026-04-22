@@ -85,14 +85,6 @@ export class KyberSwapClient {
 
       const routeSummary = data?.data?.routeSummary;
 
-      logEveryWhere({
-        message: `KyberSwap getSwapRoute response: ${JSON.stringify(
-          routeSummary,
-          null,
-          2,
-        )}`,
-      });
-
       // KyberSwap public API sometimes returns amountOutUsd=0 when it can't price
       // the output token — this makes the USD-based formula produce 100% impact.
       // Fall back to spot rate calculation in that case.
@@ -273,13 +265,7 @@ export class KyberSwapClient {
         gas: resData?.gas,
         transactionValue: resData?.transactionValue,
       };
-      logEveryWhere({
-        message: `KyberSwap getSwapTxData response: ${JSON.stringify(
-          txData,
-          null,
-          2,
-        )}`,
-      });
+
       return [txData, null];
     } catch (error: any) {
       logEveryWhere({

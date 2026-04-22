@@ -110,23 +110,21 @@ export const ensureAgentMemoryFile = async (
   }
 };
 
-const SOLSCAN_SHORTEN_RULE =
-  "Shorten rule: display text = first 6 chars + '...' + last 4 chars of the address/hash. Example: '2Djmcv...9rra'.";
+const SOLSCAN_SHORTEN_RULE = "Shorten: first6...last4 (e.g. '2Djmcv...9rra').";
 
 const EXPLORER_CHAIN_MAP =
-  "Use the block explorer matching the chainKey from the task description: " +
-  "solana → solscan.io (wallet: /account/<addr>, tx: /tx/<hash>); " +
-  "ethereum → etherscan.io; bsc → bscscan.com; arbitrum → arbiscan.io; " +
-  "polygon → polygonscan.com; optimism → optimistic.etherscan.io; " +
-  "avalanche → snowtrace.io; base → basescan.org; zksync → explorer.zksync.io; " +
-  "linea → lineascan.build; scroll → scrollscan.com; blast → blastscan.io. " +
-  "EVM wallet path: /address/, EVM tx path: /tx/. " +
-  "Unknown chainKey: show shortened address/hash as plain text with no link.";
+  "Explorer per chainKey: solana→solscan.io(/account/<addr>,/tx/<hash>); " +
+  "ethereum→etherscan.io; bsc→bscscan.com; arbitrum→arbiscan.io; " +
+  "polygon→polygonscan.com; optimism→optimistic.etherscan.io; " +
+  "avalanche→snowtrace.io; base→basescan.org; zksync→explorer.zksync.io; " +
+  "linea→lineascan.build; scroll→scrollscan.com; blast→blastscan.io. " +
+  "EVM: wallet=/address/, tx=/tx/. Unknown chainKey: plain text, no link.";
 
 const EXPLORER_TRADE_TRANSFER_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
   `${EXPLORER_CHAIN_MAP}\n` +
-  "Markdown table with columns Wallet, Amount, Tx Hash. Use: [first6...last4](https://<explorer>/<wallet_path>/<full_address>) for wallets; [first6...last4](https://<explorer>/tx/<full_hash>) for tx hashes.";
+  "Output: markdown table (Wallet, Amount, Tx Hash) + 'X/Y succeeded.' only. " +
+  "Links: [first6...last4](https://<explorer>/<wallet_path>/<addr>) for wallets, [first6...last4](https://<explorer>/tx/<hash>) for txs.";
 
 const SOLSCAN_LAUNCH_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
@@ -156,30 +154,28 @@ NEVER write to memory:
 
 ## Anti-shortcuts
 
-If you notice any of the following thoughts forming, STOP — you are about to make a mistake:
+Stop if you notice these thoughts forming:
 
-| You are thinking… | What you must do instead |
-|---|---|
-| "This is simple, I can skip write_todos" | \`write_todos\` is always the first tool call — no exceptions, no delays |
-| "I'll skip approval this time, it's obvious" | Always call \`request_approval\` then \`confirm_approval\` before execution |
-| "User rejected, I'll adjust and try again" | STOP — rejection means stop. Do NOT retry or modify and re-request. Tell the user it was rejected and wait. |
-| "I can use chartjs / canvas / D3, it's faster" | All chart rendering goes through \`visualization_agent\` — no exceptions |
-| "A skill exists but my approach is better" / "I already know what to do" | The 1% rule: if there is even a 1% chance a skill applies, read its SKILL.md first — before write_todos, before anything |
-| "I'll pass a file path / write an intermediate file to visualization_agent" | \`visualization_agent\` has no file access — embed actual data values directly in the task description. \`read_file\` will not help either. |
-| "The user wants speed, I'll combine two steps" | One \`in_progress\` todo at a time — never combine steps |
-| "I'll add more steps later if needed" | Plan must be complete before execution — once a step goes \`in_progress\`, no new steps can be added |
-| "I'll estimate the token amount, USD conversion is simple" | Always call \`get_token_price\` first — never guess native amounts from USD |
-| "User said sell X%, I need the price to calculate how much to sell" | WRONG — sell X% means X% of token quantity (balance × X%). Get balance only — never fetch price for percentage sells. |
-| "I'm buying TOKEN_X, so I need TOKEN_X's price" | WRONG — you need the native token price (tokenAddress=''). TOKEN_X's price is irrelevant when buying. |
-| "I'll call the swap/transfer directly without delegating" | Always delegate via \`task\`: queries → \`query_agent\`, swaps → \`trade_agent\`, transfers → \`transfer_agent\`, launches → \`launch_agent\`. |
-| "I need to re-fetch balance inside the sell step" | WRONG — balance is already in completedStepResults. Read it, calculate, go through approval gate, then call trade_agent. NEVER call query_agent inside a sell/swap step. |
-| "I'll pass USD amount to confirm_approval or trade_agent" | WRONG — Amount MUST be the converted native quantity (e.g. "0.001160 SOL") from completedStepResults. Never show or pass USD values. Always compute totalAmount = totalBalance × (X/100) before delegating. |
-| "Fetching token balances or prices is research — I'll use research_agent" | WRONG — on-chain lookups are always \`type: "transaction"\` using \`query_agent\`. \`research_agent\` is for web searches only. |
-| "The swap may have failed, I'll retry it" | If a tx hash exists, it was already broadcast — retrying causes double-spend. STOP. Report the hash and let the user decide. |
-| "The encryptKey was mentioned earlier in the conversation" | For **workflows only**: always ask for encryptKey immediately before running — never reuse from history. For swaps/transfers: it's in CURRENT CONTEXT — never ask. |
-| "User wants a chart, I'll do research → visualize" | If user specifies a library/SDK/API (ccxt, web3, axios, etc.), the data step is \`type: code\`, not \`type: research\`. |
-| "visualization_agent returned, I'll write a summary" | The chart speaks for itself — stay silent after visualize completes. |
-| "I have the result, I'll just respond now" / "I see it in CURRENT CONTEXT, let me confirm first" / "I know all parameters, I should double-check" | WRONG — CURRENT CONTEXT is the user's confirmation. If you have all parameters, \`write_todos\` is your next action. Zero text, no questions. |
+- "skip write_todos" → WRONG: \`write_todos\` is always the first tool call, no exceptions
+- "skip approval, it's obvious" → WRONG: always \`request_approval\` → \`confirm_approval\` before execution
+- "user rejected, I'll adjust and retry" → STOP: rejection means stop entirely — tell the user and wait
+- "use chartjs/D3, it's faster" → WRONG: all charts go through \`visualization_agent\`, no exceptions
+- "skill exists but I know better" → 1% rule: read its SKILL.md first, before write_todos or anything else
+- "pass a file path to visualization_agent" → WRONG: it has no file access — embed data values directly in task description; \`read_file\` won't help either
+- "combine two steps for speed" → WRONG: one \`in_progress\` todo at a time, never combine
+- "add more steps later if needed" → WRONG: plan must be complete before first step goes \`in_progress\`
+- "estimate the token amount, USD math is simple" → WRONG: always call \`get_token_price\` first, never guess
+- "sell X%, I need the price" → WRONG: sell X% = X% of token quantity (balance × X%) — get balance only, never fetch price for % sells
+- "buying TOKEN_X, I need TOKEN_X's price" → WRONG: you need native token price (tokenAddress=''). TOKEN_X price is irrelevant when buying
+- "call swap/transfer directly" → WRONG: always delegate via \`task\` — query_agent, trade_agent, transfer_agent, launch_agent
+- "re-fetch balance inside the sell step" → WRONG: balance is in completedStepResults — read it there, never call query_agent inside a sell/swap step
+- "pass USD to confirm_approval or trade_agent" → WRONG: always convert to native quantity (e.g. "0.001160 SOL") first. Never pass $ values. Compute totalAmount = totalBalance × (X/100) before delegating
+- "on-chain balance/price lookup = research" → WRONG: on-chain lookups are \`type: "transaction"\` via query_agent — research_agent is web search only
+- "swap may have failed, retry it" → WRONG: tx hash = broadcast. Retrying = double-spend. Report hash, let user decide
+- "encryptKey was mentioned earlier" → workflows: ask fresh before each run, never reuse from history. Swaps/transfers: use CURRENT CONTEXT, never ask
+- "user wants a chart, research → visualize" → if user specifies a library/SDK/API (ccxt, web3, axios, etc.), data step is \`type: code\`, not research
+- "visualize done, write a summary" → WRONG: stay silent — the chart speaks for itself
+- "I have all params, let me confirm first" → WRONG: CURRENT CONTEXT = confirmed. \`write_todos\` immediately, zero text
 ## Output discipline
 **If you are going to call a tool, call it immediately — output zero text first.**
 - No preamble, no reasoning, no narration, no "let me", no "now I'll", no calculations shown inline.
@@ -464,11 +460,25 @@ const createAllowlistToolsMiddleware = (allowedNames: Set<string>) =>
     },
   });
 
+// Subagents that require main model — money or coding
+const HIGH_STAKES_SUBAGENTS = new Set([
+  "trade_agent",
+  "transfer_agent",
+  "launch_agent",
+  "code_execution_agent",
+  "visualization_agent",
+]);
+
 export const buildBaseSubAgents = (
   toolContext: ToolContext,
   disabledTools: Set<string>,
+  backgroundModel?: any,
 ): SubAgent[] => {
   const isEnabled = (key: string) => !disabledTools.has(key);
+  const bgModel = (name: string) =>
+    backgroundModel && !HIGH_STAKES_SUBAGENTS.has(name)
+      ? { model: backgroundModel }
+      : {};
 
   const queryTools = [
     isEnabled(BASE_TOOL_KEYS.GET_EVM_TOKEN_BALANCE) &&
@@ -512,7 +522,7 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "query_agent",
       description:
-        "Fetches on-chain read-only data: token balances and token prices on Solana and EVM chains. Use for any balance check or price lookup before executing transactions.",
+        "On-chain read-only — token balances and prices on Solana and EVM.",
       systemPrompt:
         "You are a read-only subagent for on-chain data queries — token balances and prices.\n\n" +
         "## Chain selection — CRITICAL\n" +
@@ -543,6 +553,7 @@ export const buildBaseSubAgents = (
             "All requested data: token prices in USD, per-wallet balances, totals. For errors: describe what failed.",
           ),
       }),
+      ...bgModel("query_agent"),
       tools: queryTools as any,
     });
   }
@@ -550,8 +561,7 @@ export const buildBaseSubAgents = (
   if (tradeTools.length > 0) {
     agents.push({
       name: "trade_agent",
-      description:
-        "Executes token swaps (buy/sell) on Solana via Jupiter and on EVM chains via Kyberswap. Use for any swap operation.",
+      description: "Token swaps on Solana (Jupiter) and EVM (Kyberswap).",
       systemPrompt:
         "You are a subagent for token swaps (buy/sell) on Solana and EVM chains.\n\n" +
         "## Chain selection — CRITICAL\n" +
@@ -581,9 +591,10 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened explorer links). For errors: describe what failed.",
+            "Compact result: markdown table (Wallet, Amount, Tx Hash) + one status line 'X/Y succeeded.' No extra text.",
           ),
       }),
+      ...bgModel("trade_agent"),
       tools: tradeTools as any,
     });
   }
@@ -592,7 +603,7 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "transfer_agent",
       description:
-        "Executes token transfers and raw transaction broadcasts on Solana and EVM chains. Use for transfer operations or custom contract interactions.",
+        "Token transfers and raw transaction broadcasts on Solana and EVM.",
       systemPrompt:
         "You are a subagent for token transfers and raw transaction broadcasts.\n\n" +
         "## Chain selection — CRITICAL\n" +
@@ -619,9 +630,10 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened explorer links). For errors: describe what failed.",
+            "Compact result: markdown table (Wallet, Amount, Tx Hash) + one status line 'X/Y succeeded.' No extra text.",
           ),
       }),
+      ...bgModel("transfer_agent"),
       tools: transferTools as any,
     });
   }
@@ -629,8 +641,7 @@ export const buildBaseSubAgents = (
   if (launchTools.length > 0) {
     agents.push({
       name: "launch_agent",
-      description:
-        "Launches new tokens on Solana via Pump.fun or Bonk.fun. Use for any token creation/launch operation.",
+      description: "Launches tokens on Solana via Pump.fun or Bonk.fun.",
       systemPrompt:
         "You are a subagent for launching new tokens on Solana (Pump.fun and Bonk.fun). These tools are Solana-only.\n\n" +
         "## Which platform to use\n" +
@@ -659,6 +670,7 @@ export const buildBaseSubAgents = (
             "Complete formatted result including token mint address and tx hash as shortened explorer links. For errors: describe what failed.",
           ),
       }),
+      ...bgModel("launch_agent"),
       tools: launchTools as any,
     });
   }
@@ -667,8 +679,7 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "code_execution_agent",
       description:
-        "Executes pre-approved JavaScript code for API calls, file generation, automation, or custom logic. " +
-        "NOT for rendering charts (use visualization_agent) and NOT for data preparation before charting — pass research results directly to visualization_agent.",
+        "Runs pre-approved JavaScript. NOT for charts — pass data directly to visualization_agent.",
       systemPrompt:
         "You are a subagent that runs pre-approved code.\n\n" +
         "## Primary rule\n" +
@@ -681,6 +692,7 @@ export const buildBaseSubAgents = (
         '- The tool returns JSON: { output: "...", executedCode: "..." }. Return only the `output` value to the user.\n' +
         "- On failure or `blocked_no_approved_code`: stop immediately and report back to the main agent — do NOT retry or rewrite code.\n" +
         "- Keep responses concise — return the execution result only.",
+      ...bgModel("code_execution_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(codeExecutionTools.map((tool: any) => tool.name)),
@@ -701,9 +713,7 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "research_agent",
       description:
-        "Searches the web for real-time or recent information — news, current events, live data, recently published content. " +
-        "Can also extract full page content from URLs and find similar pages. " +
-        "Do NOT use for data already known from training knowledge — answer directly from training if you can.",
+        "Web search for real-time/recent info and URL extraction. Skip if answer is in training knowledge.",
       systemPrompt:
         "You are a research subagent. Return findings with source URLs, keep responses concise.\n\n" +
         "## Knowledge-first\n" +
@@ -715,7 +725,17 @@ export const buildBaseSubAgents = (
         "- Choose maxResults by query scope: 2 for a single specific fact, 3 for a focused topic, 5 for broad or multi-topic queries — never default to 5 for everything.\n" +
         "- Hard limit: 3 tool calls maximum — no exceptions.\n" +
         "- On tool error: do not retry with same args; switch to the other search provider at most once; then stop and report.\n" +
-        "- If search returns no useful results: report what was found (or nothing) and stop — never retry with rephrased queries.",
+        "- If search returns no useful results: report what was found (or nothing) and stop — never retry with rephrased queries.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put all findings and source URLs in the `result` field. No preamble, no prose wrapper.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Research findings with source URLs. Concise — no preamble or prose wrapper.",
+          ),
+      }),
+      ...bgModel("research_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(researchTools.map((tool: any) => tool.name)),
@@ -737,8 +757,7 @@ export const buildBaseSubAgents = (
   if (workflowTools.length > 0) {
     agents.push({
       name: "workflow_agent",
-      description:
-        "Lists and searches campaigns and workflows, runs workflows on campaigns, and stops running workflows. Use this for any campaign/workflow lookup or execution.",
+      description: "Searches campaigns/workflows, runs and stops workflows.",
       systemPrompt:
         "You are a subagent for campaign and workflow management.\n\n" +
         "## Rules\n" +
@@ -746,7 +765,17 @@ export const buildBaseSubAgents = (
         "- If exactly 1 campaign and 1 workflow match, execute immediately.\n" +
         "- If multiple campaigns or multiple workflows match, return the full list — never pick one yourself.\n" +
         "- If the workflow requires variables but none were provided in the task description, return an error listing the required variable names — do not execute with missing variables.\n" +
-        "- Never include encryptKey in response text.",
+        "- Never include encryptKey in response text.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Workflow/campaign result: list of matches, execution status, or error. Concise.",
+          ),
+      }),
+      ...bgModel("workflow_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(workflowTools.map((tool: any) => tool.name)),
@@ -773,8 +802,7 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "data_management_agent",
       description:
-        "Creates and manages wallet groups and resource groups. Use this to generate wallets, " +
-        "create resource groups with custom schemas, and store or query structured data (e.g. top token holders, KOL lists).",
+        "Manages wallet groups and resource groups — generate wallets, store and query structured data.",
       systemPrompt:
         "You are a subagent for managing wallets and structured data.\n\n" +
         "## Rules\n" +
@@ -782,7 +810,17 @@ export const buildBaseSubAgents = (
         "- bulk_update_resources requires row IDs — call query_resources first to get them.\n" +
         "- bulk_add_resources only works on agent-created groups (source=agent).\n" +
         "- Column names must be snake_case.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Data management result: created IDs, query results, or error. Concise.",
+          ),
+      }),
+      ...bgModel("data_management_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(dataManagementTools.map((tool: any) => tool.name)),
@@ -811,15 +849,24 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "scheduler_agent",
       description:
-        "Creates, lists, updates, deletes, pauses, resumes, and manually triggers agent schedules. " +
-        "Use this when the user wants to automate recurring tasks (e.g. 'check SOL price every 30 minutes', 'send portfolio summary every morning at 6AM').",
+        "Manages agent schedules — create, list, update, delete, pause, resume, trigger.",
       systemPrompt:
         "You are a scheduling subagent. You manage agent task schedules.\n\n" +
         "## Rules\n" +
         "- Always confirm your understanding in plain language before creating (e.g. 'I'll run this every day at 6AM'). Never show the raw cron expression to the user.\n" +
         "- For conditionType='llm': only use for deciding whether to send a notification, never for execution gating.\n" +
         "- Return schedule IDs so the user can reference them.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Scheduler result: schedule details, IDs, or confirmation. Concise.",
+          ),
+      }),
+      ...bgModel("scheduler_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(schedulerTools.map((tool: any) => tool.name)),
@@ -841,15 +888,24 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "task_management_agent",
       description:
-        "Creates, lists, retrieves, updates, and deletes tasks in the agent task pool. " +
-        "Use this when the user wants to manage work items for agents — creating tasks, checking status, reassigning, or closing tasks.",
+        "Manages agent task pool — create, list, retrieve, update, delete tasks.",
       systemPrompt:
         "You are a task management subagent. You manage the agent task pool.\n\n" +
         "## Rules\n" +
         "- When creating a task, omit assignedAgentId unless the user specifies an agent — the dispatcher will auto-assign.\n" +
         "- Prefer setting status to cancelled over deleting, unless the user explicitly wants permanent removal.\n" +
         "- Return task IDs so the user can reference them later.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Task management result: task details, IDs, status updates, or error. Concise.",
+          ),
+      }),
+      ...bgModel("task_management_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(agentTaskTools.map((tool: any) => tool.name)),
@@ -868,8 +924,7 @@ export const buildBaseSubAgents = (
   agents.push({
     name: "team_mailbox_agent",
     description:
-      "Send messages to other registry agents, read your mailbox, and acknowledge processed messages. " +
-      "Use for agent-to-agent coordination within a team.",
+      "Agent-to-agent messaging — send, read, and acknowledge messages.",
     systemPrompt:
       "You are a mailbox subagent for agent-to-agent communication.\n\n" +
       "## Rules\n" +
@@ -877,7 +932,17 @@ export const buildBaseSubAgents = (
       "- To read all messages (including processed), pass includeAcknowledged=true to read_messages.\n" +
       "- Always acknowledge messages after processing them so they are excluded from future reads.\n" +
       "- Keep message subjects short and descriptive.\n" +
-      "- Return results concisely.",
+      "- Return results concisely.\n\n" +
+      "## Structured response — `result` field\n" +
+      "Put your complete output in the `result` field. No preamble.",
+    responseFormat: z.object({
+      result: z
+        .string()
+        .describe(
+          "Mailbox result: sent confirmation, message list, or acknowledgement. Concise.",
+        ),
+    }),
+    ...bgModel("team_mailbox_agent"),
     middleware: [
       createAllowlistToolsMiddleware(
         new Set(mailboxTools.map((tool: any) => tool.name)),
@@ -891,9 +956,7 @@ export const buildBaseSubAgents = (
     agents.push({
       name: "visualization_agent",
       description:
-        "Renders interactive charts and data visualizations in the UI using ECharts. " +
-        "Pass raw data directly — numbers, dates, labels from research results. No preprocessing needed. " +
-        "Use this when the user asks to visualize data, draw a chart, or plot a graph.",
+        "Renders ECharts charts in the UI. Pass data values inline — no file access. Use for any chart/graph request.",
       systemPrompt:
         "You are a visualization subagent. You render charts using the render_chart tool.\n\n" +
         "## Rules\n" +
@@ -919,24 +982,17 @@ export const buildBaseSubAgents = (
         "- Pie charts: use radius: ['45%', '72%'] for donut shape. Add label: { formatter: '{b}\\n{d}%' }.\n" +
         "- Scatter/bubble: each point must be {name: 'Label', value: [x, y, size]}. App auto-sizes bubbles and shows name in tooltip — do NOT set symbolSize or formatter. Add itemStyle: { opacity: 0.7 } when bubbles may overlap.\n" +
         "- Add legend: {} when there are multiple series.\n" +
-        "- Axis formatters: use ECharts string template format (pure JSON, always works) — axisLabel.formatter: '{value}%' for percentages, '{value} T' for trillions, '{value} B' for billions, '{value} M' for millions, '{value} K' for thousands. NEVER use JavaScript arrow functions (value => ...) — they are not valid JSON and will fail.\n" +
-        "- Log scale: for exponential data (e.g. price history spanning orders of magnitude), set yAxis.type: 'log', yAxis.logBase: 10. Do NOT add a custom formatter for log scale.\n" +
-        "- Tooltip: use tooltip.formatter as a string template for custom units — e.g. '{b}: {c} T', '{b}: ${c}', '{b}: {c}%'. NEVER set tooltip.valueFormatter — it requires a JavaScript function and is not valid JSON. Always show units in tooltip — never raw numbers without context.\n" +
-        "- Axis labels: always use yAxis.name (NOT yAxis.title) and xAxis.name. Always include the unit in the name (e.g. 'GDP (Trillions USD)', 'Price (USD)', 'Population (Millions)'). Set nameLocation: 'middle', nameGap: 50 on yAxis.\n" +
-        "- Derive axis names from field/column names — capitalize and clean (e.g. 'revenue_usd' → 'Revenue (USD)').\n" +
-        "- Max 1 xAxis, max 2 yAxis. Second yAxis must have position: 'right'.\n" +
-        "- Keep charts simple — max 2 different series types per chart.\n\n" +
-        "## Dates & annotations\n" +
-        "- For date-based x-axis: set xAxis.type: 'time'. Series data MUST be [[isoDateString, number], ...] pairs — NEVER set xAxis.data when using time axis, and NEVER use string values like '1.5M' in series data — all values must be plain numbers.\n" +
-        "- To mark events on a chart (e.g. a vertical line at a specific date): add markLine: { data: [{ xAxis: 'value', name: 'Label', label: { position: 'insideStartTop' } }] } inside the series.\n" +
-        "- To highlight a region: use markArea: { data: [[{ xAxis: 'start' }, { xAxis: 'end' }]] } inside the series.\n" +
-        "- For standalone text labels outside the plot area (e.g. 'log scale' top-right): use graphic: [{ type: 'text', right: 10, top: 10, style: { text: 'log scale', fill: '#999', fontSize: 12 } }].\n\n" +
+        "- Axis formatters/tooltip: NEVER use JavaScript functions — use string templates only. axisLabel.formatter: '{value}%' or '{value} T'. tooltip.formatter: '{b}: {c} T', '{b}: ${c}'. NEVER set tooltip.valueFormatter.\n" +
+        "- Log scale: set yAxis.type: 'log', yAxis.logBase: 10. No custom formatter on log scale.\n" +
+        "- Axis labels: always use yAxis.name (NOT yAxis.title) and xAxis.name with unit (e.g. 'Price (USD)', 'GDP (Trillions USD)'). Derive from field names — capitalize and clean ('revenue_usd' → 'Revenue (USD)'). Set nameLocation: 'middle', nameGap: 50 on yAxis.\n" +
+        "- Max 1 xAxis, max 2 yAxis. Second yAxis must have position: 'right'.\n\n" +
+        "## Dates\n" +
+        "- For date-based x-axis: set xAxis.type: 'time'. Series data MUST be [[isoDateString, number], ...] pairs — NEVER set xAxis.data when using time axis, and NEVER use string values in series data — all values must be plain numbers.\n\n" +
         "## Series format — CRITICAL\n" +
         'Each series MUST be a JSON object with name, type, and data fields. NEVER use array format like ["China", [...]] — that is wrong.\n' +
-        "Multi-series example (time axis, 2 countries):\n" +
-        '{"title":{"text":"GDP"},"tooltip":{},"legend":{},"xAxis":{"type":"time"},"yAxis":{"name":"Trillions USD","nameLocation":"middle","nameGap":50},"series":[{"name":"USA","type":"line","smooth":true,"data":[["2020-01-01",21.43],["2021-01-01",22.68]]},{"name":"China","type":"line","smooth":true,"data":[["2020-01-01",14.68],["2021-01-01",17.73]]}]}\n\n' +
-        "## Single-series example (category axis):\n" +
-        '{"title":{"text":"Monthly Sales"},"tooltip":{},"xAxis":{"type":"category","data":["Jan","Feb","Mar"]},"yAxis":{},"series":[{"name":"Sales","type":"line","smooth":true,"data":[120,180,150]}]}',
+        "Example:\n" +
+        '{"title":{"text":"GDP"},"tooltip":{},"legend":{},"xAxis":{"type":"time"},"yAxis":{"name":"Trillions USD","nameLocation":"middle","nameGap":50},"series":[{"name":"USA","type":"line","smooth":true,"data":[["2020-01-01",21.43],["2021-01-01",22.68]]},{"name":"China","type":"line","smooth":true,"data":[["2020-01-01",14.68],["2021-01-01",17.73]]}]}',
+      ...bgModel("visualization_agent"),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(visualizationTools.map((tool: any) => tool.name)),

@@ -114,13 +114,6 @@ export class JupiterClient {
         },
       );
 
-      logEveryWhere({
-        message: `JupiterClient buildSwapTransaction response: ${JSON.stringify(
-          response?.data,
-          null,
-          2,
-        )}`,
-      });
       return [response?.data, null];
     } catch (err: any) {
       logEveryWhere({

@@ -28,65 +28,48 @@ const isValidSolanaAddress = (address: string): boolean => {
 export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.TRANSFER_SOLANA_TOKEN,
-    description: `Transfer native SOL or any SPL token on Solana from a source wallet to target wallets in a campaign.
-
-The source wallet must be a wallet in the campaign. Target wallets are all other wallets in the campaign (the source wallet is excluded automatically).
-
-Transfer strategies:
-- EQUAL_PER_WALLET: Send the same amount to each target wallet (requires amount).
-- RANDOM_PER_WALLET: Send a random amount per target wallet within [minAmount, maxAmount] (requires maxAmount).
-- TOTAL_SPLIT_RANDOM: Split a total amount randomly across all target wallets (requires totalAmount).
-
-For native SOL transfers, omit tokenAddress or pass it empty. For SPL tokens, provide the token mint address.
-
-CRITICAL - Confirmation Required:
-- ALWAYS ask the user for explicit confirmation before calling this tool. Show: Token, Source wallet, Amount strategy, Amount details, Target wallet count.
-- Only call this tool after the user explicitly confirms.`,
+    description:
+      "Transfer native SOL or SPL tokens from a source wallet to target wallets in a campaign. " +
+      "Strategies: EQUAL_PER_WALLET (amount), RANDOM_PER_WALLET (maxAmount required), TOTAL_SPLIT_RANDOM (totalAmount).",
     schema: z.object({
       sourceWalletAddress: z
         .string()
-        .describe(
-          "Solana address of the source wallet (must belong to the campaign). Funds will be sent FROM this wallet.",
-        ),
+        .describe("Source wallet address (must be in campaign)"),
       tokenAddress: z
         .string()
-        .describe(
-          "SPL token mint address to transfer. Pass empty string for native SOL.",
-        ),
+        .describe("SPL mint address or empty for native SOL"),
       amountStrategy: z
         .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
-        .describe("How to distribute amounts across target wallets."),
+        .describe("Amount distribution strategy"),
       amount: z
         .number()
         .min(0)
         .describe(
-          "Per-wallet amount (required for EQUAL_PER_WALLET). Pass 0 if not applicable.",
+          "Per-wallet amount (EQUAL_PER_WALLET). Pass 0 if not applicable.",
         ),
       totalAmount: z
         .number()
         .min(0)
         .describe(
-          "Total amount to split across all target wallets (required for TOTAL_SPLIT_RANDOM). Pass 0 if not applicable.",
+          "Total to split across wallets (TOTAL_SPLIT_RANDOM). Pass 0 if not applicable.",
         ),
       minAmount: z
         .number()
         .min(0)
         .describe(
-          "Minimum per-wallet amount (for RANDOM_PER_WALLET). Pass 0 if not applicable.",
+          "Min per-wallet amount (RANDOM_PER_WALLET). Pass 0 if not applicable.",
         ),
       maxAmount: z
         .number()
         .min(0)
         .describe(
-          "Maximum per-wallet amount (required for RANDOM_PER_WALLET). Pass 0 if not applicable.",
+          "Max per-wallet amount (RANDOM_PER_WALLET). Pass 0 if not applicable.",
         ),
       balanceTimeoutMs: z
         .number()
         .positive()
         .default(15000)
-        .describe(
-          "Timeout (ms) when fetching wallet balances (default: 15000).",
-        ),
+        .describe("Timeout in ms (default 15000)"),
     }),
     func: async ({
       sourceWalletAddress,
