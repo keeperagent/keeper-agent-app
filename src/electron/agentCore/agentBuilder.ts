@@ -110,24 +110,21 @@ export const ensureAgentMemoryFile = async (
   }
 };
 
-const SOLSCAN_SHORTEN_RULE =
-  "Shorten rule: display text = first 6 chars + '...' + last 4 chars of the address/hash. Example: '2Djmcv...9rra'.";
+const SOLSCAN_SHORTEN_RULE = "Shorten: first6...last4 (e.g. '2Djmcv...9rra').";
 
 const EXPLORER_CHAIN_MAP =
-  "Use the block explorer matching the chainKey from the task description: " +
-  "solana → solscan.io (wallet: /account/<addr>, tx: /tx/<hash>); " +
-  "ethereum → etherscan.io; bsc → bscscan.com; arbitrum → arbiscan.io; " +
-  "polygon → polygonscan.com; optimism → optimistic.etherscan.io; " +
-  "avalanche → snowtrace.io; base → basescan.org; zksync → explorer.zksync.io; " +
-  "linea → lineascan.build; scroll → scrollscan.com; blast → blastscan.io. " +
-  "EVM wallet path: /address/, EVM tx path: /tx/. " +
-  "Unknown chainKey: show shortened address/hash as plain text with no link.";
+  "Explorer per chainKey: solana→solscan.io(/account/<addr>,/tx/<hash>); " +
+  "ethereum→etherscan.io; bsc→bscscan.com; arbitrum→arbiscan.io; " +
+  "polygon→polygonscan.com; optimism→optimistic.etherscan.io; " +
+  "avalanche→snowtrace.io; base→basescan.org; zksync→explorer.zksync.io; " +
+  "linea→lineascan.build; scroll→scrollscan.com; blast→blastscan.io. " +
+  "EVM: wallet=/address/, tx=/tx/. Unknown chainKey: plain text, no link.";
 
 const EXPLORER_TRADE_TRANSFER_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
   `${EXPLORER_CHAIN_MAP}\n` +
-  "Output ONLY a markdown table (Wallet, Amount, Tx Hash) + one line 'X/Y succeeded.' Nothing else. " +
-  "Use: [first6...last4](https://<explorer>/<wallet_path>/<full_address>) for wallets; [first6...last4](https://<explorer>/tx/<full_hash>) for tx hashes.";
+  "Output: markdown table (Wallet, Amount, Tx Hash) + 'X/Y succeeded.' only. " +
+  "Links: [first6...last4](https://<explorer>/<wallet_path>/<addr>) for wallets, [first6...last4](https://<explorer>/tx/<hash>) for txs.";
 
 const SOLSCAN_LAUNCH_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
@@ -564,8 +561,7 @@ export const buildBaseSubAgents = (
   if (tradeTools.length > 0) {
     agents.push({
       name: "trade_agent",
-      description:
-        "Token swaps on Solana (Jupiter) and EVM (Kyberswap).",
+      description: "Token swaps on Solana (Jupiter) and EVM (Kyberswap).",
       systemPrompt:
         "You are a subagent for token swaps (buy/sell) on Solana and EVM chains.\n\n" +
         "## Chain selection — CRITICAL\n" +
@@ -645,8 +641,7 @@ export const buildBaseSubAgents = (
   if (launchTools.length > 0) {
     agents.push({
       name: "launch_agent",
-      description:
-        "Launches tokens on Solana via Pump.fun or Bonk.fun.",
+      description: "Launches tokens on Solana via Pump.fun or Bonk.fun.",
       systemPrompt:
         "You are a subagent for launching new tokens on Solana (Pump.fun and Bonk.fun). These tools are Solana-only.\n\n" +
         "## Which platform to use\n" +
@@ -762,8 +757,7 @@ export const buildBaseSubAgents = (
   if (workflowTools.length > 0) {
     agents.push({
       name: "workflow_agent",
-      description:
-        "Searches campaigns/workflows, runs and stops workflows.",
+      description: "Searches campaigns/workflows, runs and stops workflows.",
       systemPrompt:
         "You are a subagent for campaign and workflow management.\n\n" +
         "## Rules\n" +

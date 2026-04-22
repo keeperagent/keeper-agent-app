@@ -615,8 +615,13 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. All steps are complete — give your final response.`
         : `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. Call write_todos to mark the next step as in_progress.`;
 
+      const storedContent =
+        resultContent.length > 2000
+          ? resultContent.slice(0, 2000) + "...[truncated]"
+          : resultContent;
+
       return new ToolMessage({
-        content: resultContent + note,
+        content: storedContent + note,
         tool_call_id: taskResult?.tool_call_id || request?.toolCall?.id || "",
       });
     }

@@ -9,7 +9,7 @@ import {
 import { ChatHistoryModel } from "./index";
 
 const RECENT_MESSAGES_LIMIT = 40;
-const SUMMARIZATION_KEEP_COUNT = 20;
+const COMPACTION_KEEP_COUNT = 20;
 
 class ChatHistoryDB {
   async saveMessage(
@@ -91,7 +91,7 @@ class ChatHistoryDB {
       })) as any[] as IChatMessage[];
 
       // Keep the most recent messages verbatim — summarise everything older
-      const toSummarize = allRows.slice(0, -SUMMARIZATION_KEEP_COUNT);
+      const toSummarize = allRows.slice(0, -COMPACTION_KEEP_COUNT);
       return [toSummarize, null];
     } catch (err: any) {
       logEveryWhere({
