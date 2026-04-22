@@ -14,6 +14,9 @@ export const writeJavaScriptTool = (toolContext?: ToolContext) =>
     schema: z.object({
       code: z
         .string()
+        .refine((s) => s.trim().length > 0, {
+          message: "code cannot be empty or only whitespace",
+        })
         .describe("Complete, runnable JavaScript (Node.js ESM) code"),
     }),
     func: async ({ code }) => {

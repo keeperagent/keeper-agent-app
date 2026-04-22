@@ -33,6 +33,7 @@ const swapOnKyberswapSchema = z
   .object({
     swapDirection: z
       .enum(["BUY", "SELL"])
+      .default("BUY")
       .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
@@ -84,6 +85,7 @@ const swapOnKyberswapSchema = z
       .number()
       .int()
       .positive()
+      .default(15000)
       .describe("Timeout in ms (default 15000)"),
     slippage: z
       .number()

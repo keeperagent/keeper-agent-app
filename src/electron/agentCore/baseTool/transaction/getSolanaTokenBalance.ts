@@ -27,16 +27,19 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
       timeoutMs: z
         .number()
         .positive()
+        .default(DEFAULT_TIMEOUT_MS)
         .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
+        .default(DEFAULT_TOP_N)
         .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
+        .default(DEFAULT_MAX_WALLETS_IN_RESPONSE)
         .describe(
           `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
         ),

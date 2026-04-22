@@ -217,7 +217,8 @@ const buildPendingReminder = (
   completedStepResults: { stepName: string; content: string }[],
 ): string => {
   const nextTodo = lastKnownTodos.find(
-    (item: any) => item.status !== TodoItemStatus.COMPLETED,
+    (item: any) =>
+      item.status !== TodoItemStatus.COMPLETED && item.status !== "rejected",
   );
   const nextName = nextTodo?.content || "the next step";
   const currentPlan = lastKnownTodos
@@ -640,12 +641,13 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       if (parsed.status === "rejected") {
         lastKnownTodos = lastKnownTodos.map((item: any) =>
           item.status === TodoItemStatus.IN_PROGRESS
-            ? { ...item, status: "pending" }
+            ? { ...item, status: "rejected" }
             : item,
         );
+        planLocked = false;
         toolContext.update({ currentStepType: null });
         logEveryWhere({
-          message: `[TodoDispatcher] Plan rejected — reset in_progress step to pending, cleared currentStepType`,
+          message: `[TodoDispatcher] Plan rejected — marked step as rejected, released plan lock`,
         });
       }
     } catch {}
@@ -746,7 +748,9 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       // Inject reminder when plan has pending todos but nothing is in_progress
       // (happens right after auto-advance — prevents the LLM from retrying task before calling write_todos)
       const hasPendingTodos = lastKnownTodos.some(
-        (item: any) => item.status !== TodoItemStatus.COMPLETED,
+        (item: any) =>
+          item.status !== TodoItemStatus.COMPLETED &&
+          item.status !== "rejected",
       );
       if (
         lastKnownTodos.length > 0 &&
@@ -754,7 +758,9 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         hasPendingTodos
       ) {
         const nextTodo = lastKnownTodos.find(
-          (item: any) => item.status !== TodoItemStatus.COMPLETED,
+          (item: any) =>
+            item.status !== TodoItemStatus.COMPLETED &&
+            item.status !== "rejected",
         );
         logEveryWhere({
           message: `[TodoDispatcher] Pending reminder — nextStep="${nextTodo?.content || "the next step"}" completedStepResults=${completedStepResults.length}`,
