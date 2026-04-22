@@ -51,7 +51,6 @@ export class SwapOnJupiter {
       false,
       TOKEN_PROGRAM_ID,
     );
-    console.log(`Fee account for SOL: ${solTokenAccount.toBase58()}`);
 
     this.platformFeeTokenAccountWithSol = solTokenAccount;
     return this.platformFeeTokenAccountWithSol;
@@ -68,7 +67,6 @@ export class SwapOnJupiter {
       false,
       TOKEN_PROGRAM_ID,
     );
-    console.log(`Fee account for USD1: ${usd1TokenAccount.toBase58()}`);
 
     this.platformFeeTokenAccountWithUsd1 = usd1TokenAccount;
     return this.platformFeeTokenAccountWithUsd1;

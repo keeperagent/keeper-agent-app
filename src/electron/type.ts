@@ -2533,6 +2533,7 @@ export type IPreference = {
   mcpServerPort?: number;
   isScreenCaptureProtectionOn?: boolean;
   llmProvider?: string;
+  useClaudeCLI?: boolean;
 };
 
 export enum McpTokenPermission {
@@ -2836,6 +2837,7 @@ export type ILlmSetting = {
   disabledTools?: string[];
   isMcpServerOn?: boolean;
   mcpServerPort?: number;
+  useClaudeCLI?: boolean;
 };
 
 export type IDexSetting = {

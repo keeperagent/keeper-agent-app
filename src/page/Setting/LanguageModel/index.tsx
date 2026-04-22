@@ -1,4 +1,13 @@
-import { Form, Button, Row, message, Input, Divider } from "antd";
+import {
+  Form,
+  Button,
+  Row,
+  message,
+  Input,
+  Divider,
+  Switch,
+  Typography,
+} from "antd";
 import { useEffect } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -7,11 +16,14 @@ import {
   useTranslation,
   useCheckModelCapability,
 } from "@/hook";
+import { useCheckClaudeCLIAvailable } from "@/hook/preference";
 import { IPreference, LLMProvider } from "@/electron/type";
 import { PasswordInput } from "@/component/Input";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { ProviderLabel } from "@/page/Setting/ProviderLabel";
 import { Wrapper } from "./style";
+
+const { Text } = Typography;
 
 type IProps = {
   preference: IPreference | null;
@@ -23,6 +35,7 @@ const LanguageModel = (props: IProps) => {
   const { translate } = useTranslation();
   const { updatePreference, loading, isSuccess } = useUpdatePreference();
   const { checkModelCapability } = useCheckModelCapability();
+  const { checkClaudeCLIAvailable } = useCheckClaudeCLIAvailable();
 
   useEffect(() => {
     form.setFieldsValue({
@@ -43,6 +56,17 @@ const LanguageModel = (props: IProps) => {
       message.success(translate("updateSuccess"));
     }
   }, [loading, isSuccess]);
+
+  const onToggleClaudeCLI = async (checked: boolean) => {
+    if (checked) {
+      const available = await checkClaudeCLIAvailable();
+      if (!available) {
+        message.error(translate("setting.useClaudeCLINotAvailable"));
+        return;
+      }
+    }
+    updatePreference({ id: preference?.id, useClaudeCLI: checked }, true);
+  };
 
   const onSubmitForm = async () => {
     try {
@@ -117,7 +141,7 @@ const LanguageModel = (props: IProps) => {
           label={`${translate("workflow.anthropicModelLabel")}:`}
           name="anthropicModel"
           tooltip={translate("workflow.anthropicModelTooltip")}
-          style={{ marginTop: "-1rem" }}
+          style={{ marginTop: "-1.5rem" }}
         >
           <Input
             className="custom-input"
@@ -130,13 +154,28 @@ const LanguageModel = (props: IProps) => {
           label={`${translate("workflow.anthropicBackgroundModelLabel")}:`}
           name="anthropicBackgroundModel"
           tooltip={translate("workflow.backgroundModelTooltip")}
-          style={{ marginTop: "-1rem" }}
         >
           <Input
             className="custom-input"
             placeholder="haiku-4-5-20251001"
             size="large"
           />
+        </Form.Item>
+
+        <Form.Item
+          label={`${translate("setting.useClaudeCLI")}:`}
+          tooltip={translate("setting.useClaudeCLITooltip")}
+        >
+          <Switch
+            checked={Boolean(preference?.useClaudeCLI)}
+            onChange={onToggleClaudeCLI}
+          />
+
+          {preference?.useClaudeCLI && (
+            <Text type="secondary" style={{ marginLeft: 12, fontSize: 12 }}>
+              {translate("setting.useClaudeCLIActive")}
+            </Text>
+          )}
         </Form.Item>
 
         <Divider />
@@ -162,7 +201,7 @@ const LanguageModel = (props: IProps) => {
           label={`${translate("workflow.openAIModelLabel")}:`}
           name="openAIModel"
           tooltip={translate("workflow.openAIModelTooltip")}
-          style={{ marginTop: "-1rem" }}
+          style={{ marginTop: "-1.5rem" }}
         >
           <Input
             className="custom-input"
@@ -175,7 +214,6 @@ const LanguageModel = (props: IProps) => {
           label={`${translate("workflow.openAIBackgroundModelLabel")}:`}
           name="openAIBackgroundModel"
           tooltip={translate("workflow.backgroundModelTooltip")}
-          style={{ marginTop: "-1rem" }}
         >
           <Input
             className="custom-input"
@@ -222,7 +260,6 @@ const LanguageModel = (props: IProps) => {
           label={`${translate("workflow.googleGeminiBackgroundModelLabel")}:`}
           name="googleGeminiBackgroundModel"
           tooltip={translate("workflow.backgroundModelTooltip")}
-          style={{ marginTop: "-1rem" }}
         >
           <Input
             className="custom-input"
