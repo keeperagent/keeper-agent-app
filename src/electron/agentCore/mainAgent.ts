@@ -8,7 +8,7 @@ import {
 } from "@/electron/service/agentSkill";
 import { mcpToolLoader } from "./mcpTool";
 import { ToolContext } from "./toolContext";
-import { createLLM } from "./llm";
+import { createLLM, createBackgroundLLM } from "./llm";
 import { getLlmSetting } from "./utils";
 import { requestApprovalTool, confirmApprovalTool } from "./baseTool";
 import { writeJavaScriptTool } from "./baseTool/codeExecution";
@@ -47,7 +47,10 @@ export const createMainAgent = async (
   options?: CreateAgentOptions,
 ): Promise<MainAgent> => {
   const provider = options?.provider || LLMProvider.CLAUDE;
-  const llm = await createLLM(provider, options?.temperature || 0);
+  const [llm, backgroundLlm] = await Promise.all([
+    createLLM(provider, options?.temperature || 0),
+    createBackgroundLLM(provider),
+  ]);
 
   const memoryFile = options?.memoryFile || DEFAULT_MEMORY_FILE;
   const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
@@ -57,7 +60,11 @@ export const createMainAgent = async (
   const disabledTools = new Set<string>(llmSetting?.disabledTools || []);
 
   toolContext.update({ llmProvider: provider });
-  const baseSubAgents = buildBaseSubAgents(toolContext, disabledTools);
+  const baseSubAgents = buildBaseSubAgents(
+    toolContext,
+    disabledTools,
+    backgroundLlm,
+  );
 
   const { subAgents: mcpSubAgentInfos, closeClients } =
     await mcpToolLoader.loadMcpSubAgents();

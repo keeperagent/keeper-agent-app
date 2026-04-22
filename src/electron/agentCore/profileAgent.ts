@@ -8,7 +8,7 @@ import {
 } from "@/electron/service/agentSkill";
 import { mcpToolLoader } from "./mcpTool";
 import { ToolContext } from "./toolContext";
-import { createLLM } from "./llm";
+import { createLLM, createBackgroundLLM } from "./llm";
 import { requestApprovalTool, confirmApprovalTool } from "./baseTool";
 import {
   MainAgent,
@@ -32,7 +32,10 @@ export const createAgentFromProfile = async (
   const { profile, checkpointer, toolContext: providedToolContext } = options;
 
   const provider = (profile.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
-  const llm = await createLLM(provider, 0, profile.llmModel || undefined);
+  const [llm, backgroundLlm] = await Promise.all([
+    createLLM(provider, 0, profile.llmModel || undefined),
+    createBackgroundLLM(provider),
+  ]);
 
   const memoryFile = `AGENT_PROFILE_${profile.id}.md`;
   const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
@@ -52,7 +55,11 @@ export const createAgentFromProfile = async (
   const isToolEnabled = (key: string): boolean =>
     allowedBaseToolsSet === null || allowedBaseToolsSet.has(key);
 
-  const baseSubAgents = buildBaseSubAgents(toolContext, new Set<string>());
+  const baseSubAgents = buildBaseSubAgents(
+    toolContext,
+    new Set<string>(),
+    backgroundLlm,
+  );
   const filteredSubAgents = baseSubAgents
     .filter((subagent) => {
       if (allowedBaseToolsSet === null) {

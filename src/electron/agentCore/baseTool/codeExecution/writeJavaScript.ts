@@ -8,27 +8,13 @@ export const writeJavaScriptTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.WRITE_JAVASCRIPT,
     description:
-      "Draft JavaScript code for user review before execution. " +
-      "The code will be shown to the user for approval, then executed by code_execution_agent.\n\n" +
-      "CRITICAL: Write ONLY JavaScript (Node.js) — never Python, never Python-style syntax.\n\n" +
-      "Runtime: Node.js ESM (.mjs). Follow this exact template:\n" +
-      "  import pkg from 'package-name';        // always `from 'name'` — never `import pkg;`\n" +
-      "  const result = await someAsyncFn();     // top-level await — never wrap in async IIFE\n" +
-      "  console.log(result);\n\n" +
-      "Rules:\n" +
-      "- Imports at top, always `import x from 'pkg'` — `import x;` is a SyntaxError\n" +
-      "- Top-level await only — never `(async () => { ... })()`\n" +
-      "- Every async call must be awaited — missing await produces no output\n" +
-      "- `let` for variables that will be reassigned; `const` for fixed values\n" +
-      "- console.log() for all output — only stdout is captured\n" +
-      "- Relative paths for files (e.g. `report.pdf`, not `/report.pdf`)\n" +
-      "- `import.meta.dirname` instead of `__dirname`",
+      "Draft JavaScript (Node.js ESM) for user review before execution. " +
+      "Use top-level await, `import x from 'pkg'` (never `import x;`), and console.log() for output. " +
+      "Never wrap in async IIFE. Use import.meta.dirname instead of __dirname.",
     schema: z.object({
       code: z
         .string()
-        .describe(
-          "The complete, runnable JavaScript (Node.js ESM) code. Must be actual code — not a description, not a plan.",
-        ),
+        .describe("Complete, runnable JavaScript (Node.js ESM) code"),
     }),
     func: async ({ code }) => {
       const agentId = String(toolContext?.agentProfileId || "main");

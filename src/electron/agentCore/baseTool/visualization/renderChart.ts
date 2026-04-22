@@ -15,14 +15,9 @@ export const renderChartTool = () =>
       option: z
         .string()
         .describe(
-          "REQUIRED. A JSON string of a complete ECharts option object. " +
-            "Must include: title, tooltip, legend (if applicable), xAxis, yAxis, and series with inline data. " +
-            'Example: \'{"title":{"text":"Sales"},"xAxis":{"data":["Jan","Feb"]},"yAxis":{},"series":[{"type":"bar","data":[100,200]}]}\'',
+          "JSON string of a complete ECharts option object (must include series with inline data)",
         ),
-      height: z
-        .number()
-        .optional()
-        .describe("Chart height in pixels (default 400)"),
+      height: z.number().optional().describe("Height in pixels (default 400)"),
     }),
     func: async ({ option, height = 400 }) => {
       let parsed: unknown;

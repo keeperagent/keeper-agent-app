@@ -19,7 +19,7 @@ const schema = z
     pageSize: z
       .number()
       .optional()
-      .describe("Rows per page (default 100, max 500)"),
+      .describe("Rows per page (default 30, max 500)"),
   })
   .refine((value) => Boolean(value.groupId || value.groupName), {
     message: "groupId or groupName is required",
@@ -47,7 +47,7 @@ export const queryResourcesTool = () =>
 
       const columns = groupToColumns(group);
       const resolvedPage = Math.max(1, page || 1);
-      const resolvedPageSize = Math.min(500, Math.max(1, pageSize || 100));
+      const resolvedPageSize = Math.min(500, Math.max(1, pageSize || 30));
       const resolvedGroupId = group.id!;
 
       const [result, err] = await resourceDB.getListResource({

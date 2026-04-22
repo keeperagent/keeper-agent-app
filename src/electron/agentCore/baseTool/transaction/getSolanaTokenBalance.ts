@@ -18,36 +18,27 @@ const DEFAULT_MAX_WALLETS_IN_RESPONSE = 50;
 export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE,
-    description: `Get SOL or SPL token balances across campaign wallets on Solana.
-ONLY use when chainKey from context is "solana". For EVM chains use get_evm_token_balance.
-
-tokenAddress: omit or 'SOL' for native balance, or pass SPL mint address. Extract token address from user prompt — these are mint addresses, NOT wallet addresses. Wallets come from campaign profiles.
-
-Read-only, no confirmation needed. Returns per-wallet balances, totals, and top/lowest lists.
-Display: use "SOL" for native, "tokens" for SPL. NEVER show token addresses after amounts.`,
+    description:
+      "Get SOL or SPL token balances across campaign wallets on Solana. Solana only — use get_evm_token_balance for EVM. Read-only, no confirmation needed.",
     schema: z.object({
       tokenAddress: z
         .string()
-        .describe(
-          "SPL mint address, or empty string '' for native SOL balance. Prompt address overrides context.",
-        ),
+        .describe("SPL mint address or empty for native SOL"),
       timeoutMs: z
         .number()
         .positive()
-        .describe(`Per-request timeout in ms (default: ${DEFAULT_TIMEOUT_MS})`),
+        .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
-        .describe(
-          `Number of wallets in top/bottom lists (default: ${DEFAULT_TOP_N})`,
-        ),
+        .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
         .describe(
-          `Max wallet entries in response (default: ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
+          `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
         ),
     }),
     func: async ({

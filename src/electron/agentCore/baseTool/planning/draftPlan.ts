@@ -9,10 +9,8 @@ export const requestApprovalTool = (toolContext: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.REQUEST_APPROVAL,
     description:
-      "Enter approval mode before running any on-chain transaction, code, or workflow. " +
-      "In approval mode, all execution tools are blocked — on-chain transactions, code execution (JS/Python), and workflow runs. " +
-      "Read-only tools remain available (balances, token prices, web search, wallet info). " +
-      "Use this tool first, then research and prepare your execution summary, then call confirm_approval.",
+      "Enter approval mode before any on-chain transaction, code execution, or workflow run. " +
+      "Read-only tools remain available. Call confirm_approval after to present the execution summary.",
     schema: z.object({}),
     func: async () => {
       toolContext.update({ planState: PlanState.DRAFTED });

@@ -129,32 +129,18 @@ export const getTokenPriceTool = () => {
 
   return new DynamicStructuredTool({
     name: TOOL_KEYS.GET_TOKEN_PRICE,
-    description: `Get token price in USD. Read-only, no confirmation needed.
-
-Native token: pass empty string as tokenAddress. Only works for the CURRENT chainKey from context.
-SPL/ERC20 token: pass the contract address as tokenAddress.
-
-Before calling: validate tokenAddress format matches chainKey.
-- Solana: base58 (32-44 chars, no 0x prefix)
-- EVM: 0x hex (42 chars)
-If mismatch, inform user to switch chains instead of calling this tool.
-
-Native token symbol matching: if user says "bnb price" but chainKey is "base", inform user to switch chains. If symbol matches current chain (e.g. "eth price" on base), pass empty tokenAddress.`,
+    description:
+      "Get token price in USD. Pass empty tokenAddress for native token. Read-only, no confirmation needed.",
     schema: z.object({
       chainKey: z
         .string()
         .describe(
-          "Chain key from context. ALWAYS use the MOST RECENT chainKey from context, not from user prompt. Supported: 'solana', 'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 'base', 'zksync', 'linea', 'scroll', 'mantle', 'blast', 'sonic', 'unichain', 'berachain', 'ronin', 'monad', 'plasma', 'hyperevm'.",
+          "Chain key from context (solana, ethereum, bsc, arbitrum, polygon, base, etc.)",
         ),
       tokenAddress: z
         .string()
-        .describe(
-          "Token contract address, or empty string '' for native token price. Do NOT pass native token symbols (ETH, SOL, BNB) — always use empty string for native tokens.",
-        ),
-      timeoutMs: z
-        .number()
-        .positive()
-        .describe("Request timeout in milliseconds"),
+        .describe("Token contract address or empty for native token"),
+      timeoutMs: z.number().positive().describe("Request timeout in ms"),
     }),
     func: async ({
       chainKey,
