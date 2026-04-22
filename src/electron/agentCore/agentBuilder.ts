@@ -126,7 +126,8 @@ const EXPLORER_CHAIN_MAP =
 const EXPLORER_TRADE_TRANSFER_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
   `${EXPLORER_CHAIN_MAP}\n` +
-  "Markdown table with columns Wallet, Amount, Tx Hash. Use: [first6...last4](https://<explorer>/<wallet_path>/<full_address>) for wallets; [first6...last4](https://<explorer>/tx/<full_hash>) for tx hashes.";
+  "Output ONLY a markdown table (Wallet, Amount, Tx Hash) + one line 'X/Y succeeded.' Nothing else. " +
+  "Use: [first6...last4](https://<explorer>/<wallet_path>/<full_address>) for wallets; [first6...last4](https://<explorer>/tx/<full_hash>) for tx hashes.";
 
 const SOLSCAN_LAUNCH_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
@@ -581,7 +582,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened explorer links). For errors: describe what failed.",
+            "Compact result: markdown table (Wallet, Amount, Tx Hash) + one status line 'X/Y succeeded.' No extra text.",
           ),
       }),
       tools: tradeTools as any,
@@ -619,7 +620,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Complete formatted result with wallet addresses (shortened), amounts, and tx hashes (shortened explorer links). For errors: describe what failed.",
+            "Compact result: markdown table (Wallet, Amount, Tx Hash) + one status line 'X/Y succeeded.' No extra text.",
           ),
       }),
       tools: transferTools as any,
@@ -715,7 +716,16 @@ export const buildBaseSubAgents = (
         "- Choose maxResults by query scope: 2 for a single specific fact, 3 for a focused topic, 5 for broad or multi-topic queries — never default to 5 for everything.\n" +
         "- Hard limit: 3 tool calls maximum — no exceptions.\n" +
         "- On tool error: do not retry with same args; switch to the other search provider at most once; then stop and report.\n" +
-        "- If search returns no useful results: report what was found (or nothing) and stop — never retry with rephrased queries.",
+        "- If search returns no useful results: report what was found (or nothing) and stop — never retry with rephrased queries.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put all findings and source URLs in the `result` field. No preamble, no prose wrapper.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Research findings with source URLs. Concise — no preamble or prose wrapper.",
+          ),
+      }),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(researchTools.map((tool: any) => tool.name)),
@@ -746,7 +756,16 @@ export const buildBaseSubAgents = (
         "- If exactly 1 campaign and 1 workflow match, execute immediately.\n" +
         "- If multiple campaigns or multiple workflows match, return the full list — never pick one yourself.\n" +
         "- If the workflow requires variables but none were provided in the task description, return an error listing the required variable names — do not execute with missing variables.\n" +
-        "- Never include encryptKey in response text.",
+        "- Never include encryptKey in response text.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Workflow/campaign result: list of matches, execution status, or error. Concise.",
+          ),
+      }),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(workflowTools.map((tool: any) => tool.name)),
@@ -782,7 +801,16 @@ export const buildBaseSubAgents = (
         "- bulk_update_resources requires row IDs — call query_resources first to get them.\n" +
         "- bulk_add_resources only works on agent-created groups (source=agent).\n" +
         "- Column names must be snake_case.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Data management result: created IDs, query results, or error. Concise.",
+          ),
+      }),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(dataManagementTools.map((tool: any) => tool.name)),
@@ -819,7 +847,16 @@ export const buildBaseSubAgents = (
         "- Always confirm your understanding in plain language before creating (e.g. 'I'll run this every day at 6AM'). Never show the raw cron expression to the user.\n" +
         "- For conditionType='llm': only use for deciding whether to send a notification, never for execution gating.\n" +
         "- Return schedule IDs so the user can reference them.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Scheduler result: schedule details, IDs, or confirmation. Concise.",
+          ),
+      }),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(schedulerTools.map((tool: any) => tool.name)),
@@ -849,7 +886,16 @@ export const buildBaseSubAgents = (
         "- When creating a task, omit assignedAgentId unless the user specifies an agent — the dispatcher will auto-assign.\n" +
         "- Prefer setting status to cancelled over deleting, unless the user explicitly wants permanent removal.\n" +
         "- Return task IDs so the user can reference them later.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise.\n\n" +
+        "## Structured response — `result` field\n" +
+        "Put your complete output in the `result` field. No preamble.",
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "Task management result: task details, IDs, status updates, or error. Concise.",
+          ),
+      }),
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(agentTaskTools.map((tool: any) => tool.name)),
@@ -877,7 +923,16 @@ export const buildBaseSubAgents = (
       "- To read all messages (including processed), pass includeAcknowledged=true to read_messages.\n" +
       "- Always acknowledge messages after processing them so they are excluded from future reads.\n" +
       "- Keep message subjects short and descriptive.\n" +
-      "- Return results concisely.",
+      "- Return results concisely.\n\n" +
+      "## Structured response — `result` field\n" +
+      "Put your complete output in the `result` field. No preamble.",
+    responseFormat: z.object({
+      result: z
+        .string()
+        .describe(
+          "Mailbox result: sent confirmation, message list, or acknowledgement. Concise.",
+        ),
+    }),
     middleware: [
       createAllowlistToolsMiddleware(
         new Set(mailboxTools.map((tool: any) => tool.name)),

@@ -624,6 +624,29 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
     return taskResult;
   };
 
+  const handleConfirmApproval = async (
+    request: any,
+    handler: any,
+  ): Promise<any> => {
+    const result = await handleGateChecks(request, handler);
+    try {
+      const content = typeof result?.content === "string" ? result.content : "";
+      const parsed = JSON.parse(content);
+      if (parsed.status === "rejected") {
+        lastKnownTodos = lastKnownTodos.map((item: any) =>
+          item.status === TodoItemStatus.IN_PROGRESS
+            ? { ...item, status: "pending" }
+            : item,
+        );
+        toolContext.update({ currentStepType: null });
+        logEveryWhere({
+          message: `[TodoDispatcher] Plan rejected — reset in_progress step to pending, cleared currentStepType`,
+        });
+      }
+    } catch {}
+    return result;
+  };
+
   const handleGateChecks = async (request: any, handler: any): Promise<any> => {
     const toolName = request?.toolCall?.name;
     const hasTodoPlan = lastKnownTodos.length > 0;
@@ -677,6 +700,9 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       }
       if (toolName === "task") {
         return handleTask(request, handler);
+      }
+      if (toolName === "confirm_approval") {
+        return handleConfirmApproval(request, handler);
       }
       return handleGateChecks(request, handler);
     },
@@ -734,22 +760,31 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         );
       }
 
-      // Filter tools to only those relevant to the current step type
-      const stepType = toolContext.currentStepType;
+      // Filter tools based on current execution state
       if (
-        !stepType ||
         !Array.isArray(updatedRequest?.tools) ||
         updatedRequest.tools.length === 0
       ) {
         return handler(updatedRequest);
       }
 
-      const scopeForType = STEP_EXTRA_TOOLS[stepType];
-      if (!scopeForType) {
-        return handler(updatedRequest);
+      const stepType = toolContext.currentStepType;
+      let allowed: Set<string>;
+
+      if (stepType && STEP_EXTRA_TOOLS[stepType]) {
+        // Active step: only tools scoped to this step type
+        allowed = new Set([
+          ...ALWAYS_ALLOWED_TOOLS,
+          ...STEP_EXTRA_TOOLS[stepType],
+        ]);
+      } else if (lastKnownTodos.length > 0) {
+        // Between steps: plan exists but nothing in_progress
+        allowed = BETWEEN_STEPS_ALLOWED_TOOLS;
+      } else {
+        // No todos yet: only write_todos + read_file (memory read at startup is legitimate)
+        allowed = new Set(["write_todos", "read_file"]);
       }
 
-      const allowed = new Set([...ALWAYS_ALLOWED_TOOLS, ...scopeForType]);
       const filteredTools = updatedRequest.tools.filter((tool: any) =>
         allowed.has(getToolName(tool)),
       );

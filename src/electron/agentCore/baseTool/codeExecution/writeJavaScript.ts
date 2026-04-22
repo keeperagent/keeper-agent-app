@@ -1,10 +1,11 @@
-import { DynamicTool } from "@langchain/core/tools";
+import { DynamicStructuredTool } from "@langchain/core/tools";
+import { z } from "zod";
 import { TOOL_KEYS } from "@/electron/constant";
 import { type ToolContext } from "@/electron/agentCore/toolContext";
 import { storePendingCode } from "./pendingCodeStore";
 
 export const writeJavaScriptTool = (toolContext?: ToolContext) =>
-  new DynamicTool({
+  new DynamicStructuredTool({
     name: TOOL_KEYS.WRITE_JAVASCRIPT,
     description:
       "Draft JavaScript code for user review before execution. " +
@@ -22,7 +23,14 @@ export const writeJavaScriptTool = (toolContext?: ToolContext) =>
       "- console.log() for all output — only stdout is captured\n" +
       "- Relative paths for files (e.g. `report.pdf`, not `/report.pdf`)\n" +
       "- `import.meta.dirname` instead of `__dirname`",
-    func: async (code: string) => {
+    schema: z.object({
+      code: z
+        .string()
+        .describe(
+          "The complete, runnable JavaScript (Node.js ESM) code. Must be actual code — not a description, not a plan.",
+        ),
+    }),
+    func: async ({ code }) => {
       const agentId = String(toolContext?.agentProfileId || "main");
       storePendingCode(agentId, { language: "javascript", code });
       toolContext?.update({ pendingCode: { language: "javascript", code } });
