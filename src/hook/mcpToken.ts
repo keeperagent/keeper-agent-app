@@ -82,4 +82,38 @@ const useDeleteMcpToken = () => {
   return { loading, isSuccess, deleteMcpToken };
 };
 
-export { useGetListMcpToken, useCreateMcpToken, useDeleteMcpToken };
+const useInstallToClaudeCode = () => {
+  const [loading, setLoading] = useState(false);
+
+  const installToClaudeCode = (): Promise<{
+    success: boolean;
+    error?: string;
+  }> =>
+    new Promise((resolve) => {
+      setLoading(true);
+      window?.electron?.send(MESSAGE.INSTALL_TO_CLAUDE_CODE, {});
+      const handler = (_event: any, payload: any) => {
+        window?.electron?.removeListener(
+          MESSAGE.INSTALL_TO_CLAUDE_CODE_RES,
+          handler,
+        );
+        setLoading(false);
+
+        if (payload?.error) {
+          resolve({ success: false, error: payload.error });
+        } else {
+          resolve({ success: true });
+        }
+      };
+      window?.electron?.on(MESSAGE.INSTALL_TO_CLAUDE_CODE_RES, handler);
+    });
+
+  return { loading, installToClaudeCode };
+};
+
+export {
+  useGetListMcpToken,
+  useCreateMcpToken,
+  useDeleteMcpToken,
+  useInstallToClaudeCode,
+};

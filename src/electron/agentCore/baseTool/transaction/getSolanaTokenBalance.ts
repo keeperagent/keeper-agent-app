@@ -1,29 +1,68 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { PublicKey } from "@solana/web3.js";
-import { TOKEN_TYPE } from "@/electron/constant";
+import { TOKEN_TYPE, CHAIN_TYPE } from "@/electron/constant";
 import { safeStringify } from "@/electron/agentCore/utils";
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
+import { nodeEndpointGroupDB } from "@/electron/database/nodeEndpointGroup";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { logEveryWhere } from "@/electron/service/util";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
 const DEFAULT_MAX_WALLETS_IN_RESPONSE = 50;
 
+const resolveNodeProviders = async (
+  nodeEndpointGroupId?: number,
+): Promise<string[]> => {
+  if (nodeEndpointGroupId) {
+    const [listNodeEndpoint, errList] =
+      await nodeEndpointDB.getListNodeEndpointByGroupId(nodeEndpointGroupId);
+    if (errList) throw errList;
+    return (
+      listNodeEndpoint?.map((node) => node?.endpoint || "")?.filter(Boolean) ||
+      []
+    );
+  }
+
+  const [groupsRes, errGroups] =
+    await nodeEndpointGroupDB.getListNodeEndpointGroup(1, 30);
+  if (errGroups) throw errGroups;
+  const solanaGroup = (groupsRes?.data || []).find(
+    (group) => group.chainType === CHAIN_TYPE.SOLANA,
+  );
+  if (!solanaGroup?.id) {
+    throw new Error(
+      "No Solana node endpoint group found. Please configure one in Node Endpoints settings.",
+    );
+  }
+
+  const [listNodeEndpoint, errList] =
+    await nodeEndpointDB.getListNodeEndpointByGroupId(solanaGroup.id);
+  if (errList) throw errList;
+  return (
+    listNodeEndpoint?.map((node) => node?.endpoint || "")?.filter(Boolean) || []
+  );
+};
+
 export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE,
     description:
-      "Get SOL or SPL token balances across campaign wallets on Solana. Solana only — use get_evm_token_balance for EVM. Read-only, no confirmation needed.",
+      "Get SOL or SPL token balance for any Solana wallet address. Only tokenAddress and walletAddresses are needed — do NOT ask for campaignId, nodeEndpointGroupId, or encryptKey. Read-only, no confirmation needed.",
     schema: z.object({
       tokenAddress: z
         .string()
         .describe("SPL mint address or empty for native SOL"),
+      walletAddresses: z
+        .array(z.string())
+        .optional()
+        .describe("Solana wallet addresses to query"),
       timeoutMs: z
         .number()
         .positive()
@@ -46,88 +85,86 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
     }),
     func: async ({
       tokenAddress: tokenAddressParam,
+      walletAddresses,
       timeoutMs = DEFAULT_TIMEOUT_MS,
       topN = DEFAULT_TOP_N,
       maxWalletsInResponse = DEFAULT_MAX_WALLETS_IN_RESPONSE,
     }) => {
-      const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
-      if (!effectiveCampaignId) {
-        throw new Error(
-          "campaignId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
 
-      if (!effectiveNodeEndpointGroupId) {
-        throw new Error(
-          "nodeEndpointGroupId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
-
-      const [listNodeEndpoint, errList] =
-        await nodeEndpointDB.getListNodeEndpointByGroupId(
-          effectiveNodeEndpointGroupId,
-        );
-      if (errList) throw errList;
-      const listNodeProvider =
-        listNodeEndpoint
-          ?.map((node) => node?.endpoint || "")
-          ?.filter((endpoint) => Boolean(endpoint)) || [];
+      // Resolve node providers — fall back to first Solana group in DB
+      const listNodeProvider = await resolveNodeProviders(
+        toolContext?.nodeEndpointGroupId,
+      );
       if (!listNodeProvider.length) {
         throw new Error(
           "The configured node endpoint group has no active endpoints",
         );
       }
 
-      const effectiveIsAllWallet = toolContext?.isAllWallet || false;
-      const effectiveListCampaignProfileId =
-        toolContext?.listCampaignProfileId || [];
+      // Resolve wallets — schema walletAddresses takes priority over campaign context
+      let wallets: IWallet[] = [];
 
-      // Resolve wallets from campaign profiles
-      let profiles: ICampaignProfile[] = [];
-      if (effectiveIsAllWallet) {
-        const [allProfiles, errAll] =
-          await campaignProfileDB.getAllProfileOfCampaign(
-            effectiveCampaignId,
-            true,
-          );
-        if (errAll) throw errAll;
-        profiles = allProfiles || [];
+      if (walletAddresses && walletAddresses.length > 0) {
+        wallets = walletAddresses.map((address) => ({ address }));
       } else {
-        if (!effectiveListCampaignProfileId.length) {
+        if (!effectiveCampaignId) {
           throw new Error(
-            "listCampaignProfileId is required when isAllWallet is false",
+            "Either walletAddresses or campaignId (via context) is required.",
           );
         }
-        const [resProfiles, errListProfiles] =
-          await campaignProfileDB.getListCampaignProfile({
-            page: 1,
-            pageSize: effectiveListCampaignProfileId.length,
-            campaignId: effectiveCampaignId,
-            listId: effectiveListCampaignProfileId,
-          });
-        if (errListProfiles) throw errListProfiles;
-        profiles = resProfiles?.data || [];
+
+        const effectiveIsAllWallet = toolContext?.isAllWallet || false;
+        const effectiveListCampaignProfileId =
+          toolContext?.listCampaignProfileId || [];
+
+        let profiles: ICampaignProfile[] = [];
+        if (effectiveIsAllWallet) {
+          const [allProfiles, errAll] =
+            await campaignProfileDB.getAllProfileOfCampaign(
+              effectiveCampaignId,
+              true,
+            );
+          if (errAll) throw errAll;
+          profiles = allProfiles || [];
+        } else {
+          if (!effectiveListCampaignProfileId.length) {
+            throw new Error(
+              "listCampaignProfileId is required when isAllWallet is false",
+            );
+          }
+          const [resProfiles, errListProfiles] =
+            await campaignProfileDB.getListCampaignProfile({
+              page: 1,
+              pageSize: effectiveListCampaignProfileId.length,
+              campaignId: effectiveCampaignId,
+              listId: effectiveListCampaignProfileId,
+            });
+          if (errListProfiles) throw errListProfiles;
+          profiles = resProfiles?.data || [];
+        }
+
+        wallets =
+          profiles
+            ?.map((profile) => {
+              const wallet = profile?.wallet
+                ? decryptWallet(profile?.wallet, effectiveEncryptKey || "")
+                : profile?.wallet;
+              return wallet;
+            })
+            ?.filter((wallet): wallet is IWallet => Boolean(wallet)) || [];
       }
 
-      const wallets: IWallet[] =
-        profiles
-          ?.map((profile) => {
-            const wallet = profile?.wallet
-              ? decryptWallet(profile?.wallet, effectiveEncryptKey || "")
-              : profile?.wallet;
-            return wallet;
-          })
-          ?.filter((wallet): wallet is IWallet => Boolean(wallet)) || [];
-
       if (!wallets.length) {
-        throw new Error("No wallets found for the selected campaign profiles");
+        throw new Error("No wallets found");
       }
 
       // Validate wallet addresses are valid Solana addresses
       const invalidWallets = wallets.filter((wallet) => {
-        if (!wallet?.address) return true;
+        if (!wallet?.address) {
+          return true;
+        }
         try {
           new PublicKey(wallet.address);
           return false;
@@ -142,20 +179,14 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
           .slice(0, 3)
           .join(", ");
         throw new Error(
-          `Invalid wallet addresses detected for Solana chain. Found ${
-            invalidWallets.length
-          } invalid wallet(s): ${invalidAddresses}${
+          `Invalid Solana wallet addresses. Found ${invalidWallets.length} invalid wallet(s): ${invalidAddresses}${
             invalidWallets.length > 3 ? "..." : ""
-          }. Please check: (1) If you provided the correct encryption key, (2) If you selected wallets on the correct chain (Solana). You may have forgotten to switch chains after working on EVM chains.`,
+          }`,
         );
       }
 
       const solanaProvider = new SolanaProvider();
-      // Normalize "SOL" to mean native token. Model-provided value takes priority over context.
       const tokenAddress = tokenAddressParam || toolContext?.tokenAddress;
-      console.log(
-        `[get_solana_token_balance] input: tokenAddressParam="${tokenAddressParam}" toolContext.tokenAddress="${toolContext?.tokenAddress}" walletCount=${wallets.length}`,
-      );
       const normalizedTokenAddress =
         tokenAddress?.trim().toUpperCase() === "SOL"
           ? ""
@@ -196,8 +227,11 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
         });
       }
 
-      const successful = results.filter((r) => !r.error);
-      const totalBalance = successful.reduce((sum, r) => sum + r.balance, 0);
+      const successful = results.filter((result) => !result.error);
+      const totalBalance = successful.reduce(
+        (sum, result) => sum + result.balance,
+        0,
+      );
       const sortedDesc = [...successful].sort(
         (a, b) => (b.balance || 0) - (a.balance || 0),
       );
@@ -207,11 +241,9 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
 
       const highest = sortedDesc[0] || null;
       const lowest = sortedAsc[0] || null;
-
       const topWallets = sortedDesc.slice(0, topN);
       const lowestWallets = sortedAsc.slice(0, topN);
 
-      // Clamp balances returned to avoid flooding UI
       const maxBalances = Math.max(
         1,
         Math.min(maxWalletsInResponse, results.length),
@@ -232,7 +264,9 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
         balances: balancesSample,
         omittedCount,
       });
-      console.log(`[get_solana_token_balance] result: ${toolResult}`);
+      logEveryWhere({
+        message: `[get_solana_token_balance] result: ${toolResult}`,
+      });
       return toolResult;
     },
   });

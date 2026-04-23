@@ -271,11 +271,15 @@ const useDashboardAgent = () => {
       const normalizedSteps = normalizeSteps(result?.steps || []);
 
       // Mark any tool calls still RUNNING as ERROR (e.g. tool schema validation failed mid-run)
+      const runErrorMsg = result?.isError
+        ? result?.errorMsg || "Unknown error"
+        : null;
       for (const [runId, toolCall] of toolCallMapRef.current.entries()) {
         if (toolCall.state === ToolCallStateStatus.RUNNING) {
           toolCallMapRef.current.set(runId, {
             ...toolCall,
             state: ToolCallStateStatus.ERROR,
+            ...(runErrorMsg ? { result: runErrorMsg } : {}),
           });
         }
       }

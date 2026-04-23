@@ -70,7 +70,6 @@ const OllamaSetting = (props: IProps) => {
           label={`${translate("setting.ollamaModel")}:`}
           name="ollamaModel"
           tooltip={translate("setting.ollamaModelTooltip")}
-          style={{ marginTop: "-1rem" }}
         >
           <Input
             className="custom-input"

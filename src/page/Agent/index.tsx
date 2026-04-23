@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useMemo, Fragment } from "react";
 import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
-import { Spin, Tabs, Tooltip } from "antd";
+import { Spin, Tabs, Tag, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
 import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
@@ -65,9 +65,12 @@ const AgentPage = (props: any) => {
   };
 
   const isProviderConfigured = (provider: (typeof LLM_PROVIDERS)[number]) => {
-    const hasApiKey = provider.apiKeyField
-      ? Boolean(preference?.[provider.apiKeyField])
-      : true;
+    const isClaudeCLIMode =
+      provider.key === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
+    let hasApiKey = true;
+    if (!isClaudeCLIMode && provider.apiKeyField) {
+      hasApiKey = Boolean(preference?.[provider.apiKeyField]);
+    }
     return hasApiKey && Boolean(preference?.[provider.modelField]);
   };
 
@@ -91,6 +94,9 @@ const AgentPage = (props: any) => {
       DEFAULT_LLM_MODELS[providerKey]
     );
   }, [currentProvider, preference]);
+
+  const isClaudeCLIActive =
+    currentProvider === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
 
   const agentStats = useMemo(() => {
     const subAgents = agentStatsFromReady?.subAgentsCount || 0;
@@ -147,7 +153,32 @@ const AgentPage = (props: any) => {
         </div>
 
         <div className="list-provider">
-          <span className="current-model">{currentModelName}</span>
+          <span
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              marginRight: isClaudeCLIActive ? "1.5rem" : 0,
+            }}
+          >
+            <span className="current-model">{currentModelName}</span>
+            {isClaudeCLIActive && (
+              <Tag
+                color="cyan"
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -5,
+                  fontSize: 9,
+                  lineHeight: "14px",
+                  padding: "0 4px",
+                  margin: 0,
+                  borderRadius: 4,
+                }}
+              >
+                CLI
+              </Tag>
+            )}
+          </span>
 
           {LLM_PROVIDERS.map((provider) => {
             const isDisabled = !isProviderConfigured(provider);

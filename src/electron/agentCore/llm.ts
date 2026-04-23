@@ -6,6 +6,7 @@ import { ChatOpenRouter } from "@langchain/openrouter";
 import { ILlmSetting, LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { getLlmSetting } from "./utils";
+import { claudeCLIAuth } from "./claudeCLIAuth";
 
 type ProviderConfig = {
   apiKeyField: keyof ILlmSetting | null;
@@ -98,6 +99,30 @@ export const createLLM = async (
   if (llmErr) {
     throw llmErr;
   }
+
+  if (provider === LLMProvider.CLAUDE && llm?.useClaudeCLI) {
+    if (!claudeCLIAuth.isAvailable()) {
+      throw new Error(
+        "Claude CLI credentials not found. Please run: claude auth login",
+      );
+    }
+    const accessToken = await claudeCLIAuth.getAccessToken();
+    const betaHeaders = claudeCLIAuth.getBetaHeaders();
+    const modelName =
+      modelOverride || llm?.[config.modelField] || DEFAULT_LLM_MODELS[provider];
+    return new ChatAnthropic({
+      anthropicApiKey: accessToken,
+      model: modelName as string,
+      temperature,
+      streaming: true,
+      clientOptions: {
+        defaultHeaders: {
+          "anthropic-beta": betaHeaders.join(","),
+        },
+      },
+    });
+  }
+
   const apiKey = config.apiKeyField ? llm?.[config.apiKeyField] || "" : "";
   if (config.apiKeyField && !apiKey) {
     throw new Error(config.keyError!);
@@ -135,6 +160,9 @@ export const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   const [llm, llmErr] = await getLlmSetting();
   if (llmErr) {
     throw llmErr;
+  }
+  if (provider === LLMProvider.CLAUDE && llm?.useClaudeCLI) {
+    return true;
   }
   return !!llm?.[config.apiKeyField];
 };

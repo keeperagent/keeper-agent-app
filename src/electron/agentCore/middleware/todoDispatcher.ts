@@ -14,8 +14,6 @@ const STEP_EXTRA_TOOLS: Record<string, string[]> = {
   code: [
     "task",
     "write_javascript",
-    "execute",
-    "execute_javascript",
     "read_file",
     "write_file",
     "edit_file",

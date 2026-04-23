@@ -69,4 +69,22 @@ const useUpdatePreference = () => {
   return { updatePreference, loading, isSuccess };
 };
 
-export { useGetPreference, useUpdatePreference };
+const useCheckClaudeCLIAvailable = () => {
+  const checkClaudeCLIAvailable = (): Promise<boolean> =>
+    new Promise((resolve) => {
+      const uniqueID = uid(25);
+      window?.electron?.send(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE, { requestId: uniqueID });
+      const handler = (_event: any, payload: any) => {
+        if (payload?.requestId !== uniqueID) {
+          return;
+        }
+        window?.electron?.removeListener(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, handler);
+        resolve(Boolean(payload?.data));
+      };
+      window?.electron?.on(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, handler);
+    });
+
+  return { checkClaudeCLIAvailable };
+};
+
+export { useGetPreference, useUpdatePreference, useCheckClaudeCLIAvailable };

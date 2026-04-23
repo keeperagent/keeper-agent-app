@@ -14,6 +14,7 @@ import { ICampaignProfile, IWallet } from "@/electron/type";
 import { mapNativeTokenName } from "./swapOnKyberswap";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
+import { logEveryWhere } from "@/electron/service/util";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
@@ -221,7 +222,7 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
       const balancesSample = results.slice(0, maxBalances);
       const omittedCount = Math.max(0, results.length - maxBalances);
 
-      return safeStringify({
+      const evmResult = safeStringify({
         chain: capitalizeFirstLetter(chainKey),
         token: resolvedTokenAddress || nativeTokenName,
         tokenType: resolvedTokenAddress ? "ERC20" : nativeTokenName,
@@ -234,5 +235,9 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
         balances: balancesSample,
         omittedCount,
       });
+      logEveryWhere({
+        message: `[get_evm_token_balance] result: ${evmResult}`,
+      });
+      return evmResult;
     },
   });

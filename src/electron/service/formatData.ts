@@ -408,6 +408,7 @@ const formatSetting = (raw: any): ISetting => {
         openRouterModel: parsed.openRouterModel,
         ollamaBaseUrl: parsed.ollamaBaseUrl,
         ollamaModel: parsed.ollamaModel,
+        useClaudeCLI: parsed.useClaudeCLI,
       };
       formatedData.llmSetting = llmSetting;
     } else if (formatedData.type === SETTING_TYPE.DEX_SETTING) {

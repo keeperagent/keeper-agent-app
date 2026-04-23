@@ -6,6 +6,7 @@ import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
 import { keeperMcpServer } from "@/electron/mcpServer/index";
 import { logEveryWhere } from "@/electron/service/util";
 import { LLMProvider } from "@/electron/type";
+import { claudeCLIAuth } from "@/electron/agentCore/claudeCLIAuth";
 import { onIpc } from "./helpers";
 import { recreateAllAgents } from "./appAgent";
 
@@ -87,6 +88,17 @@ export const perferenceController = () => {
           win.setContentProtection(enabled);
         }
       }
+    },
+  );
+
+  onIpc(
+    MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE,
+    MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES,
+    async (event, payload) => {
+      event.reply(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, {
+        data: claudeCLIAuth.isAvailable(),
+        requestId: payload?.requestId,
+      });
     },
   );
 };

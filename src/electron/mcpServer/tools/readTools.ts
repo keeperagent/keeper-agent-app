@@ -26,7 +26,7 @@ const registerReadTools = (server: McpServer) => {
     "search_campaigns",
     {
       description: searchCampaignsInstance.description,
-      inputSchema: searchCampaignsInstance.schema.shape,
+      inputSchema: searchCampaignsInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await searchCampaignsInstance.invoke(args)).toString()),
@@ -37,7 +37,7 @@ const registerReadTools = (server: McpServer) => {
     "search_workflows",
     {
       description: searchWorkflowsInstance.description,
-      inputSchema: searchWorkflowsInstance.schema.shape,
+      inputSchema: searchWorkflowsInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await searchWorkflowsInstance.invoke(args)).toString()),
@@ -48,7 +48,7 @@ const registerReadTools = (server: McpServer) => {
     "check_workflow_status",
     {
       description: checkWorkflowStatusInstance.description,
-      inputSchema: checkWorkflowStatusInstance.schema.shape,
+      inputSchema: checkWorkflowStatusInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await checkWorkflowStatusInstance.invoke(args)).toString()),
@@ -59,7 +59,7 @@ const registerReadTools = (server: McpServer) => {
     "list_agent_schedules",
     {
       description: listAgentSchedulesInstance.description,
-      inputSchema: listAgentSchedulesInstance.schema.shape,
+      inputSchema: listAgentSchedulesInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await listAgentSchedulesInstance.invoke(args)).toString()),
@@ -70,7 +70,7 @@ const registerReadTools = (server: McpServer) => {
     "get_token_price",
     {
       description: getTokenPriceInstance.description,
-      inputSchema: getTokenPriceInstance.schema.shape,
+      inputSchema: getTokenPriceInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await getTokenPriceInstance.invoke(args)).toString()),
@@ -80,12 +80,28 @@ const registerReadTools = (server: McpServer) => {
     "get_solana_token_balance",
     {
       description:
-        "Get SOL or SPL token balances across wallets in a campaign on Solana",
+        "Get SOL or SPL token balance for any Solana wallet address. Provide walletAddresses to query any wallet directly — no campaignId or nodeEndpointGroupId needed. Read-only, no confirmation needed.",
       inputSchema: {
-        campaignId: z.number().describe("Campaign ID containing the wallets"),
+        walletAddresses: z
+          .array(z.string())
+          .optional()
+          .describe("Solana wallet addresses to query"),
+        tokenAddress: z
+          .string()
+          .optional()
+          .describe("SPL mint address, 'SOL', or omit for native SOL balance"),
+        campaignId: z
+          .number()
+          .optional()
+          .describe(
+            "Campaign ID (only needed when walletAddresses is omitted)",
+          ),
         nodeEndpointGroupId: z
           .number()
-          .describe("Node endpoint group ID for Solana RPC connections"),
+          .optional()
+          .describe(
+            "Node endpoint group ID (auto-detected from DB when omitted)",
+          ),
         encryptKey: z
           .string()
           .optional()
@@ -100,20 +116,17 @@ const registerReadTools = (server: McpServer) => {
           .describe(
             "Specific profile IDs to check (when isAllWallet is false)",
           ),
-        tokenAddress: z
-          .string()
-          .optional()
-          .describe("SPL mint address, 'SOL', or omit for native SOL balance"),
-      },
+      } as any,
     },
     async ({
+      walletAddresses,
+      tokenAddress,
       campaignId,
       nodeEndpointGroupId,
       encryptKey,
       isAllWallet,
       listCampaignProfileId,
-      tokenAddress,
-    }) => {
+    }: any) => {
       const toolCtx = new ToolContext();
       toolCtx.update({
         campaignId,
@@ -123,7 +136,8 @@ const registerReadTools = (server: McpServer) => {
         listCampaignProfileId,
       });
       const result = await getSolanaTokenBalanceTool(toolCtx).invoke({
-        tokenAddress,
+        tokenAddress: tokenAddress || "",
+        walletAddresses,
       });
       return wrapText(result.toString());
     },
@@ -164,7 +178,7 @@ const registerReadTools = (server: McpServer) => {
           .describe(
             "ERC-20 token contract address (0x...), or omit for native token balance",
           ),
-      },
+      } as any,
     },
     async ({
       campaignId,
@@ -174,7 +188,7 @@ const registerReadTools = (server: McpServer) => {
       isAllWallet,
       listCampaignProfileId,
       tokenAddress,
-    }) => {
+    }: any) => {
       const toolCtx = new ToolContext();
       toolCtx.update({
         campaignId,
@@ -185,8 +199,11 @@ const registerReadTools = (server: McpServer) => {
         listCampaignProfileId,
       });
       const result = await getEvmTokenBalanceTool(toolCtx).invoke({
-        tokenAddress,
-      });
+        tokenAddress: tokenAddress || "",
+        timeoutMs: 15000,
+        topN: 5,
+        maxWalletsInResponse: 50,
+      } as any);
       return wrapText(result.toString());
     },
   );
@@ -196,7 +213,7 @@ const registerReadTools = (server: McpServer) => {
     "web_search_tavily",
     {
       description: webSearchTavilyInstance.description,
-      inputSchema: webSearchTavilyInstance.schema.shape,
+      inputSchema: webSearchTavilyInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await webSearchTavilyInstance.invoke(args)).toString()),
@@ -207,7 +224,7 @@ const registerReadTools = (server: McpServer) => {
     "web_search_exa",
     {
       description: webSearchExaInstance.description,
-      inputSchema: webSearchExaInstance.schema.shape,
+      inputSchema: webSearchExaInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await webSearchExaInstance.invoke(args)).toString()),
@@ -218,7 +235,7 @@ const registerReadTools = (server: McpServer) => {
     "web_extract_tavily",
     {
       description: webExtractTavilyInstance.description,
-      inputSchema: webExtractTavilyInstance.schema.shape,
+      inputSchema: webExtractTavilyInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await webExtractTavilyInstance.invoke(args)).toString()),
@@ -229,7 +246,7 @@ const registerReadTools = (server: McpServer) => {
     "find_similar_exa",
     {
       description: findSimilarExaInstance.description,
-      inputSchema: findSimilarExaInstance.schema.shape,
+      inputSchema: findSimilarExaInstance.schema.shape as any,
     },
     async (args: any) =>
       wrapText((await findSimilarExaInstance.invoke(args)).toString()),

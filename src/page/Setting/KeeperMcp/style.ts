@@ -28,35 +28,85 @@ export const KeeperMcpWrapper = styled.div`
   flex-direction: column;
   width: 100%;
 
-  .item-wrapper {
+  .section-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+    margin-bottom: 1rem;
+  }
+
+  .server-card {
+    border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+    border-radius: 0.8rem;
+    overflow: hidden;
     margin-bottom: 2rem;
-  }
 
-  .section-title {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
-    margin-bottom: 1.2rem;
-  }
+    .card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 1.6rem;
 
-  .port-row {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+      & + .card-row {
+        border-top: 1px solid
+          ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+      }
 
-    .port-input {
-      width: 14rem;
+      .row-label {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+      }
+
+      .row-control {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+      }
+
+      .port-input {
+        width: 12rem;
+      }
     }
   }
 
-  .status-wrapper {
+  .cli-section {
+    border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+    border-radius: 0.8rem;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 2rem;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+
+    .cli-text {
+      .cli-title {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+        margin-bottom: 0.4rem;
+      }
+
+      .cli-desc {
+        font-size: 1.1rem;
+        color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+      }
+    }
+
+    .cli-button {
+      flex-shrink: 0;
+    }
   }
 
-  .connect-hint {
+  .config-section {
+    margin-bottom: 2rem;
+
     .code-wrapper {
       position: relative;
-      margin-top: 0.8rem;
+      margin-top: 1rem;
 
       .icon {
         position: absolute;
