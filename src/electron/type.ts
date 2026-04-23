@@ -546,6 +546,7 @@ export type INodeEndpointGroup = {
   name?: string;
   note?: string;
   chainType?: string;
+  chainId?: number;
   totalNodeEndpoint?: number;
   createAt?: number;
   updateAt?: number;

@@ -79,8 +79,19 @@ const ChainWrapper = styled.div`
     }
   }
 
+  .chain-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
   .text {
     font-size: 1.2rem;
+  }
+
+  .chain-id {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
   }
 `;
 

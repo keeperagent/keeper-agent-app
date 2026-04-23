@@ -7,6 +7,7 @@ import {
   capitalizeFirstLetter,
 } from "@/electron/agentCore/utils";
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
+import { nodeEndpointGroupDB } from "@/electron/database/nodeEndpointGroup";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
@@ -20,112 +21,154 @@ const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
 const DEFAULT_MAX_WALLETS_IN_RESPONSE = 50;
 
+const resolveEvmNodeProviders = async (
+  chainKey: string,
+  nodeEndpointGroupId?: number,
+): Promise<string[]> => {
+  let groupId = nodeEndpointGroupId;
+
+  if (!groupId) {
+    const resolvedId =
+      await nodeEndpointGroupDB.resolveNodeEndpointGroupIdByChainKey(chainKey);
+    if (!resolvedId) {
+      throw new Error(
+        `No EVM node endpoint group found for chain '${chainKey}'. Please configure one in Node Endpoints settings with an endpoint connected to that chain.`,
+      );
+    }
+    groupId = resolvedId;
+  }
+
+  const [listNodeEndpoint, errList] =
+    await nodeEndpointDB.getListNodeEndpointByGroupId(groupId);
+  if (errList) {
+    throw errList;
+  }
+  return (
+    listNodeEndpoint?.map((node) => node?.endpoint || "")?.filter(Boolean) || []
+  );
+};
+
 export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.GET_EVM_TOKEN_BALANCE,
     description:
-      "Get native or ERC20 token balances across campaign wallets on EVM chains. EVM only — use get_solana_token_balance for Solana. Read-only, no confirmation needed.",
+      "Get native or ERC20 token balance for any EVM wallet address. Only tokenAddress, walletAddresses, and chainKey are needed — do NOT ask for campaignId, nodeEndpointGroupId, or encryptKey. EVM only — use get_solana_token_balance for Solana. Read-only, no confirmation needed.",
     schema: z.object({
+      chainKey: z
+        .string()
+        .describe(
+          "EVM chain key inferred from user message (e.g. 'ethereum', 'bsc', 'base'). Infer from context — never ask the user.",
+        ),
       tokenAddress: z
         .string()
         .describe("ERC20 address or empty for native balance"),
+      walletAddresses: z
+        .array(z.string())
+        .nullish()
+        .describe(
+          "EVM wallet addresses to query, or null to use campaign context",
+        ),
       timeoutMs: z
         .number()
         .positive()
+        .optional()
         .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
+        .optional()
         .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
+        .optional()
         .describe(
           `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
         ),
     }),
     func: async ({
+      chainKey: schemaChainKey,
       tokenAddress: tokenAddressParam,
+      walletAddresses,
       timeoutMs = DEFAULT_TIMEOUT_MS,
       topN = DEFAULT_TOP_N,
       maxWalletsInResponse = DEFAULT_MAX_WALLETS_IN_RESPONSE,
     }) => {
-      const chainKey = toolContext?.chainKey as KYBERSWAP_CHAIN_KEY;
-      const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
+      const chainKey = (schemaChainKey ||
+        toolContext?.chainKey) as KYBERSWAP_CHAIN_KEY;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
-      if (!effectiveCampaignId) {
-        throw new Error(
-          "campaignId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
 
-      if (!effectiveNodeEndpointGroupId) {
-        throw new Error(
-          "nodeEndpointGroupId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
-
-      const [listNodeEndpoint, errList] =
-        await nodeEndpointDB.getListNodeEndpointByGroupId(
-          effectiveNodeEndpointGroupId,
-        );
-      if (errList) throw errList;
-      const listNodeProvider =
-        listNodeEndpoint
-          ?.map((node) => node?.endpoint || "")
-          ?.filter((endpoint) => Boolean(endpoint)) || [];
+      const listNodeProvider = await resolveEvmNodeProviders(
+        chainKey,
+        toolContext?.nodeEndpointGroupId,
+      );
       if (!listNodeProvider.length) {
         throw new Error(
           "The configured node endpoint group has no active endpoints",
         );
       }
 
-      const effectiveIsAllWallet = toolContext?.isAllWallet || false;
-      const effectiveListCampaignProfileId =
-        toolContext?.listCampaignProfileId || [];
+      let wallets: IWallet[] = [];
 
-      // Resolve wallets from campaign profiles
-      let profiles: ICampaignProfile[] = [];
-      if (effectiveIsAllWallet) {
-        const [allProfiles, errAll] =
-          await campaignProfileDB.getAllProfileOfCampaign(
-            effectiveCampaignId,
-            true,
-          );
-        if (errAll) throw errAll;
-        profiles = allProfiles || [];
+      if (walletAddresses && walletAddresses.length > 0) {
+        wallets = walletAddresses.map((address) => ({ address }));
       } else {
-        if (!effectiveListCampaignProfileId.length) {
+        if (!effectiveCampaignId) {
           throw new Error(
-            "listCampaignProfileId is required when isAllWallet is false",
+            "Either walletAddresses or campaignId (via context) is required.",
           );
         }
-        const [resProfiles, errListProfiles] =
-          await campaignProfileDB.getListCampaignProfile({
-            page: 1,
-            pageSize: effectiveListCampaignProfileId.length,
-            campaignId: effectiveCampaignId,
-            listId: effectiveListCampaignProfileId,
-          });
-        if (errListProfiles) throw errListProfiles;
-        profiles = resProfiles?.data || [];
+
+        const effectiveIsAllWallet = toolContext?.isAllWallet || false;
+        const effectiveListCampaignProfileId =
+          toolContext?.listCampaignProfileId || [];
+
+        let profiles: ICampaignProfile[] = [];
+        if (effectiveIsAllWallet) {
+          const [allProfiles, errAll] =
+            await campaignProfileDB.getAllProfileOfCampaign(
+              effectiveCampaignId,
+              true,
+            );
+          if (errAll) {
+            throw errAll;
+          }
+          profiles = allProfiles || [];
+        } else {
+          if (!effectiveListCampaignProfileId.length) {
+            throw new Error(
+              "listCampaignProfileId is required when isAllWallet is false",
+            );
+          }
+          const [resProfiles, errListProfiles] =
+            await campaignProfileDB.getListCampaignProfile({
+              page: 1,
+              pageSize: effectiveListCampaignProfileId.length,
+              campaignId: effectiveCampaignId,
+              listId: effectiveListCampaignProfileId,
+            });
+          if (errListProfiles) {
+            throw errListProfiles;
+          }
+          profiles = resProfiles?.data || [];
+        }
+
+        wallets =
+          profiles
+            ?.map((profile) => {
+              const wallet = profile?.wallet
+                ? decryptWallet(profile?.wallet, effectiveEncryptKey || "")
+                : profile?.wallet;
+              return wallet;
+            })
+            ?.filter((wallet): wallet is IWallet => Boolean(wallet)) || [];
       }
 
-      const wallets: IWallet[] =
-        profiles
-          ?.map((profile) => {
-            const wallet = profile?.wallet
-              ? decryptWallet(profile?.wallet, effectiveEncryptKey || "")
-              : profile?.wallet;
-            return wallet;
-          })
-          ?.filter((wallet): wallet is IWallet => Boolean(wallet)) || [];
-
       if (!wallets.length) {
-        throw new Error("No wallets found for the selected campaign profiles");
+        throw new Error("No wallets found");
       }
 
       // Validate wallet addresses are valid EVM addresses

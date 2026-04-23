@@ -23,6 +23,11 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: null,
       },
+      chainId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
       createAt: { type: DataTypes.INTEGER, allowNull: false },
       updateAt: { type: DataTypes.INTEGER, allowNull: false },
     },

@@ -1,6 +1,9 @@
 import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
 import { CHAIN_TYPE, MESSAGE, RESPONSE_CODE } from "@/electron/constant";
-import { checkNodeEndpointStatus } from "@/electron/service/onchain";
+import {
+  checkNodeEndpointStatus,
+  fetchEvmChainId,
+} from "@/electron/service/onchain";
 import { nodeEndpointGroupDB } from "@/electron/database/nodeEndpointGroup";
 import { onIpc } from "./helpers";
 import type {
@@ -49,6 +52,16 @@ export const nodeEndpointController = () => {
     async (event, payload) => {
       const err = await nodeEndpointDB.createBulkNodeEndpoint(payload?.data);
 
+      if (!err) {
+        const endpoints = payload?.data || [];
+        if (endpoints.length > 0) {
+          await refreshGroupChainId(
+            endpoints[0].groupId,
+            endpoints[0].endpoint || "",
+          );
+        }
+      }
+
       event.reply(MESSAGE.CREATE_NODE_ENDPOINT_RES, {
         error: err,
       });
@@ -71,6 +84,8 @@ export const nodeEndpointController = () => {
         res?.groupId!,
         res?.endpoint || "",
       );
+      await refreshGroupChainId(res?.groupId, res?.endpoint || "");
+
       event.reply(MESSAGE.UPDATE_NODE_ENDPOINT_RES, {
         data: { ...res, isActive },
       });
@@ -108,4 +123,19 @@ const getNodeEndpointStatus = async (
     nodeEndpointGroup?.chainType || CHAIN_TYPE.EVM,
   );
   return isActive;
+};
+
+const refreshGroupChainId = async (
+  groupId: number | undefined,
+  endpoint: string,
+): Promise<void> => {
+  if (!groupId || !endpoint) {
+    return;
+  }
+  const [group] = await nodeEndpointGroupDB.getOneNodeEndpointGroup(groupId);
+  if (group?.chainType !== CHAIN_TYPE.EVM) {
+    return;
+  }
+  const chainId = await fetchEvmChainId(endpoint);
+  await nodeEndpointGroupDB.updateGroupChainId(groupId, chainId);
 };

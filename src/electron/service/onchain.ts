@@ -9,7 +9,7 @@ import { logEveryWhere } from "./util";
 // Check the status of the node provider
 const checkNodeEndpointStatus = async (
   nodeEndpoint: string,
-  chainType: string
+  chainType: string,
 ): Promise<boolean> => {
   if (chainType === CHAIN_TYPE.EVM) {
     return await checkEVMNodeEndpointStatus(nodeEndpoint);
@@ -25,7 +25,7 @@ const checkNodeEndpointStatus = async (
 };
 
 const checkEVMNodeEndpointStatus = async (
-  nodeEndpoint: string
+  nodeEndpoint: string,
 ): Promise<boolean> => {
   try {
     const provider = new ethers.providers.JsonRpcProvider(nodeEndpoint);
@@ -33,13 +33,15 @@ const checkEVMNodeEndpointStatus = async (
     await sendWithTimeout(resultPromise, 5000);
     return true;
   } catch (error: any) {
-    logEveryWhere({ message: `checkNodeEndpointStatus() error: ${error?.message}` });
+    logEveryWhere({
+      message: `checkNodeEndpointStatus() error: ${error?.message}`,
+    });
     return false;
   }
 };
 
 const checkAptosNodeEndpointStatus = async (
-  nodeEndpoint: string
+  nodeEndpoint: string,
 ): Promise<boolean> => {
   try {
     const config = new AptosConfig({
@@ -52,13 +54,15 @@ const checkAptosNodeEndpointStatus = async (
     await sendWithTimeout(resultPromise, 5000);
     return true;
   } catch (error: any) {
-    logEveryWhere({ message: `checkAptosNodeEndpointStatus() error: ${error?.message}` });
+    logEveryWhere({
+      message: `checkAptosNodeEndpointStatus() error: ${error?.message}`,
+    });
     return false;
   }
 };
 
 const checkSuiNodeEndpointStatus = async (
-  nodeEndpoint: string
+  nodeEndpoint: string,
 ): Promise<boolean> => {
   try {
     const provider = new SuiClient({
@@ -68,13 +72,15 @@ const checkSuiNodeEndpointStatus = async (
     await sendWithTimeout(resultPromise, 5000);
     return true;
   } catch (error: any) {
-    logEveryWhere({ message: `checkSuiNodeEndpointStatus() error: ${error?.message}` });
+    logEveryWhere({
+      message: `checkSuiNodeEndpointStatus() error: ${error?.message}`,
+    });
     return false;
   }
 };
 
 const checkSolanaNodeEndpointStatus = async (
-  nodeEndpoint: string
+  nodeEndpoint: string,
 ): Promise<boolean> => {
   try {
     const provider = new Connection(nodeEndpoint);
@@ -82,9 +88,22 @@ const checkSolanaNodeEndpointStatus = async (
     await sendWithTimeout(resultPromise, 5000);
     return true;
   } catch (error: any) {
-    logEveryWhere({ message: `checkSolanaNodeEndpointStatus() error: ${error?.message}` });
+    logEveryWhere({
+      message: `checkSolanaNodeEndpointStatus() error: ${error?.message}`,
+    });
     return false;
   }
 };
 
-export { checkNodeEndpointStatus };
+const fetchEvmChainId = async (nodeEndpoint: string): Promise<number> => {
+  try {
+    const provider = new ethers.providers.JsonRpcProvider(nodeEndpoint);
+    const network = await sendWithTimeout(provider.getNetwork(), 5000);
+    return network?.chainId || 0;
+  } catch (error: any) {
+    logEveryWhere({ message: `fetchEvmChainId() error: ${error?.message}` });
+    return 0;
+  }
+};
+
+export { checkNodeEndpointStatus, fetchEvmChainId };
