@@ -52,19 +52,19 @@ export const nodeEndpointController = () => {
     async (event, payload) => {
       const err = await nodeEndpointDB.createBulkNodeEndpoint(payload?.data);
 
-      event.reply(MESSAGE.CREATE_NODE_ENDPOINT_RES, {
-        error: err,
-      });
-
       if (!err) {
         const endpoints = payload?.data || [];
         if (endpoints.length > 0) {
-          refreshGroupChainId(
+          await refreshGroupChainId(
             endpoints[0].groupId,
             endpoints[0].endpoint || "",
           );
         }
       }
+
+      event.reply(MESSAGE.CREATE_NODE_ENDPOINT_RES, {
+        error: err,
+      });
     },
   );
 
@@ -84,11 +84,11 @@ export const nodeEndpointController = () => {
         res?.groupId!,
         res?.endpoint || "",
       );
+      await refreshGroupChainId(res?.groupId, res?.endpoint || "");
+
       event.reply(MESSAGE.UPDATE_NODE_ENDPOINT_RES, {
         data: { ...res, isActive },
       });
-
-      refreshGroupChainId(res?.groupId, res?.endpoint || "");
     },
   );
 

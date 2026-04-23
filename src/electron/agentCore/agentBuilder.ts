@@ -10,6 +10,8 @@ import { z } from "zod/v4";
 import path from "path";
 import fs from "fs-extra";
 import { getWorkspaceDir, getMemoryDir } from "@/electron/service/agentSkill";
+import { LLMProvider, IAgentProfile } from "@/electron/type";
+import { EVM_CHAIN_ID, CHAIN_KEY_ALIASES } from "@/electron/constant";
 import {
   createWalletGroupTool,
   generateWalletsForGroupTool,
@@ -64,7 +66,6 @@ import {
 } from "./baseTool/agentMailbox";
 
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
-import { LLMProvider, IAgentProfile } from "@/electron/type";
 import { ToolContext } from "./toolContext";
 
 export const DEFAULT_MEMORY_FILE = "AGENT.md";
@@ -532,8 +533,13 @@ export const buildBaseSubAgents = (
         "- Any other chainKey (ethereum, bsc, base, etc.) → use get_evm_token_balance\n" +
         "get_token_price works for all chains — pass chainKey and tokenAddress (empty string '' for native token price).\n\n" +
         "## Valid chainKey values (normalize user input to these)\n" +
-        "ethereum (Ethereum, Eth), bsc (BNB/Binance/BSC), polygon, arbitrum, optimism, avalanche (Avalanche, Avax), " +
-        "base, zksync, linea, scroll, mantle, blast, sonic, unichain, berachain, ronin.\n\n" +
+        Object.keys(EVM_CHAIN_ID)
+          .map((chainKey) => {
+            const aliases = CHAIN_KEY_ALIASES[chainKey];
+            return aliases ? `${chainKey} (${aliases.join("/")})` : chainKey;
+          })
+          .join(", ") +
+        ".\n\n" +
         "## Calculator — ALWAYS use for arithmetic\n" +
         "NEVER do arithmetic mentally. Always call `calculate` for any numeric computation:\n" +
         "- USD → native: calculate('usdAmount / nativePrice') e.g. calculate('0.1 / 86.24') → 0.001160 SOL\n" +

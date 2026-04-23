@@ -1131,6 +1131,15 @@ export const EVM_CHAIN_ID: Record<string, number> = {
   [KYBERSWAP_CHAIN_KEY.UNICHAIN]: 130,
   [KYBERSWAP_CHAIN_KEY.BERACHAIN]: 80094,
   [KYBERSWAP_CHAIN_KEY.RONIN]: 2020,
+  [KYBERSWAP_CHAIN_KEY.MONAD]: 143,
+  [KYBERSWAP_CHAIN_KEY.PLASMA]: 9745,
+  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: 999,
+};
+
+export const CHAIN_KEY_ALIASES: Partial<Record<string, string[]>> = {
+  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: ["Ethereum", "Eth"],
+  [KYBERSWAP_CHAIN_KEY.BSC]: ["BNB", "Binance", "BSC"],
+  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: ["Avalanche", "Avax"],
 };
 
 export const TOOL_KEYS = {

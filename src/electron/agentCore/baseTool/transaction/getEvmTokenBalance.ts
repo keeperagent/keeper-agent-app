@@ -64,21 +64,26 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
         .describe("ERC20 address or empty for native balance"),
       walletAddresses: z
         .array(z.string())
-        .nullable()
-        .describe("EVM wallet addresses to query, or null to use campaign context"),
+        .nullish()
+        .describe(
+          "EVM wallet addresses to query, or null to use campaign context",
+        ),
       timeoutMs: z
         .number()
         .positive()
+        .optional()
         .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
+        .optional()
         .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
+        .optional()
         .describe(
           `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
         ),
