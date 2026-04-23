@@ -393,6 +393,17 @@ const AgentChatView = ({
   }, [messages, loading]);
 
   useEffect(() => {
+    const handleChartReady = () => {
+      conversationEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    };
+    window.addEventListener("chart-ready", handleChartReady);
+    return () => window.removeEventListener("chart-ready", handleChartReady);
+  }, []);
+
+  useEffect(() => {
     if (hasPlanReview && !prevHasPlanReviewRef.current) {
       planReviewRef.current?.scrollIntoView({
         behavior: "smooth",
