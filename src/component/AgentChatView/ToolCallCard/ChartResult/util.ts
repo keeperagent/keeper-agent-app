@@ -350,13 +350,19 @@ const applyCandlestickTheme = (option: any): void => {
       return;
     }
     seriesItem.data.forEach((point: any) => {
-      if (Array.isArray(point)) {
-        if (typeof point[2] === "number") {
-          allLows.push(point[2]);
-        }
-        if (typeof point[3] === "number") {
-          allHighs.push(point[3]);
-        }
+      const values = Array.isArray(point)
+        ? point
+        : point && Array.isArray(point.value)
+          ? point.value
+          : null;
+      if (!values) {
+        return;
+      }
+      if (typeof values[2] === "number") {
+        allLows.push(values[2]);
+      }
+      if (typeof values[3] === "number") {
+        allHighs.push(values[3]);
       }
     });
   });

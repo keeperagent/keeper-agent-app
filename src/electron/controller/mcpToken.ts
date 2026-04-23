@@ -142,8 +142,12 @@ export const mcpTokenController = () => {
         };
 
         const tmpPath = `${claudeConfigPath}.tmp`;
-        fs.writeFileSync(tmpPath, JSON.stringify(updated, null, 2), "utf-8");
+        fs.writeFileSync(tmpPath, JSON.stringify(updated, null, 2), {
+          encoding: "utf-8",
+          mode: 0o600,
+        });
         fs.renameSync(tmpPath, claudeConfigPath);
+        fs.chmodSync(claudeConfigPath, 0o600);
 
         event.reply(MESSAGE.INSTALL_TO_CLAUDE_CODE_RES, { data: true });
       } catch (err: any) {

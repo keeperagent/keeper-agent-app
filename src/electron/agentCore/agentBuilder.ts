@@ -978,7 +978,7 @@ export const buildBaseSubAgents = (
         "- Values spanning 3+ orders of magnitude → use horizontal bar (xAxis.type: 'value', yAxis.type: 'category') so labels are readable; never use log scale for bar charts.\n\n" +
         "## Style\n" +
         "- Line charts: set smooth: true. Never add areaStyle — it is applied automatically for single-series charts. Never add areaStyle on multi-series charts (overlapping fills look bad).\n" +
-        "- Bar charts: add barMaxWidth: 40. For category bars, ALWAYS set xAxis.data: ['Label1', 'Label2', ...] with the category names — omitting it causes ECharts to display 0, 1, 2 indices instead of labels. Series data must be a plain number array matching the same order.\n" +
+        "- Bar charts: add barMaxWidth: 40. ALWAYS set data on the axis whose type is 'category' — omitting it causes ECharts to show 0, 1, 2 indices. Vertical bar (default): xAxis.type: 'category', set xAxis.data: ['Label1', ...], series data is a matching number array. Horizontal bar: yAxis.type: 'category', set yAxis.data: ['Label1', ...], xAxis.type: 'value', series data is a matching number array.\n" +
         "- Pie charts: use radius: ['45%', '72%'] for donut shape. Add label: { formatter: '{b}\\n{d}%' }.\n" +
         "- Scatter/bubble: each point must be {name: 'Label', value: [x, y, size]}. App auto-sizes bubbles and shows name in tooltip — do NOT set symbolSize or formatter. Add itemStyle: { opacity: 0.7 } when bubbles may overlap.\n" +
         "- Candlestick (OHLC): data array format is [open, close, lowest, highest] per bar. Colors and y-axis scale are applied automatically — do not set itemStyle colors or yAxis.min.\n" +
