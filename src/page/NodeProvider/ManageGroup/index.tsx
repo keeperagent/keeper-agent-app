@@ -73,7 +73,7 @@ const renderColumns = (
     title: translate("wallet.blockchainType"),
     dataIndex: "chainType",
     width: "20%",
-    render: (chainType: string) => {
+    render: (chainType: string, record: INodeEndpointGroup) => {
       chainType = chainType || CHAIN_TYPE.EVM;
 
       return (
@@ -81,11 +81,20 @@ const renderColumns = (
           <div className="icon">
             <img src={getChainImg(chainType)} alt="" />
           </div>
-          <span className="text">
-            {(
-              _.find(getChainConfig(locale), { key: chainType }) as IChainConfig
-            )?.name || EMPTY_STRING}
-          </span>
+
+          <div className="chain-info">
+            <span className="text">
+              {(
+                _.find(getChainConfig(locale), {
+                  key: chainType,
+                }) as IChainConfig
+              )?.name || EMPTY_STRING}
+            </span>
+
+            {record?.chainId && record.chainId > 0 ? (
+              <span className="chain-id">Chain ID: {record.chainId}</span>
+            ) : null}
+          </div>
         </ChainWrapper>
       );
     },

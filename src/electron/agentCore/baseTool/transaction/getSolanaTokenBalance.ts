@@ -31,11 +31,16 @@ const resolveNodeProviders = async (
   }
 
   const [groupsRes, errGroups] =
-    await nodeEndpointGroupDB.getListNodeEndpointGroup(1, 30);
-  if (errGroups) throw errGroups;
-  const solanaGroup = (groupsRes?.data || []).find(
-    (group) => group.chainType === CHAIN_TYPE.SOLANA,
-  );
+    await nodeEndpointGroupDB.getListNodeEndpointGroup(
+      1,
+      5,
+      undefined,
+      CHAIN_TYPE.SOLANA,
+    );
+  if (errGroups) {
+    throw errGroups;
+  }
+  const solanaGroup = groupsRes?.data?.[0];
   if (!solanaGroup?.id) {
     throw new Error(
       "No Solana node endpoint group found. Please configure one in Node Endpoints settings.",
@@ -61,24 +66,23 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
         .describe("SPL mint address or empty for native SOL"),
       walletAddresses: z
         .array(z.string())
-        .optional()
-        .describe("Solana wallet addresses to query"),
+        .nullable()
+        .describe(
+          "Solana wallet addresses to query, or null to use campaign context",
+        ),
       timeoutMs: z
         .number()
         .positive()
-        .default(DEFAULT_TIMEOUT_MS)
         .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
       topN: z
         .number()
         .positive()
         .max(100)
-        .default(DEFAULT_TOP_N)
         .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
       maxWalletsInResponse: z
         .number()
         .positive()
         .max(100)
-        .default(DEFAULT_MAX_WALLETS_IN_RESPONSE)
         .describe(
           `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
         ),

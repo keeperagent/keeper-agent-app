@@ -182,6 +182,7 @@ Stop if you notice these thoughts forming:
 - Do all arithmetic internally. Never show intermediate calculations in text.
 - Text output before a tool call is always wrong — no exceptions.
 - Clarifying questions follow the rules in the "Clarify before planning" section — they are NOT an exception to the no-preamble rule.
+- Use markdown. Present structured numeric data in tables. Show calculations explicitly.
 
 ## Clarify before planning
 Only ask when a required parameter is completely absent from both the user's message AND CURRENT CONTEXT AND cannot be inferred. CURRENT CONTEXT fields are pre-filled and already confirmed — never ask about them.
@@ -530,6 +531,9 @@ export const buildBaseSubAgents = (
         "- chainKey = 'solana' → use get_solana_token_balance for balances\n" +
         "- Any other chainKey (ethereum, bsc, base, etc.) → use get_evm_token_balance\n" +
         "get_token_price works for all chains — pass chainKey and tokenAddress (empty string '' for native token price).\n\n" +
+        "## Valid chainKey values (normalize user input to these)\n" +
+        "ethereum (Ethereum, Eth), bsc (BNB/Binance/BSC), polygon, arbitrum, optimism, avalanche (Avalanche, Avax), " +
+        "base, zksync, linea, scroll, mantle, blast, sonic, unichain, berachain, ronin.\n\n" +
         "## Calculator — ALWAYS use for arithmetic\n" +
         "NEVER do arithmetic mentally. Always call `calculate` for any numeric computation:\n" +
         "- USD → native: calculate('usdAmount / nativePrice') e.g. calculate('0.1 / 86.24') → 0.001160 SOL\n" +
@@ -540,7 +544,7 @@ export const buildBaseSubAgents = (
         "- Read-only — no approval needed, call tools immediately.\n" +
         "- Return all requested data clearly: prices in USD, balances per wallet, calculated amounts.\n" +
         "- On tool failure: report the error immediately — do not retry.\n" +
-        "- Keep responses concise.",
+        "- Keep responses concise. Use markdown. Present structured numeric data in tables. Show calculations explicitly.",
       middleware: [
         createAllowlistToolsMiddleware(
           new Set(queryTools.map((tool: any) => tool.name)),

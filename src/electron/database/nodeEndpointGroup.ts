@@ -4,6 +4,7 @@ import { nodeEndpointDB } from "./nodeEndpoint";
 import { INodeEndpointGroup, IGetListResponse } from "@/electron/type";
 import { NodeEndpointGroupModel } from "./index";
 import { logEveryWhere } from "@/electron/service/util";
+import { EVM_CHAIN_ID } from "@/electron/constant";
 
 class NodeEndpointGroupDB {
   async totalData(): Promise<[number | null, Error | null]> {
@@ -18,17 +19,23 @@ class NodeEndpointGroupDB {
     page: number,
     pageSize: number,
     searchText?: string,
+    chainType?: string,
   ): Promise<[IGetListResponse<INodeEndpointGroup> | null, Error | null]> {
     try {
-      const condition = {
-        [Op.and]: searchText
-          ? {
-              [Op.or]: [
-                { name: { [Op.like]: `%${searchText}%` } },
-                { note: { [Op.like]: `%${searchText}%` } },
-              ],
-            }
-          : {},
+      const condition: any = {
+        [Op.and]: [
+          ...(searchText
+            ? [
+                {
+                  [Op.or]: [
+                    { name: { [Op.like]: `%${searchText}%` } },
+                    { note: { [Op.like]: `%${searchText}%` } },
+                  ],
+                },
+              ]
+            : []),
+          ...(chainType ? [{ chainType }] : []),
+        ],
       };
       const totalDataAwait = NodeEndpointGroupModel.count({ where: condition });
       const listDataAwait = NodeEndpointGroupModel.findAll({
@@ -59,7 +66,9 @@ class NodeEndpointGroupDB {
       const totalPage = Math.ceil(totalData / Number(pageSize));
       return [{ data: listData, totalData, page, pageSize, totalPage }, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListNodeEndpointGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListNodeEndpointGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -87,7 +96,9 @@ class NodeEndpointGroupDB {
 
       return [nodeEndpointGroup, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getOneNodeEndpointGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getOneNodeEndpointGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -106,7 +117,9 @@ class NodeEndpointGroupDB {
       );
       return [data?.toJSON(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `createNodeEndpointGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `createNodeEndpointGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -124,7 +137,9 @@ class NodeEndpointGroupDB {
 
       return this.getOneNodeEndpointGroup(group?.id!);
     } catch (err: any) {
-      logEveryWhere({ message: `updateNodeEndpointGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `updateNodeEndpointGroup() error: ${err?.message}`,
+      });
       return [null, err];
     }
   }
@@ -138,8 +153,43 @@ class NodeEndpointGroupDB {
       });
       return [data, null];
     } catch (err: any) {
-      logEveryWhere({ message: `deleteNodeEndpointGroup() error: ${err?.message}` });
+      logEveryWhere({
+        message: `deleteNodeEndpointGroup() error: ${err?.message}`,
+      });
       return [null, err];
+    }
+  }
+
+  async updateGroupChainId(groupId: number, chainId: number): Promise<void> {
+    try {
+      await NodeEndpointGroupModel.update(
+        { chainId, updateAt: new Date().getTime() },
+        { where: { id: groupId } },
+      );
+    } catch (err: any) {
+      logEveryWhere({ message: `updateGroupChainId() error: ${err?.message}` });
+    }
+  }
+
+  async resolveNodeEndpointGroupIdByChainKey(
+    chainKey: string,
+  ): Promise<number | null> {
+    const chainId = EVM_CHAIN_ID[chainKey.toLowerCase()];
+    if (!chainId) {
+      return null;
+    }
+
+    try {
+      const group: any = await NodeEndpointGroupModel.findOne({
+        where: { chainId },
+        raw: true,
+      });
+      return group?.id || null;
+    } catch (err: any) {
+      logEveryWhere({
+        message: `resolveNodeEndpointGroupIdByChainKey() error: ${err?.message}`,
+      });
+      return null;
     }
   }
 }

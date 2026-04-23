@@ -138,7 +138,10 @@ const registerReadTools = (server: McpServer) => {
       const result = await getSolanaTokenBalanceTool(toolCtx).invoke({
         tokenAddress: tokenAddress || "",
         walletAddresses,
-      });
+        timeoutMs: 15000,
+        topN: 5,
+        maxWalletsInResponse: 50,
+      } as any);
       return wrapText(result.toString());
     },
   );
@@ -147,16 +150,35 @@ const registerReadTools = (server: McpServer) => {
     "get_evm_token_balance",
     {
       description:
-        "Get native or ERC-20 token balances across wallets in a campaign on EVM chains",
+        "Get native or ERC-20 token balance for any EVM wallet address. Provide walletAddresses to query any wallet directly — no campaignId or nodeEndpointGroupId needed. Read-only, no confirmation needed.",
       inputSchema: {
-        campaignId: z.number().describe("Campaign ID containing the wallets"),
-        nodeEndpointGroupId: z
-          .number()
-          .describe("Node endpoint group ID for EVM RPC connections"),
+        walletAddresses: z
+          .array(z.string())
+          .optional()
+          .describe("EVM wallet addresses to query"),
+        tokenAddress: z
+          .string()
+          .optional()
+          .describe(
+            "ERC-20 token contract address (0x...), or omit for native token balance",
+          ),
         chainKey: z
           .string()
+          .optional()
           .describe(
-            "EVM chain key (e.g. 'ethereum', 'bsc', 'base', 'arbitrum', 'polygon')",
+            "EVM chain key inferred from context (e.g. 'ethereum', 'bsc', 'base', 'arbitrum', 'polygon'). Infer from context — never ask the user.",
+          ),
+        campaignId: z
+          .number()
+          .optional()
+          .describe(
+            "Campaign ID (only needed when walletAddresses is omitted)",
+          ),
+        nodeEndpointGroupId: z
+          .number()
+          .optional()
+          .describe(
+            "Node endpoint group ID (auto-detected from DB when omitted)",
           ),
         encryptKey: z
           .string()
@@ -172,22 +194,17 @@ const registerReadTools = (server: McpServer) => {
           .describe(
             "Specific profile IDs to check (when isAllWallet is false)",
           ),
-        tokenAddress: z
-          .string()
-          .optional()
-          .describe(
-            "ERC-20 token contract address (0x...), or omit for native token balance",
-          ),
       } as any,
     },
     async ({
+      walletAddresses,
+      tokenAddress,
+      chainKey,
       campaignId,
       nodeEndpointGroupId,
-      chainKey,
       encryptKey,
       isAllWallet,
       listCampaignProfileId,
-      tokenAddress,
     }: any) => {
       const toolCtx = new ToolContext();
       toolCtx.update({
@@ -199,7 +216,9 @@ const registerReadTools = (server: McpServer) => {
         listCampaignProfileId,
       });
       const result = await getEvmTokenBalanceTool(toolCtx).invoke({
+        chainKey: chainKey || "",
         tokenAddress: tokenAddress || "",
+        walletAddresses,
         timeoutMs: 15000,
         topN: 5,
         maxWalletsInResponse: 50,
