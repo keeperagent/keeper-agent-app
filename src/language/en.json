@@ -918,7 +918,7 @@
   "setting.useClaudeCLI": "Use Claude CLI auth",
   "setting.useClaudeCLITooltip": "Use your existing Claude Pro/Team/Max subscription via claude auth login instead of an API key",
   "setting.useClaudeCLIActive": "Authenticated via Claude CLI",
-  "setting.useClaudeCLINotAvailable": "Claude CLI not found. Please install Claude Code and run: claude auth login",
+  "setting.useClaudeCLINotAvailable": "Claude CLI credentials not found or not authenticated. Please run: claude auth login",
   "setting.general": "General",
   "setting.database": "Database",
   "setting.keeperMcp": "Keeper MCP",

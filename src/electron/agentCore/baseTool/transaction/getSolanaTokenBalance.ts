@@ -93,10 +93,6 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
 
-      logEveryWhere({
-        message: `[get_solana_token_balance] input: tokenAddressParam="${tokenAddressParam}" walletAddresses=${JSON.stringify(walletAddresses)} toolContext.tokenAddress="${toolContext?.tokenAddress}" campaignId=${effectiveCampaignId}`,
-      });
-
       // Resolve node providers — fall back to first Solana group in DB
       const listNodeProvider = await resolveNodeProviders(
         toolContext?.nodeEndpointGroupId,

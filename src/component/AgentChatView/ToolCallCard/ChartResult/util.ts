@@ -68,15 +68,27 @@ export const forceAxisTheme = (
     return axisConfig;
   }
 
+  const rawFormatter = axisConfig.axisLabel?.formatter;
   const agentFormatter =
-    typeof axisConfig.axisLabel?.formatter === "function"
-      ? axisConfig.axisLabel.formatter
-      : null;
-  const sample = isYAxis && agentFormatter ? agentFormatter(1000) : null;
-  const detectedPrefix =
-    typeof sample === "string" && /^[^0-9-]/.test(sample)
-      ? sample.charAt(0)
-      : "";
+    typeof rawFormatter === "function" ? rawFormatter : null;
+
+  let yAxisFormatter: ((value: number) => string) | undefined;
+  if (isYAxis) {
+    if (typeof rawFormatter === "string" && rawFormatter.includes("{value}")) {
+      const parts = rawFormatter.split("{value}");
+      const prefix = parts[0];
+      const suffix = parts[1] || "";
+      yAxisFormatter = (value: number) =>
+        prefix + compactNumber(value) + suffix;
+    } else {
+      const sample = agentFormatter ? agentFormatter(1000) : null;
+      const detectedPrefix =
+        typeof sample === "string" && /^[^0-9-]/.test(sample)
+          ? sample.charAt(0)
+          : "";
+      yAxisFormatter = (value: number) => detectedPrefix + compactNumber(value);
+    }
+  }
 
   return {
     ...axisConfig,
@@ -84,9 +96,7 @@ export const forceAxisTheme = (
       fontSize: 11,
       ...axisConfig.axisLabel,
       color: theme.subText,
-      ...(isYAxis && {
-        formatter: (value: number) => detectedPrefix + compactNumber(value),
-      }),
+      ...(isYAxis && { formatter: yAxisFormatter }),
     },
     axisLine: { show: false },
     axisTick: { show: false },
@@ -355,7 +365,7 @@ const applyCandlestickTheme = (option: any): void => {
     const dataMin = Math.min(...allLows);
     const dataMax = Math.max(...(allHighs.length > 0 ? allHighs : allLows));
     const padding = (dataMax - dataMin) * 0.3;
-    const paddedMin = dataMin - padding;
+    const paddedMin = Math.max(0, dataMin - padding);
 
     if (Array.isArray(option.yAxis)) {
       option.yAxis = option.yAxis.map((axis: any, index: number) =>

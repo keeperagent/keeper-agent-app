@@ -116,11 +116,17 @@ export const mcpTokenController = () => {
         }
 
         const claudeConfigPath = path.join(os.homedir(), ".claude.json");
+
         let existing: Record<string, any> = {};
         if (fs.existsSync(claudeConfigPath)) {
+          const raw = fs.readFileSync(claudeConfigPath, "utf-8");
           try {
-            existing = JSON.parse(fs.readFileSync(claudeConfigPath, "utf-8"));
-          } catch {}
+            existing = JSON.parse(raw);
+          } catch (parseErr: any) {
+            throw new Error(
+              `Claude config file is not valid JSON and cannot be updated safely. Please fix ${claudeConfigPath} manually. Error: ${parseErr?.message}`,
+            );
+          }
         }
 
         const updated = {
@@ -135,11 +141,9 @@ export const mcpTokenController = () => {
           },
         };
 
-        fs.writeFileSync(
-          claudeConfigPath,
-          JSON.stringify(updated, null, 2),
-          "utf-8",
-        );
+        const tmpPath = `${claudeConfigPath}.tmp`;
+        fs.writeFileSync(tmpPath, JSON.stringify(updated, null, 2), "utf-8");
+        fs.renameSync(tmpPath, claudeConfigPath);
 
         event.reply(MESSAGE.INSTALL_TO_CLAUDE_CODE_RES, { data: true });
       } catch (err: any) {
