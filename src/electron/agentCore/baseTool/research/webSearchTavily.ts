@@ -23,22 +23,9 @@ export const webSearchTavilyTool = () =>
         .describe(
           "Concise search-engine keywords — not a full sentence or question",
         ),
-      maxResults: z
-        .number()
-        .positive()
-        .default(MAX_RESULTS)
-        .optional()
-        .describe("Maximum number of results to return (default 5)"),
-      searchDepth: z
-        .enum(["basic", "advanced"])
-        .default("basic")
-        .optional()
-        .describe(
-          "'basic' for simple factual queries (faster); 'advanced' for deep research",
-        ),
     }),
     func: async (input) => {
-      const { query, maxResults = MAX_RESULTS, searchDepth = "basic" } = input;
+      const { query } = input;
       try {
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.tavilyApiKey || null;
@@ -52,9 +39,9 @@ export const webSearchTavilyTool = () =>
 
         const rawData = await wrapper.rawResults({
           query,
-          maxResults,
+          maxResults: MAX_RESULTS,
           includeAnswer: true,
-          searchDepth,
+          searchDepth: "basic",
         } as any);
 
         // Answer field first — LLM should read this before scanning individual results

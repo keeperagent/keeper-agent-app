@@ -64,9 +64,9 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
         .describe("ERC20 address or empty for native balance"),
       walletAddresses: z
         .array(z.string())
-        .nullable()
+        .nullish()
         .describe(
-          "EVM wallet addresses to query, or null to use campaign context",
+          "EVM wallet addresses to query, or null/undefined to use campaign context",
         ),
     }),
     func: async ({
@@ -74,8 +74,13 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
       tokenAddress: tokenAddressParam,
       walletAddresses,
     }) => {
-      const chainKey = (toolContext?.chainKey ||
-        schemaChainKey) as KYBERSWAP_CHAIN_KEY;
+      const resolvedChainKey = schemaChainKey || toolContext?.chainKey;
+      const validChainKeys = Object.values(KYBERSWAP_CHAIN_KEY) as string[];
+      if (!resolvedChainKey || !validChainKeys.includes(resolvedChainKey)) {
+        return `Error: invalid or missing chainKey "${resolvedChainKey}". Valid values: ${validChainKeys.join(", ")}.`;
+      }
+
+      const chainKey = resolvedChainKey as KYBERSWAP_CHAIN_KEY;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
 

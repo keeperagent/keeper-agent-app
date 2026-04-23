@@ -432,9 +432,17 @@ const SecretWarning = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
   font-size: 12px;
   color: var(--color-text-secondary, #666);
+`;
+
+const ComposerMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 6px;
+  width: 100%;
 `;
 
 export {
@@ -445,4 +453,5 @@ export {
   ExecutingToolBadge,
   ComposerStatus,
   SecretWarning,
+  ComposerMeta,
 };

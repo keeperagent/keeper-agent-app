@@ -719,23 +719,6 @@ class AgentChatBridge {
           });
         }
 
-        // Log input size before each LLM call (fires even if the call errors out)
-        if (evt.event === "on_chat_model_start") {
-          const isSubagent = String(
-            evt.metadata?.langgraph_checkpoint_ns || "",
-          ).includes("|");
-          const messages: any[] = evt.data?.input?.messages?.flat() || [];
-          const approxChars = messages.reduce((sum: number, msg: any) => {
-            const content = msg?.content || msg?.kwargs?.content || "";
-            return (
-              sum +
-              (typeof content === "string"
-                ? content.length
-                : JSON.stringify(content).length)
-            );
-          }, 0);
-        }
-
         // Model end — flush buffered text if no tool calls, discard if preamble.
         // No namespace filter here — the buffer only contains text from top-level
         // stream events that passed the "|" filter, so subagent end events will

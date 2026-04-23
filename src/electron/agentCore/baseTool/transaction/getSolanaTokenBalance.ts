@@ -66,9 +66,9 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
         .describe("SPL mint address or empty for native SOL"),
       walletAddresses: z
         .array(z.string())
-        .nullable()
+        .nullish()
         .describe(
-          "Solana wallet addresses to query, or null to use campaign context",
+          "Solana wallet addresses to query, or null/undefined to use campaign context",
         ),
     }),
     func: async ({ tokenAddress: tokenAddressParam, walletAddresses }) => {

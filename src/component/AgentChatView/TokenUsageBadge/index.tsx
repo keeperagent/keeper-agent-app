@@ -23,6 +23,11 @@ const TokenUsageBadge = ({ turnUsage }: Props) => {
     return null;
   }
 
+  const billedInputTokens = Math.max(
+    0,
+    turnUsage.inputTokens - turnUsage.cacheRead,
+  );
+
   const cacheHitRate =
     turnUsage.inputTokens > 0
       ? Math.round((turnUsage.cacheRead / turnUsage.inputTokens) * 100)
@@ -34,7 +39,7 @@ const TokenUsageBadge = ({ turnUsage }: Props) => {
         <span className="usage-item">
           In
           <AnimatedNumber
-            animateToNumber={turnUsage.inputTokens}
+            animateToNumber={billedInputTokens}
             includeComma
             fontStyle={NUMBER_FONT_STYLE}
           />

@@ -21,6 +21,7 @@ import {
   ExecutingToolBadge,
   ComposerStatus,
   SecretWarning,
+  ComposerMeta,
 } from "./style";
 import TokenUsageBadge from "./TokenUsageBadge";
 import { type AttachedFile } from "./AttachedFiles";
@@ -646,19 +647,21 @@ const AgentChatView = ({
           </ComposerStatus>
         )}
 
-        {secretWarning && (
-          <SecretWarning>
-            <span>{translate("agent.secretDetectedWarning")}</span>
-          </SecretWarning>
-        )}
+        <ComposerMeta>
+          {turnUsage && <TokenUsageBadge turnUsage={turnUsage} />}
 
-        {warning && (
-          <SecretWarning>
-            <span>{warning}</span>
-          </SecretWarning>
-        )}
+          {secretWarning && (
+            <SecretWarning>
+              <span>{translate("agent.secretDetectedWarning")}</span>
+            </SecretWarning>
+          )}
 
-        <TokenUsageBadge turnUsage={turnUsage || null} />
+          {warning && (
+            <SecretWarning>
+              <span>{warning}</span>
+            </SecretWarning>
+          )}
+        </ComposerMeta>
 
         <ChatComposer
           value={draftMessage}

@@ -1306,7 +1306,7 @@
   "agent.addFilesOrPhotos": "Add files or photos",
   "agent.removeAttachment": "Remove attachment",
   "agent.dropFilesHere": "Drop files here",
-  "agent.secretDetectedWarning": "Private key or seed phrase detected — redacted before sending",
+  "agent.secretDetectedWarning": "Private key or seed phrase detected",
   "agent.modelDoesNotSupportVision": "{model} may not support vision. Images might not be processed.",
   "agent.waitingForApproval": "Waiting for your approval",
   "agent.usage.inputTokens": "Input tokens",

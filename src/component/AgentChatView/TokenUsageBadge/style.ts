@@ -3,11 +3,11 @@ import styled from "styled-components";
 const TokenUsageBadgeWrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
-  margin-bottom: 6px;
   font-size: 1.05rem;
   color: var(--color-text-secondary);
+  margin-right: auto;
 
   .usage-item {
     cursor: default;
