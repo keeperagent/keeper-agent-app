@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { guard } from "@keeperagent/crypto-key-guard";
 import { MESSAGE, TOOL_KEYS } from "@/electron/constant";
+import { type TurnUsage } from "@/electron/type";
 import { Alert, message } from "antd";
 import copy from "copy-to-clipboard";
 import {
@@ -21,6 +22,7 @@ import {
   ComposerStatus,
   SecretWarning,
 } from "./style";
+import TokenUsageBadge from "./TokenUsageBadge";
 import { type AttachedFile } from "./AttachedFiles";
 import {
   type DisplayMessage,
@@ -101,6 +103,7 @@ type Props = {
   loading: boolean;
   error?: string | null;
   warning?: string | null;
+  turnUsage?: TurnUsage;
   composerDisabled?: boolean;
   canReset?: boolean;
   showPreparingStatus?: boolean;
@@ -120,6 +123,7 @@ const AgentChatView = ({
   loading,
   error,
   warning,
+  turnUsage,
   composerDisabled,
   canReset,
   showPreparingStatus,
@@ -653,6 +657,8 @@ const AgentChatView = ({
             <span>{warning}</span>
           </SecretWarning>
         )}
+
+        <TokenUsageBadge turnUsage={turnUsage || null} />
 
         <ChatComposer
           value={draftMessage}

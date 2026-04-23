@@ -51,6 +51,7 @@ const AgentView = (props: any) => {
     executingTool,
     toolCallStates,
     planReview,
+    turnUsage,
     llmProvider,
     createSession,
     sendMessage,
@@ -235,6 +236,7 @@ const AgentView = (props: any) => {
       loading={loading}
       error={error}
       warning={visionWarning}
+      turnUsage={turnUsage}
       composerDisabled={
         creatingSession || (Boolean(sessionId) && !agentReady) || hasPlanReview
       }
