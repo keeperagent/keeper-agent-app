@@ -66,37 +66,12 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
         .describe("SPL mint address or empty for native SOL"),
       walletAddresses: z
         .array(z.string())
-        .nullish()
+        .nullable()
         .describe(
           "Solana wallet addresses to query, or null to use campaign context",
         ),
-      timeoutMs: z
-        .number()
-        .positive()
-        .optional()
-        .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
-      topN: z
-        .number()
-        .positive()
-        .max(100)
-        .optional()
-        .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
-      maxWalletsInResponse: z
-        .number()
-        .positive()
-        .max(100)
-        .optional()
-        .describe(
-          `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
-        ),
     }),
-    func: async ({
-      tokenAddress: tokenAddressParam,
-      walletAddresses,
-      timeoutMs = DEFAULT_TIMEOUT_MS,
-      topN = DEFAULT_TOP_N,
-      maxWalletsInResponse = DEFAULT_MAX_WALLETS_IN_RESPONSE,
-    }) => {
+    func: async ({ tokenAddress: tokenAddressParam, walletAddresses }) => {
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
 
@@ -216,7 +191,7 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
           tokenType,
           wallet?.address || "",
           resolvedTokenAddress,
-          timeoutMs,
+          DEFAULT_TIMEOUT_MS,
         );
         if (errBalance) {
           results.push({
@@ -248,12 +223,12 @@ export const getSolanaTokenBalanceTool = (toolContext?: ToolContext) =>
 
       const highest = sortedDesc[0] || null;
       const lowest = sortedAsc[0] || null;
-      const topWallets = sortedDesc.slice(0, topN);
-      const lowestWallets = sortedAsc.slice(0, topN);
+      const topWallets = sortedDesc.slice(0, DEFAULT_TOP_N);
+      const lowestWallets = sortedAsc.slice(0, DEFAULT_TOP_N);
 
       const maxBalances = Math.max(
         1,
-        Math.min(maxWalletsInResponse, results.length),
+        Math.min(DEFAULT_MAX_WALLETS_IN_RESPONSE, results.length),
       );
       const balancesSample = results.slice(0, maxBalances);
       const omittedCount = Math.max(0, results.length - maxBalances);

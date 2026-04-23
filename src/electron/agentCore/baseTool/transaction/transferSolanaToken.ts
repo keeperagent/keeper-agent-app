@@ -65,11 +65,6 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
         .describe(
           "Max per-wallet amount (RANDOM_PER_WALLET). Pass 0 if not applicable.",
         ),
-      balanceTimeoutMs: z
-        .number()
-        .positive()
-        .default(15000)
-        .describe("Timeout in ms (default 15000)"),
     }),
     func: async ({
       sourceWalletAddress,
@@ -79,7 +74,6 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
       totalAmount,
       minAmount,
       maxAmount,
-      balanceTimeoutMs = 15000,
     }) => {
       console.log(
         `[transfer_solana_token] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
@@ -214,7 +208,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
         const [bal, balErr] = await solanaProvider.getNativeBalance(
           sourceWalletAddress,
           listNodeProvider,
-          balanceTimeoutMs,
+          15000,
         );
         if (balErr) throw balErr;
         sourceBalanceStr = bal;
@@ -224,7 +218,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
           TOKEN_TYPE.SOLANA_TOKEN,
           sourceWalletAddress,
           tokenAddress!.trim(),
-          balanceTimeoutMs,
+          15000,
         );
         if (balErr) throw balErr;
         sourceBalanceStr = bal;
@@ -332,7 +326,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
             isNative ? "" : tokenAddress!.trim(),
             new Big(transferAmount).toString(),
             listNodeProvider,
-            balanceTimeoutMs,
+            15000,
             "",
             "",
           );

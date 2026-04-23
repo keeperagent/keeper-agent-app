@@ -93,6 +93,8 @@ export type CreateProfileAgentOptions = {
 
 export type MainAgent = {
   agent: DeepAgent;
+  llm: any;
+  systemPrompt: string;
   cleanup: () => Promise<void>;
   toolContext: ToolContext;
   subAgentsCount: number;
@@ -487,7 +489,7 @@ export const buildBaseSubAgents = (
       getEvmTokenBalanceTool(toolContext),
     isEnabled(BASE_TOOL_KEYS.GET_SOLANA_TOKEN_BALANCE) &&
       getSolanaTokenBalanceTool(toolContext),
-    isEnabled(BASE_TOOL_KEYS.GET_TOKEN_PRICE) && getTokenPriceTool(),
+    isEnabled(BASE_TOOL_KEYS.GET_TOKEN_PRICE) && getTokenPriceTool(toolContext),
     calculateTool(),
   ].filter((tool): any => Boolean(tool));
 
@@ -531,7 +533,7 @@ export const buildBaseSubAgents = (
         "Check the chainKey in the task description:\n" +
         "- chainKey = 'solana' → use get_solana_token_balance for balances\n" +
         "- Any other chainKey (ethereum, bsc, base, etc.) → use get_evm_token_balance\n" +
-        "get_token_price works for all chains — pass chainKey and tokenAddress (empty string '' for native token price).\n\n" +
+        "get_token_price works for all chains — pass the chainKey from the task context (same chainKey used for balance tools) and tokenAddress (empty string '' for native token price).\n\n" +
         "## Valid chainKey values (normalize user input to these)\n" +
         Object.keys(EVM_CHAIN_ID)
           .map((chainKey) => {

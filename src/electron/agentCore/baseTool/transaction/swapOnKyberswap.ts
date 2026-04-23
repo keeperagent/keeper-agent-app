@@ -33,7 +33,6 @@ const swapOnKyberswapSchema = z
   .object({
     swapDirection: z
       .enum(["BUY", "SELL"])
-      .default("BUY")
       .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
@@ -81,12 +80,6 @@ const swapOnKyberswapSchema = z
     sellPercentage: z
       .union([z.literal("all"), z.literal("half"), z.number().min(0).max(100)])
       .describe("SELL only. 'all'=100%, 'half'=50%, or 0-100. Pass 0 for BUY."),
-    balanceTimeoutMs: z
-      .number()
-      .int()
-      .positive()
-      .default(15000)
-      .describe("Timeout in ms (default 15000)"),
     slippage: z
       .number()
       .min(0)
@@ -97,47 +90,6 @@ const swapOnKyberswapSchema = z
       .min(0)
       .max(100)
       .describe("Max price impact % (default: 5)"),
-    deadlineInSecond: z
-      .number()
-      .int()
-      .positive()
-      .describe("Tx deadline in seconds (default: 10)"),
-    gasLimit: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Gas limit. Pass 0 for auto-estimate (default: 0)."),
-    transactionType: z
-      .enum([EVM_TRANSACTION_TYPE.LEGACY, EVM_TRANSACTION_TYPE.EIP_1559])
-      .describe(`LEGACY or EIP_1559 (default: ${EVM_TRANSACTION_TYPE.LEGACY})`),
-    gasPrice: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Gas price in gwei (LEGACY). Pass 0 for auto (default: 0)."),
-    maxFeePerGas: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Max fee per gas in gwei (EIP_1559). Pass 0 for auto."),
-    maxPriorityFeePerGas: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Max priority fee in gwei (EIP_1559). Pass 0 for auto."),
-    shouldWaitTransactionComfirmed: z
-      .boolean()
-      .describe("Wait for tx confirmation (default: true)"),
-    includedSources: z
-      .string()
-      .describe(
-        "Included liquidity sources (comma-separated). Pass empty string for all.",
-      ),
-    excludedSources: z
-      .string()
-      .describe(
-        "Excluded liquidity sources (comma-separated). Pass empty string for none.",
-      ),
   })
   .refine(
     (data) => {
@@ -194,18 +146,8 @@ export const swapOnKyberswapTool = (
       minAmount,
       maxAmount,
       sellPercentage,
-      balanceTimeoutMs = 15000,
       slippage = 2,
       priceImpact = 5,
-      deadlineInSecond = 10,
-      gasLimit,
-      transactionType = EVM_TRANSACTION_TYPE.LEGACY,
-      gasPrice,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      shouldWaitTransactionComfirmed = true,
-      includedSources = "",
-      excludedSources = "",
     }) => {
       console.log(
         `[swap_on_kyberswap] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
@@ -416,7 +358,7 @@ export const swapOnKyberswapTool = (
                 TOKEN_TYPE.NATIVE_TOKEN,
                 wallet?.address || "",
                 "",
-                balanceTimeoutMs,
+                15000,
               );
               balanceStr = balance;
               balanceErr = err || null;
@@ -427,7 +369,7 @@ export const swapOnKyberswapTool = (
                 TOKEN_TYPE.EVM_ERC20_TOKEN,
                 wallet?.address || "",
                 tokenAddress,
-                balanceTimeoutMs,
+                15000,
               );
               balanceStr = balance;
               balanceErr = err || null;
@@ -634,23 +576,17 @@ export const swapOnKyberswapTool = (
             amount: effectiveAmountBig.toString(), // Use Big.js string to preserve full precision
             slippage,
             priceImpact,
-            dealineInSecond: deadlineInSecond,
-            gasLimit: gasLimit
-              ? ethers.BigNumber.from(gasLimit)
-              : ethers.BigNumber.from(0),
-            isUseCustomGasLimit: Boolean(gasLimit),
-            transactionType,
-            maxFeePerGas: maxFeePerGas
-              ? ethers.BigNumber.from(maxFeePerGas)
-              : undefined,
-            maxPriorityFeePerGas: maxPriorityFeePerGas
-              ? ethers.BigNumber.from(maxPriorityFeePerGas)
-              : undefined,
-            gasPrice: gasPrice ? ethers.BigNumber.from(gasPrice) : undefined,
-            isUseCustomGasPrice: Boolean(gasPrice),
-            shouldWaitTransactionComfirmed,
-            includedSources,
-            excludedSources,
+            dealineInSecond: 15,
+            gasLimit: ethers.BigNumber.from(0),
+            isUseCustomGasLimit: false,
+            transactionType: EVM_TRANSACTION_TYPE.LEGACY,
+            maxFeePerGas: undefined,
+            maxPriorityFeePerGas: undefined,
+            gasPrice: undefined,
+            isUseCustomGasPrice: false,
+            shouldWaitTransactionComfirmed: true,
+            includedSources: "",
+            excludedSources: "",
           };
 
           const logInfo = {
@@ -661,7 +597,7 @@ export const swapOnKyberswapTool = (
           const [txHash, err] = await kyberswap.swapNormal(
             swapInput,
             wallet?.privateKey || "",
-            balanceTimeoutMs,
+            15000,
             logInfo,
           );
           results.push({

@@ -3,6 +3,7 @@ import { AxiosProxyConfig } from "axios";
 import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { logEveryWhere } from "@/electron/service/util";
+import { sendWithTimeout } from "@/electron/simulator/util";
 import type { IStructuredLogPayload } from "@/electron/type";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { IJupiterSwapInput } from "@/electron/type";
@@ -255,9 +256,9 @@ export class SwapOnJupiter {
       return [signature, null];
     }
 
-    const confirmation = await provider.confirmTransaction(
-      signature,
-      "confirmed",
+    const confirmation = await sendWithTimeout(
+      provider.confirmTransaction(signature, "confirmed"),
+      15000,
     );
     if (confirmation.value.err) {
       return [signature, Error(confirmation?.value?.err?.toString())];

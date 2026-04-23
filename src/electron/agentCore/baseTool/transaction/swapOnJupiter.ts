@@ -74,10 +74,6 @@ const swapOnJupiterSchema = z
     sellPercentage: z
       .union([z.enum(["all", "half"]), z.number().min(0).max(100)])
       .describe("SELL only. 'all'=100%, 'half'=50%, or 0-100. Pass 0 for BUY."),
-    balanceTimeoutMs: z
-      .number()
-      .positive()
-      .describe("Timeout in ms (default 15000)"),
     slippagePercentage: z
       .number()
       .min(0)
@@ -88,14 +84,6 @@ const swapOnJupiterSchema = z
       .min(0.1)
       .max(50)
       .describe("Max price impact % (default 5)"),
-    pritorityFeeMicroLamport: z
-      .number()
-      .min(0)
-      .max(0.5)
-      .describe("Priority fee in micro-lamports (default 0)"),
-    shouldWaitTransactionComfirmed: z
-      .boolean()
-      .describe("Wait for tx confirmation (default true)"),
   })
   .refine(
     (data) => {
@@ -130,11 +118,8 @@ export const swapOnJupiterTool = (
       minAmount,
       maxAmount,
       sellPercentage,
-      balanceTimeoutMs = 15000,
       slippagePercentage = 0,
       maxPriceImpactPercentage = 5,
-      pritorityFeeMicroLamport = 0,
-      shouldWaitTransactionComfirmed = true,
     }) => {
       console.log(
         `[swap_on_jupiter] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
@@ -352,7 +337,7 @@ export const swapOnJupiterTool = (
               [balanceStr, balanceErr] = await solanaProvider.getNativeBalance(
                 wallet?.address || "",
                 listNodeProvider,
-                balanceTimeoutMs,
+                15000,
               );
             } else {
               // For SELL: fetch token balance
@@ -361,7 +346,7 @@ export const swapOnJupiterTool = (
                 TOKEN_TYPE.SOLANA_TOKEN,
                 wallet?.address || "",
                 tokenAddress,
-                balanceTimeoutMs,
+                15000,
               );
             }
 
@@ -572,8 +557,8 @@ export const swapOnJupiterTool = (
           slippagePercentage,
           maxPriceImpactPercentage,
           dynamicSlippage: !slippagePercentage,
-          pritorityFeeMicroLamport,
-          shouldWaitTransactionComfirmed,
+          pritorityFeeMicroLamport: 0,
+          shouldWaitTransactionComfirmed: true,
         };
 
         try {
@@ -605,9 +590,9 @@ export const swapOnJupiterTool = (
       }
 
       const successCount = results.filter(
-        (r) => r.signature && !r.error,
+        (result) => result.signature && !result.error,
       ).length;
-      const failedEntries = results.filter((r) => r.error);
+      const failedEntries = results.filter((result) => result.error);
       const totalSwapped = actualPerWalletAmounts.reduce((a, b) => a + b, 0);
 
       // Consume the approval after execution — any retry attempt will be blocked
@@ -632,11 +617,11 @@ export const swapOnJupiterTool = (
           totalAmount: totalSwapped,
         },
         ...(wallets.length <= 5 && {
-          results: results.map((r) => ({
-            wallet: r.wallet,
-            amount: r.amount,
-            txHash: r.signature,
-            ...(r.error && { error: r.error }),
+          results: results.map((result) => ({
+            wallet: result.wallet,
+            amount: result.amount,
+            txHash: result.signature,
+            ...(result.error && { error: result.error }),
           })),
         }),
         ...(wallets.length > 5 &&
