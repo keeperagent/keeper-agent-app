@@ -975,15 +975,16 @@ export const buildBaseSubAgents = (
         "- Two numeric columns (correlation) → scatter\n" +
         "- Parts of a whole → donut pie\n" +
         "- Three numeric columns (x, y, magnitude) → bubble scatter, value: [x, y, size]\n" +
-        "- Values spanning 3+ orders of magnitude → always use yAxis.type: 'log'\n\n" +
+        "- Values spanning 3+ orders of magnitude → use horizontal bar (xAxis.type: 'value', yAxis.type: 'category') so labels are readable; never use log scale for bar charts.\n\n" +
         "## Style\n" +
         "- Line charts: set smooth: true. Never add areaStyle — it is applied automatically for single-series charts. Never add areaStyle on multi-series charts (overlapping fills look bad).\n" +
-        "- Bar charts: add barMaxWidth: 40.\n" +
+        "- Bar charts: add barMaxWidth: 40. For category bars, ALWAYS set xAxis.data: ['Label1', 'Label2', ...] with the category names — omitting it causes ECharts to display 0, 1, 2 indices instead of labels. Series data must be a plain number array matching the same order.\n" +
         "- Pie charts: use radius: ['45%', '72%'] for donut shape. Add label: { formatter: '{b}\\n{d}%' }.\n" +
         "- Scatter/bubble: each point must be {name: 'Label', value: [x, y, size]}. App auto-sizes bubbles and shows name in tooltip — do NOT set symbolSize or formatter. Add itemStyle: { opacity: 0.7 } when bubbles may overlap.\n" +
+        "- Candlestick (OHLC): data array format is [open, close, lowest, highest] per bar. Colors and y-axis scale are applied automatically — do not set itemStyle colors or yAxis.min.\n" +
         "- Add legend: {} when there are multiple series.\n" +
-        "- Axis formatters/tooltip: NEVER use JavaScript functions — use string templates only. axisLabel.formatter: '{value}%' or '{value} T'. tooltip.formatter: '{b}: {c} T', '{b}: ${c}'. NEVER set tooltip.valueFormatter.\n" +
-        "- Log scale: set yAxis.type: 'log', yAxis.logBase: 10. No custom formatter on log scale.\n" +
+        "- Axis formatters/tooltip: the option param is JSON — NEVER use JavaScript functions, arrow functions, or any code. Use ECharts string templates only: axisLabel.formatter: '{value}%' or '{value} B'. tooltip.formatter: '{b}: {c} B', '{b}: ${c}'. NEVER set tooltip.valueFormatter. Violation causes a JSON parse error.\n" +
+        "- Log scale: set yAxis.type: 'log', yAxis.logBase: 10. No custom formatter on log scale. Never use log scale for bar charts.\n" +
         "- Axis labels: always use yAxis.name (NOT yAxis.title) and xAxis.name with unit (e.g. 'Price (USD)', 'GDP (Trillions USD)'). Derive from field names — capitalize and clean ('revenue_usd' → 'Revenue (USD)'). Set nameLocation: 'middle', nameGap: 50 on yAxis.\n" +
         "- Max 1 xAxis, max 2 yAxis. Second yAxis must have position: 'right'.\n\n" +
         "## Dates\n" +

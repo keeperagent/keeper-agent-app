@@ -71,7 +71,7 @@ const OpenRouterSetting = (props: IProps) => {
           label={`${translate("setting.openRouterModel")}:`}
           name="openRouterModel"
           tooltip={translate("setting.openRouterModelTooltip")}
-          style={{ marginTop: "-1rem" }}
+          style={{ marginTop: "-1.5rem" }}
         >
           <Input
             className="custom-input"

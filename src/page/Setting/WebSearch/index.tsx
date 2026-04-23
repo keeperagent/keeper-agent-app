@@ -80,7 +80,7 @@ const WebSearch = (props: IProps) => {
           type="primary"
           onClick={onSubmitForm}
           loading={loading}
-          style={{ marginTop: 0 }}
+          style={{ marginTop: "-1.5rem" }}
         >
           {translate("save")}
         </Button>

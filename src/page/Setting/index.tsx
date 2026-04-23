@@ -9,7 +9,9 @@ import ConnectWhatsApp from "./ConnectWhatsApp";
 import ImportDatabase from "./ImportDatabase";
 import ExportDatabase from "./ExportDatabase";
 import Other from "./Other";
-import LanguageModel from "./LanguageModel";
+import AnthropicSetting from "./AnthropicSetting";
+import OpenAISetting from "./OpenAISetting";
+import GeminiSetting from "./GeminiSetting";
 import WebSearch from "./WebSearch";
 import OpenRouterSetting from "./OpenRouterSetting";
 import OllamaSetting from "./OllamaSetting";
@@ -23,6 +25,21 @@ const TAB = {
   DATABASE_SETTING: "DATABASE_SETTING",
   WORKFLOW: "WORKFLOW",
 };
+
+type SettingSectionProps = {
+  label: string;
+  children: React.ReactNode;
+};
+
+const SettingSection = ({ label, children }: SettingSectionProps) => (
+  <div className="form">
+    <div className="heading">
+      <span>{label}</span>
+    </div>
+
+    {children}
+  </div>
+);
 
 const SettingPage = (props: any) => {
   const { translate } = useTranslation();
@@ -78,30 +95,21 @@ const SettingPage = (props: any) => {
       {activeTab === TAB.GENERAL_SETTING && (
         <Row style={{ width: "100%" }} justify="space-between">
           <Col span={7}>
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.connectTelegram")}</span>
-              </div>
+            <SettingSection label={translate("setting.connectTelegram")}>
               <ConnectTelegram />
-            </div>
+            </SettingSection>
 
             <Divider />
 
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.connectWhatsApp")}</span>
-              </div>
+            <SettingSection label={translate("setting.connectWhatsApp")}>
               <ConnectWhatsApp />
-            </div>
+            </SettingSection>
           </Col>
 
           <Col span={7}>
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.otherSetting")}</span>
-              </div>
+            <SettingSection label={translate("setting.otherSetting")}>
               <Other />
-            </div>
+            </SettingSection>
           </Col>
 
           <Col span={7}></Col>
@@ -111,40 +119,39 @@ const SettingPage = (props: any) => {
       {activeTab === TAB.AGENT_SETTING && (
         <Row style={{ width: "100%" }} justify="space-between">
           <Col span={7}>
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.languageModel")}</span>
-              </div>
+            <SettingSection label={translate("setting.anthropic")}>
+              <AnthropicSetting />
+            </SettingSection>
 
-              <LanguageModel />
-            </div>
+            <Divider />
+
+            <SettingSection label={translate("setting.openAI")}>
+              <OpenAISetting />
+            </SettingSection>
+
+            <Divider />
+
+            <SettingSection label={translate("setting.gemini")}>
+              <GeminiSetting />
+            </SettingSection>
           </Col>
 
           <Col span={7}>
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.openRouter")}</span>
-              </div>
+            <SettingSection label={translate("setting.openRouter")}>
               <OpenRouterSetting />
-            </div>
+            </SettingSection>
 
             <Divider />
 
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.ollama")}</span>
-              </div>
+            <SettingSection label={translate("setting.ollama")}>
               <OllamaSetting />
-            </div>
+            </SettingSection>
 
             <Divider />
 
-            <div className="form">
-              <div className="heading">
-                <span>{translate("setting.webSearch")}</span>
-              </div>
+            <SettingSection label={translate("setting.webSearch")}>
               <WebSearch />
-            </div>
+            </SettingSection>
           </Col>
 
           <Col span={7}></Col>
@@ -154,17 +161,15 @@ const SettingPage = (props: any) => {
       {activeTab === TAB.DATABASE_SETTING && (
         <Row style={{ width: "100%" }} justify="space-between">
           <Col span={7}>
-            <div className="form">
-              <div className="heading">{translate("setting.syncData")}</div>
+            <SettingSection label={translate("setting.syncData")}>
               <ImportDatabase />
-            </div>
+            </SettingSection>
           </Col>
 
           <Col span={7}>
-            <div className="form">
-              <div className="heading">{translate("setting.exportData")}</div>
+            <SettingSection label={translate("setting.exportData")}>
               <ExportDatabase />
-            </div>
+            </SettingSection>
           </Col>
 
           <Col span={7}></Col>

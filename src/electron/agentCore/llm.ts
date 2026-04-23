@@ -107,6 +107,7 @@ export const createLLM = async (
       );
     }
     const accessToken = await claudeCLIAuth.getAccessToken();
+    const betaHeaders = claudeCLIAuth.getBetaHeaders();
     const modelName =
       modelOverride || llm?.[config.modelField] || DEFAULT_LLM_MODELS[provider];
     return new ChatAnthropic({
@@ -114,6 +115,11 @@ export const createLLM = async (
       model: modelName as string,
       temperature,
       streaming: true,
+      clientOptions: {
+        defaultHeaders: {
+          "anthropic-beta": betaHeaders.join(","),
+        },
+      },
     });
   }
 

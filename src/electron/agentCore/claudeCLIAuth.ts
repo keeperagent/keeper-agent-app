@@ -9,6 +9,7 @@ type ClaudeCLIConfig = {
   clientId: string;
   tokenUrl: string;
   scopes: string[];
+  betaHeaders: string[];
 };
 
 type ClaudeOAuthCredentials = {
@@ -28,6 +29,7 @@ const DEFAULT_CONFIG: ClaudeCLIConfig = {
     "user:mcp_servers",
     "user:file_upload",
   ],
+  betaHeaders: ["claude-code-20250219"],
 };
 
 class ClaudeCLIAuth {
@@ -135,7 +137,9 @@ class ClaudeCLIAuth {
 
     const isExpiringSoon = credentials.expiresAt - Date.now() < cacheTime;
     if (!isExpiringSoon) {
-      logEveryWhere({ message: "claudeCLIAuth: token loaded from keychain" });
+      logEveryWhere({
+        message: `claudeCLIAuth: token loaded from keychain, accessToken: ${credentials.accessToken}, expiresAt: ${credentials.expiresAt}`,
+      });
       this.cachedToken = {
         accessToken: credentials.accessToken,
         expiresAt: credentials.expiresAt,
@@ -170,6 +174,11 @@ class ClaudeCLIAuth {
     const config = this.loadConfig();
     const credentials = this.readKeychainCredentials(config.keychainService);
     return credentials !== null;
+  };
+
+  getBetaHeaders = (): string[] => {
+    const config = this.loadConfig();
+    return config.betaHeaders || DEFAULT_CONFIG.betaHeaders;
   };
 }
 

@@ -35,6 +35,30 @@ export const hexToRgba = (hex: string, alpha: number): string => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const compactNumber = (value: number): string => {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) {
+    return (
+      (value / 1_000_000_000)
+        .toFixed(abs >= 10_000_000_000 ? 0 : 1)
+        .replace(/\.0$/, "") + "B"
+    );
+  }
+  if (abs >= 1_000_000) {
+    return (
+      (value / 1_000_000)
+        .toFixed(abs >= 10_000_000 ? 0 : 1)
+        .replace(/\.0$/, "") + "M"
+    );
+  }
+  if (abs >= 1_000) {
+    return (
+      (value / 1_000).toFixed(abs >= 10_000 ? 0 : 1).replace(/\.0$/, "") + "k"
+    );
+  }
+  return String(value);
+};
+
 export const forceAxisTheme = (
   axisConfig: any,
   theme: ChartTheme,
@@ -44,12 +68,25 @@ export const forceAxisTheme = (
     return axisConfig;
   }
 
+  const agentFormatter =
+    typeof axisConfig.axisLabel?.formatter === "function"
+      ? axisConfig.axisLabel.formatter
+      : null;
+  const sample = isYAxis && agentFormatter ? agentFormatter(1000) : null;
+  const detectedPrefix =
+    typeof sample === "string" && /^[^0-9-]/.test(sample)
+      ? sample.charAt(0)
+      : "";
+
   return {
     ...axisConfig,
     axisLabel: {
       fontSize: 11,
       ...axisConfig.axisLabel,
       color: theme.subText,
+      ...(isYAxis && {
+        formatter: (value: number) => detectedPrefix + compactNumber(value),
+      }),
     },
     axisLine: { show: false },
     axisTick: { show: false },
@@ -109,7 +146,7 @@ const applyLegendTheme = (option: any, theme: ChartTheme) => {
     itemWidth: 14,
     itemHeight: 14,
     top: "auto",
-    bottom: 8,
+    bottom: 16,
     textStyle: {
       fontSize: 12,
       ...legendItem.textStyle,
@@ -264,22 +301,85 @@ const applyRadarTheme = (option: any, theme: ChartTheme) => {
   };
 };
 
-const applyGridTheme = (option: any, hasTitle: boolean) => {
-  if (option.grid) {
+const CANDLESTICK_BULLISH = "#7FC8A9";
+const CANDLESTICK_BEARISH = "#FF6767";
+
+const applyCandlestickTheme = (option: any): void => {
+  if (!Array.isArray(option.series)) {
     return;
   }
 
+  const candlestickSeries = option.series.filter(
+    (item: any) => item?.type === "candlestick" || item?.type === "k",
+  );
+
+  if (candlestickSeries.length === 0) {
+    return;
+  }
+
+  option.series = option.series.map((seriesItem: any) => {
+    if (seriesItem?.type !== "candlestick" && seriesItem?.type !== "k") {
+      return seriesItem;
+    }
+    return {
+      ...seriesItem,
+      itemStyle: {
+        ...seriesItem.itemStyle,
+        color: CANDLESTICK_BULLISH,
+        color0: CANDLESTICK_BEARISH,
+        borderColor: CANDLESTICK_BULLISH,
+        borderColor0: CANDLESTICK_BEARISH,
+      },
+    };
+  });
+
+  const allLows: number[] = [];
+  const allHighs: number[] = [];
+  candlestickSeries.forEach((seriesItem: any) => {
+    if (!Array.isArray(seriesItem.data)) {
+      return;
+    }
+    seriesItem.data.forEach((point: any) => {
+      if (Array.isArray(point)) {
+        if (typeof point[2] === "number") {
+          allLows.push(point[2]);
+        }
+        if (typeof point[3] === "number") {
+          allHighs.push(point[3]);
+        }
+      }
+    });
+  });
+
+  if (allLows.length > 0 && option.yAxis) {
+    const dataMin = Math.min(...allLows);
+    const dataMax = Math.max(...(allHighs.length > 0 ? allHighs : allLows));
+    const padding = (dataMax - dataMin) * 0.3;
+    const paddedMin = dataMin - padding;
+
+    if (Array.isArray(option.yAxis)) {
+      option.yAxis = option.yAxis.map((axis: any, index: number) =>
+        index === 0 ? { ...axis, min: paddedMin } : axis,
+      );
+    } else {
+      option.yAxis = { ...option.yAxis, min: paddedMin };
+    }
+  }
+};
+
+const applyGridTheme = (option: any, hasTitle: boolean) => {
   const yAxes = option.yAxis ? toArray(option.yAxis) : [];
   const xAxes = option.xAxis ? toArray(option.xAxis) : [];
   const hasLegend = Boolean(option.legend);
   const hasYAxisName = yAxes.some((axis: any) => axis?.name);
   const hasXAxisName = xAxes.some((axis: any) => axis?.name);
   const hasRightAxis = yAxes.length >= 2;
+
   option.grid = {
     top: hasTitle ? 64 : 24,
     right: hasRightAxis ? 72 : hasXAxisName ? 40 : 20,
-    bottom: hasLegend ? 48 : hasXAxisName ? 40 : 20,
-    left: hasYAxisName ? 50 : 16,
+    bottom: hasLegend ? 72 : hasXAxisName ? 40 : 20,
+    left: hasYAxisName ? 44 : 16,
     containLabel: true,
   };
 };
@@ -604,6 +704,7 @@ export const applyTheme = (
   );
   applyXAxisTheme(option, theme);
   applyYAxisTheme(option, theme);
+  applyCandlestickTheme(option);
   applyRadarTheme(option, theme);
   applyGridTheme(option, hasTitle);
   applySeriesTheme(option, theme, isHorizontalBar, hasTitle);
