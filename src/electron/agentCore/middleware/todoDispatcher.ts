@@ -4,30 +4,14 @@ import { TodoItemStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
 
-// Tools always available regardless of active step type
 const ALWAYS_ALLOWED_TOOLS = new Set(["write_todos"]);
 
-// Extra tools unlocked per step type (on top of ALWAYS_ALLOWED_TOOLS)
-const STEP_EXTRA_TOOLS: Record<string, string[]> = {
-  research: ["task", "read_file", "ls", "glob", "grep"],
-  visualize: ["task", "read_file"],
-  code: [
-    "task",
-    "write_javascript",
-    "read_file",
-    "write_file",
-    "edit_file",
-    "ls",
-    "glob",
-    "grep",
-    "request_approval",
-    "confirm_approval",
-  ],
-  transaction: ["task", "request_approval", "confirm_approval"],
-  workflow: ["task", "read_file", "request_approval", "confirm_approval"],
-  communicate: [],
-  manage: ["task", "read_file"],
-};
+const BETWEEN_STEPS_ALLOWED_TOOLS = new Set([
+  "write_todos",
+  "request_approval",
+  "confirm_approval",
+  "read_file",
+]);
 
 // When `task` is called, main agent will delegate to the subagent, which subagent_type is expected for each step type
 const STEP_ALLOWED_SUBAGENTS: Record<string, string[]> = {
@@ -53,17 +37,6 @@ const ALWAYS_APPROVAL_REQUIRED = new Set([
 
 // Tools that require a todo plan to exist before they can be called
 const TOOLS_REQUIRING_PLAN = new Set(["request_approval", "confirm_approval"]);
-
-// Tools allowed between steps (when plan exists but no step is in_progress)
-const BETWEEN_STEPS_ALLOWED_TOOLS = new Set([
-  "write_todos",
-  "request_approval",
-  "confirm_approval",
-  "read_file",
-]);
-
-const getToolName = (tool: any): string =>
-  tool?.name || tool?.function?.name || "";
 
 // Extracts text content from a task result — handles LangGraph Command, ToolMessage, and structured output forms
 const extractResultContent = (result: any): string => {
@@ -769,36 +742,7 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         );
       }
 
-      // Filter tools based on current execution state
-      if (
-        !Array.isArray(updatedRequest?.tools) ||
-        updatedRequest.tools.length === 0
-      ) {
-        return handler(updatedRequest);
-      }
-
-      const stepType = toolContext.currentStepType;
-      let allowed: Set<string>;
-
-      if (stepType && STEP_EXTRA_TOOLS[stepType]) {
-        // Active step: only tools scoped to this step type
-        allowed = new Set([
-          ...ALWAYS_ALLOWED_TOOLS,
-          ...STEP_EXTRA_TOOLS[stepType],
-        ]);
-      } else if (lastKnownTodos.length > 0) {
-        // Between steps: plan exists but nothing in_progress
-        allowed = BETWEEN_STEPS_ALLOWED_TOOLS;
-      } else {
-        // No todos yet: only write_todos + read_file (memory read at startup is legitimate)
-        allowed = new Set(["write_todos", "read_file"]);
-      }
-
-      const filteredTools = updatedRequest.tools.filter((tool: any) =>
-        allowed.has(getToolName(tool)),
-      );
-
-      return handler({ ...updatedRequest, tools: filteredTools });
+      return handler(updatedRequest);
     },
 
     afterModel: (state: any) => {

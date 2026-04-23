@@ -3005,3 +3005,10 @@ export type IAgentProfile = {
   createAt?: number;
   updateAt?: number;
 };
+
+export type TurnUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  cacheRead: number;
+  cacheCreation: number;
+} | null;

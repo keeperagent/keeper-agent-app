@@ -8,6 +8,7 @@ import {
   LLMProvider,
 } from "@/redux/agent";
 import { ChatRole } from "@/electron/chatGateway/types";
+import { type TurnUsage } from "@/electron/type";
 import {
   type ToolCallState,
   ToolCallStateStatus,
@@ -104,6 +105,7 @@ const useDashboardAgent = () => {
   const [executingTool, setExecutingTool] = useState<string | null>(null);
   const [toolCallStates, setToolCallStates] = useState<ToolCallState[]>([]);
   const toolCallMapRef = useRef<Map<string, ToolCallState>>(new Map());
+  const [turnUsage, setTurnUsage] = useState<TurnUsage>(null);
   const [planReview, setPlanReview] = useState<{
     sessionId: string;
     plan: string;
@@ -401,6 +403,9 @@ const useDashboardAgent = () => {
       setSteps(normalizedSteps);
       setOutput(result?.output || "");
       setError(null);
+      if (result?.turnUsage) {
+        setTurnUsage(result.turnUsage);
+      }
       setLoading(false);
       setStreamingContent("");
       streamingContentRef.current = "";
@@ -636,6 +641,13 @@ const useDashboardAgent = () => {
       // Keep conversation so chat history stays visible after switching model
     };
 
+    const handleLlmUsage = (_event: any, payload: any) => {
+      const { sessionId: payloadSessionId, turnUsage: usage } = payload || {};
+      if (payloadSessionId === sessionIdRef.current && usage) {
+        setTurnUsage(usage);
+      }
+    };
+
     window?.electron?.on(
       MESSAGE.DASHBOARD_AGENT_CREATE_SESSION_RES,
       handleCreateSession,
@@ -665,6 +677,7 @@ const useDashboardAgent = () => {
       MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED,
       handleStepAdvanced,
     );
+    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_LLM_USAGE, handleLlmUsage);
 
     return () => {
       window?.electron?.removeListener(
@@ -710,6 +723,10 @@ const useDashboardAgent = () => {
       window?.electron?.removeListener(
         MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED,
         handleStepAdvanced,
+      );
+      window?.electron?.removeListener(
+        MESSAGE.DASHBOARD_AGENT_LLM_USAGE,
+        handleLlmUsage,
       );
     };
   }, [saveMessageToDB]);
@@ -835,6 +852,7 @@ const useDashboardAgent = () => {
       setToolCallStates([]);
       toolCallMapRef.current.clear();
       mergedTodosRef.current.clear();
+      setTurnUsage(null);
       window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RUN, {
         sessionId: sessionIdRef.current,
         input,
@@ -918,6 +936,7 @@ const useDashboardAgent = () => {
     executingTool,
     toolCallStates,
     planReview,
+    turnUsage,
     llmProvider,
     createSession,
     sendMessage,

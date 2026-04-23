@@ -30,7 +30,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { experienceRetriever } from "@/electron/agentCore/experienceEngine/experienceRetriever";
 import { experienceRecorder } from "@/electron/agentCore/experienceEngine/experienceRecorder";
-import { LLMProvider } from "@/electron/type";
+import { LLMProvider, type TurnUsage } from "@/electron/type";
 import { mainWindow } from "@/electron/main";
 import { MESSAGE, getToolDisplayName } from "@/electron/constant";
 import { ChatPlatform, ChatRole } from "./types";
@@ -527,6 +527,7 @@ class AgentChatBridge {
     errorMsg?: string;
     runId: string;
     todoTemplate: string | null;
+    turnUsage: NonNullable<TurnUsage>;
   }> => {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -543,6 +544,12 @@ class AgentChatBridge {
       result: string;
       success: boolean;
     }> = [];
+    const turnUsage = {
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheRead: 0,
+      cacheCreation: 0,
+    };
 
     if (this.activeRuns.has(sessionId)) {
       throw new Error("Run already in progress for this session");
@@ -735,6 +742,20 @@ class AgentChatBridge {
           } else if (bufferedText && hasToolCalls) {
           }
 
+          const usageMeta = output?.usage_metadata;
+          if (usageMeta) {
+            turnUsage.inputTokens += usageMeta.input_tokens || 0;
+            turnUsage.outputTokens += usageMeta.output_tokens || 0;
+            turnUsage.cacheRead +=
+              usageMeta.input_token_details?.cache_read || 0;
+            turnUsage.cacheCreation +=
+              usageMeta.input_token_details?.cache_creation || 0;
+            options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_LLM_USAGE, {
+              sessionId,
+              turnUsage: { ...turnUsage },
+            });
+          }
+
           // Only track context tokens for top-level model calls
           if (
             !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
@@ -776,12 +797,13 @@ class AgentChatBridge {
           stopped: true,
           runId,
           todoTemplate,
+          turnUsage,
         };
       }
 
       // Background compaction
       this.postRunCompaction(sessionId, session);
-      return { output: finalOutput, steps, runId, todoTemplate };
+      return { output: finalOutput, steps, runId, todoTemplate, turnUsage };
     } catch (err: any) {
       const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
 
@@ -792,6 +814,7 @@ class AgentChatBridge {
           stopped: true,
           runId,
           todoTemplate,
+          turnUsage,
         };
       }
 
@@ -812,6 +835,7 @@ class AgentChatBridge {
         errorMsg,
         runId,
         todoTemplate,
+        turnUsage,
       };
     } finally {
       this.activeRuns.delete(sessionId);

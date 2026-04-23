@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { Tooltip } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -52,6 +52,15 @@ type ToolCallRowProps = {
 };
 
 const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
+  const chartData = useMemo(
+    () =>
+      toolCall.toolName === TOOL_KEYS.RENDER_CHART &&
+      toolCall.state === ToolCallStateStatus.DONE
+        ? tryParseChart(toolCall.result)
+        : null,
+    [toolCall.toolName, toolCall.state, toolCall.result],
+  );
+
   const summaryPairs = getSummaryPairs(toolCall.toolName, toolCall.input);
   const webSearchResultItems = parseWebSearchResultItems(
     toolCall.toolName,
@@ -65,11 +74,7 @@ const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
     toolCall.input,
     toolCall.result,
   );
-  const chartData =
-    toolCall.toolName === TOOL_KEYS.RENDER_CHART &&
-    toolCall.state === ToolCallStateStatus.DONE
-      ? tryParseChart(toolCall.result)
-      : null;
+
   const todos =
     toolCall.toolName === TOOL_KEYS.WRITE_TODOS
       ? parseTodos(toolCall.input)

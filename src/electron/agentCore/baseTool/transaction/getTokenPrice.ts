@@ -13,6 +13,7 @@ import { Pricing } from "@/electron/simulator/category/pricing";
 import { PRICE_DATA_SOURCE } from "@/electron/constant";
 import { TOOL_KEYS } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
+import { ToolContext } from "@/electron/agentCore/toolContext";
 
 // Map chainKey to chainId for DexScreener
 const mapChainKeyToChainId: Record<string, number> = {
@@ -125,7 +126,7 @@ const getNativeTokenSymbolForChain = (chainKey: string): string | null => {
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_CACHE_TIME_MS = 5000; // 5 seconds cache
 
-export const getTokenPriceTool = () => {
+export const getTokenPriceTool = (toolContext?: ToolContext) => {
   const pricing = new Pricing(DEFAULT_CACHE_TIME_MS);
 
   return new DynamicStructuredTool({
@@ -136,20 +137,18 @@ export const getTokenPriceTool = () => {
       chainKey: z
         .string()
         .describe(
-          "Chain key from context (solana, ethereum, bsc, arbitrum, polygon, base, etc.)",
+          "Chain key — use the chainKey from the task context. Only override if the user explicitly specifies a different chain.",
         ),
       tokenAddress: z
         .string()
         .describe("Token contract address or empty for native token"),
-      timeoutMs: z.number().positive().describe("Request timeout in ms"),
     }),
-    func: async ({
-      chainKey,
-      tokenAddress,
-      timeoutMs = DEFAULT_TIMEOUT_MS,
-    }) => {
+    func: async ({ chainKey, tokenAddress }) => {
+      const effectiveChainKey = (toolContext?.chainKey || chainKey || "solana")
+        .toLowerCase()
+        .trim();
       try {
-        const normalizedChainKey = chainKey.toLowerCase().trim();
+        const normalizedChainKey = effectiveChainKey;
         const normalizedTokenAddress = tokenAddress.trim();
 
         // Validate token address format matches chain type
@@ -177,7 +176,7 @@ export const getTokenPriceTool = () => {
             return safeStringify({
               success: false,
               error: `Invalid token address for EVM chain (${capitalizeFirstLetter(
-                chainKey,
+                effectiveChainKey,
               )}): ${tokenAddress}. This appears to be a Solana address (base58 format). Please switch to Solana chain in the app first.`,
               price: null,
             });
@@ -199,7 +198,7 @@ export const getTokenPriceTool = () => {
           if (!nativeTokenCoingeckoId) {
             return safeStringify({
               success: false,
-              error: `Unsupported chain: ${chainKey}. Cannot get native token price for this chain.`,
+              error: `Unsupported chain: ${effectiveChainKey}. Cannot get native token price for this chain.`,
               price: null,
             });
           }
@@ -214,7 +213,7 @@ export const getTokenPriceTool = () => {
             sleep: 0,
             dataSource: PRICE_DATA_SOURCE.COINGECKO,
             coingeckoId: nativeTokenCoingeckoId,
-            timeout: timeoutMs / 1000, // Convert to seconds
+            timeout: DEFAULT_TIMEOUT_MS / 1000, // Convert to seconds
           });
 
           if (err) {
@@ -237,7 +236,7 @@ export const getTokenPriceTool = () => {
             success: true,
             price: price,
             nativeTokenSymbol: nativeTokenSymbol || null,
-            chain: capitalizeFirstLetter(chainKey),
+            chain: capitalizeFirstLetter(effectiveChainKey),
             unit: "USD",
             message:
               "Note: We only support getting native token price for the current chain. To get native token price for other chains, please switch to that chain in the app first.",
@@ -254,7 +253,7 @@ export const getTokenPriceTool = () => {
         if (chainId === undefined) {
           return safeStringify({
             success: false,
-            error: `Unsupported chain: ${chainKey}. Supported chains: solana, ethereum, bsc, arbitrum, polygon, optimism, avalanche, base, zksync, linea, scroll, mantle, blast`,
+            error: `Unsupported chain: ${effectiveChainKey}. Supported chains: solana, ethereum, bsc, arbitrum, polygon, optimism, avalanche, base, zksync, linea, scroll, mantle, blast`,
             price: null,
           });
         }
@@ -273,7 +272,7 @@ export const getTokenPriceTool = () => {
           dataSource: PRICE_DATA_SOURCE.DEXSCREENER,
           tokenAddress,
           chainId,
-          timeout: timeoutMs / 1000,
+          timeout: DEFAULT_TIMEOUT_MS / 1000,
         });
 
         if (err) {
@@ -296,7 +295,7 @@ export const getTokenPriceTool = () => {
         const tokenResult = safeStringify({
           success: true,
           price: price,
-          chain: capitalizeFirstLetter(chainKey),
+          chain: capitalizeFirstLetter(effectiveChainKey),
           tokenAddress,
           unit: "USD",
         });

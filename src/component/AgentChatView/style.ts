@@ -212,7 +212,7 @@ const AgentChatViewWrapper = styled.div`
       .bubble {
         padding: var(--padding-small);
         border-radius: 1.2rem;
-        font-size: 1.3rem;
+        font-size: 1.35rem;
         line-height: 1.7rem;
         word-break: break-word;
         box-shadow: var(--shadow-sm);
@@ -236,13 +236,13 @@ const AgentChatViewWrapper = styled.div`
           }
           h1,
           h2 {
-            font-size: 1.55rem;
+            font-size: 1.4rem;
           }
           h3,
           h4,
           h5,
           h6 {
-            font-size: 1.35rem;
+            font-size: 1.25rem;
           }
           h1:first-child,
           h2:first-child,
@@ -304,7 +304,7 @@ const AgentChatViewWrapper = styled.div`
             width: 100%;
             margin: 0.75rem 0;
             border-collapse: collapse;
-            font-size: 1.24rem;
+            font-size: 1.2rem;
           }
           th,
           td {
@@ -432,9 +432,17 @@ const SecretWarning = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
   font-size: 12px;
   color: var(--color-text-secondary, #666);
+`;
+
+const ComposerMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 6px;
+  width: 100%;
 `;
 
 export {
@@ -445,4 +453,5 @@ export {
   ExecutingToolBadge,
   ComposerStatus,
   SecretWarning,
+  ComposerMeta,
 };

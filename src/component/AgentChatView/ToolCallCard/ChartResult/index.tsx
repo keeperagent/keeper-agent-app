@@ -31,6 +31,9 @@ const ChartResult = ({ option, height = 400, isLightMode }: Props) => {
         style={{ height: `${clampedHeight}px`, width: "100%" }}
         notMerge
         lazyUpdate
+        onChartReady={() =>
+          window.dispatchEvent(new CustomEvent("chart-ready"))
+        }
       />
     </ChartResultWrapper>
   );

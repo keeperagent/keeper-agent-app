@@ -12,10 +12,10 @@ import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import { ICampaignProfile, IWallet } from "@/electron/type";
-import { mapNativeTokenName } from "./swapOnKyberswap";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
+import { mapNativeTokenName } from "./swapOnKyberswap";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_TOP_N = 5;
@@ -66,38 +66,21 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
         .array(z.string())
         .nullish()
         .describe(
-          "EVM wallet addresses to query, or null to use campaign context",
-        ),
-      timeoutMs: z
-        .number()
-        .positive()
-        .optional()
-        .describe(`Timeout per request in ms (default ${DEFAULT_TIMEOUT_MS})`),
-      topN: z
-        .number()
-        .positive()
-        .max(100)
-        .optional()
-        .describe(`Top/bottom wallet count (default ${DEFAULT_TOP_N})`),
-      maxWalletsInResponse: z
-        .number()
-        .positive()
-        .max(100)
-        .optional()
-        .describe(
-          `Max wallet entries in response (default ${DEFAULT_MAX_WALLETS_IN_RESPONSE})`,
+          "EVM wallet addresses to query, or null/undefined to use campaign context",
         ),
     }),
     func: async ({
       chainKey: schemaChainKey,
       tokenAddress: tokenAddressParam,
       walletAddresses,
-      timeoutMs = DEFAULT_TIMEOUT_MS,
-      topN = DEFAULT_TOP_N,
-      maxWalletsInResponse = DEFAULT_MAX_WALLETS_IN_RESPONSE,
     }) => {
-      const chainKey = (schemaChainKey ||
-        toolContext?.chainKey) as KYBERSWAP_CHAIN_KEY;
+      const resolvedChainKey = schemaChainKey || toolContext?.chainKey;
+      const validChainKeys = Object.values(KYBERSWAP_CHAIN_KEY) as string[];
+      if (!resolvedChainKey || !validChainKeys.includes(resolvedChainKey)) {
+        return `Error: invalid or missing chainKey "${resolvedChainKey}". Valid values: ${validChainKeys.join(", ")}.`;
+      }
+
+      const chainKey = resolvedChainKey as KYBERSWAP_CHAIN_KEY;
       const effectiveEncryptKey = toolContext?.encryptKey;
       const effectiveCampaignId = toolContext?.campaignId;
 
@@ -224,7 +207,7 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
           tokenType,
           wallet?.address || "",
           resolvedTokenAddress,
-          timeoutMs,
+          DEFAULT_TIMEOUT_MS,
         );
         if (errBalance) {
           results.push({
@@ -254,13 +237,13 @@ export const getEvmTokenBalanceTool = (toolContext?: ToolContext) =>
       const highest = sortedDesc[0] || null;
       const lowest = sortedAsc[0] || null;
 
-      const topWallets = sortedDesc.slice(0, topN);
-      const lowestWallets = sortedAsc.slice(0, topN);
+      const topWallets = sortedDesc.slice(0, DEFAULT_TOP_N);
+      const lowestWallets = sortedAsc.slice(0, DEFAULT_TOP_N);
 
       // Clamp balances returned to avoid flooding UI
       const maxBalances = Math.max(
         1,
-        Math.min(maxWalletsInResponse, results.length),
+        Math.min(DEFAULT_MAX_WALLETS_IN_RESPONSE, results.length),
       );
       const balancesSample = results.slice(0, maxBalances);
       const omittedCount = Math.max(0, results.length - maxBalances);

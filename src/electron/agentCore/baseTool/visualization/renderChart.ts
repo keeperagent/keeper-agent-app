@@ -1,6 +1,5 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { jsonrepair } from "jsonrepair";
 import { TOOL_KEYS } from "@/electron/constant";
 
 export const renderChartTool = () =>
@@ -11,38 +10,18 @@ export const renderChartTool = () =>
       "Generate an ECharts option object — it will be rendered directly in the app using the installed echarts library. " +
       "Supports line, bar, pie, scatter, candlestick, radar, heatmap, and all other ECharts chart types. " +
       "All data must be inline in the option object — do NOT use async or remote data sources.",
-    schema: z.object({
-      option: z
-        .string()
-        .describe(
-          "JSON string of a complete ECharts option object (must include series with inline data)",
-        ),
-      height: z.number().optional().describe("Height in pixels (default 400)"),
-    }),
-    func: async ({ option, height = 400 }) => {
-      let parsed: unknown;
-
-      if (typeof option !== "string") {
-        parsed = option;
-      } else {
-        try {
-          parsed = JSON.parse(option);
-        } catch {
-          try {
-            parsed = JSON.parse(jsonrepair(option));
-          } catch {
-            return "Error: option is not valid JSON and could not be repaired. Provide a valid JSON ECharts option object.";
-          }
-        }
-      }
-
-      if (
-        parsed === null ||
-        typeof parsed !== "object" ||
-        Array.isArray(parsed)
-      ) {
-        return "Error: option must be a JSON object, not a primitive or array.";
-      }
+    schema: z
+      .object({
+        series: z
+          .array(z.unknown())
+          .describe(
+            "ECharts series array — each item defines one chart series with type and data",
+          ),
+      })
+      .passthrough(),
+    func: async (input) => {
+      const height = 400;
+      const parsed: unknown = input;
 
       const VALID_ECHART_KEYS = new Set([
         "title",

@@ -202,6 +202,7 @@ export const agentController = () => {
             errorMsg: result.errorMsg,
             runId: result.runId,
             todoTemplate: result.todoTemplate,
+            turnUsage: result.turnUsage,
           },
           sessionId,
         });

@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { guard } from "@keeperagent/crypto-key-guard";
 import { MESSAGE, TOOL_KEYS } from "@/electron/constant";
+import { type TurnUsage } from "@/electron/type";
 import { Alert, message } from "antd";
 import copy from "copy-to-clipboard";
 import {
@@ -20,7 +21,9 @@ import {
   ExecutingToolBadge,
   ComposerStatus,
   SecretWarning,
+  ComposerMeta,
 } from "./style";
+import TokenUsageBadge from "./TokenUsageBadge";
 import { type AttachedFile } from "./AttachedFiles";
 import {
   type DisplayMessage,
@@ -101,6 +104,7 @@ type Props = {
   loading: boolean;
   error?: string | null;
   warning?: string | null;
+  turnUsage?: TurnUsage;
   composerDisabled?: boolean;
   canReset?: boolean;
   showPreparingStatus?: boolean;
@@ -120,6 +124,7 @@ const AgentChatView = ({
   loading,
   error,
   warning,
+  turnUsage,
   composerDisabled,
   canReset,
   showPreparingStatus,
@@ -393,6 +398,17 @@ const AgentChatView = ({
   }, [messages, loading]);
 
   useEffect(() => {
+    const handleChartReady = () => {
+      conversationEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    };
+    window.addEventListener("chart-ready", handleChartReady);
+    return () => window.removeEventListener("chart-ready", handleChartReady);
+  }, []);
+
+  useEffect(() => {
     if (hasPlanReview && !prevHasPlanReviewRef.current) {
       planReviewRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -631,17 +647,21 @@ const AgentChatView = ({
           </ComposerStatus>
         )}
 
-        {secretWarning && (
-          <SecretWarning>
-            <span>{translate("agent.secretDetectedWarning")}</span>
-          </SecretWarning>
-        )}
+        <ComposerMeta>
+          {turnUsage && <TokenUsageBadge turnUsage={turnUsage} />}
 
-        {warning && (
-          <SecretWarning>
-            <span>{warning}</span>
-          </SecretWarning>
-        )}
+          {secretWarning && (
+            <SecretWarning>
+              <span>{translate("agent.secretDetectedWarning")}</span>
+            </SecretWarning>
+          )}
+
+          {warning && (
+            <SecretWarning>
+              <span>{warning}</span>
+            </SecretWarning>
+          )}
+        </ComposerMeta>
 
         <ChatComposer
           value={draftMessage}

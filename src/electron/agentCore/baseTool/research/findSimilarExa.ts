@@ -18,15 +18,9 @@ export const findSimilarExaTool = () =>
       "Input: a URL to find similar pages for.",
     schema: z.object({
       url: z.string().describe("The URL to find similar pages for"),
-      maxResults: z
-        .number()
-        .positive()
-        .default(MAX_RESULTS)
-        .optional()
-        .describe("Maximum number of similar results to return (default 5)"),
     }),
     func: async (input) => {
-      const { url, maxResults = MAX_RESULTS } = input;
+      const { url } = input;
       try {
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.exaApiKey || null;
@@ -38,7 +32,7 @@ export const findSimilarExaTool = () =>
         const exaTool = new ExaFindSimilarResults({
           client: exaClient as any,
           searchArgs: {
-            numResults: maxResults,
+            numResults: MAX_RESULTS,
           },
         });
 

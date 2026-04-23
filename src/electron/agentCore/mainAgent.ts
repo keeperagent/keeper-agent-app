@@ -123,9 +123,10 @@ export const createMainAgent = async (
       writeJavaScriptTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
+  const systemPrompt = buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
   const agent = createDeepAgent({
     model: llm,
-    systemPrompt: buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH),
+    systemPrompt,
     backend,
     tools: [
       ...planningTools,
@@ -158,6 +159,8 @@ export const createMainAgent = async (
 
   return {
     agent,
+    llm,
+    systemPrompt,
     cleanup: closeClients,
     toolContext,
     subAgentsCount,

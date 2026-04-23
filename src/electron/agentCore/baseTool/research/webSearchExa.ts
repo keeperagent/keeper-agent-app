@@ -22,15 +22,9 @@ export const webSearchExaTool = () =>
         .describe(
           "The search query — can be a natural language question or concept",
         ),
-      maxResults: z
-        .number()
-        .positive()
-        .default(MAX_RESULTS)
-        .optional()
-        .describe("Maximum number of results to return (default 5)"),
     }),
     func: async (input) => {
-      const { query, maxResults = MAX_RESULTS } = input;
+      const { query } = input;
       try {
         const [llm, keyErr] = await getLlmSetting();
         const apiKey = llm?.exaApiKey || null;
@@ -42,7 +36,7 @@ export const webSearchExaTool = () =>
         const exaTool = new ExaSearchResults({
           client: exaClient as any,
           searchArgs: {
-            numResults: maxResults,
+            numResults: MAX_RESULTS,
           },
         });
 
