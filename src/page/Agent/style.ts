@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Tag } from "antd";
 import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
@@ -90,6 +91,18 @@ const Wrapper = styled.div`
     flex: 1;
     width: 100%;
   }
+
+  .model-name-wrapper {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
 `;
 
 const StatBadgeWrapper = styled.span`
@@ -116,4 +129,15 @@ const StatBadgeWrapper = styled.span`
   }
 `;
 
-export { Wrapper, StatBadgeWrapper };
+const CliTag = styled(Tag)`
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  font-size: 9px;
+  line-height: 14px;
+  padding: 0 4px;
+  margin: 0;
+  border-radius: 4px;
+`;
+
+export { Wrapper, StatBadgeWrapper, CliTag };

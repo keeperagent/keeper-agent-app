@@ -1,7 +1,7 @@
 import { LLMProvider } from "./type";
 
 export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
-  [LLMProvider.OPENAI]: "gpt-4o-mini",
+  [LLMProvider.OPENAI]: "gpt-5.4-mini",
   [LLMProvider.CLAUDE]: "claude-sonnet-4-6",
   [LLMProvider.GEMINI]: "gemini-2.0-flash",
   [LLMProvider.OPENROUTER]: "anthropic/claude-sonnet-4.6",
@@ -300,6 +300,8 @@ export const MESSAGE = {
   CHECK_MODEL_CAPABILITY_RES: "CHECK_MODEL_CAPABILITY_RES",
   CHECK_CLAUDE_CLI_AVAILABLE: "CHECK_CLAUDE_CLI_AVAILABLE",
   CHECK_CLAUDE_CLI_AVAILABLE_RES: "CHECK_CLAUDE_CLI_AVAILABLE_RES",
+  CHECK_CODEX_CLI_AVAILABLE: "CHECK_CODEX_CLI_AVAILABLE",
+  CHECK_CODEX_CLI_AVAILABLE_RES: "CHECK_CODEX_CLI_AVAILABLE_RES",
 
   // Data statistic
   GET_STATISTIC: "GET_STATISTIC",

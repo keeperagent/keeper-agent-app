@@ -161,6 +161,7 @@ class PreferenceService {
         "ollamaBaseUrl",
         "ollamaModel",
         "useClaudeCLI",
+        "useCodexCLI",
       ];
       const llmEncryptedKeys: (keyof IPreference)[] = [
         "openAIApiKey",

@@ -2535,6 +2535,7 @@ export type IPreference = {
   isScreenCaptureProtectionOn?: boolean;
   llmProvider?: string;
   useClaudeCLI?: boolean;
+  useCodexCLI?: boolean;
 };
 
 export enum McpTokenPermission {
@@ -2839,6 +2840,7 @@ export type ILlmSetting = {
   isMcpServerOn?: boolean;
   mcpServerPort?: number;
   useClaudeCLI?: boolean;
+  useCodexCLI?: boolean;
 };
 
 export type IDexSetting = {
