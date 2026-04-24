@@ -38,11 +38,14 @@ const OllamaSetting = (props: IProps) => {
         "ollamaModel",
       ]);
 
-      await updatePreference({
-        id: preference?.id,
-        ollamaBaseUrl: ollamaBaseUrl || "",
-        ollamaModel: ollamaModel || "",
-      });
+      await updatePreference(
+        {
+          id: preference?.id,
+          ollamaBaseUrl: ollamaBaseUrl || "",
+          ollamaModel: ollamaModel || "",
+        },
+        true,
+      );
     } catch {}
   };
 

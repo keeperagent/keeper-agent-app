@@ -45,7 +45,7 @@ export const perferenceController = () => {
     MESSAGE.UPDATE_PREFERENCE,
     MESSAGE.UPDATE_PREFERENCE_RES,
     async (event, payload) => {
-      const { requestId, data, isUpdateAgentTool } = payload;
+      const { requestId, data, recreateAgents } = payload;
       const [res, err] = await preferenceService.updatePreference(data);
 
       if (err) {
@@ -64,7 +64,7 @@ export const perferenceController = () => {
         requestId,
       });
 
-      if (isUpdateAgentTool) {
+      if (recreateAgents) {
         recreateAllAgents();
       }
 

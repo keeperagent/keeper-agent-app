@@ -30,7 +30,7 @@ const useUpdatePreference = () => {
 
   const updatePreference = async (
     data: IPreference,
-    isUpdateAgentTool?: boolean,
+    recreateAgents?: boolean,
   ) => {
     setLoading(true);
     setIsSuccess(false);
@@ -39,7 +39,7 @@ const useUpdatePreference = () => {
     window?.electron?.send(MESSAGE.UPDATE_PREFERENCE, {
       data,
       requestId: uniqueID,
-      isUpdateAgentTool,
+      recreateAgents,
     });
 
     await new Promise<void>((resolve) => {

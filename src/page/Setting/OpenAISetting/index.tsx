@@ -66,12 +66,15 @@ const OpenAISetting = (props: IProps) => {
         checkModelCapability(openAIModel, LLMProvider.OPENAI);
       }
 
-      await updatePreference({
-        id: preference?.id,
-        openAIApiKey,
-        openAIModel: openAIModel || "",
-        openAIBackgroundModel: openAIBackgroundModel || "",
-      });
+      await updatePreference(
+        {
+          id: preference?.id,
+          openAIApiKey,
+          openAIModel: openAIModel || "",
+          openAIBackgroundModel: openAIBackgroundModel || "",
+        },
+        true,
+      );
     } catch {}
   };
 

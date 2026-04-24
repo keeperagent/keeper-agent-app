@@ -378,7 +378,7 @@ export type IpcGetMcpServerToolsPayload = {
 export type IpcUpdatePreferencePayload = {
   requestId?: string;
   data: IPreference;
-  isUpdateAgentTool?: boolean;
+  recreateAgents?: boolean;
 };
 
 // NodeSecret
