@@ -967,39 +967,57 @@ export const buildBaseSubAgents = (
         "- ALWAYS call render_chart — never describe a chart in text.\n" +
         "- The `option` parameter is REQUIRED and must be a complete ECharts option object.\n" +
         "- Always include: title, tooltip, and series with all data inline.\n" +
-        "- For cartesian charts (line, bar, scatter, heatmap): ALWAYS include explicit xAxis and yAxis objects — never omit them. Always set xAxis.name and yAxis.name with a descriptive label and unit (e.g. 'Year', 'GDP Growth Rate (%)', 'Price (USD)'). Missing axis names leave the chart unlabeled.\n" +
-        "- Do NOT hardcode any colors, text colors, background colors, or axis colors — the app theme is applied automatically.\n" +
+        "- For cartesian charts (line, bar, scatter, heatmap): ALWAYS include explicit xAxis and yAxis objects — never omit them. Two distinct axis concepts:\n" +
+        "  • xAxis.data / yAxis.data — the tick LABELS shown on the axis (e.g. ['USA','Germany','France'] for bar charts). Required for category axes. Missing → ECharts shows 0, 1, 2 indices.\n" +
+        "  • xAxis.name / yAxis.name — the axis TITLE shown beside the axis (e.g. 'Country', 'Share (%)'). Always set with a descriptive label and unit. Position/styling are applied automatically — just set the name string.\n" +
+        "- Do NOT hardcode any colors — no itemStyle.color per series, no label.color, no background colors. The app theme applies all colors automatically.\n" +
         "- Call render_chart EXACTLY ONCE. If it fails, report the error and stop — never retry or call it again.\n" +
-        "- After calling render_chart, respond with nothing. No summary, no insights, no legends, no trend analysis.\n" +
-        "- If data is missing or incomplete, return an error describing exactly what data is needed — never fabricate or estimate values for a chart.\n\n" +
+        "- After calling render_chart, respond with nothing. No summary, no insights, no trend analysis.\n" +
+        "- If data is missing or incomplete, return an error describing exactly what data is needed — never fabricate or estimate values.\n\n" +
         "## Chart type selection\n" +
         "Pick based on data shape — never ask the user:\n" +
         "- Dates + values → line, xAxis.type: 'time'\n" +
-        "- Categories + one metric → bar\n" +
-        "- Categories + multiple metrics → grouped bar or multi-series line\n" +
-        "- Two numeric columns (correlation) → scatter\n" +
-        "- Parts of a whole → donut pie\n" +
+        "- Categories + one metric → vertical bar\n" +
+        "- Categories + multiple metrics (side-by-side) → grouped bar or multi-series line\n" +
+        "- Categories + composition per category (parts that sum to 100%) → stacked bar, stack: 'total'\n" +
+        "- Two numeric columns (correlation) → scatter, value: [x, y]\n" +
         "- Three numeric columns (x, y, magnitude) → bubble scatter, value: [x, y, size]\n" +
-        "- Values spanning 3+ orders of magnitude → use horizontal bar (xAxis.type: 'value', yAxis.type: 'category') so labels are readable; never use log scale for bar charts.\n\n" +
+        "- Multiple entities compared across named dimensions → radar\n" +
+        "- Parts of a whole → donut pie\n" +
+        "- Values spanning 3+ orders of magnitude → horizontal bar (xAxis.type: 'value', yAxis.type: 'category'); never use log scale for bar charts.\n\n" +
         "## Style\n" +
-        "- Line charts: set smooth: true. Never add areaStyle — it is applied automatically for single-series charts. Never add areaStyle on multi-series charts (overlapping fills look bad).\n" +
-        "- Bar charts: add barMaxWidth: 40. ALWAYS set data on the axis whose type is 'category' — omitting it causes ECharts to show 0, 1, 2 indices. Vertical bar (default): xAxis.type: 'category', set xAxis.data: ['Label1', ...], series.data MUST be a plain number array: [3, 6, 8, 10]. Horizontal bar: yAxis.type: 'category', set yAxis.data: ['Label1', ...], xAxis.type: 'value', series.data MUST be a plain number array. NEVER use {value:N, itemStyle:{color:'...'}} per-item format in series.data — colors are applied automatically by the theme; using it causes ECharts to ignore xAxis.data and show numeric indices instead.\n" +
+        "- Line charts: set smooth: true. Never add areaStyle — applied automatically for single-series. Never add areaStyle on multi-series charts.\n" +
+        "- Bar charts — add barMaxWidth: 40 per series. Add legend: {} when multiple series.\n" +
+        "  • Vertical bar (single metric): ONE series only — NEVER create extra series with zeros to highlight or color individual bars, colors are applied automatically. Pass xAxisLabels: ['Label1','Label2',...] AND xAxis: {type:'category', data:['Label1','Label2',...]}, yAxis: {type:'value', name:'Axis Title (unit)'}, series.data: plain number array [3, 6, 8].\n" +
+        "  • Horizontal bar: yAxis: {type:'category', data:['Label1',...]}, xAxis: {type:'value', name:'Axis Title (unit)'}, series.data: plain number array.\n" +
+        "  • Stacked bar: same as vertical bar PLUS stack:'total' on every series. ALWAYS pass xAxisLabels: ['Label1','Label2',...] with the category names in order — this is the safest way to label the bars.\n" +
+        "  • NEVER use {value:N, itemStyle:{color:'#...'}} per-item objects in series.data — overrides xAxis.data labels and shows 0, 1, 2 indices.\n" +
         "- Pie charts: use radius: ['45%', '72%'] for donut shape. Add label: { formatter: '{b}\\n{d}%' }.\n" +
-        "- Scatter/bubble: each point must be {name: 'Label', value: [x, y, size]}. App auto-sizes bubbles — do NOT set symbolSize. REQUIRED: xAxis: {type:'value', name:'<X label with unit>'} and yAxis: {type:'value', name:'<Y label with unit>'} — missing names leave axes unlabeled. Add itemStyle: { opacity: 0.7 } when bubbles may overlap.\n" +
-        "- Heatmap: data format is [[xIndex, yIndex, value], ...] where indices reference xAxis.data and yAxis.data arrays. ALWAYS include: xAxis: {type:'category', data:[...]}, yAxis: {type:'category', data:[...]}, and visualMap: {min: <minValue>, max: <maxValue>, calculable: true}. Without visualMap all cells are invisible. Example: xAxis.data:['Mon','Tue','Wed','Thu','Fri'], yAxis.data:['9am','10am',...,'6pm'].\n" +
+        "- Scatter (2D): data format is {name:'Label', value:[x, y]} per point. Include xAxis: {type:'value', name:'X label (unit)'} and yAxis: {type:'value', name:'Y label (unit)'}.\n" +
+        "- Bubble (3D scatter): data format is {name:'Label', value:[x, y, size]} per point. App auto-sizes bubbles — do NOT set symbolSize. Same axis requirements as scatter. Add itemStyle: {opacity: 0.7} when bubbles may overlap.\n" +
+        "- Radar: ALWAYS include a top-level radar object with an indicator array — without it the chart is blank. Each indicator needs name and max: radar: {indicator:[{name:'Performance',max:10},{name:'Learning Curve',max:10},...]}. Each series entry: {name:'Label', value:[v1,v2,...]} matching the indicator order.\n" +
+        "- Heatmap: data format is [[xIndex, yIndex, value], ...] where indices reference xAxis.data and yAxis.data arrays. ALWAYS include: xAxis: {type:'category', data:[...]}, yAxis: {type:'category', data:[...]}, and visualMap: {min: <minValue>, max: <maxValue>, calculable: true}. Without visualMap all cells are invisible.\n" +
         "- Candlestick (OHLC): data array format is [open, close, lowest, highest] per bar. Colors and y-axis scale are applied automatically — do not set itemStyle colors or yAxis.min.\n" +
-        "- Add legend: {} when there are multiple series.\n" +
         "- Axis formatters/tooltip: the option param is JSON — NEVER use JavaScript functions, arrow functions, or any code. Use ECharts string templates only: axisLabel.formatter: '{value}%' or '{value} B'. tooltip.formatter: '{b}: {c} B', '{b}: ${c}'. NEVER set tooltip.valueFormatter. Violation causes a JSON parse error.\n" +
         "- Log scale: set yAxis.type: 'log', yAxis.logBase: 10. No custom formatter on log scale. Never use log scale for bar charts.\n" +
-        "- Axis labels: always use yAxis.name (NOT yAxis.title) and xAxis.name with unit (e.g. 'Price (USD)', 'GDP (Trillions USD)'). Derive from field names — capitalize and clean ('revenue_usd' → 'Revenue (USD)'). Set nameLocation: 'middle', nameGap: 50 on yAxis.\n" +
+        "- Axis name style: use yAxis.name (NOT yAxis.title). Derive from field names — capitalize and clean ('revenue_usd' → 'Revenue (USD)'). Do NOT set nameLocation or nameGap — applied automatically.\n" +
         "- Max 1 xAxis, max 2 yAxis. Second yAxis must have position: 'right'.\n\n" +
         "## Dates\n" +
         "- Year-only data (2020, 2021, ...): use xAxis.type: 'category', xAxis.data: ['2020','2021',...], series.data as plain number array. NEVER use [[year, value]] pairs for year data — it breaks the axis.\n" +
         "- Full date data (monthly, daily): use xAxis.type: 'time', series.data as [[isoDateString, number], ...] pairs. NEVER set xAxis.data with time axis.\n\n" +
         "## Series format — CRITICAL\n" +
         'Each series MUST be a JSON object with name, type, and data fields. NEVER use array format like ["China", [...]] — that is wrong.\n' +
-        "Example:\n" +
-        '{"title":{"text":"GDP"},"tooltip":{},"legend":{},"xAxis":{"type":"time"},"yAxis":{"name":"Trillions USD","nameLocation":"middle","nameGap":50},"series":[{"name":"USA","type":"line","smooth":true,"data":[["2020-01-01",21.43],["2021-01-01",22.68]]},{"name":"China","type":"line","smooth":true,"data":[["2020-01-01",14.68],["2021-01-01",17.73]]}]}',
+        "Line chart example:\n" +
+        '{"title":{"text":"GDP"},"tooltip":{},"legend":{},"xAxis":{"type":"time"},"yAxis":{"name":"Trillions USD"},"series":[{"name":"USA","type":"line","smooth":true,"data":[["2020-01-01",21.43],["2021-01-01",22.68]]},{"name":"China","type":"line","smooth":true,"data":[["2020-01-01",14.68],["2021-01-01",17.73]]}]}\n' +
+        "Stacked bar example — xAxisLabels is a top-level parameter that labels each bar group:\n" +
+        '{"title":{"text":"Energy Mix"},"tooltip":{},"legend":{},"xAxisLabels":["USA","Germany","France"],"xAxis":{"type":"category","data":["USA","Germany","France"]},"yAxis":{"name":"Share (%)"},"series":[{"name":"Coal","type":"bar","stack":"total","barMaxWidth":40,"data":[16,26,1]},{"name":"Gas","type":"bar","stack":"total","barMaxWidth":40,"data":[43,13,9]},{"name":"Nuclear","type":"bar","stack":"total","barMaxWidth":40,"data":[19,2,67]}]}',
+      responseFormat: z.object({
+        result: z
+          .string()
+          .describe(
+            "MUST be empty string or at most one short sentence (e.g. 'Chart rendered.'). No summaries, no insights, no tables, no bullet points.",
+          ),
+      }),
       ...bgModel("visualization_agent"),
       middleware: [
         createAllowlistToolsMiddleware(

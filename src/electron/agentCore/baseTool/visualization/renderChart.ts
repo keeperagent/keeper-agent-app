@@ -18,6 +18,24 @@ export const renderChartTool = () =>
           .describe(
             "ECharts series array — each item defines one chart series with type and data",
           ),
+        xAxisLabels: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Category labels for the x-axis in order (e.g. ['A','B','C']). Required for vertical and stacked bar charts — injected into xAxis.data automatically.",
+          ),
+        xAxis: z
+          .record(z.unknown())
+          .optional()
+          .describe(
+            "X-axis config. For scatter/bubble REQUIRED: {type:'value', name:'<label with unit>'}. For bar REQUIRED: {type:'category', data:[...]}. name is the axis title shown on the chart — always set it.",
+          ),
+        yAxis: z
+          .record(z.unknown())
+          .optional()
+          .describe(
+            "Y-axis config. REQUIRED for all cartesian charts: {type:'value', name:'<label with unit>'}. name is the axis title shown on the chart — always set it.",
+          ),
       })
       .passthrough(),
     func: async (input) => {
@@ -32,6 +50,22 @@ export const renderChartTool = () =>
               ? parseError.message
               : String(parseError);
           return `Error: series could not be parsed as JSON array. ${detail}. Ensure the value is valid JSON — invalid escape sequences like \\$ are not allowed; use $ directly.`;
+        }
+      }
+
+      // Extract xAxisLabels before ECharts key validation — it is not an ECharts field.
+      const xAxisLabels = input.xAxisLabels as string[] | undefined;
+      delete input.xAxisLabels;
+
+      // Inject xAxisLabels into xAxis.data when xAxis.data is absent.
+      if (xAxisLabels && xAxisLabels.length > 0) {
+        if (!input.xAxis) {
+          input.xAxis = { type: "category", data: xAxisLabels };
+        } else if (!Array.isArray(input.xAxis) && !(input.xAxis as any).data) {
+          (input.xAxis as any).data = xAxisLabels;
+          if (!(input.xAxis as any).type) {
+            (input.xAxis as any).type = "category";
+          }
         }
       }
 
@@ -90,7 +124,7 @@ export const renderChartTool = () =>
         option: parsed,
         height,
         result:
-          "Chart rendered and displayed to the user. Do not call render_chart again.",
+          "Chart rendered and displayed to the user. Do not call render_chart again. Do not summarize, describe, or analyze the chart — respond with empty string only.",
       });
     },
   });
