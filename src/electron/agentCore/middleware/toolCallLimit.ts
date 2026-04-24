@@ -24,7 +24,9 @@ export const createToolCallLimitMiddleware = (maxCalls: number) =>
         ToolMessage.isInstance(msg),
       ).length;
 
-      if (completedCalls < maxCalls) {
+      const pendingCalls = lastAiMsg.tool_calls.length;
+
+      if (completedCalls + pendingCalls <= maxCalls) {
         return;
       }
 

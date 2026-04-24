@@ -212,9 +212,10 @@ const applyTooltipTheme = (
         const value = Array.isArray(params.value) ? params.value : [];
         const fmt = (val: any) =>
           typeof val === "number"
-            ? Math.abs(val) >= 1000
-              ? val.toLocaleString()
-              : String(parseFloat(val.toFixed(2)))
+            ? val.toLocaleString(undefined, {
+                maximumFractionDigits: 4,
+                minimumFractionDigits: Math.abs(val) < 1 ? 2 : 0,
+              })
             : escHtml(String(val || ""));
         const lines: string[] = [];
         if (name) {
@@ -525,13 +526,17 @@ const applyHeatmapTheme = (option: any, theme: ChartTheme) => {
   if (!option.visualMap) {
     const dataValues = Array.isArray(heatmapSeries.data)
       ? (heatmapSeries.data as any[])
-          .map((point: any) =>
-            Array.isArray(point)
-              ? point[2]
-              : typeof point?.value === "number"
-                ? point.value
-                : null,
-          )
+          .map((point: any) => {
+            if (Array.isArray(point)) {
+              return point[2];
+            } else if (Array.isArray(point?.value)) {
+              return point.value[2];
+            } else if (typeof point?.value === "number") {
+              return point.value;
+            } else {
+              return null;
+            }
+          })
           .filter((value: any) => typeof value === "number")
       : [];
     const minVal = dataValues.length > 0 ? Math.min(...dataValues) : 0;
