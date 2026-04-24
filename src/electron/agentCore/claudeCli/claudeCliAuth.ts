@@ -1,24 +1,32 @@
 import { execSync } from "child_process";
 import { app } from "electron";
+import os from "os";
 import path from "path";
 import fs from "fs";
 import { logEveryWhere } from "@/electron/service/util";
 
-type ClaudeCLIConfig = {
+export type ClaudeCliConfig = {
   keychainService: string;
   clientId: string;
   tokenUrl: string;
   scopes: string[];
-  betaHeaders: string[];
+  cliVersion: string;
+  billingSalt: string;
+  systemIdentity: string;
+  billingPrefix: string;
+  toolPrefix: string;
+  baseBetas: string[];
+  modelOverrides: Record<string, { exclude?: string[]; add?: string[] }>;
 };
 
 type ClaudeOAuthCredentials = {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  clientId?: string;
 };
 
-const DEFAULT_CONFIG: ClaudeCLIConfig = {
+const DEFAULT_CONFIG: ClaudeCliConfig = {
   keychainService: "Claude Code-credentials",
   clientId: "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
   tokenUrl: "https://platform.claude.com/v1/oauth/token",
@@ -29,13 +37,29 @@ const DEFAULT_CONFIG: ClaudeCLIConfig = {
     "user:mcp_servers",
     "user:file_upload",
   ],
-  betaHeaders: ["claude-code-20250219"],
+  cliVersion: "2.1.119",
+  billingSalt: "59cf53e54c78",
+  systemIdentity: "You are Claude Code, Anthropic's official CLI for Claude.",
+  billingPrefix: "x-anthropic-billing-header",
+  toolPrefix: "mcp_",
+  baseBetas: [
+    "claude-code-20250219",
+    "oauth-2025-04-20",
+    "interleaved-thinking-2025-05-14",
+    "prompt-caching-scope-2026-01-05",
+    "context-management-2025-06-27",
+  ],
+  modelOverrides: {
+    haiku: { exclude: ["interleaved-thinking-2025-05-14"] },
+    "4-6": { add: ["effort-2025-11-24"] },
+    "4-7": { add: ["effort-2025-11-24"] },
+  },
 };
 
-class ClaudeCLIAuth {
+class ClaudeCliAuth {
   private cachedToken: { accessToken: string; expiresAt: number } | null = null;
 
-  private loadConfig = (): ClaudeCLIConfig => {
+  loadConfig = (): ClaudeCliConfig => {
     try {
       const configPath = path.join(
         app.getPath("userData"),
@@ -77,15 +101,53 @@ class ClaudeCLIAuth {
         accessToken: oauthData.accessToken,
         refreshToken: oauthData.refreshToken,
         expiresAt: oauthData.expiresAt,
+        clientId: oauthData.clientId,
       };
     } catch {
       return null;
     }
   };
 
+  private readCredentialsFile = (): ClaudeOAuthCredentials | null => {
+    try {
+      const credentialsPath = path.join(
+        os.homedir(),
+        ".claude",
+        ".credentials.json",
+      );
+      if (!fs.existsSync(credentialsPath)) {
+        return null;
+      }
+      const raw = fs.readFileSync(credentialsPath, "utf-8");
+      const parsed = JSON.parse(raw);
+      const oauthData = parsed?.claudeAiOauth;
+      if (!oauthData?.accessToken) {
+        return null;
+      }
+      return {
+        accessToken: oauthData.accessToken,
+        refreshToken: oauthData.refreshToken,
+        expiresAt: oauthData.expiresAt,
+        clientId: oauthData.clientId,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  private readCredentials = (
+    keychainService: string,
+  ): ClaudeOAuthCredentials | null => {
+    return (
+      this.readKeychainCredentials(keychainService) ||
+      this.readCredentialsFile()
+    );
+  };
+
   private refreshAccessToken = async (
     refreshToken: string,
-    config: ClaudeCLIConfig,
+    config: ClaudeCliConfig,
+    storedClientId?: string,
   ): Promise<ClaudeOAuthCredentials | null> => {
     try {
       const response = await fetch(config.tokenUrl, {
@@ -94,7 +156,7 @@ class ClaudeCLIAuth {
         body: JSON.stringify({
           grant_type: "refresh_token",
           refresh_token: refreshToken,
-          client_id: config.clientId,
+          client_id: storedClientId || config.clientId,
           scope: config.scopes.join(" "),
         }),
       });
@@ -128,7 +190,7 @@ class ClaudeCLIAuth {
     }
 
     const config = this.loadConfig();
-    const credentials = this.readKeychainCredentials(config.keychainService);
+    const credentials = this.readCredentials(config.keychainService);
     if (!credentials) {
       throw new Error(
         "Claude CLI credentials not found. Please run: claude auth login",
@@ -138,7 +200,7 @@ class ClaudeCLIAuth {
     const isExpiringSoon = credentials.expiresAt - Date.now() < cacheTime;
     if (!isExpiringSoon) {
       logEveryWhere({
-        message: `claudeCLIAuth: token loaded from keychain, accessToken: ${credentials.accessToken}, expiresAt: ${credentials.expiresAt}`,
+        message: `claudeCliAuth: token loaded from keychain, accessToken: ${credentials.accessToken}, expiresAt: ${credentials.expiresAt}`,
       });
       this.cachedToken = {
         accessToken: credentials.accessToken,
@@ -150,9 +212,10 @@ class ClaudeCLIAuth {
     const refreshed = await this.refreshAccessToken(
       credentials.refreshToken,
       config,
+      credentials.clientId,
     );
     if (refreshed) {
-      logEveryWhere({ message: "claudeCLIAuth: token refreshed successfully" });
+      logEveryWhere({ message: "claudeCliAuth: token refreshed successfully" });
       this.cachedToken = {
         accessToken: refreshed.accessToken,
         expiresAt: refreshed.expiresAt,
@@ -161,7 +224,7 @@ class ClaudeCLIAuth {
     }
 
     logEveryWhere({
-      message: "claudeCLIAuth: token refresh failed, using existing token",
+      message: "claudeCliAuth: token refresh failed, using existing token",
     });
     this.cachedToken = {
       accessToken: credentials.accessToken,
@@ -172,15 +235,10 @@ class ClaudeCLIAuth {
 
   isAvailable = (): boolean => {
     const config = this.loadConfig();
-    const credentials = this.readKeychainCredentials(config.keychainService);
+    const credentials = this.readCredentials(config.keychainService);
     return credentials !== null;
-  };
-
-  getBetaHeaders = (): string[] => {
-    const config = this.loadConfig();
-    return config.betaHeaders || DEFAULT_CONFIG.betaHeaders;
   };
 }
 
-const claudeCLIAuth = new ClaudeCLIAuth();
-export { claudeCLIAuth };
+const claudeCliAuth = new ClaudeCliAuth();
+export { claudeCliAuth };

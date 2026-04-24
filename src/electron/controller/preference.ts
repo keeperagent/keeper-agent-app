@@ -6,7 +6,7 @@ import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
 import { keeperMcpServer } from "@/electron/mcpServer/index";
 import { logEveryWhere } from "@/electron/service/util";
 import { LLMProvider } from "@/electron/type";
-import { claudeCLIAuth } from "@/electron/agentCore/claudeCLIAuth";
+import { claudeCliAuth } from "@/electron/agentCore/claudeCli/claudeCliAuth";
 import { onIpc } from "./helpers";
 import { recreateAllAgents } from "./appAgent";
 
@@ -96,7 +96,7 @@ export const perferenceController = () => {
     MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES,
     async (event, payload) => {
       event.reply(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, {
-        data: claudeCLIAuth.isAvailable(),
+        data: claudeCliAuth.isAvailable(),
         requestId: payload?.requestId,
       });
     },

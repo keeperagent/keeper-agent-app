@@ -1,5 +1,9 @@
 import { MemorySaver } from "@langchain/langgraph";
-import { createMiddleware } from "langchain";
+import {
+  createRenderOnceMiddleware,
+  createAllowlistToolsMiddleware,
+  createToolCallLimitMiddleware,
+} from "./middleware";
 import {
   createDeepAgent,
   FilesystemBackend,
@@ -64,12 +68,10 @@ import {
   readMessagesTool,
   acknowledgeMessageTool,
 } from "./baseTool/agentMailbox";
-
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { ToolContext } from "./toolContext";
 
 export const DEFAULT_MEMORY_FILE = "AGENT.md";
-
 export const MEMORY_TEMPLATE =
   "# Agent Memory\n\n" +
   "## User Profile\n\n" +
@@ -453,17 +455,6 @@ export const buildAgentBackend = (
     }),
   });
 
-const createAllowlistToolsMiddleware = (allowedNames: Set<string>) =>
-  createMiddleware({
-    name: "AllowlistTools",
-    wrapModelCall: async (request: any, handler: any) => {
-      const filteredTools = (request.tools || []).filter((tool: any) =>
-        allowedNames.has(tool?.name || ""),
-      );
-      return handler({ ...request, tools: filteredTools });
-    },
-  });
-
 // Subagents that require main model — money or coding
 const HIGH_STAKES_SUBAGENTS = new Set([
   "trade_agent",
@@ -728,14 +719,14 @@ export const buildBaseSubAgents = (
         "Web search for real-time/recent info and URL extraction. Skip if answer is in training knowledge.",
       systemPrompt:
         "You are a research subagent. Return findings with source URLs, keep responses concise.\n\n" +
-        "## Knowledge-first\n" +
-        "If you already know the answer, return it directly — no search needed.\n" +
-        "Search only for genuinely live, real-time, or too-recent-for-training data.\n\n" +
+        "## When to search\n" +
+        "ALWAYS search for: news, latest/recent/current events, prices, live data, anything that changes over time.\n" +
+        "Skip search only for static facts that never change. When in doubt, search.\n\n" +
         "## Search rules\n" +
         "- Before searching: convert the task to concise keywords, not full sentences.\n" +
         "- One search per task — combine everything into one query.\n" +
         "- Choose maxResults by query scope: 2 for a single specific fact, 3 for a focused topic, 5 for broad or multi-topic queries — never default to 5 for everything.\n" +
-        "- Hard limit: 3 tool calls maximum — no exceptions.\n" +
+        "- Hard limit: 3 tool calls maximum — no exceptions. The framework enforces this and will block further calls.\n" +
         "- On tool error: do not retry with same args; switch to the other search provider at most once; then stop and report.\n" +
         "- If search returns no useful results: report what was found (or nothing) and stop — never retry with rephrased queries.\n\n" +
         "## Structured response — `result` field\n" +
@@ -752,6 +743,7 @@ export const buildBaseSubAgents = (
         createAllowlistToolsMiddleware(
           new Set(researchTools.map((tool: any) => tool.name)),
         ),
+        createToolCallLimitMiddleware(3),
       ],
       tools: researchTools as any,
     });
@@ -974,7 +966,8 @@ export const buildBaseSubAgents = (
         "## Rules\n" +
         "- ALWAYS call render_chart — never describe a chart in text.\n" +
         "- The `option` parameter is REQUIRED and must be a complete ECharts option object.\n" +
-        "- Always include: title, tooltip, and series with all data inline. Include xAxis/yAxis for cartesian charts.\n" +
+        "- Always include: title, tooltip, and series with all data inline.\n" +
+        "- For cartesian charts (line, bar, scatter, heatmap): ALWAYS include explicit xAxis and yAxis objects — never omit them. Always set xAxis.name and yAxis.name with a descriptive label and unit (e.g. 'Year', 'GDP Growth Rate (%)', 'Price (USD)'). Missing axis names leave the chart unlabeled.\n" +
         "- Do NOT hardcode any colors, text colors, background colors, or axis colors — the app theme is applied automatically.\n" +
         "- Call render_chart EXACTLY ONCE. If it fails, report the error and stop — never retry or call it again.\n" +
         "- After calling render_chart, respond with nothing. No summary, no insights, no legends, no trend analysis.\n" +
@@ -990,9 +983,10 @@ export const buildBaseSubAgents = (
         "- Values spanning 3+ orders of magnitude → use horizontal bar (xAxis.type: 'value', yAxis.type: 'category') so labels are readable; never use log scale for bar charts.\n\n" +
         "## Style\n" +
         "- Line charts: set smooth: true. Never add areaStyle — it is applied automatically for single-series charts. Never add areaStyle on multi-series charts (overlapping fills look bad).\n" +
-        "- Bar charts: add barMaxWidth: 40. ALWAYS set data on the axis whose type is 'category' — omitting it causes ECharts to show 0, 1, 2 indices. Vertical bar (default): xAxis.type: 'category', set xAxis.data: ['Label1', ...], series data is a matching number array. Horizontal bar: yAxis.type: 'category', set yAxis.data: ['Label1', ...], xAxis.type: 'value', series data is a matching number array.\n" +
+        "- Bar charts: add barMaxWidth: 40. ALWAYS set data on the axis whose type is 'category' — omitting it causes ECharts to show 0, 1, 2 indices. Vertical bar (default): xAxis.type: 'category', set xAxis.data: ['Label1', ...], series.data MUST be a plain number array: [3, 6, 8, 10]. Horizontal bar: yAxis.type: 'category', set yAxis.data: ['Label1', ...], xAxis.type: 'value', series.data MUST be a plain number array. NEVER use {value:N, itemStyle:{color:'...'}} per-item format in series.data — colors are applied automatically by the theme; using it causes ECharts to ignore xAxis.data and show numeric indices instead.\n" +
         "- Pie charts: use radius: ['45%', '72%'] for donut shape. Add label: { formatter: '{b}\\n{d}%' }.\n" +
-        "- Scatter/bubble: each point must be {name: 'Label', value: [x, y, size]}. App auto-sizes bubbles and shows name in tooltip — do NOT set symbolSize or formatter. Add itemStyle: { opacity: 0.7 } when bubbles may overlap.\n" +
+        "- Scatter/bubble: each point must be {name: 'Label', value: [x, y, size]}. App auto-sizes bubbles — do NOT set symbolSize. REQUIRED: xAxis: {type:'value', name:'<X label with unit>'} and yAxis: {type:'value', name:'<Y label with unit>'} — missing names leave axes unlabeled. Add itemStyle: { opacity: 0.7 } when bubbles may overlap.\n" +
+        "- Heatmap: data format is [[xIndex, yIndex, value], ...] where indices reference xAxis.data and yAxis.data arrays. ALWAYS include: xAxis: {type:'category', data:[...]}, yAxis: {type:'category', data:[...]}, and visualMap: {min: <minValue>, max: <maxValue>, calculable: true}. Without visualMap all cells are invisible. Example: xAxis.data:['Mon','Tue','Wed','Thu','Fri'], yAxis.data:['9am','10am',...,'6pm'].\n" +
         "- Candlestick (OHLC): data array format is [open, close, lowest, highest] per bar. Colors and y-axis scale are applied automatically — do not set itemStyle colors or yAxis.min.\n" +
         "- Add legend: {} when there are multiple series.\n" +
         "- Axis formatters/tooltip: the option param is JSON — NEVER use JavaScript functions, arrow functions, or any code. Use ECharts string templates only: axisLabel.formatter: '{value}%' or '{value} B'. tooltip.formatter: '{b}: {c} B', '{b}: ${c}'. NEVER set tooltip.valueFormatter. Violation causes a JSON parse error.\n" +
@@ -1000,7 +994,8 @@ export const buildBaseSubAgents = (
         "- Axis labels: always use yAxis.name (NOT yAxis.title) and xAxis.name with unit (e.g. 'Price (USD)', 'GDP (Trillions USD)'). Derive from field names — capitalize and clean ('revenue_usd' → 'Revenue (USD)'). Set nameLocation: 'middle', nameGap: 50 on yAxis.\n" +
         "- Max 1 xAxis, max 2 yAxis. Second yAxis must have position: 'right'.\n\n" +
         "## Dates\n" +
-        "- For date-based x-axis: set xAxis.type: 'time'. Series data MUST be [[isoDateString, number], ...] pairs — NEVER set xAxis.data when using time axis, and NEVER use string values in series data — all values must be plain numbers.\n\n" +
+        "- Year-only data (2020, 2021, ...): use xAxis.type: 'category', xAxis.data: ['2020','2021',...], series.data as plain number array. NEVER use [[year, value]] pairs for year data — it breaks the axis.\n" +
+        "- Full date data (monthly, daily): use xAxis.type: 'time', series.data as [[isoDateString, number], ...] pairs. NEVER set xAxis.data with time axis.\n\n" +
         "## Series format — CRITICAL\n" +
         'Each series MUST be a JSON object with name, type, and data fields. NEVER use array format like ["China", [...]] — that is wrong.\n' +
         "Example:\n" +
@@ -1010,6 +1005,7 @@ export const buildBaseSubAgents = (
         createAllowlistToolsMiddleware(
           new Set(visualizationTools.map((tool: any) => tool.name)),
         ),
+        createRenderOnceMiddleware(),
       ],
       tools: visualizationTools,
     });
