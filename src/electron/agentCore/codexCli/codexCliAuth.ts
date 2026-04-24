@@ -135,8 +135,14 @@ class CodexCliAuth {
 
   private writeAuthFile = (authPath: string, updated: CodexAuthFile): void => {
     try {
-      fs.writeFileSync(authPath, JSON.stringify(updated, null, 2), "utf-8");
-    } catch {}
+      fs.writeFileSync(authPath, JSON.stringify(updated, null, 2), {
+        encoding: "utf-8",
+        mode: 0o600,
+      });
+      fs.chmodSync(authPath, 0o600);
+    } catch (err: any) {
+      logEveryWhere({ message: `writeAuthFile() error: ${err?.message}` });
+    }
   };
 
   private refreshAccessToken = async (

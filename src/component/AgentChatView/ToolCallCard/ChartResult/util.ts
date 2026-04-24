@@ -1038,7 +1038,11 @@ const dropGhostBarSeries = (option: any) => {
       return true;
     }
     const zeroCount = seriesItem.data.filter((value: any) => {
-      const num = typeof value === "number" ? value : 0;
+      const raw =
+        typeof value === "object" && value !== null && "value" in value
+          ? value.value
+          : value;
+      const num = typeof raw === "number" ? raw : 0;
       return num === 0;
     }).length;
 
