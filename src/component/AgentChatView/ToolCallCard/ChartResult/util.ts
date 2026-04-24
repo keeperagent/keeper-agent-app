@@ -205,8 +205,8 @@ const applyTooltipTheme = (
     };
 
     if (isScatterChart && !tooltipItem.formatter) {
-      const xLabel = xAxisObj?.name || null;
-      const yLabel = yAxisObj?.name || null;
+      const xLabel = xAxisObj?.name || "X";
+      const yLabel = yAxisObj?.name || "Y";
       base.formatter = (params: any) => {
         const name = params.name || params.seriesName || "";
         const value = Array.isArray(params.value) ? params.value : [];
@@ -221,14 +221,10 @@ const applyTooltipTheme = (
         if (name) {
           lines.push(`<b>${escHtml(name)}</b>`);
         }
-        lines.push(
-          xLabel ? `${escHtml(xLabel)}: ${fmt(value[0])}` : fmt(value[0]),
-        );
-        lines.push(
-          yLabel ? `${escHtml(yLabel)}: ${fmt(value[1])}` : fmt(value[1]),
-        );
+        lines.push(`${escHtml(xLabel)}: ${fmt(value[0])}`);
+        lines.push(`${escHtml(yLabel)}: ${fmt(value[1])}`);
         if (value[2] != null) {
-          lines.push(`${fmt(value[2])}`);
+          lines.push(`Size: ${fmt(value[2])}`);
         }
         return lines.join("<br/>");
       };
@@ -269,6 +265,7 @@ const injectDefaultAxes = (option: any) => {
   const xAxis = option.xAxis;
   if (!Array.isArray(xAxis) && !xAxis.type && !xAxis.data) {
     // Bar series: extract category names from {name, value} per-item format
+    // and flatten data to plain number arrays across all bar series.
     const barSeries = option.series.find(
       (seriesItem: any) =>
         seriesItem?.type === "bar" && Array.isArray(seriesItem.data),
@@ -286,6 +283,41 @@ const injectDefaultAxes = (option: any) => {
 
       if (names.length === barSeries.data.length && names.length > 0) {
         option.xAxis = { ...xAxis, type: "category", data: names };
+        // Flatten {name, value, itemStyle} per-item objects to plain numbers
+        // across all bar series so ECharts doesn't ignore xAxis.data labels.
+        option.series = option.series.map((seriesItem: any) => {
+          if (seriesItem?.type !== "bar" || !Array.isArray(seriesItem.data)) {
+            return seriesItem;
+          }
+
+          const hasObjectItems = seriesItem.data.some(
+            (item: any) =>
+              item !== null &&
+              typeof item === "object" &&
+              !Array.isArray(item) &&
+              "value" in item,
+          );
+          if (!hasObjectItems) {
+            return seriesItem;
+          }
+
+          return {
+            ...seriesItem,
+            data: seriesItem.data.map((item: any) => {
+              if (
+                item !== null &&
+                typeof item === "object" &&
+                !Array.isArray(item) &&
+                "value" in item
+              ) {
+                return typeof item.value === "number" ? item.value : 0;
+              }
+
+              return item;
+            }),
+          };
+        });
+
         return;
       }
     }
@@ -389,9 +421,54 @@ const applyYAxisTheme = (option: any, theme: ChartTheme) => {
 };
 
 const applyRadarTheme = (option: any, theme: ChartTheme) => {
-  if (!option.radar || typeof option.radar !== "object") {
+  const radarSeries = Array.isArray(option.series)
+    ? option.series.filter((seriesItem: any) => seriesItem?.type === "radar")
+    : [];
+  if (radarSeries.length === 0) {
     return;
   }
+
+  // Auto-inject radar config when the LLM omitted it — without indicator
+  // the chart renders completely blank.
+  if (!option.radar || typeof option.radar !== "object") {
+    // Determine dimension count from the first data entry found
+    let dimCount = 5;
+    for (const seriesItem of radarSeries) {
+      const firstEntry = Array.isArray(seriesItem.data)
+        ? seriesItem.data[0]
+        : null;
+      const values = firstEntry?.value || firstEntry;
+      if (Array.isArray(values) && values.length > 0) {
+        dimCount = values.length;
+        break;
+      }
+    }
+    // Find max value across all data to set indicator max
+    let maxVal = 10;
+    for (const seriesItem of radarSeries) {
+      if (!Array.isArray(seriesItem.data)) {
+        continue;
+      }
+      for (const entry of seriesItem.data) {
+        const values = entry?.value || entry;
+        if (Array.isArray(values)) {
+          const entryMax = Math.max(
+            ...values.filter((value: any) => typeof value === "number"),
+          );
+          if (entryMax > maxVal) {
+            maxVal = entryMax;
+          }
+        }
+      }
+    }
+    option.radar = {
+      indicator: Array.from({ length: dimCount }, (_, idx) => ({
+        name: `Dim ${idx + 1}`,
+        max: maxVal,
+      })),
+    };
+  }
+
   const radar = option.radar as any;
   option.radar = {
     radius: "60%",
@@ -677,6 +754,7 @@ const applyBarSeriesStyle: SeriesStyler = (
     shadowOffsetY: 4,
   };
   result.barMaxWidth = seriesItem.barMaxWidth ?? 36;
+  result.label = { show: false };
 };
 
 const applyPieSeriesStyle: SeriesStyler = (
@@ -815,7 +893,9 @@ const applyScatterSeriesStyle: SeriesStyler = (
   const hasBubbleSize = normalized.some(
     (point: any) => Array.isArray(point) && point.length >= 3 && point[2] > 0,
   );
-  if (hasBubbleSize && typeof seriesItem.symbolSize !== "number") {
+  if (hasBubbleSize) {
+    // Always use our formula — ignore any symbolSize the LLM pre-calculated,
+    // since those values bypass our proportional scaling and clipping.
     const sizes = normalized.map((point: any) =>
       Array.isArray(point) ? point[2] : 0,
     );
@@ -824,9 +904,14 @@ const applyScatterSeriesStyle: SeriesStyler = (
       const rawSize = Array.isArray(dataItem) ? dataItem[2] : 0;
       return 8 + (rawSize / maxSize) * 48;
     };
-  } else if (seriesItem.symbolSize === undefined) {
+  } else {
+    // 2D scatter — always use a fixed size regardless of what the LLM set
     result.symbolSize = 32;
   }
+
+  // Labels on scatter overlap badly when bubbles cluster — tooltip shows the
+  // name already, so disable inline labels entirely.
+  result.label = { show: false };
 
   // Single-point series (one entity per series): use seriesColor so each series
   // gets a distinct palette color. Multi-point series: color by point index.
@@ -921,6 +1006,128 @@ const applySeriesTheme = (
   });
 };
 
+// Removes non-stacked bar series where ≥50% of values are zero when at least
+// one other bar series exists. These are LLM color-hack ghost series (e.g. a
+// duplicate series with zeros everywhere except one bar to override itemStyle).
+const dropGhostBarSeries = (option: any) => {
+  if (!Array.isArray(option.series)) {
+    return;
+  }
+
+  const nonStackedBars = option.series.filter(
+    (seriesItem: any) =>
+      seriesItem?.type === "bar" &&
+      !seriesItem.stack &&
+      Array.isArray(seriesItem.data),
+  );
+  if (nonStackedBars.length <= 1) {
+    return;
+  }
+
+  option.series = option.series.filter((seriesItem: any) => {
+    if (
+      seriesItem?.type !== "bar" ||
+      seriesItem.stack ||
+      !Array.isArray(seriesItem.data)
+    ) {
+      return true;
+    }
+
+    const total = seriesItem.data.length;
+    if (total === 0) {
+      return true;
+    }
+    const zeroCount = seriesItem.data.filter((value: any) => {
+      const raw =
+        typeof value === "object" && value !== null && "value" in value
+          ? value.value
+          : value;
+      const num = typeof raw === "number" ? raw : 0;
+      return num === 0;
+    }).length;
+
+    return zeroCount / total < 0.5;
+  });
+};
+
+// When scatter x-values span more than 100× (e.g. TPS 7 → 120,000), a linear
+// axis crushes everything to the left. Auto-switch to log scale so points spread
+// evenly. Only applies when xAxis has no explicit type set by the LLM.
+const autoLogScaleScatterX = (option: any) => {
+  if (!Array.isArray(option.series)) {
+    return;
+  }
+
+  const hasScatter = option.series.some(
+    (seriesItem: any) =>
+      seriesItem?.type === "scatter" || seriesItem?.type === "effectScatter",
+  );
+  if (!hasScatter) {
+    return;
+  }
+  const xAxisObj = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
+  if (xAxisObj?.type && xAxisObj.type !== "value") {
+    return;
+  }
+
+  const xValues: number[] = [];
+  for (const seriesItem of option.series) {
+    if (
+      seriesItem?.type !== "scatter" &&
+      seriesItem?.type !== "effectScatter"
+    ) {
+      continue;
+    }
+    if (!Array.isArray(seriesItem.data)) {
+      continue;
+    }
+
+    for (const point of seriesItem.data) {
+      const xVal = Array.isArray(point)
+        ? point[0]
+        : Array.isArray(point?.value)
+          ? point.value[0]
+          : null;
+      if (typeof xVal === "number" && xVal > 0) {
+        xValues.push(xVal);
+      }
+    }
+  }
+
+  if (xValues.length < 2) {
+    return;
+  }
+
+  const minX = Math.min(...xValues);
+  const maxX = Math.max(...xValues);
+  if (minX > 0 && maxX / minX > 100) {
+    if (Array.isArray(option.xAxis)) {
+      option.xAxis[0] = { ...option.xAxis[0], type: "log", logBase: 10 };
+    } else {
+      option.xAxis = { ...option.xAxis, type: "log", logBase: 10 };
+    }
+  }
+
+  // Inject fallback axis names for scatter when the LLM omitted xAxis/yAxis.
+  // These are captured by xAxisObj/yAxisObj after this function runs, so the
+  // tooltip formatter also picks them up — keeping axis label and tooltip consistent.
+  if (Array.isArray(option.xAxis)) {
+    if (!option.xAxis[0]?.name) {
+      option.xAxis[0] = { ...option.xAxis[0], name: "X" };
+    }
+  } else if (option.xAxis && !option.xAxis.name) {
+    option.xAxis = { ...option.xAxis, name: "X" };
+  }
+
+  if (Array.isArray(option.yAxis)) {
+    if (!option.yAxis[0]?.name) {
+      option.yAxis[0] = { ...option.yAxis[0], name: "Y" };
+    }
+  } else if (option.yAxis && !option.yAxis.name) {
+    option.yAxis = { ...option.yAxis, name: "Y" };
+  }
+};
+
 const MAX_BUBBLE_SIZE = 72;
 
 // If any scatter series has a manually-set symbolSize that exceeds MAX_BUBBLE_SIZE,
@@ -992,6 +1199,8 @@ export const applyTheme = (
 
   // Inject axes first so xAxisObj/yAxisObj include any auto-injected names
   injectDefaultAxes(option);
+  dropGhostBarSeries(option);
+  autoLogScaleScatterX(option);
 
   const xAxisObj = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
   const yAxisObj = Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis;

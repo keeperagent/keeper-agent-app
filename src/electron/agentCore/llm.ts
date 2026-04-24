@@ -8,6 +8,8 @@ import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { getLlmSetting } from "./utils";
 import { claudeCliAuth } from "./claudeCli/claudeCliAuth";
 import { claudeCliTransport } from "./claudeCli/claudeCliTransport";
+import { codexCliAuth } from "./codexCli/codexCliAuth";
+import { codexCliTransport } from "./codexCli/codexCliTransport";
 
 type ProviderConfig = {
   apiKeyField: keyof ILlmSetting | null;
@@ -125,6 +127,28 @@ export const createLLM = async (
     });
   }
 
+  if (provider === LLMProvider.OPENAI && llm?.useCodexCLI) {
+    if (!codexCliAuth.isAvailable()) {
+      throw new Error(
+        "Codex CLI credentials not found. Please run: codex auth login",
+      );
+    }
+    const modelName =
+      modelOverride || llm?.[config.modelField] || DEFAULT_LLM_MODELS[provider];
+
+    return new ChatOpenAI({
+      apiKey: "dummy",
+      model: modelName,
+      temperature,
+      streaming: true,
+      useResponsesApi: true,
+      configuration: {
+        baseURL: "https://chatgpt.com/backend-api/codex",
+        fetch: codexCliTransport.createCodexFetch(),
+      },
+    } as any);
+  }
+
   const apiKey = config.apiKeyField ? llm?.[config.apiKeyField] || "" : "";
   if (config.apiKeyField && !apiKey) {
     throw new Error(config.keyError!);
@@ -165,6 +189,9 @@ export const hasApiKey = async (provider: LLMProvider): Promise<boolean> => {
   }
   if (provider === LLMProvider.CLAUDE && llm?.useClaudeCLI) {
     return true;
+  }
+  if (provider === LLMProvider.OPENAI && llm?.useCodexCLI) {
+    return codexCliAuth.isAvailable();
   }
   return !!llm?.[config.apiKeyField];
 };

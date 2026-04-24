@@ -409,6 +409,7 @@ const formatSetting = (raw: any): ISetting => {
         ollamaBaseUrl: parsed.ollamaBaseUrl,
         ollamaModel: parsed.ollamaModel,
         useClaudeCLI: parsed.useClaudeCLI,
+        useCodexCLI: parsed.useCodexCLI,
       };
       formatedData.llmSetting = llmSetting;
     } else if (formatedData.type === SETTING_TYPE.DEX_SETTING) {

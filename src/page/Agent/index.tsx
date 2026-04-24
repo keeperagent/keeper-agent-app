@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useMemo, Fragment } from "react";
 import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
-import { Spin, Tabs, Tag, Tooltip } from "antd";
+import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
 import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
@@ -9,7 +9,7 @@ import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
 import { useUpdatePreference } from "@/hook/preference";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
-import { Wrapper, StatBadgeWrapper } from "./style";
+import { Wrapper, StatBadgeWrapper, CliTag } from "./style";
 import ChatAgent from "./ChatAgent";
 
 const McpServerManager = lazy(() => import("./McpServerManager"));
@@ -97,6 +97,8 @@ const AgentPage = (props: any) => {
 
   const isClaudeCLIActive =
     currentProvider === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
+  const isCodexCLIActive =
+    currentProvider === LLMProvider.OPENAI && Boolean(preference?.useCodexCLI);
 
   const agentStats = useMemo(() => {
     const subAgents = agentStatsFromReady?.subAgentsCount || 0;
@@ -154,29 +156,14 @@ const AgentPage = (props: any) => {
 
         <div className="list-provider">
           <span
+            className="model-name-wrapper"
             style={{
-              position: "relative",
-              display: "inline-flex",
-              marginRight: isClaudeCLIActive ? "1.5rem" : 0,
+              marginRight: isClaudeCLIActive || isCodexCLIActive ? "1.5rem" : 0,
             }}
           >
             <span className="current-model">{currentModelName}</span>
-            {isClaudeCLIActive && (
-              <Tag
-                color="cyan"
-                style={{
-                  position: "absolute",
-                  top: -8,
-                  right: -5,
-                  fontSize: 9,
-                  lineHeight: "14px",
-                  padding: "0 4px",
-                  margin: 0,
-                  borderRadius: 4,
-                }}
-              >
-                CLI
-              </Tag>
+            {(isClaudeCLIActive || isCodexCLIActive) && (
+              <CliTag color="cyan">CLI</CliTag>
             )}
           </span>
 
@@ -204,14 +191,7 @@ const AgentPage = (props: any) => {
       </div>
 
       {!contentReady ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 200,
-          }}
-        >
+        <div className="loading-container">
           <Spin size="small" />
         </div>
       ) : (

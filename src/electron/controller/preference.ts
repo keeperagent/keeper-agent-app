@@ -7,6 +7,7 @@ import { keeperMcpServer } from "@/electron/mcpServer/index";
 import { logEveryWhere } from "@/electron/service/util";
 import { LLMProvider } from "@/electron/type";
 import { claudeCliAuth } from "@/electron/agentCore/claudeCli/claudeCliAuth";
+import { codexCliAuth } from "@/electron/agentCore/codexCli/codexCliAuth";
 import { onIpc } from "./helpers";
 import { recreateAllAgents } from "./appAgent";
 
@@ -44,7 +45,7 @@ export const perferenceController = () => {
     MESSAGE.UPDATE_PREFERENCE,
     MESSAGE.UPDATE_PREFERENCE_RES,
     async (event, payload) => {
-      const { requestId, data, isUpdateAgentTool } = payload;
+      const { requestId, data, recreateAgents } = payload;
       const [res, err] = await preferenceService.updatePreference(data);
 
       if (err) {
@@ -63,7 +64,7 @@ export const perferenceController = () => {
         requestId,
       });
 
-      if (isUpdateAgentTool) {
+      if (recreateAgents) {
         recreateAllAgents();
       }
 
@@ -97,6 +98,17 @@ export const perferenceController = () => {
     async (event, payload) => {
       event.reply(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, {
         data: claudeCliAuth.isAvailable(),
+        requestId: payload?.requestId,
+      });
+    },
+  );
+
+  onIpc(
+    MESSAGE.CHECK_CODEX_CLI_AVAILABLE,
+    MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES,
+    async (event, payload) => {
+      event.reply(MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES, {
+        data: codexCliAuth.isAvailable(),
         requestId: payload?.requestId,
       });
     },

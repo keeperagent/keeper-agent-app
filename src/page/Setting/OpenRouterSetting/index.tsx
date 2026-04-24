@@ -39,11 +39,14 @@ const OpenRouterSetting = (props: IProps) => {
         "openRouterModel",
       ]);
 
-      await updatePreference({
-        id: preference?.id,
-        openRouterApiKey,
-        openRouterModel: openRouterModel || "",
-      });
+      await updatePreference(
+        {
+          id: preference?.id,
+          openRouterApiKey,
+          openRouterModel: openRouterModel || "",
+        },
+        true,
+      );
     } catch {}
   };
 

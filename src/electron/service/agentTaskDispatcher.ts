@@ -23,6 +23,7 @@ import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { agentTaskExecutor } from "@/electron/service/agentTaskExecutor";
 import { createLLM } from "@/electron/agentCore/llm";
+import { codexCliAuth } from "@/electron/agentCore/codexCli/codexCliAuth";
 
 const LLM_MATCH_TIMEOUT_MS = 15_000;
 
@@ -345,8 +346,9 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
       });
 
       switch (provider) {
-        case LLMProvider.CLAUDE: {
-          const llm = await createLLM(LLMProvider.CLAUDE, 0, llmConfig.model);
+        case LLMProvider.CLAUDE:
+        case LLMProvider.OPENAI: {
+          const llm = await createLLM(provider, 0, llmConfig.model);
           const result = await Promise.race([
             llm.invoke([{ role: "user", content: prompt }], {
               signal: abortController.signal,
@@ -423,6 +425,9 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
         };
       }
       case LLMProvider.OPENAI: {
+        if (preference.useCodexCLI) {
+          return { apiKey: "", model: codexCliAuth.loadConfig().defaultModel };
+        }
         if (!preference.openAIApiKey || !preference.openAIModel) {
           return null;
         }

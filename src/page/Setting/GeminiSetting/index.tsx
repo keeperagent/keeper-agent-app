@@ -59,7 +59,7 @@ const GeminiSetting = (props: IProps) => {
         googleGeminiApiKey,
         googleGeminiModel: googleGeminiModel || "",
         googleGeminiBackgroundModel: googleGeminiBackgroundModel || "",
-      });
+      }, true);
     } catch {}
   };
 

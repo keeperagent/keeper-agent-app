@@ -1,4 +1,4 @@
-import { Form, Button, Row, Input, message } from "antd";
+import { Form, Button, Row, Input, Switch, Typography, message } from "antd";
 import { useEffect } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -7,11 +7,14 @@ import {
   useTranslation,
   useCheckModelCapability,
 } from "@/hook";
+import { useCheckCodexCLIAvailable } from "@/hook/preference";
 import { IPreference, LLMProvider } from "@/electron/type";
 import { PasswordInput } from "@/component/Input";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { ProviderLabel } from "@/page/Setting/ProviderLabel";
 import { Wrapper } from "./style";
+
+const { Text } = Typography;
 
 type IProps = {
   preference: IPreference | null;
@@ -23,6 +26,7 @@ const OpenAISetting = (props: IProps) => {
   const { translate } = useTranslation();
   const { updatePreference, loading, isSuccess } = useUpdatePreference();
   const { checkModelCapability } = useCheckModelCapability();
+  const { checkCodexCLIAvailable } = useCheckCodexCLIAvailable();
 
   useEffect(() => {
     form.setFieldsValue({
@@ -38,6 +42,17 @@ const OpenAISetting = (props: IProps) => {
     }
   }, [loading, isSuccess]);
 
+  const onToggleCodexCLI = async (checked: boolean) => {
+    if (checked) {
+      const available = await checkCodexCLIAvailable();
+      if (!available) {
+        message.error(translate("setting.useCodexCLINotAvailable"));
+        return;
+      }
+    }
+    updatePreference({ id: preference?.id, useCodexCLI: checked }, true);
+  };
+
   const onSubmitForm = async () => {
     try {
       const { openAIApiKey, openAIModel, openAIBackgroundModel } =
@@ -51,12 +66,15 @@ const OpenAISetting = (props: IProps) => {
         checkModelCapability(openAIModel, LLMProvider.OPENAI);
       }
 
-      await updatePreference({
-        id: preference?.id,
-        openAIApiKey,
-        openAIModel: openAIModel || "",
-        openAIBackgroundModel: openAIBackgroundModel || "",
-      });
+      await updatePreference(
+        {
+          id: preference?.id,
+          openAIApiKey,
+          openAIModel: openAIModel || "",
+          openAIBackgroundModel: openAIBackgroundModel || "",
+        },
+        true,
+      );
     } catch {}
   };
 
@@ -103,6 +121,22 @@ const OpenAISetting = (props: IProps) => {
             placeholder="gpt-4o-mini"
             size="large"
           />
+        </Form.Item>
+
+        <Form.Item
+          label={`${translate("setting.useCodexCLI")}:`}
+          tooltip={translate("setting.useCodexCLITooltip")}
+        >
+          <Switch
+            checked={Boolean(preference?.useCodexCLI)}
+            onChange={onToggleCodexCLI}
+          />
+
+          {preference?.useCodexCLI && (
+            <Text type="secondary" style={{ marginLeft: 12, fontSize: 12 }}>
+              {translate("setting.useCodexCLIActive")}
+            </Text>
+          )}
         </Form.Item>
       </Form>
 

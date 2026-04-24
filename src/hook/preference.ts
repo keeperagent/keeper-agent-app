@@ -30,7 +30,7 @@ const useUpdatePreference = () => {
 
   const updatePreference = async (
     data: IPreference,
-    isUpdateAgentTool?: boolean,
+    recreateAgents?: boolean,
   ) => {
     setLoading(true);
     setIsSuccess(false);
@@ -39,7 +39,7 @@ const useUpdatePreference = () => {
     window?.electron?.send(MESSAGE.UPDATE_PREFERENCE, {
       data,
       requestId: uniqueID,
-      isUpdateAgentTool,
+      recreateAgents,
     });
 
     await new Promise<void>((resolve) => {
@@ -73,12 +73,17 @@ const useCheckClaudeCLIAvailable = () => {
   const checkClaudeCLIAvailable = (): Promise<boolean> =>
     new Promise((resolve) => {
       const uniqueID = uid(25);
-      window?.electron?.send(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE, { requestId: uniqueID });
+      window?.electron?.send(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE, {
+        requestId: uniqueID,
+      });
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== uniqueID) {
           return;
         }
-        window?.electron?.removeListener(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, handler);
+        window?.electron?.removeListener(
+          MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES,
+          handler,
+        );
         resolve(Boolean(payload?.data));
       };
       window?.electron?.on(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, handler);
@@ -87,4 +92,32 @@ const useCheckClaudeCLIAvailable = () => {
   return { checkClaudeCLIAvailable };
 };
 
-export { useGetPreference, useUpdatePreference, useCheckClaudeCLIAvailable };
+const useCheckCodexCLIAvailable = () => {
+  const checkCodexCLIAvailable = (): Promise<boolean> =>
+    new Promise((resolve) => {
+      const uniqueID = uid(25);
+      window?.electron?.send(MESSAGE.CHECK_CODEX_CLI_AVAILABLE, {
+        requestId: uniqueID,
+      });
+      const handler = (_event: any, payload: any) => {
+        if (payload?.requestId !== uniqueID) {
+          return;
+        }
+        window?.electron?.removeListener(
+          MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES,
+          handler,
+        );
+        resolve(Boolean(payload?.data));
+      };
+      window?.electron?.on(MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES, handler);
+    });
+
+  return { checkCodexCLIAvailable };
+};
+
+export {
+  useGetPreference,
+  useUpdatePreference,
+  useCheckClaudeCLIAvailable,
+  useCheckCodexCLIAvailable,
+};

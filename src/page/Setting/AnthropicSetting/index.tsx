@@ -66,12 +66,15 @@ const AnthropicSetting = (props: IProps) => {
         checkModelCapability(anthropicModel, LLMProvider.CLAUDE);
       }
 
-      await updatePreference({
-        id: preference?.id,
-        anthropicApiKey,
-        anthropicModel: anthropicModel || "",
-        anthropicBackgroundModel: anthropicBackgroundModel || "",
-      });
+      await updatePreference(
+        {
+          id: preference?.id,
+          anthropicApiKey,
+          anthropicModel: anthropicModel || "",
+          anthropicBackgroundModel: anthropicBackgroundModel || "",
+        },
+        true,
+      );
     } catch {}
   };
 
