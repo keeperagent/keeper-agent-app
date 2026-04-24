@@ -1,5 +1,4 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
   AgentTaskStatus,
@@ -23,6 +22,7 @@ import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { agentTaskExecutor } from "@/electron/service/agentTaskExecutor";
+import { createLLM } from "@/electron/agentCore/llm";
 
 const LLM_MATCH_TIMEOUT_MS = 15_000;
 
@@ -346,11 +346,7 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
 
       switch (provider) {
         case LLMProvider.CLAUDE: {
-          const llm = new ChatAnthropic({
-            anthropicApiKey: llmConfig.apiKey,
-            model: llmConfig.model,
-            temperature: 0,
-          });
+          const llm = await createLLM(LLMProvider.CLAUDE, 0, llmConfig.model);
           const result = await Promise.race([
             llm.invoke([{ role: "user", content: prompt }], {
               signal: abortController.signal,
@@ -415,6 +411,9 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
     const provider = preference.llmProvider as LLMProvider;
     switch (provider) {
       case LLMProvider.CLAUDE: {
+        if (preference.useClaudeCLI) {
+          return { apiKey: "", model: preference.anthropicModel || "" };
+        }
         if (!preference.anthropicApiKey || !preference.anthropicModel) {
           return null;
         }

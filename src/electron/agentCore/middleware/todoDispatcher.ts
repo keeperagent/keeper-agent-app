@@ -583,8 +583,12 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       if (allDone) {
         toolContext.onAllDone?.(lastKnownTodos);
       }
+      const allDoneNote =
+        completedStep.type === "visualize"
+          ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. The chart is now displayed to the user. Your final response MUST be empty or at most one sentence — absolutely no tables, bullet points, or analysis. The chart speaks for itself.`
+          : `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. All steps are complete — give your final response.`;
       const note = allDone
-        ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. All steps are complete — give your final response.`
+        ? allDoneNote
         : `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. Call write_todos to mark the next step as in_progress.`;
 
       const storedContent =

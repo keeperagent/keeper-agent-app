@@ -205,25 +205,30 @@ const applyTooltipTheme = (
     };
 
     if (isScatterChart && !tooltipItem.formatter) {
-      const xLabel = xAxisObj?.name || "X";
-      const yLabel = yAxisObj?.name || "Y";
+      const xLabel = xAxisObj?.name || null;
+      const yLabel = yAxisObj?.name || null;
       base.formatter = (params: any) => {
         const name = params.name || params.seriesName || "";
         const value = Array.isArray(params.value) ? params.value : [];
         const fmt = (val: any) =>
           typeof val === "number"
-            ? Math.abs(val) >= 1000
-              ? val.toLocaleString()
-              : val.toFixed(2)
+            ? val.toLocaleString(undefined, {
+                maximumFractionDigits: 4,
+                minimumFractionDigits: Math.abs(val) < 1 ? 2 : 0,
+              })
             : escHtml(String(val || ""));
         const lines: string[] = [];
         if (name) {
           lines.push(`<b>${escHtml(name)}</b>`);
         }
-        lines.push(`${escHtml(xLabel)}: ${fmt(value[0])}`);
-        lines.push(`${escHtml(yLabel)}: ${fmt(value[1])}`);
+        lines.push(
+          xLabel ? `${escHtml(xLabel)}: ${fmt(value[0])}` : fmt(value[0]),
+        );
+        lines.push(
+          yLabel ? `${escHtml(yLabel)}: ${fmt(value[1])}` : fmt(value[1]),
+        );
         if (value[2] != null) {
-          lines.push(`Size: ${fmt(value[2])}`);
+          lines.push(`${fmt(value[2])}`);
         }
         return lines.join("<br/>");
       };
@@ -231,6 +236,114 @@ const applyTooltipTheme = (
 
     return base;
   });
+};
+
+const CARTESIAN_SERIES_TYPES = new Set([
+  "line",
+  "bar",
+  "scatter",
+  "effectScatter",
+  "candlestick",
+  "k",
+  "heatmap",
+]);
+
+const injectDefaultAxes = (option: any) => {
+  if (!Array.isArray(option.series)) {
+    return;
+  }
+
+  const hasCartesian = option.series.some((seriesItem: any) =>
+    CARTESIAN_SERIES_TYPES.has(seriesItem?.type),
+  );
+  if (!hasCartesian) {
+    return;
+  }
+  if (option.xAxis === undefined) {
+    option.xAxis = {};
+  }
+  if (option.yAxis === undefined) {
+    option.yAxis = {};
+  }
+
+  const xAxis = option.xAxis;
+  if (!Array.isArray(xAxis) && !xAxis.type && !xAxis.data) {
+    // Bar series: extract category names from {name, value} per-item format
+    const barSeries = option.series.find(
+      (seriesItem: any) =>
+        seriesItem?.type === "bar" && Array.isArray(seriesItem.data),
+    );
+    if (barSeries) {
+      const names = barSeries.data
+        .map((dataItem: any) =>
+          dataItem &&
+          typeof dataItem === "object" &&
+          typeof dataItem.name === "string"
+            ? dataItem.name
+            : null,
+        )
+        .filter(Boolean);
+
+      if (names.length === barSeries.data.length && names.length > 0) {
+        option.xAxis = { ...xAxis, type: "category", data: names };
+        return;
+      }
+    }
+
+    // Plain-array line/bar series with no xAxis type: force category so ECharts doesn't
+    // switch to value axis when scatter series are also present (which causes diagonal rendering).
+    const plainLineSeries = option.series.find(
+      (seriesItem: any) =>
+        (seriesItem?.type === "line" || seriesItem?.type === "bar") &&
+        Array.isArray(seriesItem.data) &&
+        seriesItem.data.length > 0 &&
+        !Array.isArray(seriesItem.data[0]),
+    );
+    if (plainLineSeries) {
+      option.xAxis = { ...xAxis, type: "category" };
+    }
+
+    // Line/bar series with [[number, value], ...] pairs and no xAxis type: the LLM intended
+    // the x numbers as category labels (years, months, quarters, etc.), not coordinates.
+    // Without an explicit type ECharts uses a linear axis starting at 0, collapsing all
+    // points to one side. Convert to category axis + plain value arrays.
+    // Scatter is excluded — it uses [x, y] pairs as true numeric coordinates.
+    const pairSeries = option.series.find(
+      (seriesItem: any) =>
+        (seriesItem?.type === "line" || seriesItem?.type === "bar") &&
+        Array.isArray(seriesItem.data) &&
+        seriesItem.data.length > 0 &&
+        Array.isArray(seriesItem.data[0]) &&
+        typeof seriesItem.data[0][0] === "number",
+    );
+
+    if (pairSeries) {
+      const xValues = pairSeries.data.map((point: any) => String(point[0]));
+      option.xAxis = { ...xAxis, type: "category", data: xValues };
+
+      // Flatten all line/bar series that use the same [xNum, value] pair format
+      option.series = option.series.map((seriesItem: any) => {
+        if (seriesItem?.type !== "line" && seriesItem?.type !== "bar") {
+          return seriesItem;
+        }
+        if (!Array.isArray(seriesItem.data)) {
+          return seriesItem;
+        }
+        const allPairs = seriesItem.data.every(
+          (point: any) => Array.isArray(point) && typeof point[0] === "number",
+        );
+        if (!allPairs) {
+          return seriesItem;
+        }
+        const flatData = seriesItem.data.map((point: any) => {
+          const matchedIndex = xValues.indexOf(String(point[0]));
+          return matchedIndex !== -1 ? point[1] : null;
+        });
+
+        return { ...seriesItem, data: flatData };
+      });
+    }
+  }
 };
 
 const applyXAxisTheme = (option: any, theme: ChartTheme) => {
@@ -383,10 +496,72 @@ const applyCandlestickTheme = (option: any): void => {
   }
 };
 
+const applyHeatmapTheme = (option: any, theme: ChartTheme) => {
+  const heatmapSeries = Array.isArray(option.series)
+    ? option.series.find((seriesItem: any) => seriesItem?.type === "heatmap")
+    : null;
+  if (!heatmapSeries) {
+    return;
+  }
+
+  // Heatmap axes must be category type — numeric axes cause blank rendering
+  if (option.xAxis && !Array.isArray(option.xAxis) && !option.xAxis.type) {
+    option.xAxis = { ...option.xAxis, type: "category" };
+  }
+  if (option.yAxis && !Array.isArray(option.yAxis) && !option.yAxis.type) {
+    option.yAxis = { ...option.yAxis, type: "category" };
+  }
+
+  // Always normalize visualMap position to bottom-center so it doesn't overlap the grid
+  if (option.visualMap && !Array.isArray(option.visualMap)) {
+    option.visualMap = {
+      ...option.visualMap,
+      orient: "horizontal",
+      left: "center",
+      bottom: 16,
+    };
+  }
+
+  // Without visualMap, heatmap cells are invisible — auto-inject from data range
+  if (!option.visualMap) {
+    const dataValues = Array.isArray(heatmapSeries.data)
+      ? (heatmapSeries.data as any[])
+          .map((point: any) => {
+            if (Array.isArray(point)) {
+              return point[2];
+            } else if (Array.isArray(point?.value)) {
+              return point.value[2];
+            } else if (typeof point?.value === "number") {
+              return point.value;
+            } else {
+              return null;
+            }
+          })
+          .filter((value: any) => typeof value === "number")
+      : [];
+    const minVal = dataValues.length > 0 ? Math.min(...dataValues) : 0;
+    const maxVal = dataValues.length > 0 ? Math.max(...dataValues) : 10;
+
+    option.visualMap = {
+      min: minVal,
+      max: maxVal,
+      calculable: true,
+      orient: "horizontal",
+      left: "center",
+      bottom: 0,
+      inRange: {
+        color: ["#1e293b", "#4338ca", "#6366F1", "#F97316", "#fb923c"],
+      },
+      textStyle: { color: theme.subText, fontSize: 11 },
+    };
+  }
+};
+
 const applyGridTheme = (option: any, hasTitle: boolean) => {
   const yAxes = option.yAxis ? toArray(option.yAxis) : [];
   const xAxes = option.xAxis ? toArray(option.xAxis) : [];
   const hasLegend = Boolean(option.legend);
+  const hasVisualMap = Boolean(option.visualMap);
   const hasYAxisName = yAxes.some((axis: any) => axis?.name);
   const hasXAxisName = xAxes.some((axis: any) => axis?.name);
   const hasRightAxis = yAxes.length >= 2;
@@ -394,7 +569,7 @@ const applyGridTheme = (option: any, hasTitle: boolean) => {
   option.grid = {
     top: hasTitle ? 64 : 24,
     right: hasRightAxis ? 72 : hasXAxisName ? 40 : 20,
-    bottom: hasLegend ? 72 : hasXAxisName ? 40 : 20,
+    bottom: hasLegend ? 72 : hasVisualMap ? 64 : hasXAxisName ? 40 : 20,
     left: hasYAxisName ? 44 : 16,
     containLabel: true,
   };
@@ -411,7 +586,9 @@ type SeriesContext = {
   theme: ChartTheme;
   isHorizontalBar: boolean;
   hasTitle: boolean;
+  hasLegend: boolean;
   totalRadarPolygons: number;
+  isSingleLineSeries: boolean;
 };
 
 type SeriesStyler = (
@@ -421,11 +598,34 @@ type SeriesStyler = (
   ctx: SeriesContext,
 ) => void;
 
+const normalizeSeriesLabel = (
+  result: any,
+  seriesItem: any,
+  theme: ChartTheme,
+) => {
+  if (!seriesItem.label) {
+    return;
+  }
+
+  const {
+    color: _c,
+    textBorderColor: _tbc,
+    textBorderWidth: _tbw,
+    ...safeLabel
+  } = seriesItem.label;
+  result.label = {
+    ...safeLabel,
+    color: theme.subText,
+    textBorderWidth: 0,
+    fontSize: safeLabel.fontSize ?? 11,
+  };
+};
+
 const applyLineSeriesStyle: SeriesStyler = (
   result,
   seriesItem,
   { safeItemStyle, safeLineStyle, safeAreaStyle },
-  { seriesColor, theme },
+  { seriesColor, theme, isSingleLineSeries },
 ) => {
   result.smooth = seriesItem.smooth ?? true;
   result.symbol = seriesItem.symbol || "circle";
@@ -442,20 +642,24 @@ const applyLineSeriesStyle: SeriesStyler = (
     borderWidth: 2,
     borderColor: theme.pieBorder,
   };
-  result.areaStyle = {
-    ...safeAreaStyle,
-    color: {
-      type: "linear",
-      x: 0,
-      y: 0,
-      x2: 0,
-      y2: 1,
-      colorStops: [
-        { offset: 0, color: hexToRgba(seriesColor, 0.25) },
-        { offset: 1, color: hexToRgba(seriesColor, 0) },
-      ],
-    },
-  };
+  if (isSingleLineSeries) {
+    result.areaStyle = {
+      ...safeAreaStyle,
+      color: {
+        type: "linear",
+        x: 0,
+        y: 0,
+        x2: 0,
+        y2: 1,
+        colorStops: [
+          { offset: 0, color: hexToRgba(seriesColor, 0.25) },
+          { offset: 1, color: hexToRgba(seriesColor, 0) },
+        ],
+      },
+    };
+  } else {
+    result.areaStyle = undefined;
+  }
 };
 
 const applyBarSeriesStyle: SeriesStyler = (
@@ -479,13 +683,29 @@ const applyPieSeriesStyle: SeriesStyler = (
   result,
   seriesItem,
   { safeItemStyle },
-  { seriesColor, theme, hasTitle },
+  { seriesColor, theme, hasTitle, hasLegend },
 ) => {
   if (!seriesItem.radius) {
-    result.radius = hasTitle ? ["48%", "72%"] : ["55%", "80%"];
+    if (hasTitle && hasLegend) {
+      result.radius = ["35%", "60%"];
+    } else if (hasTitle) {
+      result.radius = ["48%", "72%"];
+    } else if (hasLegend) {
+      result.radius = ["45%", "68%"];
+    } else {
+      result.radius = ["55%", "80%"];
+    }
   }
   if (!seriesItem.center) {
-    result.center = hasTitle ? ["50%", "58%"] : ["50%", "50%"];
+    if (hasTitle && hasLegend) {
+      result.center = ["50%", "50%"];
+    } else if (hasTitle) {
+      result.center = ["50%", "58%"];
+    } else if (hasLegend) {
+      result.center = ["50%", "46%"];
+    } else {
+      result.center = ["50%", "50%"];
+    }
   }
   if (seriesItem.avoidLabelOverlap === undefined) {
     result.avoidLabelOverlap = true;
@@ -564,7 +784,12 @@ const applyRadarSeriesStyle: SeriesStyler = (
   });
 };
 
-const applyScatterSeriesStyle: SeriesStyler = (result, seriesItem) => {
+const applyScatterSeriesStyle: SeriesStyler = (
+  result,
+  seriesItem,
+  _styles,
+  { seriesColor },
+) => {
   const rawData: any[] = Array.isArray(seriesItem.data) ? seriesItem.data : [];
   const normalized = rawData.map((point: any) => {
     if (Array.isArray(point)) {
@@ -597,12 +822,15 @@ const applyScatterSeriesStyle: SeriesStyler = (result, seriesItem) => {
     const maxSize = Math.max(...sizes) || 1;
     result.symbolSize = (dataItem: any) => {
       const rawSize = Array.isArray(dataItem) ? dataItem[2] : 0;
-      return 26 + (rawSize / maxSize) * 82;
+      return 8 + (rawSize / maxSize) * 48;
     };
   } else if (seriesItem.symbolSize === undefined) {
     result.symbolSize = 32;
   }
 
+  // Single-point series (one entity per series): use seriesColor so each series
+  // gets a distinct palette color. Multi-point series: color by point index.
+  const singlePoint = normalized.length <= 1;
   result.data = normalized.map((point: any, pointIndex: number) => {
     const originalPoint = rawData[pointIndex];
     const name =
@@ -611,10 +839,13 @@ const applyScatterSeriesStyle: SeriesStyler = (result, seriesItem) => {
       originalPoint?.coin ||
       originalPoint?.symbol ||
       "";
+    const pointColor = singlePoint
+      ? seriesColor
+      : CHART_COLORS[pointIndex % CHART_COLORS.length];
     return {
       name,
       value: point,
-      itemStyle: { color: CHART_COLORS[pointIndex % CHART_COLORS.length] },
+      itemStyle: { color: pointColor },
     };
   });
 };
@@ -633,6 +864,7 @@ const applySeriesTheme = (
   theme: ChartTheme,
   isHorizontalBar: boolean,
   hasTitle: boolean,
+  hasLegend: boolean,
 ) => {
   if (!Array.isArray(option.series)) {
     return;
@@ -645,6 +877,11 @@ const applySeriesTheme = (
         sum + (Array.isArray(radarSeries.data) ? radarSeries.data.length : 0),
       0,
     );
+
+  const lineSeriesCount = option.series.filter(
+    (item: any) => item?.type === "line",
+  ).length;
+  const isSingleLineSeries = lineSeriesCount === 1;
 
   let colorIndex = 0;
   option.series = option.series.map((seriesItem: any) => {
@@ -665,7 +902,9 @@ const applySeriesTheme = (
       theme,
       isHorizontalBar,
       hasTitle,
+      hasLegend,
       totalRadarPolygons,
+      isSingleLineSeries,
     };
     seriesStylers[seriesItem?.type]?.(
       result,
@@ -674,7 +913,48 @@ const applySeriesTheme = (
       ctx,
     );
 
+    if (seriesItem?.type !== "pie" && seriesItem?.type !== "heatmap") {
+      normalizeSeriesLabel(result, seriesItem, theme);
+    }
+
     return result;
+  });
+};
+
+const MAX_BUBBLE_SIZE = 72;
+
+// If any scatter series has a manually-set symbolSize that exceeds MAX_BUBBLE_SIZE,
+// scale all scatter symbolSizes proportionally so the largest fits within the cap.
+const normalizeBubbleSizes = (option: any) => {
+  if (!Array.isArray(option.series)) {
+    return;
+  }
+  const scatterSeries = option.series.filter(
+    (seriesItem: any) =>
+      (seriesItem?.type === "scatter" ||
+        seriesItem?.type === "effectScatter") &&
+      typeof seriesItem.symbolSize === "number",
+  );
+  if (scatterSeries.length === 0) {
+    return;
+  }
+  const maxSize = Math.max(...scatterSeries.map((s: any) => s.symbolSize));
+  if (maxSize <= MAX_BUBBLE_SIZE) {
+    return;
+  }
+  const scale = MAX_BUBBLE_SIZE / maxSize;
+  option.series = option.series.map((seriesItem: any) => {
+    if (
+      (seriesItem?.type !== "scatter" &&
+        seriesItem?.type !== "effectScatter") ||
+      typeof seriesItem.symbolSize !== "number"
+    ) {
+      return seriesItem;
+    }
+    return {
+      ...seriesItem,
+      symbolSize: Math.max(8, Math.round(seriesItem.symbolSize * scale)),
+    };
   });
 };
 
@@ -693,27 +973,35 @@ export const applyTheme = (
   };
 
   const hasTitle = Boolean(option.title);
-  const xAxisObj = Array.isArray(rawOption.xAxis)
-    ? rawOption.xAxis[0]
-    : rawOption.xAxis;
-  const yAxisObj = Array.isArray(rawOption.yAxis)
-    ? rawOption.yAxis[0]
-    : rawOption.yAxis;
+  const hasLegend = Boolean(option.legend);
   const isHorizontalBar =
-    (xAxisObj as any)?.type === "value" &&
-    (yAxisObj as any)?.type === "category";
+    (rawOption.xAxis as any)?.type === "value" &&
+    (rawOption.yAxis as any)?.type === "category";
   const isScatterChart =
     Array.isArray(rawOption.series) &&
     (rawOption.series as any[]).some(
       (item: any) => item?.type === "scatter" || item?.type === "effectScatter",
     );
+  const isPieChart =
+    Array.isArray(rawOption.series) &&
+    (rawOption.series as any[]).some((item: any) => item?.type === "pie");
+
+  if (!option.tooltip) {
+    option.tooltip = {};
+  }
+
+  // Inject axes first so xAxisObj/yAxisObj include any auto-injected names
+  injectDefaultAxes(option);
+
+  const xAxisObj = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
+  const yAxisObj = Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis;
 
   applyTitleTheme(option, theme);
   applyLegendTheme(option, theme);
   applyTooltipTheme(
     option,
     theme,
-    isScatterChart,
+    isScatterChart || isPieChart,
     isLightMode,
     xAxisObj,
     yAxisObj,
@@ -721,9 +1009,11 @@ export const applyTheme = (
   applyXAxisTheme(option, theme);
   applyYAxisTheme(option, theme);
   applyCandlestickTheme(option);
+  applyHeatmapTheme(option, theme);
   applyRadarTheme(option, theme);
   applyGridTheme(option, hasTitle);
-  applySeriesTheme(option, theme, isHorizontalBar, hasTitle);
+  applySeriesTheme(option, theme, isHorizontalBar, hasTitle, hasLegend);
+  normalizeBubbleSizes(option);
 
   return option;
 };

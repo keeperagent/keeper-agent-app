@@ -9,11 +9,12 @@ export const renderChartTool = () =>
       "Render an interactive chart or data visualization in the UI using ECharts. " +
       "Generate an ECharts option object — it will be rendered directly in the app using the installed echarts library. " +
       "Supports line, bar, pie, scatter, candlestick, radar, heatmap, and all other ECharts chart types. " +
-      "All data must be inline in the option object — do NOT use async or remote data sources.",
+      "All data must be inline in the option object — do NOT use async or remote data sources. " +
+      "After the chart renders successfully, respond with ONE short sentence summary only — do not repeat the data in text, tables, or bullet points.",
     schema: z
       .object({
         series: z
-          .array(z.unknown())
+          .union([z.string(), z.array(z.unknown())])
           .describe(
             "ECharts series array — each item defines one chart series with type and data",
           ),
@@ -21,6 +22,19 @@ export const renderChartTool = () =>
       .passthrough(),
     func: async (input) => {
       const height = 400;
+
+      if (typeof input.series === "string") {
+        try {
+          input.series = JSON.parse(input.series);
+        } catch (parseError) {
+          const detail =
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError);
+          return `Error: series could not be parsed as JSON array. ${detail}. Ensure the value is valid JSON — invalid escape sequences like \\$ are not allowed; use $ directly.`;
+        }
+      }
+
       const parsed: unknown = input;
 
       const VALID_ECHART_KEYS = new Set([
@@ -71,6 +85,12 @@ export const renderChartTool = () =>
         return `Error: option is missing required ECharts keys: ${missingKeys.join(", ")}.`;
       }
 
-      return JSON.stringify({ __type: "chart", option: parsed, height });
+      return JSON.stringify({
+        __type: "chart",
+        option: parsed,
+        height,
+        result:
+          "Chart rendered and displayed to the user. Do not call render_chart again.",
+      });
     },
   });
