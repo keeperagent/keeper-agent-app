@@ -79,7 +79,7 @@ const ModalUpdateWallet = (props: IModalUpdateWalletProps) => {
       open={isModalOpen}
       title={translate("wallet.editWallet")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={translate("button.update")}
       cancelText={translate("cancel")}
       width="45rem"

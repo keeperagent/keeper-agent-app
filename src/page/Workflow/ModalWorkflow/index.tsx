@@ -133,7 +133,7 @@ const ModalWorkflow = (props: any) => {
           : translate("workflow.editWorkflow")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         !selectedWorkflow
           ? translate("button.createNew")

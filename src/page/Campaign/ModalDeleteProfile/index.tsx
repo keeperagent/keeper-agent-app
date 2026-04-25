@@ -130,7 +130,7 @@ const ModalDeleteProfile = (props: IProps) => {
           ? translate("campaign.deleteCampaignProgress")
           : translate("campaign.deleteProfileProgress")
       }
-      maskClosable={false}
+      mask={{ closable: false }}
       closeIcon={null}
     >
       <Wrapper>

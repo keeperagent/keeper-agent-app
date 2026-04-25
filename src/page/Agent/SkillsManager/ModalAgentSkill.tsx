@@ -108,7 +108,7 @@ const ModalAgentSkill = (props: any) => {
       }
       cancelText={translate("cancel")}
       width={600}
-      maskClosable={false}
+      mask={{ closable: false }}
       confirmLoading={createLoading || updateLoading}
     >
       <Form layout="vertical" form={form} style={{ marginTop: "2rem" }}>

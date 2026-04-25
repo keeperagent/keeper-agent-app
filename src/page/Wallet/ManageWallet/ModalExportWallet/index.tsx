@@ -79,7 +79,7 @@ const ModalExportWallet = (props: any) => {
       open={isModalOpen}
       title={translate("wallet.export.wallet")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText="Export"
       cancelText={translate("cancel")}
       width="50rem"

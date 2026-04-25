@@ -179,7 +179,7 @@ const ModalResource = (props: IModalResourceProps) => {
           : translate("button.createNew")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         selectedResource
           ? translate("button.update")

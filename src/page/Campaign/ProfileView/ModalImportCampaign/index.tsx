@@ -43,7 +43,7 @@ const ModalImportCampaign = (props: any) => {
       open={isModalOpen}
       title={translate("campaign.importConfig")}
       onCancel={onCloseModal}
-      maskClosable={true}
+      mask={{ closable: true }}
       okText={translate("button.import")}
       cancelText={translate("cancel")}
       width="45rem"

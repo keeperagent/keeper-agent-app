@@ -78,7 +78,7 @@ const ModalExportProfile = (props: any) => {
       open={isModalOpen}
       title={translate("profile.exportProfile")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText="Export"
       cancelText={translate("cancel")}
       width="50rem"

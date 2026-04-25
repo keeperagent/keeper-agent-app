@@ -116,7 +116,7 @@ const ModalResourceGroup = (props: any) => {
           : translate("resource.editGroup")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       width="70rem"
       onOk={onSubmitForm}
       confirmLoading={isBtnLoading}

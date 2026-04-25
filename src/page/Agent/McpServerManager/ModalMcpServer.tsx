@@ -132,7 +132,7 @@ const ModalMcpServer = (props: any) => {
       }
       cancelText={translate("cancel")}
       width="65rem"
-      maskClosable={false}
+      mask={{ closable: false }}
       confirmLoading={isBtnLoading}
       style={{ top: "6rem" }}
     >

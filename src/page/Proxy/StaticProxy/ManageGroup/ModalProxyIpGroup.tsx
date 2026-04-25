@@ -94,7 +94,7 @@ const ModalProxyIpGroup = (props: any) => {
           : translate("staticProxy.updateGroup")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         !selectedStaticProxyGroup
           ? translate("button.createNew")

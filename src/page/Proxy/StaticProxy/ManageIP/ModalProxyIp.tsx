@@ -127,7 +127,7 @@ const ModalProxyIp = (props: any) => {
           : translate("staticProxy.update")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         !selectedStaticProxy
           ? translate("button.createNew")
