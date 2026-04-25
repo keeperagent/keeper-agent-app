@@ -50,7 +50,7 @@ const UserInfo = (props: any) => {
       <Dropdown
         menu={{ items }}
         placement="bottomLeft"
-        overlayStyle={{ minWidth: 150 }}
+        styles={{ root: { minWidth: 150 } }}
       >
         <div className="user" data-tut="reactour-step-4">
           <div className="user-info">

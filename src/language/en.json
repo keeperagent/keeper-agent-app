@@ -694,6 +694,7 @@
   "workflow.tabToClose": "Tab to close",
   "workflow.nodeNeedRunInCampaign": "This Processor can only be used inside Campaigns",
   "workflow.anotherWorkflowUsingBrowser": "Cannot run because another Workflow is using the browser",
+  "cantRunWorkflowWithFreeTier": "Cannot run workflow with free tier",
   "workflow.workflowIsRunning": "This workflow is running",
   "workflow.nativeTokenInputPlaceholder": "Enter the amount of native token sent in the transaction",
   "workflow.jsCodeToExtractResponse": "Use JavaScript to test and visualize response",

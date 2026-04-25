@@ -123,7 +123,7 @@ const UploadFile = (props: UploadFileProps) => {
   };
 
   return (
-    <UploadFileWrapper fullSize={fullSize}>
+    <UploadFileWrapper $fullSize={fullSize}>
       <div className="upload" onClick={handleClick}>
         {!fullSize ? (
           <div className="placeholder">

@@ -232,7 +232,7 @@ const renderColumns = (
 
         return (
           <Popover
-            overlayStyle={{ maxWidth: "50vw" }}
+            styles={{ root: { maxWidth: "50vw" } }}
             content={
               <ResultMarkdownTooltip>
                 <ReactMarkdown
@@ -254,7 +254,7 @@ const renderColumns = (
       if (record?.errorMessage) {
         return (
           <Popover
-            overlayStyle={{ maxWidth: "50vw" }}
+            styles={{ root: { maxWidth: "50vw" } }}
             trigger="click"
             content={
               <ResultMarkdownTooltip>

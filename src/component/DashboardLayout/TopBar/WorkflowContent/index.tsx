@@ -234,7 +234,7 @@ const WorkflowContent = (props: IProps) => {
     }
     if (isFreeTier) {
       notification.warning({
-        title: "Can not run workflow with free tier",
+        title: translate("cantRunWorkflowWithFreeTier"),
         duration: 15,
       });
       return;

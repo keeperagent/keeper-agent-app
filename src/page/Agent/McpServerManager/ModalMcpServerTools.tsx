@@ -58,7 +58,10 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
       setTools(payload?.data || []);
       setError(payload?.error || null);
     };
-    const unsubscribe = window?.electron?.on(MESSAGE.GET_MCP_SERVER_TOOLS_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_MCP_SERVER_TOOLS_RES,
+      handler,
+    );
     return () => {
       unsubscribe?.();
     };
@@ -113,7 +116,7 @@ const ModalMcpServerTools = (props: ModalMcpServerToolsProps) => {
           return (
             <Tooltip
               title={<pre style={preStyle}>{pretty}</pre>}
-              overlayStyle={{ maxWidth: "50rem" }}
+              styles={{ root: { maxWidth: "50rem" } }}
               overlayInnerStyle={{
                 padding: 0,
               }}

@@ -53,13 +53,20 @@ const BrowserDownload = (props: IProps) => {
   }, [preference]);
 
   useEffect(() => {
+    let timeoutId: any = null;
     if (showTour && !isInstalled) {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         setTourOpen(true);
       }, 500);
     } else {
       setTourOpen(false);
     }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [showTour, isInstalled]);
 
   useEffect(() => {

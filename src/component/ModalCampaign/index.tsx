@@ -66,6 +66,10 @@ const ModalCampaign = (props: IProps) => {
   const { getCampaignProfileStatus } = useGetCampaignProfileStatus();
 
   useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
     form.setFieldsValue({
       name: selectedCampaign?.name || null,
       listWorkflowId: selectedCampaign?.listWorkflowId || [],
