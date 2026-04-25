@@ -43,8 +43,7 @@ const TAB = {
 };
 
 const AgentPage = (props: any) => {
-  const { llmProvider, actSetLLMProvider, preference, agentStatsFromReady } =
-    props;
+  const { llmProvider, actSetLLMProvider, preference, agentStats } = props;
   const currentProvider = llmProvider || LLMProvider.CLAUDE;
   const { translate } = useTranslation();
   const { updatePreference } = useUpdatePreference();
@@ -94,14 +93,6 @@ const AgentPage = (props: any) => {
   const isCodexCLIActive =
     currentProvider === LLMProvider.OPENAI && Boolean(preference?.useCodexCLI);
 
-  const agentStats = useMemo(() => {
-    const subAgents = agentStatsFromReady?.subAgentsCount || 0;
-    const tools = agentStatsFromReady?.toolsCount || 0;
-    const skills = agentStatsFromReady?.skillsCount || 0;
-
-    return { subAgents, tools, skills };
-  }, [agentStatsFromReady]);
-
   return (
     <Wrapper
       style={{
@@ -145,15 +136,15 @@ const AgentPage = (props: any) => {
           <Fragment>
             <div className="agent-status">
               <AgentStatBadge
-                count={agentStats.subAgents}
+                count={agentStats?.subAgentsCount || 0}
                 label={translate("agent.subAgents")}
               />
               <AgentStatBadge
-                count={agentStats.tools}
+                count={agentStats?.toolsCount || 0}
                 label={translate("agent.tools")}
               />
               <AgentStatBadge
-                count={agentStats.skills}
+                count={agentStats?.skillsCount || 0}
                 label={translate("agent.skills")}
               />
             </div>
@@ -248,7 +239,7 @@ export default connect(
   (state: RootState) => ({
     llmProvider: state?.Agent?.llmProvider,
     preference: state?.Preference?.preference,
-    agentStatsFromReady: state?.Agent?.agentStats || null,
+    agentStats: state?.Agent?.agentStats || null,
   }),
   { actSetLLMProvider },
 )(AgentPage);

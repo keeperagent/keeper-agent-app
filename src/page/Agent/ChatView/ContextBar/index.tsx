@@ -39,6 +39,8 @@ import {
   actSaveCampaignId,
   actSaveListProfileId,
   actSaveIsAllWallet,
+  defaultAgentContext,
+  IAgentContext,
 } from "@/redux/agent";
 import { listChainConfig } from "@/page/Agent/config";
 import WalletView from "../WalletView";
@@ -56,19 +58,25 @@ import { EMPTY_STRING } from "@/config/constant";
 
 const ContextBar = (props: any) => {
   const {
+    agentContextMap,
+    selectedAgentProfileId,
+    listNodeEndpointGroup,
+    listCampaign,
+    listAgentSetting,
+    setEncryptKey,
+    encryptKey,
+  } = props;
+
+  const {
     chainKey,
     nodeEndpointGroupId,
     tokenAddress,
     campaignId,
     isAllWallet,
     listProfileId,
-    listNodeEndpointGroup,
-    listCampaign,
-    listAgentSetting,
-    chatProfileId,
-    setEncryptKey,
-    encryptKey,
-  } = props;
+  } =
+    (selectedAgentProfileId ? agentContextMap[selectedAgentProfileId] : null) ||
+    (defaultAgentContext as IAgentContext);
 
   const { translate, locale } = useTranslation();
   const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
@@ -92,9 +100,9 @@ const ContextBar = (props: any) => {
       page: 1,
       pageSize: 1000,
       type: SETTING_TYPE.AGENT_PRESET,
-      scopeId: chatProfileId,
+      scopeId: selectedAgentProfileId,
     });
-  }, [chatProfileId]);
+  }, [selectedAgentProfileId]);
 
   const matchingPreset = useMemo(() => {
     const currentProfileIds = JSON.stringify(listProfileId || []);
@@ -216,7 +224,7 @@ const ContextBar = (props: any) => {
       createSetting({
         name: drawerPresetName.trim(),
         type: SETTING_TYPE.AGENT_PRESET,
-        scopeId: chatProfileId,
+        scopeId: selectedAgentProfileId,
         data: presetData,
       });
     }
@@ -505,16 +513,11 @@ const ContextBar = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    chainKey: state?.Agent?.chainKey,
-    nodeEndpointGroupId: state?.Agent?.nodeEndpointGroupId,
-    tokenAddress: state?.Agent?.tokenAddress,
-    campaignId: state?.Agent?.campaignId,
-    listProfileId: state?.Agent?.listProfileId,
-    isAllWallet: state?.Agent?.isAllWallet,
+    agentContextMap: state?.Agent?.agentContextMap || {},
+    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
     listCampaign: state?.Campaign?.listCampaign,
     listAgentSetting: state?.Setting?.listSetting,
-    chatProfileId: state?.Agent?.chatProfileId,
   }),
   {
     actSaveChainKey,

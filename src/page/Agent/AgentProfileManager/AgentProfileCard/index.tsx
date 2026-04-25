@@ -38,8 +38,6 @@ const AgentProfileCard = (props: Props) => {
   const allowedToolCount = profile.allowedBaseTools?.length || 0;
   const allowedSkillCount = profile.allowedSkillIds?.length || 0;
 
-  console.log("=== chainConfig", chainConfig);
-
   return (
     <Wrapper>
       <div className="item-dots-row" aria-hidden>

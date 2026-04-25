@@ -83,9 +83,15 @@ const normalizeSteps = (steps: any[]): AgentToolStep[] => {
 };
 
 // Persist sessions per profile so switching back reuses the same session (no MCP reconnect, no cache loss).
+type PersistedAgentStats = {
+  subAgentsCount: number;
+  toolsCount: number;
+  skillsCount: number;
+};
+
 const persistedSessions = new Map<
   string,
-  { sessionId: string; agentReady: boolean }
+  { sessionId: string; agentReady: boolean; agentStats?: PersistedAgentStats }
 >();
 
 const getSessionKey = (profileId: number | null): string => String(profileId);
@@ -123,6 +129,9 @@ const useDashboardAgent = (profileId: number | null = null) => {
 
   const sessionIdRef = useRef<string | null>(sessionId);
   const profileIdRef = useRef<number | null>(profileId);
+  const agentStatsRef = useRef<PersistedAgentStats | null>(
+    persistedSession?.agentStats || null,
+  );
   const streamingContentRef = useRef<string>("");
   const preTurnContentRef = useRef<string>("");
   // Tracks full todo list across write_todos calls — agent sometimes drops earlier items
@@ -146,7 +155,11 @@ const useDashboardAgent = (profileId: number | null = null) => {
   } | null>(null);
 
   sessionIdRef.current = sessionId;
-  persistedSessions.set(sessionKey, { sessionId: sessionId || "", agentReady });
+  persistedSessions.set(sessionKey, {
+    sessionId: sessionId || "",
+    agentReady,
+    agentStats: agentStatsRef.current ?? undefined,
+  });
   dispatchRef.current = dispatch;
   conversationRef.current = conversation;
   profileIdRef.current = profileId;
@@ -168,6 +181,14 @@ const useDashboardAgent = (profileId: number | null = null) => {
         lower.includes("encrypt key") ||
         lower.includes("secret key") ||
         lower.includes("encryption key");
+    }
+  }, []);
+
+  // Restore agentStats from the persisted session when switching back to a profile
+  // whose session is already ready (CREATE_SESSION_RES won't fire again).
+  useEffect(() => {
+    if (persistedSession?.agentReady && persistedSession?.agentStats) {
+      dispatch(actSaveAgentStats(persistedSession.agentStats));
     }
   }, []);
 
@@ -221,23 +242,23 @@ const useDashboardAgent = (profileId: number | null = null) => {
       if (pending) {
         pendingReadyRef.current = null;
         setAgentReady(true);
-        dispatchRef.current(
-          actSaveAgentStats({
-            subAgentsCount: pending.subAgentsCount,
-            toolsCount: pending.toolsCount,
-            skillsCount: pending.skillsCount,
-          }),
-        );
+        const pendingStats = {
+          subAgentsCount: pending.subAgentsCount,
+          toolsCount: pending.toolsCount,
+          skillsCount: pending.skillsCount,
+        };
+        agentStatsRef.current = pendingStats;
+        dispatchRef.current(actSaveAgentStats(pendingStats));
       } else {
         setAgentReady(Boolean(data?.agentReady));
         if (data?.agentReady) {
-          dispatchRef.current(
-            actSaveAgentStats({
-              subAgentsCount: data.subAgentsCount,
-              toolsCount: data.toolsCount,
-              skillsCount: data.skillsCount,
-            }),
-          );
+          const sessionStats = {
+            subAgentsCount: data.subAgentsCount,
+            toolsCount: data.toolsCount,
+            skillsCount: data.skillsCount,
+          };
+          agentStatsRef.current = sessionStats;
+          dispatchRef.current(actSaveAgentStats(sessionStats));
         }
       }
       setSteps([]);
@@ -573,9 +594,9 @@ const useDashboardAgent = (profileId: number | null = null) => {
       if (payloadSessionId === sessionIdRef.current) {
         setAgentReady(payloadReady);
         if (payloadReady) {
-          dispatchRef.current(
-            actSaveAgentStats({ subAgentsCount, toolsCount, skillsCount }),
-          );
+          const readyStats = { subAgentsCount, toolsCount, skillsCount };
+          agentStatsRef.current = readyStats;
+          dispatchRef.current(actSaveAgentStats(readyStats));
         }
         pendingReadyRef.current = null;
       } else if (payloadSessionId && payloadReady) {
@@ -718,13 +739,13 @@ const useDashboardAgent = (profileId: number | null = null) => {
         return;
       }
       setAgentReady(true);
-      dispatchRef.current(
-        actSaveAgentStats({
-          subAgentsCount: data.subAgentsCount,
-          toolsCount: data.toolsCount,
-          skillsCount: data.skillsCount,
-        }),
-      );
+      const statusStats = {
+        subAgentsCount: data.subAgentsCount,
+        toolsCount: data.toolsCount,
+        skillsCount: data.skillsCount,
+      };
+      agentStatsRef.current = statusStats;
+      dispatchRef.current(actSaveAgentStats(statusStats));
     };
 
     const unsubscribe = window?.electron?.on(
