@@ -171,7 +171,12 @@ const ChatView = (props: any) => {
           <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
 
           <div className="agent-view-wrapper" style={{ marginTop: "0.8rem" }}>
-            <AgentView encryptKey={encryptKey} />
+            {props.chatProfileId !== null && (
+              <AgentView
+                key={String(props.chatProfileId)}
+                encryptKey={encryptKey}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -183,6 +188,7 @@ export default connect(
   (state: RootState) => ({
     layoutMode: state?.Agent?.layoutMode,
     splitPercent: state?.Agent?.splitPercent,
+    chatProfileId: state?.Agent?.chatProfileId,
   }),
   { actSetPageName, actSetSplitPercent },
 )(ChatView);

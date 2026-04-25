@@ -94,7 +94,7 @@ const AgentView = (props: any) => {
     resetSession,
     approvePlan,
     setError,
-  } = useDashboardAgent();
+  } = useDashboardAgent(chatProfileId);
 
   useEffect(() => {
     getListAgentProfile({ page: 1, pageSize: 100 });
@@ -269,7 +269,6 @@ const AgentView = (props: any) => {
 
   const onSelectProfile = (profileId: number) => {
     props.actSaveChatProfileId(profileId);
-    resetSession();
   };
 
   const activeProfiles = useMemo(

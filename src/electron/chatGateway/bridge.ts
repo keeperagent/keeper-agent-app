@@ -96,6 +96,7 @@ export type AgentSession = {
   toolContext: ToolContext;
   platformId: ChatPlatform;
   platformChatId: string;
+  agentProfileId: number | null;
   isCompacting: boolean;
   //  Summary text from the last compaction, injected into the new thread on first run
   pendingSummary: string | null;
@@ -305,6 +306,7 @@ class AgentChatBridge {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
+        session.agentProfileId,
       );
       if (messages.length < MIN_MESSAGES_FOR_COMPACTION) {
         return null;
@@ -347,6 +349,7 @@ class AgentChatBridge {
         lastId,
         session.platformId,
         session.platformChatId,
+        session.agentProfileId,
       );
       logEveryWhere({
         message: "[AgentChatBridge] Background summarisation completed",
@@ -371,6 +374,7 @@ class AgentChatBridge {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
+        session.agentProfileId,
       );
       if (messages.length === 0) {
         return;
@@ -423,6 +427,7 @@ class AgentChatBridge {
       toolContext: new ToolContext(),
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
+      agentProfileId: null,
       isCompacting: false,
       pendingSummary: null,
       expectingEncryptKey: false,
@@ -438,6 +443,7 @@ class AgentChatBridge {
 
   createIpcSession = async (
     provider: LLMProvider,
+    agentProfileId: number | null = null,
   ): Promise<{
     sessionId: string;
     session: AgentSession;
@@ -452,6 +458,8 @@ class AgentChatBridge {
       const sessionKey = this.prewarmedSessionId;
       this.prewarmedSessionId = null;
       const session = this.sessions.get(sessionKey)!;
+      session.agentProfileId = agentProfileId;
+      session.platformChatId = ChatPlatform.KEEPER;
       if (!session.keeper && session.initPromise) {
         await session.initPromise.catch(() => {});
         session.initPromise = null;
@@ -477,7 +485,8 @@ class AgentChatBridge {
       contextTokens: 0,
       toolContext: new ToolContext(),
       platformId: ChatPlatform.KEEPER,
-      platformChatId: "default",
+      platformChatId: ChatPlatform.KEEPER,
+      agentProfileId,
       isCompacting: false,
       pendingSummary: null,
       expectingEncryptKey: false,
@@ -985,6 +994,7 @@ class AgentChatBridge {
         toolContext: new ToolContext(),
         platformId: adapter.platformId,
         platformChatId: message.chatId,
+        agentProfileId: null,
         isCompacting: false,
         pendingSummary: null,
         expectingEncryptKey: false,

@@ -82,24 +82,34 @@ const normalizeSteps = (steps: any[]): AgentToolStep[] => {
   }));
 };
 
-// Persist sessionId and agentReady across component mount/unmount so navigating away
-// and back reuses the same agent session (no MCP reconnection).
-let persistedSessionId: string | null = null;
-let persistedAgentReady = false;
+// Persist sessions per profile so switching back reuses the same session (no MCP reconnect, no cache loss).
+const persistedSessions = new Map<
+  string,
+  { sessionId: string; agentReady: boolean }
+>();
 
-const useDashboardAgent = () => {
+const getSessionKey = (profileId: number | null): string => String(profileId);
+
+const useDashboardAgent = (profileId: number | null = null) => {
+  const sessionKey = getSessionKey(profileId);
+  const persistedSession = persistedSessions.get(sessionKey);
+
   const dispatch = useDispatch();
   const agentState = useSelector(agentSelector);
   const llmProvider = agentState?.llmProvider || LLMProvider.OPENAI;
 
-  const [sessionId, setSessionId] = useState<string | null>(persistedSessionId);
+  const [sessionId, setSessionId] = useState<string | null>(
+    persistedSession?.sessionId ?? null,
+  );
   const [conversation, setConversation] = useState<AgentMessage[]>([]);
   const [steps, setSteps] = useState<AgentToolStep[]>([]);
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
   /** True once MCP is connected and tools are loaded for the current session. */
-  const [agentReady, setAgentReady] = useState(persistedAgentReady);
+  const [agentReady, setAgentReady] = useState(
+    persistedSession?.agentReady ?? false,
+  );
   const [error, setError] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState<string>("");
   const [executingTool, setExecutingTool] = useState<string | null>(null);
@@ -112,6 +122,7 @@ const useDashboardAgent = () => {
   } | null>(null);
 
   const sessionIdRef = useRef<string | null>(sessionId);
+  const profileIdRef = useRef<number | null>(profileId);
   const streamingContentRef = useRef<string>("");
   const preTurnContentRef = useRef<string>("");
   // Tracks full todo list across write_todos calls — agent sometimes drops earlier items
@@ -135,16 +146,17 @@ const useDashboardAgent = () => {
   } | null>(null);
 
   sessionIdRef.current = sessionId;
-  persistedSessionId = sessionId;
-  persistedAgentReady = agentReady;
+  persistedSessions.set(sessionKey, { sessionId: sessionId || "", agentReady });
   dispatchRef.current = dispatch;
   conversationRef.current = conversation;
+  profileIdRef.current = profileId;
 
   const saveMessageToDB = useCallback((msg: AgentMessage) => {
     window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
       role: msg.role,
       content: msg.content,
       timestamp: msg.timestamp || Date.now(),
+      agentProfileId: profileIdRef.current,
     });
 
     // Detect when the agent asks the user for their encryptKey so the next
@@ -175,7 +187,9 @@ const useDashboardAgent = () => {
       MESSAGE.CHAT_HISTORY_LOAD_RES,
       handleLoad,
     );
-    window?.electron?.send(MESSAGE.CHAT_HISTORY_LOAD, {});
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_LOAD, {
+      agentProfileId: profileIdRef.current,
+    });
 
     return () => {
       unsubscribe?.();
@@ -750,6 +764,7 @@ const useDashboardAgent = () => {
     setError(null);
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CREATE_SESSION, {
       provider: llmProvider,
+      agentProfileId: profileIdRef.current,
     });
   }, [llmProvider]);
 
@@ -796,6 +811,7 @@ const useDashboardAgent = () => {
         role: userMessage.role,
         content: userMessage.content,
         timestamp: userMessage.timestamp,
+        agentProfileId: profileIdRef.current,
       });
 
       setLoading(true);
@@ -836,7 +852,9 @@ const useDashboardAgent = () => {
     toolCallMapRef.current.clear();
     expectingEncryptKeyRef.current = false;
     // Clear SQLite history so the next session starts fresh
-    window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {});
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {
+      agentProfileId: profileIdRef.current,
+    });
     // Reset the agent's LangGraph thread on the backend
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RESET_SESSION, {
       sessionId: sessionIdRef.current,

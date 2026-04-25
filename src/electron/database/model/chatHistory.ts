@@ -71,12 +71,18 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: null,
       },
+      agentProfileId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       timestamps: false,
       indexes: [
         { fields: ["platformId", "platformChatId", "isSummary"] },
         { fields: ["runId"] },
+        { fields: ["agentProfileId"] },
       ],
     },
   );

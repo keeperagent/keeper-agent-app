@@ -124,9 +124,12 @@ export const agentController = () => {
     async (event, payload) => {
       const requestedProvider: LLMProvider =
         payload?.provider || LLMProvider.CLAUDE;
+      const agentProfileId = payload?.agentProfileId ?? null;
 
-      const { sessionId, session } =
-        await agentChatBridge.createIpcSession(requestedProvider);
+      const { sessionId, session } = await agentChatBridge.createIpcSession(
+        requestedProvider,
+        agentProfileId,
+      );
 
       const keyExists = await hasApiKey(session.provider);
       createResponse(event, MESSAGE.DASHBOARD_AGENT_CREATE_SESSION_RES, {
