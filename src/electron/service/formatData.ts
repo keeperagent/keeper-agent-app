@@ -349,6 +349,7 @@ const formatSetting = (raw: any): ISetting => {
         campaignId: parsed.campaignId || null,
         selectedProfileIds: JSON.parse(parsed.selectedProfileIds || "[]"),
         isAllWallet: parsed.isAllWallet !== false,
+        tokenAddress: parsed.tokenAddress || null,
       };
     } else if (formatedData.type === SETTING_TYPE.WORKFLOW_GLOBAL_VARIABLE) {
       formatedData.workflowGlobalVariable = {

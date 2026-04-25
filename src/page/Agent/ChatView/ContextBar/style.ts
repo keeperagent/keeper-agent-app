@@ -115,6 +115,14 @@ const PresetPopoverWrapper = styled.div`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+
+      .preset-check-icon {
+        display: inline-block;
+        vertical-align: middle;
+        color: #52c41a;
+        font-size: 1.4rem;
+        margin-left: 0.5rem;
+      }
     }
   }
 `;

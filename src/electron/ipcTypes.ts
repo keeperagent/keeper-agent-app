@@ -463,6 +463,7 @@ export type IpcUpdateAgentSkillPayload = {
 // Setting
 export type IpcGetListSettingPayload = IpcSortedPagePayload & {
   type?: string;
+  scopeId?: number | null;
 };
 export type IpcCreateSettingPayload = {
   data: ISetting;

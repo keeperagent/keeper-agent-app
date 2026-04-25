@@ -11,6 +11,7 @@ import {
   Button,
   Tooltip,
 } from "antd";
+import { CheckOutlined } from "@ant-design/icons";
 import { RootState } from "@/redux/store";
 import {
   useGetListCampaign,
@@ -20,6 +21,7 @@ import {
 import {
   useGetListSetting,
   useCreateSetting,
+  useUpdateSetting,
   useDeleteSetting,
 } from "@/hook/setting";
 import {
@@ -63,6 +65,7 @@ const ContextBar = (props: any) => {
     listNodeEndpointGroup,
     listCampaign,
     listAgentSetting,
+    chatProfileId,
     setEncryptKey,
     encryptKey,
   } = props;
@@ -71,12 +74,16 @@ const ContextBar = (props: any) => {
   const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
   const { getListCampaign } = useGetListCampaign();
   const { getListSetting } = useGetListSetting();
-  const { createSetting } = useCreateSetting();
+  const { createSetting } = useCreateSetting({
+    onSuccess: (setting) => setActivePresetId(setting.id || null),
+  });
+  const { updateSetting } = useUpdateSetting();
   const { deleteSetting } = useDeleteSetting();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [presetPopoverOpen, setPresetPopoverOpen] = useState(false);
   const [drawerPresetName, setDrawerPresetName] = useState("");
+  const [activePresetId, setActivePresetId] = useState<number | null>(null);
 
   useEffect(() => {
     getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
@@ -85,8 +92,46 @@ const ContextBar = (props: any) => {
       page: 1,
       pageSize: 1000,
       type: SETTING_TYPE.AGENT_PRESET,
+      scopeId: chatProfileId,
     });
-  }, []);
+  }, [chatProfileId]);
+
+  const matchingPreset = useMemo(() => {
+    const currentProfileIds = JSON.stringify(listProfileId || []);
+
+    return (
+      listAgentSetting?.find((setting: ISetting) => {
+        const agentSetting = setting.agentSetting;
+        return (
+          agentSetting?.chainKey === chainKey &&
+          agentSetting?.nodeEndpointGroupId === nodeEndpointGroupId &&
+          agentSetting?.campaignId === campaignId &&
+          JSON.stringify(agentSetting?.selectedProfileIds || []) ===
+            currentProfileIds &&
+          agentSetting?.isAllWallet === isAllWallet &&
+          (agentSetting?.tokenAddress || "") === (tokenAddress || "")
+        );
+      }) || null
+    );
+  }, [
+    listAgentSetting,
+    chainKey,
+    nodeEndpointGroupId,
+    campaignId,
+    listProfileId,
+    isAllWallet,
+    tokenAddress,
+  ]);
+
+  useEffect(() => {
+    if (matchingPreset) {
+      setActivePresetId(matchingPreset.id || null);
+      setDrawerPresetName(matchingPreset.name || "");
+    } else {
+      setActivePresetId(null);
+      setDrawerPresetName("");
+    }
+  }, [matchingPreset]);
 
   const chainConfig = useMemo(() => {
     return _.find(listChainConfig, { dexscreenerKey: chainKey }) || null;
@@ -116,29 +161,6 @@ const ContextBar = (props: any) => {
     return count > 0 ? `${count} wallets` : translate("agent.noWallet");
   }, [isAllWallet, listProfileId, translate]);
 
-  const hasMatchingPreset = useMemo(() => {
-    const currentProfileIds = JSON.stringify(listProfileId || []);
-
-    return listAgentSetting?.some((setting: ISetting) => {
-      const agentSetting = setting.agentSetting;
-      return (
-        agentSetting?.chainKey === chainKey &&
-        agentSetting?.nodeEndpointGroupId === nodeEndpointGroupId &&
-        agentSetting?.campaignId === campaignId &&
-        JSON.stringify(agentSetting?.selectedProfileIds || []) ===
-          currentProfileIds &&
-        agentSetting?.isAllWallet === isAllWallet
-      );
-    });
-  }, [
-    listAgentSetting,
-    chainKey,
-    nodeEndpointGroupId,
-    campaignId,
-    listProfileId,
-    isAllWallet,
-  ]);
-
   const truncateAddress = (address: string) => {
     if (!address || address.length <= 10) {
       return address;
@@ -156,6 +178,9 @@ const ContextBar = (props: any) => {
     props?.actSaveCampaignId(agentSetting?.campaignId || null);
     props?.actSaveIsAllWallet(agentSetting?.isAllWallet !== false);
     props?.actSaveListProfileId(agentSetting?.selectedProfileIds || []);
+    props?.actSaveTokenAddress(agentSetting?.tokenAddress || "");
+    setActivePresetId(setting.id || null);
+    setDrawerPresetName(setting.name || "");
     setPresetPopoverOpen(false);
   };
 
@@ -169,18 +194,32 @@ const ContextBar = (props: any) => {
       return;
     }
 
-    createSetting({
-      name: drawerPresetName.trim(),
-      type: SETTING_TYPE.AGENT_PRESET,
-      data: JSON.stringify({
-        chainKey: chainKey || "",
-        nodeEndpointGroupId: nodeEndpointGroupId || null,
-        campaignId: campaignId || null,
-        selectedProfileIds: JSON.stringify(listProfileId || []),
-        isAllWallet: isAllWallet !== false,
-      }),
+    const presetData = JSON.stringify({
+      chainKey: chainKey || "",
+      nodeEndpointGroupId: nodeEndpointGroupId || null,
+      campaignId: campaignId || null,
+      selectedProfileIds: JSON.stringify(listProfileId || []),
+      isAllWallet: isAllWallet !== false,
+      tokenAddress: tokenAddress || null,
     });
-    setDrawerPresetName("");
+
+    const activeSetting = listAgentSetting?.find(
+      (setting: ISetting) => setting.id === activePresetId,
+    );
+    // Same name as the loaded preset → update in place, renamed → create new
+    const isUpdate =
+      activeSetting && drawerPresetName.trim() === activeSetting.name;
+
+    if (isUpdate) {
+      updateSetting({ ...activeSetting, data: presetData });
+    } else {
+      createSetting({
+        name: drawerPresetName.trim(),
+        type: SETTING_TYPE.AGENT_PRESET,
+        scopeId: chatProfileId,
+        data: presetData,
+      });
+    }
   };
 
   const presetContent = (
@@ -199,6 +238,9 @@ const ContextBar = (props: any) => {
         >
           <span className="preset-item-name">
             {setting?.name || EMPTY_STRING}
+            {setting.id === activePresetId && (
+              <CheckOutlined className="preset-check-icon" />
+            )}
           </span>
         </div>
       ))}
@@ -398,7 +440,7 @@ const ContextBar = (props: any) => {
       >
         <WalletView setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
 
-        {!hasMatchingPreset && (
+        {!matchingPreset && (
           <DrawerSavePreset>
             <div className="preset-save-label">
               {translate("agent.saveCurrentSettings")}
@@ -421,7 +463,12 @@ const ContextBar = (props: any) => {
                 className="custom-input"
               />
 
-              <Button onClick={onDrawerSavePreset} type="primary" size="middle">
+              <Button
+                onClick={onDrawerSavePreset}
+                type="primary"
+                size="middle"
+                disabled={!drawerPresetName.trim()}
+              >
                 {translate("button.save")}
               </Button>
             </div>
@@ -446,6 +493,7 @@ const ContextBar = (props: any) => {
                 listCampaign={listCampaign}
                 onLoad={onLoadPreset}
                 onDelete={onDeletePreset}
+                isActive={setting.id === activePresetId}
               />
             ))}
           </div>
@@ -466,6 +514,7 @@ export default connect(
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
     listCampaign: state?.Campaign?.listCampaign,
     listAgentSetting: state?.Setting?.listSetting,
+    chatProfileId: state?.Agent?.chatProfileId,
   }),
   {
     actSaveChainKey,

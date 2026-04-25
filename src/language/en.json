@@ -1347,6 +1347,7 @@
   "agent.saveCurrentSettings": "Save current settings",
   "agent.presetName": "Enter preset name",
   "agent.noPresets": "No presets yet",
+  "agent.active": "Active",
   "button.load": "Load",
   "button.save": "Save",
   "button.setting": "Settings",

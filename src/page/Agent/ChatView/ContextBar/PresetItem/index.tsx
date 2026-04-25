@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import _ from "lodash";
+import { Badge } from "antd";
 import { ISetting, ICampaign, INodeEndpointGroup } from "@/electron/type";
 import { useTranslation } from "@/hook";
 import { EMPTY_STRING } from "@/config/constant";
@@ -12,11 +13,18 @@ interface PresetItemProps {
   listCampaign: ICampaign[];
   onLoad: (setting: ISetting) => void;
   onDelete: (id: number) => void;
+  isActive?: boolean;
 }
 
 const PresetItem = (props: PresetItemProps) => {
-  const { setting, listNodeEndpointGroup, listCampaign, onLoad, onDelete } =
-    props;
+  const {
+    setting,
+    listNodeEndpointGroup,
+    listCampaign,
+    onLoad,
+    onDelete,
+    isActive,
+  } = props;
   const { translate } = useTranslation();
 
   const parsed = useMemo(
@@ -52,13 +60,16 @@ const PresetItem = (props: PresetItemProps) => {
   }, [parsed.selectedProfileIds, parsed.isAllWallet, translate]);
 
   return (
-    <PresetItemWrapper>
+    <PresetItemWrapper $isActive={isActive}>
       <div
         className="preset-item-info"
         onClick={() => onLoad(setting)}
         title={translate("button.load")}
       >
-        <div className="preset-item-name">{setting.name}</div>
+        <div className="preset-item-name">
+          <span>{setting.name}</span>
+          {isActive && <Badge status="success" className="preset-active-dot" />}
+        </div>
 
         <div className="preset-item-detail">
           <span>{presetChain?.chainName || EMPTY_STRING}</span>

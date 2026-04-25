@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
-const PresetItemWrapper = styled.div`
+const PresetItemWrapper = styled.div<{ $isActive?: boolean }>`
   display: flex;
   align-items: center;
   padding: 1rem 0.7rem;
@@ -35,6 +35,11 @@ const PresetItemWrapper = styled.div`
       white-space: nowrap;
       margin-bottom: 0.7rem;
       transition: all 0.1s ease-in-out;
+
+      .preset-active-dot {
+        margin-left: var(--margin-left);
+        line-height: 0.5;
+      }
     }
 
     .preset-item-detail {

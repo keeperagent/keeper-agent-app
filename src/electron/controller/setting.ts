@@ -13,13 +13,15 @@ export const settingController = () => {
     MESSAGE.GET_LIST_AGENT_SETTING,
     MESSAGE.GET_LIST_AGENT_SETTING_RES,
     async (event, payload) => {
-      const { page, pageSize, searchText, sortField, type } = payload || {};
+      const { page, pageSize, searchText, sortField, type, scopeId } =
+        payload || {};
       const [res] = await settingDB.getListSetting(
         page,
         pageSize,
         searchText,
         sortField,
         type,
+        scopeId,
       );
       event.reply(MESSAGE.GET_LIST_AGENT_SETTING_RES, {
         data: res,
