@@ -37,7 +37,9 @@ const useCreateAgentSkill = () => {
           message.error(payload.error);
           return;
         }
-        if (payload?.data) dispatch(actSaveCreateAgentSkill(payload.data));
+        if (payload?.data) {
+          dispatch(actSaveCreateAgentSkill(payload.data));
+        }
       },
     },
   );

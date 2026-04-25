@@ -83,10 +83,9 @@ const LogViewer = (props: IProps) => {
         batch.forEach((logItem: any) => props?.actAppendLog(logItem));
       }
     };
-    window?.electron?.on(MESSAGE.LOG_BATCH, handler);
-
+    const unsubscribe = window?.electron?.on(MESSAGE.LOG_BATCH, handler);
     return () => {
-      window?.electron?.removeListener?.(MESSAGE.LOG_BATCH, handler);
+      unsubscribe?.();
       listenerAddedRef.current = false;
     };
   }, []);

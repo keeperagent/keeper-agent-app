@@ -49,6 +49,7 @@ const useDeleteCampaignProfile = () => {
 
 // Uses responseManager (requestId correlation) for concurrent update safety
 let isUpdateCampaignProfileRegistered = false;
+let _campaignProfileUnsubscribe: (() => void) | undefined;
 const useUpdateCampaignProfile = () => {
   const dispatch = useDispatch();
 
@@ -64,9 +65,9 @@ const useUpdateCampaignProfile = () => {
     });
 
     if (!isUpdateCampaignProfileRegistered) {
-      window?.electron?.on(
+      _campaignProfileUnsubscribe = window?.electron?.on(
         MESSAGE.UPDATE_CAMPAIGN_PROFILE_RES,
-        (event: any, payload: any) => {
+        (_event: any, payload: any) => {
           const { requestId, data } = payload;
           responseManager.saveResponse(
             responseManager.getKey(

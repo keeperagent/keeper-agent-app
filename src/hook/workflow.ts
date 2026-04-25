@@ -73,18 +73,18 @@ const useUpdateWorkflow = () => {
       requestId: uniqueID,
     });
 
-    await new Promise(async (resolve) => {
-      window?.electron?.on(
-        MESSAGE.UPDATE_WORKFLOW_RES,
-        (event: any, payload: any) => {
-          const { requestId, data } = payload;
-          if (requestId !== uniqueID) return;
-          setLoading(false);
-          setIsSuccess(true);
-          dispatch(actSaveUpdateWorkflow(data));
-          resolve(true);
-        },
-      );
+    await new Promise<void>((resolve) => {
+      let unsubscribe: (() => void) | undefined;
+      const handler = (_event: any, payload: any) => {
+        const { requestId, data } = payload;
+        if (requestId !== uniqueID) return;
+        unsubscribe?.();
+        setLoading(false);
+        setIsSuccess(true);
+        dispatch(actSaveUpdateWorkflow(data));
+        resolve();
+      };
+      unsubscribe = window?.electron?.on(MESSAGE.UPDATE_WORKFLOW_RES, handler);
     });
   };
 
@@ -105,18 +105,18 @@ const useCreateWorkflow = () => {
       requestId: uniqueID,
     });
 
-    await new Promise(async (resolve) => {
-      window?.electron?.on(
-        MESSAGE.CREATE_WORKFLOW_RES,
-        (event: any, payload: any) => {
-          const { requestId, data } = payload;
-          if (requestId !== uniqueID) return;
-          setLoading(false);
-          setIsSuccess(true);
-          dispatch(actSaveCreateWorkflow(data));
-          resolve(true);
-        },
-      );
+    await new Promise<void>((resolve) => {
+      let unsubscribe: (() => void) | undefined;
+      const handler = (_event: any, payload: any) => {
+        const { requestId, data } = payload;
+        if (requestId !== uniqueID) return;
+        unsubscribe?.();
+        setLoading(false);
+        setIsSuccess(true);
+        dispatch(actSaveCreateWorkflow(data));
+        resolve();
+      };
+      unsubscribe = window?.electron?.on(MESSAGE.CREATE_WORKFLOW_RES, handler);
     });
   };
 

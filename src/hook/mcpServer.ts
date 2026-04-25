@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
+import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import { IMcpServer } from "@/electron/type";
 import type { AppDispatch } from "@/redux/store";
@@ -33,6 +34,7 @@ const useGetListMcpServer = () => {
       if (id == null) {
         return;
       }
+
       dispatch(
         actSaveUpdateMcpServer({
           id,
@@ -42,12 +44,12 @@ const useGetListMcpServer = () => {
         } as IMcpServer),
       );
     };
-    window?.electron?.on(MESSAGE.MCP_SERVER_STATUS_UPDATED, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.MCP_SERVER_STATUS_UPDATED,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.MCP_SERVER_STATUS_UPDATED,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -59,8 +61,13 @@ const useCreateMcpServer = () => {
     MESSAGE.CREATE_MCP_SERVER,
     MESSAGE.CREATE_MCP_SERVER_RES,
     {
-      onSuccess: (payload, dispatch) =>
-        dispatch(actSaveCreateMcpServer(payload?.data)),
+      onSuccess: (payload, dispatch) => {
+        if (payload?.error) {
+          message.error(payload.error);
+          return;
+        }
+        dispatch(actSaveCreateMcpServer(payload?.data));
+      },
     },
   );
   const createMcpServer = (data: IMcpServer) => execute({ data });

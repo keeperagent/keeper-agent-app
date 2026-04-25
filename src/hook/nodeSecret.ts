@@ -20,17 +20,18 @@ const useSaveNodeSecret = () => {
         encryptKey,
       });
 
+      let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== requestId) return;
-        window?.electron?.removeListener(
-          MESSAGE.UPSERT_NODE_SECRET_RES,
-          handler,
-        );
+        unsubscribe?.();
         setLoading(false);
         resolve();
       };
 
-      window?.electron?.on(MESSAGE.UPSERT_NODE_SECRET_RES, handler);
+      unsubscribe = window?.electron?.on(
+        MESSAGE.UPSERT_NODE_SECRET_RES,
+        handler,
+      );
     });
   };
 
@@ -54,14 +55,15 @@ const useGetNodeSecret = () => {
         nodeId,
       });
 
+      let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== requestId) return;
-        window?.electron?.removeListener(MESSAGE.GET_NODE_SECRET_RES, handler);
+        unsubscribe?.();
         setLoading(false);
         resolve(Boolean(payload?.hasEncryptKey));
       };
 
-      window?.electron?.on(MESSAGE.GET_NODE_SECRET_RES, handler);
+      unsubscribe = window?.electron?.on(MESSAGE.GET_NODE_SECRET_RES, handler);
     });
   };
 

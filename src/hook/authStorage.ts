@@ -31,11 +31,13 @@ const useRestoreAuth = () => {
         }),
       );
     };
-    window?.electron?.on(MESSAGE.GET_AUTH_STATE_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_AUTH_STATE_RES,
+      handler,
+    );
     window?.electron?.send(MESSAGE.GET_AUTH_STATE);
-
     return () => {
-      window?.electron?.removeListener(MESSAGE.GET_AUTH_STATE_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 };

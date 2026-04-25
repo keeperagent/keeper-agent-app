@@ -24,7 +24,7 @@ import { useTranslation } from "./useTranslation";
 
 const useStopThread = () => {
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { requestId, isDone } = payload;
       if (isDone) {
         responseManager.saveResponse(
@@ -33,10 +33,13 @@ const useStopThread = () => {
         );
       }
     };
-    window?.electron?.on(MESSAGE.TERMINATE_THREAD_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.TERMINATE_THREAD_RES,
+      handler,
+    );
 
     return () => {
-      window?.electron?.removeListener(MESSAGE.TERMINATE_THREAD_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -70,7 +73,7 @@ const useGetSampleContractSniperResult = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       setLoading(false);
       setIsSuccess(true);
       dispatch(
@@ -80,16 +83,13 @@ const useGetSampleContractSniperResult = () => {
         }),
       );
     };
-    window?.electron?.on(
+    const unsubscribe = window?.electron?.on(
       MESSAGE.GET_SAMPLE_CONTRACT_SNIPER_RESULT_RES,
       handler,
     );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_SAMPLE_CONTRACT_SNIPER_RESULT_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -123,18 +123,17 @@ const useGetPriceCheckingData = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       setLoading(false);
       setIsSuccess(true);
       dispatch(actSetPriceCheckingData({ data: payload?.data || [] }));
     };
-    window?.electron?.on(MESSAGE.GET_PRICE_CHECKING_DATA_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_PRICE_CHECKING_DATA_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_PRICE_CHECKING_DATA_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -159,18 +158,17 @@ const useGetMarketcapCheckingData = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       setLoading(false);
       setIsSuccess(true);
       dispatch(actSetMarketcapCheckingData({ data: payload?.data || [] }));
     };
-    window?.electron?.on(MESSAGE.GET_MARKETCAP_CHECKING_DATA_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_MARKETCAP_CHECKING_DATA_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_MARKETCAP_CHECKING_DATA_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -195,7 +193,7 @@ const useStartWorkflow = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { code } = payload;
       if (code === RESPONSE_CODE.OBJECT_EXISTED) {
         message.error(translate("workflow.anotherWorkflowUsingBrowser"));
@@ -208,10 +206,12 @@ const useStartWorkflow = () => {
       }
       setLoading(false);
     };
-    window?.electron?.on(MESSAGE.START_WORKFLOW_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.START_WORKFLOW_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.START_WORKFLOW_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -243,10 +243,12 @@ const useStopWorkflow = () => {
       dispatch(actSetIsRun(false));
       dispatch(actClearWhenStop());
     };
-    window?.electron?.on(MESSAGE.STOP_WORKFLOW_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.STOP_WORKFLOW_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.STOP_WORKFLOW_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -264,7 +266,7 @@ const useSyncWorkflowData = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { data } = payload;
       const {
         mapThread,
@@ -291,13 +293,12 @@ const useSyncWorkflowData = () => {
       setLoading(false);
       setIsSuccess(true);
     };
-    window?.electron?.on(MESSAGE.WORKFLOW_SYNC_DATA_TO_UI_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.WORKFLOW_SYNC_DATA_TO_UI_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.WORKFLOW_SYNC_DATA_TO_UI_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -319,19 +320,18 @@ const useGetListRunningWorkflow = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { data } = payload;
       dispatch(actSetListRunningWorkflow(data));
       setLoading(false);
       setIsSuccess(true);
     };
-    window?.electron?.on(MESSAGE.GET_LIST_RUNNING_WORKFLOW_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_LIST_RUNNING_WORKFLOW_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_LIST_RUNNING_WORKFLOW_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -353,10 +353,12 @@ const useStopAllWorkflow = () => {
       setLoading(false);
       setIsSuccess(true);
     };
-    window?.electron?.on(MESSAGE.STOP_ALL_WORKFLOW_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.STOP_ALL_WORKFLOW_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.STOP_ALL_WORKFLOW_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -374,18 +376,17 @@ const useRunJavaScriptCode = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { data } = payload;
       setResult(data);
       setLoading(false);
     };
-    window?.electron?.on(MESSAGE.RUN_JAVASCRIPT_CODE_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.RUN_JAVASCRIPT_CODE_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.RUN_JAVASCRIPT_CODE_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 

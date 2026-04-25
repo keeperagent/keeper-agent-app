@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
-const UploadFileWrapper = styled.div`
+const UploadFileWrapper = styled.div<{ fullSize: boolean }>`
   .upload {
     min-width: 35rem;
     width: 100%;

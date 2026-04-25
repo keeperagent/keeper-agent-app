@@ -57,8 +57,9 @@ const UploadFile = (props: UploadFileProps) => {
     });
 
     // Listen for response
+    let unsubscribe: (() => void) | undefined;
     const handleFileSelection = (
-      event: any,
+      _event: any,
       data: {
         data: Array<{
           path: string;
@@ -103,13 +104,13 @@ const UploadFile = (props: UploadFileProps) => {
         setListFile(tempListFile);
       }
 
-      window?.electron?.removeListener(
-        MESSAGE.CHOOSE_FILE_RES,
-        handleFileSelection,
-      );
+      unsubscribe?.();
     };
 
-    window?.electron?.on(MESSAGE.CHOOSE_FILE_RES, handleFileSelection);
+    unsubscribe = window?.electron?.on(
+      MESSAGE.CHOOSE_FILE_RES,
+      handleFileSelection,
+    );
   };
 
   const removeFile = (filePath: string) => {

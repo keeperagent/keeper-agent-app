@@ -163,34 +163,20 @@ const ChatRegistry = (props: Props) => {
       // No todo UI in this view — handler registered for completeness
     };
 
-    window?.electron?.on(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, handler);
-    window?.electron?.on(MESSAGE.AGENT_PROFILE_TOOL_START, toolStartHandler);
-    window?.electron?.on(
-      MESSAGE.AGENT_PROFILE_TOOL_COMPLETE,
-      toolCompleteHandler,
-    );
-    window?.electron?.on(
-      MESSAGE.AGENT_PROFILE_STEP_ADVANCED,
-      stepAdvancedHandler,
-    );
-
-    return () => {
-      window?.electron?.removeListener(
-        MESSAGE.AGENT_PROFILE_STREAM_CHUNK,
-        handler,
-      );
-      window?.electron?.removeListener(
-        MESSAGE.AGENT_PROFILE_TOOL_START,
-        toolStartHandler,
-      );
-      window?.electron?.removeListener(
+    const unsubscribers = [
+      window?.electron?.on(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, handler),
+      window?.electron?.on(MESSAGE.AGENT_PROFILE_TOOL_START, toolStartHandler),
+      window?.electron?.on(
         MESSAGE.AGENT_PROFILE_TOOL_COMPLETE,
         toolCompleteHandler,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(
         MESSAGE.AGENT_PROFILE_STEP_ADVANCED,
         stepAdvancedHandler,
-      );
+      ),
+    ];
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe?.());
     };
   }, [sessionId]);
 

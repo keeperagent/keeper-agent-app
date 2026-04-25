@@ -162,25 +162,23 @@ const useDashboardAgent = () => {
   // Load conversation history from SQLite on first mount only.
   // This replaces the old redux-persist rehydration.
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
     const handleLoad = (_event: any, payload: any) => {
       const { data } = payload || {};
       if (Array.isArray(data) && data.length > 0) {
         setConversation(data as AgentMessage[]);
       }
-      window?.electron?.removeListener(
-        MESSAGE.CHAT_HISTORY_LOAD_RES,
-        handleLoad,
-      );
+      unsubscribe?.();
     };
 
-    window?.electron?.on(MESSAGE.CHAT_HISTORY_LOAD_RES, handleLoad);
+    unsubscribe = window?.electron?.on(
+      MESSAGE.CHAT_HISTORY_LOAD_RES,
+      handleLoad,
+    );
     window?.electron?.send(MESSAGE.CHAT_HISTORY_LOAD, {});
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.CHAT_HISTORY_LOAD_RES,
-        handleLoad,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -648,86 +646,44 @@ const useDashboardAgent = () => {
       }
     };
 
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_CREATE_SESSION_RES,
-      handleCreateSession,
-    );
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_RUN_RES, handleRun);
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_STREAM_CHUNK,
-      handleStreamChunk,
-    );
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_TOOL_START, handleToolStart);
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE,
-      handleToolComplete,
-    );
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_RESET_SESSION_RES,
-      handleReset,
-    );
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_READY, handleAgentReady);
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER_RES,
-      handleChangeProvider,
-    );
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_STOP_RES, handleStop);
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW, handlePlanReview);
-    window?.electron?.on(
-      MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED,
-      handleStepAdvanced,
-    );
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_LLM_USAGE, handleLlmUsage);
-
-    return () => {
-      window?.electron?.removeListener(
+    const unsubscribers = [
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_CREATE_SESSION_RES,
         handleCreateSession,
-      );
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_RUN_RES,
-        handleRun,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(MESSAGE.DASHBOARD_AGENT_RUN_RES, handleRun),
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_STREAM_CHUNK,
         handleStreamChunk,
-      );
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_TOOL_START,
-        handleToolStart,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(MESSAGE.DASHBOARD_AGENT_TOOL_START, handleToolStart),
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE,
         handleToolComplete,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_RESET_SESSION_RES,
         handleReset,
-      );
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_READY,
-        handleAgentReady,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(MESSAGE.DASHBOARD_AGENT_READY, handleAgentReady),
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER_RES,
         handleChangeProvider,
-      );
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_STOP_RES,
-        handleStop,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(MESSAGE.DASHBOARD_AGENT_STOP_RES, handleStop),
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_PLAN_REVIEW,
         handlePlanReview,
-      );
-      window?.electron?.removeListener(
+      ),
+      window?.electron?.on(
         MESSAGE.DASHBOARD_AGENT_STEP_ADVANCED,
         handleStepAdvanced,
-      );
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_LLM_USAGE,
-        handleLlmUsage,
-      );
+      ),
+      window?.electron?.on(MESSAGE.DASHBOARD_AGENT_LLM_USAGE, handleLlmUsage),
+    ];
+
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe?.());
     };
   }, [saveMessageToDB]);
 
@@ -757,14 +713,14 @@ const useDashboardAgent = () => {
       );
     };
 
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES, handleStatus);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES,
+      handleStatus,
+    );
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_GET_STATUS, { sessionId });
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES,
-        handleStatus,
-      );
+      unsubscribe?.();
     };
   }, [sessionId, agentReady]);
 
@@ -964,13 +920,13 @@ const useAgentReadyStats = (active: boolean) => {
         );
       }
     };
-    window?.electron?.on(MESSAGE.DASHBOARD_AGENT_READY, handleAgentReady);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.DASHBOARD_AGENT_READY,
+      handleAgentReady,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.DASHBOARD_AGENT_READY,
-        handleAgentReady,
-      );
+      unsubscribe?.();
     };
   }, [dispatch, active]);
 };

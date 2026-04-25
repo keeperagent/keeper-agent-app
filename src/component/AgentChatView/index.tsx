@@ -233,13 +233,14 @@ const AgentChatView = ({
           { name: "Documents", extensions: ["pdf", "txt", "md"] },
         ],
       });
+      let unsubscribeChooseFile: (() => void) | undefined;
       const handleRes = (
         _event: unknown,
         data: {
           data: Array<{ path: string; name: string; extension: string }> | null;
         },
       ) => {
-        window?.electron?.removeListener(MESSAGE.CHOOSE_FILE_RES, handleRes);
+        unsubscribeChooseFile?.();
         const list = data?.data || [];
         if (list.length) {
           const newFiles = list.map(fileInfoToAttached);
@@ -249,6 +250,7 @@ const AgentChatView = ({
             .map((f) => f.path);
           if (imagePaths.length && window.electron) {
             let pending = imagePaths.length;
+            let unsubscribeDataUrl: (() => void) | undefined;
             const onDataUrl = (
               _ev: unknown,
               res: { path: string; dataUrl: string | null },
@@ -264,20 +266,23 @@ const AgentChatView = ({
               }
               pending -= 1;
               if (pending <= 0) {
-                window?.electron?.removeListener(
-                  MESSAGE.READ_FILE_AS_DATA_URL_RES,
-                  onDataUrl,
-                );
+                unsubscribeDataUrl?.();
               }
             };
-            window.electron.on(MESSAGE.READ_FILE_AS_DATA_URL_RES, onDataUrl);
+            unsubscribeDataUrl = window.electron.on(
+              MESSAGE.READ_FILE_AS_DATA_URL_RES,
+              onDataUrl,
+            );
             imagePaths.forEach((p) =>
               window.electron.send(MESSAGE.READ_FILE_AS_DATA_URL, { path: p }),
             );
           }
         }
       };
-      window.electron.on(MESSAGE.CHOOSE_FILE_RES, handleRes);
+      unsubscribeChooseFile = window.electron.on(
+        MESSAGE.CHOOSE_FILE_RES,
+        handleRes,
+      );
       return;
     }
     fileInputRef.current?.click();

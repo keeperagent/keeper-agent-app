@@ -141,7 +141,7 @@ const useGenerateRandomWallet = () => {
   const [left, setLeft] = useState(0);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { data = {} } = payload;
       if (data?.isDone) {
         setIsSuccess(true);
@@ -151,12 +151,12 @@ const useGenerateRandomWallet = () => {
         setLeft(data?.left);
       }
     };
-    window?.electron?.on(MESSAGE.GENERATE_RANDOM_WALLET_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GENERATE_RANDOM_WALLET_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GENERATE_RANDOM_WALLET_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -191,7 +191,7 @@ const useGenerateWalletFromPhrase = () => {
   const [left, setLeft] = useState(0);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { data = {} } = payload;
       if (data?.isDone) {
         setIsSuccess(true);
@@ -204,12 +204,12 @@ const useGenerateWalletFromPhrase = () => {
         setLeft(data?.left);
       }
     };
-    window?.electron?.on(MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GENERATE_WALLET_FROM_PHRASE_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 

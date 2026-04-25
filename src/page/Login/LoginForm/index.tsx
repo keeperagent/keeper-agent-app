@@ -82,13 +82,12 @@ const LoginForm = (props: any) => {
       onLoginWithGoogle(payload?.code);
     };
 
-    window?.electron?.on(MESSAGE.GET_GOOGLE_AUTH_CODE, handleGoogleAuthCode);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_GOOGLE_AUTH_CODE,
+      handleGoogleAuthCode,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_GOOGLE_AUTH_CODE,
-        handleGoogleAuthCode,
-      );
+      unsubscribe?.();
     };
   }, []);
 
