@@ -9,12 +9,14 @@ import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
 import { useUpdatePreference } from "@/hook/preference";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
-import { Wrapper, StatBadgeWrapper, CliTag } from "./style";
-import ChatAgent from "./ChatAgent";
+import { Wrapper, StatBadgeWrapper, CliTag, AgentHubTabWrapper } from "./style";
+import ChatView from "./ChatView";
 
+const AgentProfileManager = lazy(() => import("./AgentProfileManager"));
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
 const ToolsManager = lazy(() => import("./ToolsManager"));
+const AgentAnalytic = lazy(() => import("@/component/AgentAnalytic"));
 
 const AgentStatBadge = ({ count, label }: { count: number; label: string }) => (
   <StatBadgeWrapper title={label}>
@@ -33,9 +35,11 @@ const TabFallback = (
 
 const TAB = {
   AGENT: "AGENT",
+  AGENTS: "AGENTS",
   MCP_SERVER: "MCP_SERVER",
   SKILLS: "SKILLS",
   TOOLS: "TOOLS",
+  ANALYTIC: "ANALYTIC",
 };
 
 const AgentPage = (props: any) => {
@@ -54,8 +58,8 @@ const AgentPage = (props: any) => {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setContentReady(true), 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setContentReady(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useAgentReadyStats(activeTab !== TAB.AGENT);
@@ -117,11 +121,15 @@ const AgentPage = (props: any) => {
       <div className="tab">
         <Tabs
           onChange={onChangeTab}
-          size="small"
+          size="medium"
           items={[
             {
               key: TAB.AGENT,
               label: translate("agent.tabAgent"),
+            },
+            {
+              key: TAB.AGENTS,
+              label: translate("agent.tabAgents"),
             },
             {
               key: TAB.MCP_SERVER,
@@ -135,59 +143,70 @@ const AgentPage = (props: any) => {
               key: TAB.TOOLS,
               label: translate("agent.tabTools"),
             },
+            {
+              key: TAB.ANALYTIC,
+              label: translate("agent.tabAnalytic"),
+            },
           ]}
           activeKey={activeTab}
         />
 
-        <div className="agent-status">
-          <AgentStatBadge
-            count={agentStats.subAgents}
-            label={translate("agent.subAgents")}
-          />
-          <AgentStatBadge
-            count={agentStats.tools}
-            label={translate("agent.tools")}
-          />
-          <AgentStatBadge
-            count={agentStats.skills}
-            label={translate("agent.skills")}
-          />
-        </div>
+        {activeTab === TAB.AGENT && (
+          <Fragment>
+            <div className="agent-status">
+              <AgentStatBadge
+                count={agentStats.subAgents}
+                label={translate("agent.subAgents")}
+              />
+              <AgentStatBadge
+                count={agentStats.tools}
+                label={translate("agent.tools")}
+              />
+              <AgentStatBadge
+                count={agentStats.skills}
+                label={translate("agent.skills")}
+              />
+            </div>
 
-        <div className="list-provider">
-          <span
-            className="model-name-wrapper"
-            style={{
-              marginRight: isClaudeCLIActive || isCodexCLIActive ? "1.5rem" : 0,
-            }}
-          >
-            <span className="current-model">{currentModelName}</span>
-            {(isClaudeCLIActive || isCodexCLIActive) && (
-              <CliTag color="cyan">CLI</CliTag>
-            )}
-          </span>
+            <div className="list-provider">
+              <span
+                className="model-name-wrapper"
+                style={{
+                  marginRight:
+                    isClaudeCLIActive || isCodexCLIActive ? "1.5rem" : 0,
+                }}
+              >
+                <span className="current-model">{currentModelName}</span>
+                {(isClaudeCLIActive || isCodexCLIActive) && (
+                  <CliTag color="cyan">CLI</CliTag>
+                )}
+              </span>
 
-          {LLM_PROVIDERS.map((provider) => {
-            const isDisabled = !isProviderConfigured(provider);
-            const tooltipTitle = isDisabled
-              ? translate("agent.apiKeyNotConfigured").replace(
-                  "{provider}",
-                  provider.label,
-                )
-              : provider.label;
+              {LLM_PROVIDERS.map((provider) => {
+                const isDisabled = !isProviderConfigured(provider);
+                const tooltipTitle = isDisabled
+                  ? translate("agent.apiKeyNotConfigured").replace(
+                      "{provider}",
+                      provider.label,
+                    )
+                  : provider.label;
 
-            return (
-              <Tooltip key={provider.key} title={tooltipTitle}>
-                <div
-                  className={`provider-item ${currentProvider === provider.key ? "active" : ""} ${isDisabled ? "disabled" : ""}`}
-                  onClick={() => !isDisabled && onSelectProvider(provider.key)}
-                >
-                  <img src={provider.icon} alt={provider.label} />
-                </div>
-              </Tooltip>
-            );
-          })}
-        </div>
+                return (
+                  <Tooltip key={provider.key} title={tooltipTitle}>
+                    <div
+                      className={`provider-item ${currentProvider === provider.key ? "active" : ""} ${isDisabled ? "disabled" : ""}`}
+                      onClick={() =>
+                        !isDisabled && onSelectProvider(provider.key)
+                      }
+                    >
+                      <img src={provider.icon} alt={provider.label} />
+                    </div>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </Fragment>
+        )}
       </div>
 
       {!contentReady ? (
@@ -197,7 +216,13 @@ const AgentPage = (props: any) => {
       ) : (
         <Fragment>
           {activeTab === TAB.AGENT && (
-            <ChatAgent setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+            <ChatView setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+          )}
+
+          {activeTab === TAB.AGENTS && (
+            <AgentHubTabWrapper>
+              <AgentProfileManager />
+            </AgentHubTabWrapper>
           )}
 
           {activeTab === TAB.MCP_SERVER && (
@@ -215,6 +240,12 @@ const AgentPage = (props: any) => {
           {activeTab === TAB.TOOLS && (
             <Suspense fallback={TabFallback}>
               <ToolsManager />
+            </Suspense>
+          )}
+
+          {activeTab === TAB.ANALYTIC && (
+            <Suspense fallback={TabFallback}>
+              <AgentAnalytic showToolbar showStatStrip defaultPeriod={7} />
             </Suspense>
           )}
         </Fragment>

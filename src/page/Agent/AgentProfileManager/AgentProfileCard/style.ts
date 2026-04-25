@@ -78,6 +78,15 @@ export const Wrapper = styled.div`
       flex: 1;
       transition: all 0.2s ease-in-out;
     }
+
+    .item-main-badge {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text-hover);
+      border: 1px solid var(--color-text-hover);
+      border-radius: 2rem;
+      padding: 0.1rem 0.7rem;
+    }
   }
 
   .item-center {

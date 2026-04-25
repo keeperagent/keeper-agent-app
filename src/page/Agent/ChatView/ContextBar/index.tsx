@@ -38,7 +38,7 @@ import {
   actSaveListProfileId,
   actSaveIsAllWallet,
 } from "@/redux/agent";
-import { listChainConfig } from "../WalletView/config";
+import { listChainConfig } from "@/page/Agent/config";
 import WalletView from "../WalletView";
 import PresetItem from "./PresetItem";
 import SettingIcon from "@/component/Icon/Setting";

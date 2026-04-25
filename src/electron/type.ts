@@ -2993,6 +2993,7 @@ export type IAgentProfile = {
   allowedSkillIds?: number[];
   allowedSubAgentIds?: number[];
   isAgentInteractionEnabled?: boolean;
+  isMainAgent?: boolean;
   isActive?: boolean;
   maxConcurrentTasks?: number;
   // Execution context

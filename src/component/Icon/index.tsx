@@ -109,7 +109,6 @@ export { default as PaperClipIcon } from "./PaperClip";
 export { default as CustomizationIcon } from "./Customization";
 export { default as SettingWindowIcon } from "./SettingWindow";
 export { default as CalendarIcon } from "./Calendar";
-export { default as SpiderIcon } from "./Spider";
 export { default as DistributeIcon } from "./Distribute";
 export { default as SpeakIcon } from "./Speak";
 export { default as SaveIcon } from "./Save";

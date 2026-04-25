@@ -37,7 +37,7 @@ import {
 } from "@/hook";
 import { BASE_TOOL_REGISTRY } from "@/electron/agentCore/baseTool/registry";
 import { LlmProviderPicker, PasswordInput } from "@/component";
-import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
+import { listChainConfig } from "@/page/Agent/config";
 import { getChainConfig, IChainConfig } from "@/service/util";
 import { OptionWrapper, ChainWrapper } from "./style";
 
@@ -581,14 +581,16 @@ const ModalAgentProfile = (props: Props) => {
               <Switch />
             </Form.Item>
 
-            <Form.Item
-              label={translate("agent.isActive")}
-              name="isActive"
-              valuePropName="checked"
-              tooltip={translate("agent.isActiveTooltip")}
-            >
-              <Switch />
-            </Form.Item>
+            {!profile?.isMainAgent && (
+              <Form.Item
+                label={translate("agent.isActive")}
+                name="isActive"
+                valuePropName="checked"
+                tooltip={translate("agent.isActiveTooltip")}
+              >
+                <Switch />
+              </Form.Item>
+            )}
           </Col>
         </Row>
       </Form>

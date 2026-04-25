@@ -265,6 +265,7 @@ const formatAgentProfile = (data: any): IAgentProfile => {
             Number(item),
           )
         : formatedData?.profileIds || [],
+    isMainAgent: Boolean(formatedData?.isMainAgent),
     hasEncryptKey,
   };
 };

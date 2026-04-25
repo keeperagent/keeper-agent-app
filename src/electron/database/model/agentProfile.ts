@@ -56,6 +56,11 @@ export default (db: Sequelize) =>
         allowNull: true,
         defaultValue: 0,
       },
+      isMainAgent: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
       isActive: {
         type: DataTypes.INTEGER,
         allowNull: true,

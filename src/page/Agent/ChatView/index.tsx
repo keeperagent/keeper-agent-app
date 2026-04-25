@@ -11,7 +11,7 @@ import ContextBar from "./ContextBar";
 
 const DEFAULT_SPLIT_PERCENT = 50;
 
-const AgentPage = (props: any) => {
+const ChatView = (props: any) => {
   const {
     actSetPageName,
     layoutMode,
@@ -185,4 +185,4 @@ export default connect(
     splitPercent: state?.Agent?.splitPercent,
   }),
   { actSetPageName, actSetSplitPercent },
-)(AgentPage);
+)(ChatView);

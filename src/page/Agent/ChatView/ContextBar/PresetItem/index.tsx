@@ -3,7 +3,7 @@ import _ from "lodash";
 import { ISetting, ICampaign, INodeEndpointGroup } from "@/electron/type";
 import { useTranslation } from "@/hook";
 import { EMPTY_STRING } from "@/config/constant";
-import { listChainConfig } from "../../WalletView/config";
+import { listChainConfig } from "@/page/Agent/config";
 import { PresetItemWrapper } from "./style";
 
 interface PresetItemProps {

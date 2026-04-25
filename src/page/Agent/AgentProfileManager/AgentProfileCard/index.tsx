@@ -5,8 +5,8 @@ import { trimText, formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { EMPTY_STRING } from "@/config/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
-import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
 import Status from "@/component/Status";
+import { listChainConfig } from "@/page/Agent/config";
 import { Wrapper, ProviderBadge } from "./style";
 
 type Props = {
@@ -38,6 +38,8 @@ const AgentProfileCard = (props: Props) => {
   const allowedToolCount = profile.allowedBaseTools?.length || 0;
   const allowedSkillCount = profile.allowedSkillIds?.length || 0;
 
+  console.log("=== chainConfig", chainConfig);
+
   return (
     <Wrapper>
       <div className="item-dots-row" aria-hidden>
@@ -63,6 +65,13 @@ const AgentProfileCard = (props: Props) => {
         )}
 
         <span className="item-name">{profile.name}</span>
+
+        {profile.isMainAgent && (
+          <span className="item-main-badge">
+            {translate("agent.mainAgent")}
+          </span>
+        )}
+
         <Status
           content={
             profile.isActive ? translate("active") : translate("inActive")
@@ -78,13 +87,15 @@ const AgentProfileCard = (props: Props) => {
         tabIndex={0}
         onClick={() => onEdit(profile)}
       >
-        <div className="item-center-row">
-          <ProviderBadge>
-            {providerIcon && <img src={providerIcon} alt={providerLabel} />}
-            <span className="provider-name">{providerLabel}</span>
-            {modelLabel && <span className="model-name">{modelLabel}</span>}
-          </ProviderBadge>
-        </div>
+        {chainConfig && (
+          <div className="item-center-row">
+            <ProviderBadge>
+              {providerIcon && <img src={providerIcon} alt={providerLabel} />}
+              <span className="provider-name">{providerLabel}</span>
+              {modelLabel && <span className="model-name">{modelLabel}</span>}
+            </ProviderBadge>
+          </div>
+        )}
 
         <div className="item-center-row">
           <span className="item-label">{translate("description")}</span>
@@ -134,19 +145,21 @@ const AgentProfileCard = (props: Props) => {
         </span>
 
         <div className="item-actions">
-          <Popconfirm
-            title={translate("confirmDelete")}
-            onConfirm={() => onDelete(profile)}
-            okText={translate("yes")}
-            cancelText={translate("no")}
-          >
-            <div
-              className="btn-icon btn-delete"
-              onClick={(e) => e.stopPropagation()}
+          {!profile.isMainAgent && (
+            <Popconfirm
+              title={translate("confirmDelete")}
+              onConfirm={() => onDelete(profile)}
+              okText={translate("yes")}
+              cancelText={translate("no")}
             >
-              <TrashIcon className="trash" />
-            </div>
-          </Popconfirm>
+              <div
+                className="btn-icon btn-delete"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <TrashIcon className="trash" />
+              </div>
+            </Popconfirm>
+          )}
 
           <div
             className="btn-chat"

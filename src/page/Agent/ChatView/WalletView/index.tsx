@@ -55,7 +55,7 @@ import {
 import { EMPTY_STRING } from "@/config/constant";
 import { PasswordInput } from "@/component/Input";
 import { CopyIcon, CheckIcon } from "@/component/Icon";
-import { listChainConfig } from "./config";
+import { listChainConfig } from "@/page/Agent/config";
 
 let searchNodeEndpointGroupTimeOut: any = null;
 let searchCampaignTimeOut: any = null;
