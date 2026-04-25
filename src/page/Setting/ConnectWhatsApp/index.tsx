@@ -42,16 +42,16 @@ const ConnectWhatsApp = (props: IProps) => {
       }
     };
 
-    window.electron.on(MESSAGE.WHATSAPP_QR, handleQr);
-    window.electron.on(MESSAGE.WHATSAPP_STATUS, handleStatus);
+    const unsubscribeQr = window.electron.on(MESSAGE.WHATSAPP_QR, handleQr);
+    const unsubscribeStatus = window.electron.on(MESSAGE.WHATSAPP_STATUS, handleStatus);
 
     window.electron.send(MESSAGE.RESTART_WHATSAPP, {
       action: WhatsAppAction.STATUS,
     });
 
     return () => {
-      window.electron.removeListener(MESSAGE.WHATSAPP_QR, handleQr);
-      window.electron.removeListener(MESSAGE.WHATSAPP_STATUS, handleStatus);
+      unsubscribeQr?.();
+      unsubscribeStatus?.();
     };
   }, []);
 

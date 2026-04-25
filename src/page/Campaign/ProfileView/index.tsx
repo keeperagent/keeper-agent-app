@@ -304,7 +304,7 @@ const renderColumns = (
     },
     {
       title: () => (
-        <Fragment>
+        <span>
           {Object.keys(mapOpenProfileId).length > 0 && (
             <Tooltip title={translate("closeAllBrowser")}>
               <CloseIconWrapper>
@@ -312,7 +312,7 @@ const renderColumns = (
               </CloseIconWrapper>
             </Tooltip>
           )}
-        </Fragment>
+        </span>
       ),
       dataIndex: "action",
       width: 110,

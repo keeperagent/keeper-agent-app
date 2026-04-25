@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
 import { connect } from "react-redux";
-import { Tooltip, Form, Dropdown, notification } from "antd";
+import { Tooltip, Form, Dropdown, App } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import {
@@ -108,6 +108,7 @@ type IProps = {
 };
 
 const WorkflowContent = (props: IProps) => {
+  const { notification } = App.useApp();
   const { translate } = useTranslation();
   const { selectedCampaign, selectedWorkflow, workflowState, user } = props;
   const { isRunning, flowData = null } = workflowState;
@@ -233,7 +234,7 @@ const WorkflowContent = (props: IProps) => {
     }
     if (isFreeTier) {
       notification.warning({
-        message: "Can not run workflow with free tier",
+        title: translate("cantRunWorkflowWithFreeTier"),
         duration: 15,
       });
       return;

@@ -43,15 +43,13 @@ const useUpdatePreference = () => {
     });
 
     await new Promise<void>((resolve) => {
+      let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
         const { requestId } = payload;
         if (requestId !== uniqueID) {
           return;
         }
-        window?.electron?.removeListener(
-          MESSAGE.UPDATE_PREFERENCE_RES,
-          handler,
-        );
+        unsubscribe?.();
         setLoading(false);
         if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR || !payload?.data) {
           setIsSuccess(false);
@@ -62,7 +60,10 @@ const useUpdatePreference = () => {
         dispatch(actSaveUpdatePreference(payload?.data));
         resolve();
       };
-      window?.electron?.on(MESSAGE.UPDATE_PREFERENCE_RES, handler);
+      unsubscribe = window?.electron?.on(
+        MESSAGE.UPDATE_PREFERENCE_RES,
+        handler,
+      );
     });
   };
 
@@ -76,17 +77,18 @@ const useCheckClaudeCLIAvailable = () => {
       window?.electron?.send(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE, {
         requestId: uniqueID,
       });
+      let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== uniqueID) {
           return;
         }
-        window?.electron?.removeListener(
-          MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES,
-          handler,
-        );
+        unsubscribe?.();
         resolve(Boolean(payload?.data));
       };
-      window?.electron?.on(MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES, handler);
+      unsubscribe = window?.electron?.on(
+        MESSAGE.CHECK_CLAUDE_CLI_AVAILABLE_RES,
+        handler,
+      );
     });
 
   return { checkClaudeCLIAvailable };
@@ -99,17 +101,18 @@ const useCheckCodexCLIAvailable = () => {
       window?.electron?.send(MESSAGE.CHECK_CODEX_CLI_AVAILABLE, {
         requestId: uniqueID,
       });
+      let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
         if (payload?.requestId !== uniqueID) {
           return;
         }
-        window?.electron?.removeListener(
-          MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES,
-          handler,
-        );
+        unsubscribe?.();
         resolve(Boolean(payload?.data));
       };
-      window?.electron?.on(MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES, handler);
+      unsubscribe = window?.electron?.on(
+        MESSAGE.CHECK_CODEX_CLI_AVAILABLE_RES,
+        handler,
+      );
     });
 
   return { checkCodexCLIAvailable };

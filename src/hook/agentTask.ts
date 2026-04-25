@@ -81,9 +81,12 @@ const useDeleteAgentTask = () => {
 
 const useAgentTaskRealtime = (onChanged: () => void) => {
   useEffect(() => {
-    window?.electron?.on(MESSAGE.AGENT_TASK_CHANGED, onChanged);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.AGENT_TASK_CHANGED,
+      onChanged,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.AGENT_TASK_CHANGED, onChanged);
+      unsubscribe?.();
     };
   }, [onChanged]);
 };

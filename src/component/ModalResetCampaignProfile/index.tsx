@@ -170,7 +170,7 @@ const ModalResetCampaignProfile = (props: IProps) => {
           ]}
         >
           <Radio.Group>
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Radio value={false} disabled={isResetAll}>
                 {translate("campaign.resetSelectedData")}
               </Radio>
@@ -201,7 +201,7 @@ const ModalResetCampaignProfile = (props: IProps) => {
           }
         >
           <Checkbox.Group onChange={onChangeField}>
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Checkbox value={RESET_FIELD_NAME.ROUND}>
                 {translate("campaign.round")}
               </Checkbox>

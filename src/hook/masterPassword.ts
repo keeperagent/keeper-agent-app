@@ -11,14 +11,13 @@ const useCheckMasterPasswordExists = () => {
       const exists = payload?.data?.exists;
       setIsSetupMode(!exists);
     };
-    window?.electron?.on(MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES,
+      handler,
+    );
     window?.electron?.send(MESSAGE.CHECK_MASTER_PASSWORD_EXISTS, {});
-
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.CHECK_MASTER_PASSWORD_EXISTS_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -39,13 +38,13 @@ const useSetupMasterPassword = () => {
         setErrorMessage(payload?.message);
       }
     };
-    window?.electron?.on(MESSAGE.SETUP_MASTER_PASSWORD_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.SETUP_MASTER_PASSWORD_RES,
+      handler,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.SETUP_MASTER_PASSWORD_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -76,13 +75,13 @@ const useVerifyMasterPassword = () => {
         setErrorMessage(payload?.message);
       }
     };
-    window?.electron?.on(MESSAGE.VERIFY_MASTER_PASSWORD_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.VERIFY_MASTER_PASSWORD_RES,
+      handler,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.VERIFY_MASTER_PASSWORD_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -112,13 +111,13 @@ const useResetMasterPassword = () => {
         setErrorMessage(payload?.error);
       }
     };
-    window?.electron?.on(MESSAGE.RESET_MASTER_PASSWORD_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.RESET_MASTER_PASSWORD_RES,
+      handler,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.RESET_MASTER_PASSWORD_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 

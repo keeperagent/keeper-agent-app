@@ -72,7 +72,7 @@ const ModalExportWorkflow = (props: any) => {
       open={isModalOpen}
       title={translate("workflow.exportWorkflow")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText="Export"
       cancelText={translate("cancel")}
       width="50rem"

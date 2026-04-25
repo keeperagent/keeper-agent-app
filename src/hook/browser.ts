@@ -39,19 +39,18 @@ const useDownloadBrowser = () => {
         );
       }
     };
-    window?.electron?.on(MESSAGE.CHECK_BROWSER_INSTALLED_RES, checkHandler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.CHECK_BROWSER_INSTALLED_RES,
+      checkHandler,
+    );
     window?.electron?.send(MESSAGE.CHECK_BROWSER_INSTALLED, {});
-
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.CHECK_BROWSER_INSTALLED_RES,
-        checkHandler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
   useEffect(() => {
-    const downloadHandler = (event: any, payload: any) => {
+    const downloadHandler = (_event: any, payload: any) => {
       const { data = {}, isDone, code, isAvailable } = payload;
 
       if (code === RESPONSE_CODE.OBJECT_EXISTED) {
@@ -87,13 +86,13 @@ const useDownloadBrowser = () => {
         }),
       );
     };
-    window?.electron?.on(MESSAGE.DOWNLOAD_BROWSER_RES, downloadHandler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.DOWNLOAD_BROWSER_RES,
+      downloadHandler,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.DOWNLOAD_BROWSER_RES,
-        downloadHandler,
-      );
+      unsubscribe?.();
     };
   }, [locale]);
 

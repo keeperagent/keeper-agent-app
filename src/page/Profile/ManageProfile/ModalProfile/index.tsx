@@ -132,7 +132,7 @@ const ModalProfile = (props: IModalProfileProps) => {
       open={isModalOpen}
       title={translate("profile.createNewProfile")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       footer={
         <Row justify="end">
           <Button onClick={onCloseModal} style={{ marginRight: "1rem" }}>

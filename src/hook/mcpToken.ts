@@ -29,13 +29,13 @@ const useGetListMcpToken = () => {
     const handler = (_event: any, payload: any) => {
       setConnections(payload?.data || []);
     };
-    window?.electron?.on(MESSAGE.MCP_CONNECTIONS_UPDATED, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.MCP_CONNECTIONS_UPDATED,
+      handler,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.MCP_CONNECTIONS_UPDATED,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -92,11 +92,9 @@ const useInstallToClaudeCode = () => {
     new Promise((resolve) => {
       setLoading(true);
       window?.electron?.send(MESSAGE.INSTALL_TO_CLAUDE_CODE, {});
+      let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
-        window?.electron?.removeListener(
-          MESSAGE.INSTALL_TO_CLAUDE_CODE_RES,
-          handler,
-        );
+        unsubscribe?.();
         setLoading(false);
 
         if (payload?.error) {
@@ -105,7 +103,10 @@ const useInstallToClaudeCode = () => {
           resolve({ success: true });
         }
       };
-      window?.electron?.on(MESSAGE.INSTALL_TO_CLAUDE_CODE_RES, handler);
+      unsubscribe = window?.electron?.on(
+        MESSAGE.INSTALL_TO_CLAUDE_CODE_RES,
+        handler,
+      );
     });
 
   return { loading, installToClaudeCode };

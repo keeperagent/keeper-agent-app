@@ -99,7 +99,7 @@ const ModalAnalyzeValue = (props: IProps) => {
       destroyOnHidden={true}
       width="70rem"
       zIndex={4}
-      maskClosable={false}
+      mask={{ closable: false }}
       style={{ top: "6rem" }}
     >
       <Wrapper>

@@ -26,7 +26,7 @@ const ModalDeleteProfile = (props: IProps) => {
       MESSAGE.DELETE_PROFILE_FOLDER_PROGRESS_RES,
       (event: any, payload: any) => {
         setDeleteFolderProgress(payload?.data);
-      }
+      },
     );
   }, []);
 
@@ -35,7 +35,7 @@ const ModalDeleteProfile = (props: IProps) => {
       MESSAGE.DELETE_CAMPAIGN_PROFILE_PROGRESS_RES,
       (event: any, payload: any) => {
         setDeleteProfileProgress(payload?.data);
-      }
+      },
     );
   }, []);
 
@@ -44,7 +44,7 @@ const ModalDeleteProfile = (props: IProps) => {
       MESSAGE.DELETE_JOB_RELATED_TO_CAMPAIGN_RES,
       (_event: any, _payload: any) => {
         setDeleteScheduleProgress(100);
-      }
+      },
     );
   }, []);
 
@@ -53,7 +53,7 @@ const ModalDeleteProfile = (props: IProps) => {
       MESSAGE.DELETE_CAMPAIGN_RES,
       (_event: any, _payload: any) => {
         setDeleteCampaignProgress(100);
-      }
+      },
     );
   }, []);
 
@@ -130,12 +130,12 @@ const ModalDeleteProfile = (props: IProps) => {
           ? translate("campaign.deleteCampaignProgress")
           : translate("campaign.deleteProfileProgress")
       }
-      maskClosable={false}
+      mask={{ closable: false }}
       closeIcon={null}
     >
       <Wrapper>
         <Steps
-          direction="vertical"
+          orientation="vertical"
           current={step}
           percent={percentage}
           items={_.slice(
@@ -178,7 +178,7 @@ const ModalDeleteProfile = (props: IProps) => {
               },
             ],
             0,
-            isDeleteCampaign ? 4 : 2
+            isDeleteCampaign ? 4 : 2,
           )}
         />
 

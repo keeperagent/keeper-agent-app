@@ -1,5 +1,4 @@
 import { Tooltip } from "antd";
-import { Fragment } from "react";
 import ellipsize from "ellipsize";
 import { trimText } from "@/service/util";
 import { Wrapper } from "./style";
@@ -23,7 +22,7 @@ const TrimText = (props: IProps) => {
       </Wrapper>
     </Tooltip>
   ) : (
-    <Fragment>{text}</Fragment>
+    <span>{text}</span>
   );
 };
 

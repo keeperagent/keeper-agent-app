@@ -10,10 +10,12 @@ const useChooseFolder = () => {
     const handler = (_event: any, _payload: any) => {
       setLoading(false);
     };
-    window?.electron?.on(MESSAGE.CHOOSE_FOLDER_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.CHOOSE_FOLDER_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.CHOOSE_FOLDER_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -24,9 +26,9 @@ const useChooseFolder = () => {
     let isDone = false;
     let folderPath: string | null = null;
     await new Promise(async (resolve) => {
-      window?.electron?.on(
+      const unsubscribe = window?.electron?.on(
         MESSAGE.CHOOSE_FOLDER_RES,
-        (event: any, payload: any) => {
+        (_event: any, payload: any) => {
           const { data } = payload;
           folderPath = data;
 
@@ -39,6 +41,7 @@ const useChooseFolder = () => {
         await sleep(10);
       }
 
+      unsubscribe?.();
       resolve(true);
     });
 
@@ -65,7 +68,7 @@ const useSaveClipboardImage = () => {
     let result: AttachedFile | null = null;
 
     await new Promise(async (resolve) => {
-      window?.electron?.on(
+      const unsubscribe = window?.electron?.on(
         MESSAGE.SAVE_CLIPBOARD_IMAGE_RES,
         (_event: any, payload: any) => {
           if (payload?.requestId !== requestId) {
@@ -90,6 +93,7 @@ const useSaveClipboardImage = () => {
         await sleep(10);
       }
 
+      unsubscribe?.();
       resolve(true);
     });
 
@@ -113,7 +117,7 @@ const useReadFileAsDataUrl = () => {
     let dataUrl: string | null = null;
 
     await new Promise(async (resolve) => {
-      window?.electron?.on(
+      const unsubscribe = window?.electron?.on(
         MESSAGE.READ_FILE_AS_DATA_URL_RES,
         (_event: any, payload: any) => {
           if (payload?.requestId !== requestId) {
@@ -128,6 +132,7 @@ const useReadFileAsDataUrl = () => {
         await sleep(10);
       }
 
+      unsubscribe?.();
       resolve(true);
     });
 

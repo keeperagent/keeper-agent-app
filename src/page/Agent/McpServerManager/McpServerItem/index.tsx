@@ -83,9 +83,7 @@ const McpServerItem = (props: IMcpServerItemProps) => {
 
         <div className="item-center-row">
           <span className="item-label">{translate("toolsCount")}:</span>
-          <Tooltip
-            title={translate("viewTools") || translate("agent.viewTools")}
-          >
+          <Tooltip title={translate("agent.viewTools")}>
             <span
               className="item-value item-tools-row"
               onClick={(e) => {

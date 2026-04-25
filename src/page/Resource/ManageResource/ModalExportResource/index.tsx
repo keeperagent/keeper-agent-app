@@ -77,7 +77,7 @@ const ModalExportResource = (props: any) => {
       open={isModalOpen}
       title={translate("resource.exportResource")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText="Export"
       cancelText={translate("cancel")}
       width="50rem"

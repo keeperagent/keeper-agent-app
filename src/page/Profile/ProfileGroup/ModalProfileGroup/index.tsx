@@ -141,7 +141,7 @@ const ModalProfileGroup = (props: IModalProps) => {
           : translate("profile.editProfileGroup")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         !selectedProfileGroup
           ? translate("button.createNew")

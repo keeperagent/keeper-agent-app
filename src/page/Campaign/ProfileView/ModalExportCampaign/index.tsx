@@ -80,7 +80,7 @@ const ModalExportCampaign = (props: any) => {
       open={isModalOpen}
       title={translate("campaign.exportConfig")}
       onCancel={onCloseModal}
-      maskClosable={true}
+      mask={{ closable: true }}
       okText="Export"
       cancelText={translate("cancel")}
       width="50rem"

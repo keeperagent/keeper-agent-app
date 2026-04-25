@@ -63,7 +63,7 @@ const useCreateProfile = () => {
   const [left, setLeft] = useState(0);
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { data = {} } = payload;
       if (data?.isDone) {
         setLoading(false);
@@ -73,9 +73,12 @@ const useCreateProfile = () => {
         setLeft(data?.left);
       }
     };
-    window?.electron?.on(MESSAGE.CREATE_PROFILE_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.CREATE_PROFILE_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.CREATE_PROFILE_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 

@@ -1,4 +1,4 @@
-import { message, notification } from "antd";
+import { App, message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import type {
   IpcExportDatabasePayload,
@@ -19,6 +19,7 @@ const useExportDatabase = () => {
 };
 
 const useImportDatabase = () => {
+  const { notification } = App.useApp();
   const { translate } = useTranslation();
   const { execute: importDatabase, loading } =
     useIpcAction<IpcImportDatabasePayload>(
@@ -30,7 +31,7 @@ const useImportDatabase = () => {
             message.error(error);
           } else {
             notification.success({
-              message: translate("hook.syncDataDone"),
+              title: translate("hook.syncDataDone"),
               duration: 15,
             });
           }

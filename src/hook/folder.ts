@@ -57,10 +57,9 @@ const useGetFolderStatistic = (folderType: FolderType) => {
       }
       dispatch(saveAction({ listFolder: data, totalFolder, totalSize }));
     };
-    window?.electron?.on(res, handler);
-
+    const unsubscribe = window?.electron?.on(res, handler);
     return () => {
-      window?.electron?.removeListener(res, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -82,13 +81,13 @@ const useGetDatabaseFileStatistic = () => {
       const { data } = payload;
       dispatch(actSaveDatabaseStatistic(data));
     };
-    window?.electron?.on(MESSAGE.GET_DATABASE_FILE_STATISTIC_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_DATABASE_FILE_STATISTIC_RES,
+      handler,
+    );
 
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_DATABASE_FILE_STATISTIC_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -110,10 +109,12 @@ const useGetFolderPath = () => {
       const { data } = payload;
       dispatch(actSaveFolderPath(data));
     };
-    window?.electron?.on(MESSAGE.GET_FOLDER_PATH_RES, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_FOLDER_PATH_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.GET_FOLDER_PATH_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 

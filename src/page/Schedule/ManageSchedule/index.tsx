@@ -943,7 +943,7 @@ const ManageSchedule = (props: any) => {
             locale: { items_per_page: `/ ${translate("page")}` },
           }}
           virtual
-          scroll={{ x: 1400, y: "70vh" }}
+          scroll={{ x: 1400, y: 700 }}
           loading={isDeleteLoading}
           onChange={onTableChange}
           size="middle"

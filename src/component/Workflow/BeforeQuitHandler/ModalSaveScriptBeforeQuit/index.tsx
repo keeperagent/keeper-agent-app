@@ -48,7 +48,7 @@ const ModalSaveWorkflowBeforeQuit = (props: IProps) => {
   return (
     <Modal
       title={translate("workflow.dataIsNotSaved")}
-      maskClosable={false}
+      mask={{ closable: false }}
       onOk={onSaveFlow}
       onCancel={onCancel}
       open={alertBeforeQuit}

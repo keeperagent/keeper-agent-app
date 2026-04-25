@@ -43,7 +43,7 @@ const ModalImportConfig = (props: any) => {
       open={isModalOpen}
       title={translate("resource.importConfig")}
       onCancel={onCloseModal}
-      maskClosable={true}
+      mask={{ closable: true }}
       okText={translate("button.import")}
       cancelText={translate("cancel")}
       width="45rem"

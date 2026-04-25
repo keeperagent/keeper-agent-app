@@ -33,6 +33,10 @@ const ModalConfig = (props: any) => {
   const [isModalExportConfigOpen, setModalExportConfigOpen] = useState(false);
 
   useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
     form.setFieldsValue({
       defaultOpenUrl: selectedCampaign?.defaultOpenUrl,
     });

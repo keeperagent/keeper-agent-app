@@ -26,7 +26,7 @@ const ModalCreateWallet = (props: any) => {
     <Modal
       onCancel={onCloseModal}
       open={isModalOpen}
-      maskClosable={false}
+      mask={{ closable: false }}
       title={translate("wallet.createWallet")}
       width="50rem"
       footer={null}

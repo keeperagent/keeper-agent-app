@@ -175,7 +175,7 @@ const ModalMarketcap = (props: IProps) => {
       width="120rem"
       onCancel={onCloseModal}
       zIndex={3}
-      maskClosable={true}
+      mask={{ closable: true }}
     >
       <Wrapper>
         <ReactECharts

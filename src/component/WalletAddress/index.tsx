@@ -67,7 +67,7 @@ const WalletAddress = (props: IWalletAddressProps) => {
       <Modal
         open={isModalOpen}
         footer={null}
-        maskClosable={true}
+        mask={{ closable: true }}
         onCancel={onToggleModal}
         width="50rem"
         title={translate("QRCode")}

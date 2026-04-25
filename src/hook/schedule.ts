@@ -117,12 +117,12 @@ const useGetRunningAgentSchedule = () => {
       dispatch(actSetActiveAgentRuns(payload?.data || []));
       setLoading(false);
     };
-    window?.electron?.on(MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 

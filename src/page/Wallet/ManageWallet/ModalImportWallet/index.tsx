@@ -106,7 +106,7 @@ const ModalImportWallet = (props: any) => {
       open={isModalOpen}
       title={translate("wallet.importWallet")}
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={translate("button.import")}
       cancelText={translate("cancel")}
       width="45rem"

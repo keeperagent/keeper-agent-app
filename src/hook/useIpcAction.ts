@@ -39,10 +39,10 @@ const useIpcAction = <TReq = any, TRes = any>(
       }
     };
 
-    window?.electron?.on(resChannel, handler);
+    const unsubscribe = window?.electron?.on(resChannel, handler);
 
     return () => {
-      window?.electron?.removeListener(resChannel, handler);
+      unsubscribe?.();
     };
   }, deps);
 

@@ -103,7 +103,7 @@ const ModalNodeEndpoint = (props: any) => {
           : translate("nodeProvider.updateNodeEndpoint")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         !selectedNodeEndpoint
           ? translate("button.createNew")

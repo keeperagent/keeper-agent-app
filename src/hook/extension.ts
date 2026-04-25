@@ -57,7 +57,7 @@ const useImportExtension = () => {
   const { translate } = useTranslation();
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const {
         data = {},
         code,
@@ -98,9 +98,12 @@ const useImportExtension = () => {
         }));
       }
     };
-    window?.electron?.on(MESSAGE.IMPORT_EXTENSION_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.IMPORT_EXTENSION_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.IMPORT_EXTENSION_RES, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -120,19 +123,19 @@ const useImportExtension = () => {
   };
 
   useEffect(() => {
-    const handler = (event: any, payload: any) => {
+    const handler = (_event: any, payload: any) => {
       const { isGetIdSuccess, res } = payload;
       setIsGetExtensionIdSuccess(isGetIdSuccess);
       if (isGetIdSuccess) {
         dispatch(actSaveGetListExtension(res));
       }
     };
-    window?.electron?.on(MESSAGE.GET_EXTENSION_ID_ON_BROWSER_RES, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.GET_EXTENSION_ID_ON_BROWSER_RES,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.GET_EXTENSION_ID_ON_BROWSER_RES,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 

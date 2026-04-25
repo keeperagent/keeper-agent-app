@@ -41,7 +41,7 @@ const useCheckModelCapability = () => {
       let result: IModelCapability = { supportsVision: false };
 
       await new Promise(async (resolve) => {
-        window?.electron?.on(
+        const unsubscribe = window?.electron?.on(
           MESSAGE.CHECK_MODEL_CAPABILITY_RES,
           (_event: any, payload: any) => {
             if (payload?.requestId !== requestId) {
@@ -62,9 +62,7 @@ const useCheckModelCapability = () => {
           await sleep(10);
         }
 
-        window?.electron?.removeAllListeners(
-          MESSAGE.CHECK_MODEL_CAPABILITY_RES,
-        );
+        unsubscribe?.();
         resolve(true);
       });
 

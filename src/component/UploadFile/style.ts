@@ -1,14 +1,14 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
-const UploadFileWrapper = styled.div`
+const UploadFileWrapper = styled.div<{ $fullSize: boolean }>`
   .upload {
     min-width: 35rem;
     width: 100%;
-    height: ${(props: any) => (props?.fullSize ? "100%" : "19rem")};
+    height: ${(props: any) => (props?.$fullSize ? "100%" : "19rem")};
     border: ${(props: any) =>
-      props?.fullSize ? "none" : `2px dashed ${props?.theme?.colorBorder}`};
-    border-radius: ${(props: any) => (props?.fullSize ? "none" : "1rem")};
+      props?.$fullSize ? "none" : `2px dashed ${props?.theme?.colorBorder}`};
+    border-radius: ${(props: any) => (props?.$fullSize ? "none" : "1rem")};
     position: relative;
     transition: all 0.2s ease-in-out;
     display: flex;

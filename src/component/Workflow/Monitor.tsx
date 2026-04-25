@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef } from "react";
-import { notification } from "antd";
+import { App } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
@@ -37,6 +37,7 @@ let totalProfile = 0;
 let translateFunc: any = null;
 
 const Monitor = (props: IProps) => {
+  const { notification } = App.useApp();
   const { selectedCampaign, selectedWorkflow, isRunning, status } = props;
   const { translate } = useTranslation();
   const { getCampaignProfileStatus } = useGetCampaignProfileStatus();
@@ -55,7 +56,7 @@ const Monitor = (props: IProps) => {
       props?.actSetIsRun(false);
       props?.actClearWhenStop();
       notification.success({
-        message: translateFunc("notification"),
+        title: translateFunc("notification"),
         description: isRunWithCampaign
           ? translateFunc("workflow.campaignCompleted")
           : translateFunc("workflow.workflowCompleted"),
@@ -65,10 +66,12 @@ const Monitor = (props: IProps) => {
         totalUnFinishedProfile: 0,
       });
     };
-    window?.electron?.on(MESSAGE.SCRIPT_RUN_COMPLETED, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.SCRIPT_RUN_COMPLETED,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.SCRIPT_RUN_COMPLETED, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -85,12 +88,12 @@ const Monitor = (props: IProps) => {
       const { threadID } = payload;
       props?.actCleanThread({ threadID });
     };
-    window?.electron?.on(MESSAGE.WORKFLOW_THREAD_STOPPED, handler);
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.WORKFLOW_THREAD_STOPPED,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.WORKFLOW_THREAD_STOPPED,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -115,10 +118,12 @@ const Monitor = (props: IProps) => {
         isSleeping,
       });
     };
-    window?.electron?.on(MESSAGE.WORKFLOW_BATCH_UPDATE, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.WORKFLOW_BATCH_UPDATE,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.WORKFLOW_BATCH_UPDATE, handler);
+      unsubscribe?.();
     };
   }, []);
 
@@ -127,13 +132,12 @@ const Monitor = (props: IProps) => {
       const { isSleeping } = payload;
       props?.actSetIsSleeping(isSleeping);
     };
-    window?.electron?.on(MESSAGE.WORKFLOW_SLEEPING_STATUS, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.WORKFLOW_SLEEPING_STATUS,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(
-        MESSAGE.WORKFLOW_SLEEPING_STATUS,
-        handler,
-      );
+      unsubscribe?.();
     };
   }, []);
 
@@ -142,10 +146,12 @@ const Monitor = (props: IProps) => {
       const { round } = payload;
       props?.actSetCurrentRound(round);
     };
-    window?.electron?.on(MESSAGE.WORKFLOW_HAS_NEW_ROUND, handler);
-
+    const unsubscribe = window?.electron?.on(
+      MESSAGE.WORKFLOW_HAS_NEW_ROUND,
+      handler,
+    );
     return () => {
-      window?.electron?.removeListener(MESSAGE.WORKFLOW_HAS_NEW_ROUND, handler);
+      unsubscribe?.();
     };
   }, []);
 

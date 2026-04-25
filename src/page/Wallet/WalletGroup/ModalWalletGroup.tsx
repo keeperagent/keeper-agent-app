@@ -133,7 +133,7 @@ const ModalWalletGroup = (props: any) => {
           : translate("wallet.editWalletGroup")
       }
       onCancel={onCloseModal}
-      maskClosable={false}
+      mask={{ closable: false }}
       okText={
         !selectedWalletGroup
           ? translate("button.createNew")
