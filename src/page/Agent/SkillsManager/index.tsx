@@ -173,7 +173,7 @@ const SkillsManager = (props: any) => {
         </div>
       )}
 
-      <Spin size="default" spinning={loading} style={{ minHeight: "70vh" }}>
+      <Spin size="medium" spinning={loading} style={{ minHeight: "70vh" }}>
         <div className="list-item">
           {listAgentSkill?.map((item: IAgentSkill) => (
             <AgentSkillItem

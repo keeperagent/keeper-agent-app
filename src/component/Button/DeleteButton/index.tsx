@@ -32,7 +32,7 @@ const DeleteButton = (props: DeleteButtonProps) => {
       onClick={onClick}
       style={style}
       disabled={disabled}
-      loading={loading}
+      isLoading={loading}
     >
       <div className="trash">
         <div className="top">

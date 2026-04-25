@@ -546,7 +546,7 @@ const ManageWorkflow = (props: any) => {
           expandIcon: renderExpandIcon,
           columnWidth: 30,
         }}
-        scroll={{ x: 1350, y: "70vh" }}
+        scroll={{ x: 1350, y: 700 }}
         loading={getDataLoading}
         onChange={onTableChange}
         size="middle"

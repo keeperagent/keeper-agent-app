@@ -33,7 +33,6 @@ const MasterPasswordPage = (props: any) => {
   const { token, user, isMasterKeyUnlocked, isLightMode } = props;
   const email = user?.email;
   const [createForm] = Form.useForm();
-  const [changeForm] = Form.useForm();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [unlockView, setUnlockView] = useState<UnlockView>(UnlockView.Unlock);
   const { translate } = useTranslation();
@@ -177,37 +176,21 @@ const MasterPasswordPage = (props: any) => {
     } catch {}
   };
 
-  const onSubmitChangeForm = async () => {
+  const onSubmitChangeForm = async (values: {
+    newPassword?: string;
+    confirmNewPassword?: string;
+  }) => {
     setErrorMessage(null);
-    const values = changeForm.getFieldsValue();
     const newPwd = values?.newPassword;
     const confirmPwd = values?.confirmNewPassword;
 
     if (!newPwd) {
-      changeForm.setFields([
-        {
-          name: "newPassword",
-          errors: [translate("masterPassword.required")],
-        },
-      ]);
       return;
     }
     if (!confirmPwd) {
-      changeForm.setFields([
-        {
-          name: "confirmNewPassword",
-          errors: [translate("masterPassword.confirmRequired")],
-        },
-      ]);
       return;
     }
     if (newPwd !== confirmPwd) {
-      changeForm.setFields([
-        {
-          name: "confirmNewPassword",
-          errors: [translate("masterPassword.mismatch")],
-        },
-      ]);
       return;
     }
 
@@ -262,13 +245,11 @@ const MasterPasswordPage = (props: any) => {
 
                   {showChangeForm && (
                     <ResetForm
-                      form={changeForm}
                       onSubmit={onSubmitChangeForm}
                       loading={isBtnLoading}
                       errorMessage={errorMessage}
                       onBack={() => {
                         setErrorMessage(null);
-                        changeForm.resetFields();
                         setUnlockView(UnlockView.Unlock);
                       }}
                     />

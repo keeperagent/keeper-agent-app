@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 interface BtnProps {
   disabled?: boolean;
-  loading?: boolean;
+  isLoading?: boolean;
 }
 
 const DeleteButtonWrapper = styled.div`
@@ -24,7 +24,7 @@ const DeleteButtonWrapper = styled.div`
   box-shadow: 4px 4px 0px 0px rgba(255, 103, 103, 0.4);
   opacity: ${(props: BtnProps) => (props?.disabled ? 0.7 : 1)};
   cursor: ${(props: BtnProps) =>
-    props?.loading || props?.disabled ? "not-allowed" : "pointer"};
+    props?.isLoading || props?.disabled ? "not-allowed" : "pointer"};
 
   &::after {
     content: "";

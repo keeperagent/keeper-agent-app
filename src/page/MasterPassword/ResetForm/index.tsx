@@ -1,24 +1,64 @@
-import { Form, Row, Col, Alert, Button, FormInstance } from "antd";
+import { Form, Row, Col, Alert, Button } from "antd";
 import { useTranslation } from "@/hook";
 import { PasswordInput } from "@/component/Input";
 import { PrimaryButton } from "@/component/Button";
 
 type ResetFormProps = {
-  form: FormInstance;
-  onSubmit: () => void;
+  onSubmit: (values: {
+    newPassword?: string;
+    confirmNewPassword?: string;
+  }) => void;
   loading: boolean;
   errorMessage: string | null;
   onBack: () => void;
 };
 
 const ResetForm = ({
-  form,
   onSubmit,
   loading,
   errorMessage,
   onBack,
 }: ResetFormProps) => {
+  const [form] = Form.useForm();
   const { translate } = useTranslation();
+
+  const submitForm = () => {
+    const values = form.getFieldsValue();
+    const newPwd = values?.newPassword;
+    const confirmPwd = values?.confirmNewPassword;
+
+    if (!newPwd) {
+      form.setFields([
+        {
+          name: "newPassword",
+          errors: [translate("masterPassword.required")],
+        },
+      ]);
+      return;
+    }
+
+    if (!confirmPwd) {
+      form.setFields([
+        {
+          name: "confirmNewPassword",
+          errors: [translate("masterPassword.confirmRequired")],
+        },
+      ]);
+      return;
+    }
+
+    if (newPwd !== confirmPwd) {
+      form.setFields([
+        {
+          name: "confirmNewPassword",
+          errors: [translate("masterPassword.mismatch")],
+        },
+      ]);
+      return;
+    }
+
+    onSubmit(values);
+  };
 
   const focusConfirmPassword = (
     event: React.KeyboardEvent<HTMLInputElement>,
@@ -36,11 +76,11 @@ const ResetForm = ({
   ) => {
     event?.preventDefault();
     event?.stopPropagation();
-    onSubmit();
+    submitForm();
   };
 
   return (
-    <Form layout="vertical" form={form} onFinish={onSubmit}>
+    <Form layout="vertical" form={form} onFinish={submitForm}>
       <Row justify="center" style={{ marginTop: "var(--margin-top)" }}>
         <Col span={24}>
           <Form.Item
@@ -91,7 +131,7 @@ const ResetForm = ({
         <Col span={24}>
           <PrimaryButton
             text={translate("masterPassword.changeButton")}
-            onClick={onSubmit}
+            onClick={submitForm}
             loading={loading}
           />
         </Col>
