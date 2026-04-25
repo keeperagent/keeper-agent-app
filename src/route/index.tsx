@@ -2,7 +2,7 @@ import { useMemo, ReactNode, useEffect, Suspense } from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { connect } from "react-redux";
 import { ThemeProvider } from "styled-components";
-import { ThemeConfig, theme, ConfigProvider, notification } from "antd";
+import { ThemeConfig, theme, ConfigProvider, App as AntApp } from "antd";
 import { GlobalStyle } from "@/style/global";
 import { lightTheme, darkTheme } from "@/style/theme";
 import { OverideAntdStyle } from "@/style/overideAntd";
@@ -36,6 +36,7 @@ let registerNetworkListener = false;
 let translateFunc: any = null;
 
 const AppRoute = (props: any) => {
+  const { notification } = AntApp.useApp();
   const { isLightMode } = props;
   const { translate, locale } = useTranslation();
   const { createAppLog } = useCreateAppLog();
@@ -58,7 +59,7 @@ const AppRoute = (props: any) => {
     const message =
       translateFunc("offline") + `. ${formatTimeToDate(new Date().getTime())}`;
     notification.warning({
-      message: translateFunc("notification"),
+      title: translateFunc("notification"),
       description: message,
       duration: 5 * 60, // 5 minutes
     });
@@ -72,7 +73,7 @@ const AppRoute = (props: any) => {
     const message =
       translate("online") + `. ${formatTimeToDate(new Date().getTime())}`;
     notification.success({
-      message: translate("notification"),
+      title: translate("notification"),
       description: message,
       duration: 5 * 60, // 5 minutes
     });
@@ -88,36 +89,38 @@ const AppRoute = (props: any) => {
 
   return (
     <ConfigProvider theme={theme}>
-      <ThemeProvider theme={isLightMode ? lightTheme : darkTheme}>
-        <OverideAntdStyle />
-        <GlobalStyle locale={locale} />
+      <AntApp>
+        <ThemeProvider theme={isLightMode ? lightTheme : darkTheme}>
+          <OverideAntdStyle />
+          <GlobalStyle locale={locale} />
 
-        {/* Use HashRouter instead of BrowserRouter */}
-        {/* https://github.com/electron-userland/electron-builder/issues/2662#issuecomment-439776545 */}
-        <HashRouter>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {routesConfig.map((routeInfo: IRoute, index: number) => {
-                if (routeInfo?.isPrivateRoute) {
-                  return (
-                    <Route
-                      key={index}
-                      path={routeInfo?.path}
-                      element={
-                        <RequireAuth isFullScreen={routeInfo?.isFullScreen}>
-                          {routeInfo?.element}
-                        </RequireAuth>
-                      }
-                    />
-                  );
-                }
+          {/* Use HashRouter instead of BrowserRouter */}
+          {/* https://github.com/electron-userland/electron-builder/issues/2662#issuecomment-439776545 */}
+          <HashRouter>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {routesConfig.map((routeInfo: IRoute, index: number) => {
+                  if (routeInfo?.isPrivateRoute) {
+                    return (
+                      <Route
+                        key={index}
+                        path={routeInfo?.path}
+                        element={
+                          <RequireAuth isFullScreen={routeInfo?.isFullScreen}>
+                            {routeInfo?.element}
+                          </RequireAuth>
+                        }
+                      />
+                    );
+                  }
 
-                return <Route key={index} {...routeInfo} />;
-              })}
-            </Routes>
-          </Suspense>
-        </HashRouter>
-      </ThemeProvider>
+                  return <Route key={index} {...routeInfo} />;
+                })}
+              </Routes>
+            </Suspense>
+          </HashRouter>
+        </ThemeProvider>
+      </AntApp>
     </ConfigProvider>
   );
 };

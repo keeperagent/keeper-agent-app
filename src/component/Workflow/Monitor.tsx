@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef } from "react";
-import { notification } from "antd";
+import { App } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
@@ -37,6 +37,7 @@ let totalProfile = 0;
 let translateFunc: any = null;
 
 const Monitor = (props: IProps) => {
+  const { notification } = App.useApp();
   const { selectedCampaign, selectedWorkflow, isRunning, status } = props;
   const { translate } = useTranslation();
   const { getCampaignProfileStatus } = useGetCampaignProfileStatus();
@@ -55,7 +56,7 @@ const Monitor = (props: IProps) => {
       props?.actSetIsRun(false);
       props?.actClearWhenStop();
       notification.success({
-        message: translateFunc("notification"),
+        title: translateFunc("notification"),
         description: isRunWithCampaign
           ? translateFunc("workflow.campaignCompleted")
           : translateFunc("workflow.workflowCompleted"),

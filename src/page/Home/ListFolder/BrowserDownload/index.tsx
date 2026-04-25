@@ -46,18 +46,21 @@ const BrowserDownload = (props: IProps) => {
   const location = useLocation();
   const { search } = location;
   const { showTour } = qs.parse(search, { ignoreQueryPrefix: true });
+  const isInstalled = isExist || downloadStatus?.isAvailable;
 
   useEffect(() => {
     setCustomChromePath(preference?.customChromePath || "");
   }, [preference]);
 
   useEffect(() => {
-    if (showTour) {
+    if (showTour && !isInstalled) {
       setTimeout(() => {
         setTourOpen(true);
       }, 500);
+    } else {
+      setTourOpen(false);
     }
-  }, [showTour]);
+  }, [showTour, isInstalled]);
 
   useEffect(() => {
     if (downloadStatus?.isDone && downloadStatus?.isAvailable) {
@@ -92,8 +95,6 @@ const BrowserDownload = (props: IProps) => {
       message.info(translate("home.notiUseChromium"));
     }
   };
-
-  const isInstalled = isExist || downloadStatus?.isAvailable;
 
   const steps: TourProps["steps"] = [
     {
