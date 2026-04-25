@@ -8,7 +8,7 @@ import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
 import { useUpdatePreference } from "@/hook/preference";
-import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { LLM_PROVIDERS, isProviderConfigured } from "@/config/llmProviders";
 import { Wrapper, StatBadgeWrapper, CliTag, AgentHubTabWrapper } from "./style";
 import ChatView from "./ChatView";
 
@@ -66,16 +66,6 @@ const AgentPage = (props: any) => {
 
   const onChangeTab = (key: string) => {
     setActiveTab(key);
-  };
-
-  const isProviderConfigured = (provider: (typeof LLM_PROVIDERS)[number]) => {
-    const isClaudeCLIMode =
-      provider.key === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
-    let hasApiKey = true;
-    if (!isClaudeCLIMode && provider.apiKeyField) {
-      hasApiKey = Boolean(preference?.[provider.apiKeyField]);
-    }
-    return hasApiKey && Boolean(preference?.[provider.modelField]);
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
@@ -183,7 +173,7 @@ const AgentPage = (props: any) => {
               </span>
 
               {LLM_PROVIDERS.map((provider) => {
-                const isDisabled = !isProviderConfigured(provider);
+                const isDisabled = !isProviderConfigured(provider, preference);
                 const tooltipTitle = isDisabled
                   ? translate("agent.apiKeyNotConfigured").replace(
                       "{provider}",

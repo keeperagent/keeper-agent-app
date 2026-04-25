@@ -155,12 +155,10 @@ const ModalAgentProfile = (props: Props) => {
 
   const onChangeProvider = (newProvider: string) => {
     setLlmProvider(newProvider);
-    if (!isEdit) {
-      form.setFieldValue(
-        "llmModel",
-        getDefaultModelForProvider(newProvider, preference),
-      );
-    }
+    form.setFieldValue(
+      "llmModel",
+      getDefaultModelForProvider(newProvider, preference),
+    );
   };
 
   const onChangeChain = () => {
@@ -494,6 +492,7 @@ const ModalAgentProfile = (props: Props) => {
               <LlmProviderPicker
                 value={llmProvider}
                 onChange={onChangeProvider}
+                preference={preference}
               />
             </Form.Item>
 

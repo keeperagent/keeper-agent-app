@@ -32,6 +32,7 @@ type Props = {
   onSetLayoutMode?: (mode: string) => void;
   sendButtonRef?: React.Ref<HTMLButtonElement>;
   messageHistory?: string[];
+  extraActions?: React.ReactNode;
 };
 
 const ChatComposer = ({
@@ -52,6 +53,7 @@ const ChatComposer = ({
   onSetLayoutMode,
   sendButtonRef,
   messageHistory = [],
+  extraActions,
 }: Props) => {
   const { translate } = useTranslation();
   const historyIndexRef = useRef<number>(-1); // -1 = not navigating history
@@ -194,6 +196,8 @@ const ChatComposer = ({
           <div className="spacer" />
         )}
 
+        {extraActions}
+
         {loading ? (
           <Button
             onClick={onStop}
@@ -226,7 +230,7 @@ const ChatComposer = ({
             <PaperPlaneIcon
               width={16}
               height={16}
-              color={isSendDisabled ? "#595959" : "#fff"}
+              color={isSendDisabled ? "#595959" : "currentColor"}
               className="paper-plane-icon"
             />
           )}

@@ -22,6 +22,7 @@ interface IAgentState {
     toolsCount: number;
     skillsCount: number;
   } | null;
+  chatProfileId: number | null;
 }
 
 const initialState: IAgentState = {
@@ -35,6 +36,7 @@ const initialState: IAgentState = {
   splitPercent: 50,
   llmProvider: LLMProvider.CLAUDE,
   agentStats: null,
+  chatProfileId: null,
 };
 
 export const agentSlice = createSlice({
@@ -99,6 +101,12 @@ export const agentSlice = createSlice({
     ) => {
       state.agentStats = action.payload;
     },
+    actSaveChatProfileId: (
+      state: IAgentState,
+      action: PayloadAction<number | null>,
+    ) => {
+      state.chatProfileId = action.payload;
+    },
   },
 });
 
@@ -113,6 +121,7 @@ export const {
   actSetSplitPercent,
   actSetLLMProvider,
   actSaveAgentStats,
+  actSaveChatProfileId,
 } = agentSlice.actions;
 export { LLMProvider };
 export const agentSelector = (state: RootState) => state.Agent;

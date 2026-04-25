@@ -117,6 +117,7 @@ type Props = {
   layoutMode?: string;
   onSetLayoutMode?: (mode: string) => void;
   emptyState?: React.ReactNode;
+  extraActions?: React.ReactNode;
 };
 
 const AgentChatView = ({
@@ -137,6 +138,7 @@ const AgentChatView = ({
   layoutMode,
   onSetLayoutMode,
   emptyState,
+  extraActions,
 }: Props) => {
   const { translate } = useTranslation();
   const { saveClipboardImage } = useSaveClipboardImage();
@@ -686,6 +688,7 @@ const AgentChatView = ({
           onSetLayoutMode={onSetLayoutMode}
           sendButtonRef={sendButtonRef}
           messageHistory={userMessageHistory}
+          extraActions={extraActions}
         />
 
         {showPaperPlane && paperPlanePosition && (

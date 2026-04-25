@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { connect } from "react-redux";
+import { Select } from "antd";
+import styled from "styled-components";
 import { ChatPlatform } from "@/electron/chatGateway/types";
 import { RootState } from "@/redux/store";
 import {
   useDashboardAgent,
   useTranslation,
   useCheckModelCapability,
+  useGetListAgentProfile,
 } from "@/hook";
-import { LLMProvider } from "@/electron/type";
+import { IAgentProfile, LLMProvider } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { preferenceSelector } from "@/redux/preference";
-import { actSetLayoutMode } from "@/redux/agent";
+import { actSetLayoutMode, actSaveChatProfileId } from "@/redux/agent";
 import { getToolDisplayName } from "@/electron/constant";
 import { ChatRole } from "@/electron/chatGateway/types";
 
@@ -25,6 +28,35 @@ import {
   type ToolCallState,
 } from "@/component/AgentChatView/util";
 
+const OptionWrapper = styled.div`
+  padding-bottom: 0.5rem;
+  cursor: pointer;
+  overflow: hidden;
+
+  &:hover {
+    .name {
+      color: var(--color-text-hover);
+    }
+  }
+
+  .name {
+    font-size: 1.3rem;
+    font-weight: 500;
+    transition: all 0.1s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .description {
+    font-size: 1rem;
+    font-weight: 300;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
 const AgentView = (props: any) => {
   const {
     tokenAddress,
@@ -36,10 +68,13 @@ const AgentView = (props: any) => {
     chainKey,
     layoutMode,
     preference,
+    chatProfileId,
+    listAgentProfile,
   } = props;
   const { translate } = useTranslation();
   const { checkModelCapability, modelCapability } = useCheckModelCapability();
   const [visionWarning, setVisionWarning] = useState<string | null>(null);
+  const { getListAgentProfile } = useGetListAgentProfile();
   const {
     sessionId,
     conversation,
@@ -60,6 +95,10 @@ const AgentView = (props: any) => {
     approvePlan,
     setError,
   } = useDashboardAgent();
+
+  useEffect(() => {
+    getListAgentProfile({ page: 1, pageSize: 100 });
+  }, []);
 
   useEffect(() => {
     if (!sessionId && !creatingSession) {
@@ -228,6 +267,60 @@ const AgentView = (props: any) => {
     sendMessage(messageWithContext, { encryptKey, displayText: draft });
   };
 
+  const onSelectProfile = (profileId: number) => {
+    props.actSaveChatProfileId(profileId);
+    resetSession();
+  };
+
+  const activeProfiles = useMemo(
+    () =>
+      (listAgentProfile || []).filter(
+        (profile: IAgentProfile) => profile.isActive,
+      ),
+    [listAgentProfile],
+  );
+
+  useEffect(() => {
+    if (chatProfileId !== null || activeProfiles.length === 0) {
+      return;
+    }
+    const mainProfile = activeProfiles.find(
+      (profile: IAgentProfile) => profile.isMainAgent,
+    );
+    if (mainProfile) {
+      props.actSaveChatProfileId(mainProfile.id);
+    }
+  }, [activeProfiles]);
+
+  const profileSelectOptions = useMemo(
+    () =>
+      activeProfiles.map((profile: IAgentProfile) => ({
+        value: profile.id,
+        label: profile.name,
+        description: profile.description,
+      })),
+    [activeProfiles],
+  );
+
+  const profilePicker = (
+    <Select
+      size="medium"
+      value={chatProfileId}
+      onChange={onSelectProfile}
+      options={profileSelectOptions}
+      style={{ width: 170, marginRight: 8 }}
+      className="custom-select"
+      optionRender={(option) => (
+        <OptionWrapper>
+          <div className="name">{option.label}</div>
+          {option.data.description && (
+            <div className="description">{option.data.description}</div>
+          )}
+        </OptionWrapper>
+      )}
+    />
+  );
+
   const hasPlanReview = displayedMessages.some((msg) => !!msg.planReview);
 
   return (
@@ -250,6 +343,7 @@ const AgentView = (props: any) => {
       showLayoutOption
       layoutMode={layoutMode}
       onSetLayoutMode={props?.actSetLayoutMode}
+      extraActions={profilePicker}
     />
   );
 };
@@ -263,7 +357,9 @@ export default connect(
     isAllWallet: state?.Agent?.isAllWallet,
     chainKey: state?.Agent?.chainKey,
     layoutMode: state?.Agent?.layoutMode,
+    chatProfileId: state?.Agent?.chatProfileId,
+    listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
     preference: preferenceSelector(state)?.preference,
   }),
-  { actSetLayoutMode },
+  { actSetLayoutMode, actSaveChatProfileId },
 )(AgentView);
