@@ -201,7 +201,9 @@ const ChatView = (props: any) => {
               : { flexBasis: `${100 - splitPercent}%` }
           }
         >
-          <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+          {Boolean(props.selectedAgentProfileId) && (
+            <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+          )}
 
           <div className="agent-view-wrapper" style={{ marginTop: "0.8rem" }}>
             {Boolean(props.selectedAgentProfileId) && (

@@ -58,8 +58,9 @@ export default (db: Sequelize) =>
       },
       isMainAgent: {
         type: DataTypes.BOOLEAN,
-        allowNull: true,
+        allowNull: false,
         defaultValue: false,
+        unique: true,
       },
       isActive: {
         type: DataTypes.INTEGER,
@@ -84,9 +85,9 @@ export default (db: Sequelize) =>
         defaultValue: "[]",
       },
       isAllWallet: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BOOLEAN,
         allowNull: true,
-        defaultValue: 1,
+        defaultValue: false,
       },
       maxConcurrentTasks: {
         type: DataTypes.INTEGER,

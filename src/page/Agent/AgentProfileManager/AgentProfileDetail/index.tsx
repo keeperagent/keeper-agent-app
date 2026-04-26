@@ -38,6 +38,9 @@ const AgentProfileDetail = (props: Props) => {
   const [activeTab, setActiveTab] = useState(
     selectedAgentProfile?.isMainAgent ? TAB.MEMORY : TAB.HISTORY,
   );
+  const effectiveTab = selectedAgentProfile?.isMainAgent
+    ? TAB.MEMORY
+    : activeTab;
 
   const provider = LLM_PROVIDERS.find(
     (item) => item.key === selectedAgentProfile?.llmProvider,
@@ -157,7 +160,7 @@ const AgentProfileDetail = (props: Props) => {
 
         <Tabs
           size="small"
-          activeKey={activeTab}
+          activeKey={effectiveTab}
           onChange={setActiveTab}
           items={[
             ...(!selectedAgentProfile?.isMainAgent
@@ -170,11 +173,11 @@ const AgentProfileDetail = (props: Props) => {
       </div>
 
       <div className="chat-body">
-        {activeTab === TAB.HISTORY && (
+        {effectiveTab === TAB.HISTORY && (
           <HistoryTab agentProfileId={agentProfileId} />
         )}
 
-        {activeTab === TAB.MEMORY && (
+        {effectiveTab === TAB.MEMORY && (
           <MemoryTab agentProfileId={agentProfileId} />
         )}
       </div>
