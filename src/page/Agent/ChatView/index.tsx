@@ -53,16 +53,21 @@ const ChatView = (props: any) => {
   }, []);
 
   useEffect(() => {
-    if (selectedAgentProfileId || activeProfiles.length === 0) {
+    if (activeProfiles.length === 0) {
+      return;
+    }
+    const isCurrentValid = activeProfiles.some(
+      (profile: IAgentProfile) => profile.id === selectedAgentProfileId,
+    );
+    if (isCurrentValid) {
       return;
     }
     const mainProfile = activeProfiles.find(
       (profile: IAgentProfile) => profile.isMainAgent,
     );
-    if (mainProfile) {
-      props.actSaveSelectedAgentProfileId(mainProfile.id);
-    }
-  }, [selectedAgentProfileId, activeProfiles]);
+    const fallback = mainProfile || activeProfiles[0];
+    props.actSaveSelectedAgentProfileId(fallback?.id ?? null);
+  }, [activeProfiles]);
 
   useEffect(() => {
     actSetPageName?.(translate("sidebar.askAgent"));

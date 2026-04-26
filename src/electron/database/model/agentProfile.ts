@@ -60,7 +60,6 @@ export default (db: Sequelize) =>
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
-        unique: true,
       },
       isActive: {
         type: DataTypes.INTEGER,
