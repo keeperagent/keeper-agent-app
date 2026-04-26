@@ -5,7 +5,6 @@ import { MESSAGE, RESPONSE_CODE, DEFAULT_MCP_PORT } from "@/electron/constant";
 import { IpcUpdatePreferencePayload } from "@/electron/ipcTypes";
 import { keeperMcpServer } from "@/electron/mcpServer/index";
 import { logEveryWhere } from "@/electron/service/util";
-import { LLMProvider } from "@/electron/type";
 import { claudeCliAuth } from "@/electron/agentCore/claudeCli/claudeCliAuth";
 import { codexCliAuth } from "@/electron/agentCore/codexCli/codexCliAuth";
 import { onIpc } from "./helpers";
@@ -21,7 +20,6 @@ export const perferenceController = () => {
         maxConcurrentJob: 30,
         maxLogAge: preference?.maxLogAge || 15,
         maxHistoryLogAge: preference?.maxHistoryLogAge || 30,
-        llmProvider: LLMProvider.CLAUDE,
       });
     }
   });

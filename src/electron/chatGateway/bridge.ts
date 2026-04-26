@@ -99,6 +99,7 @@ export type AgentSession = {
   platformId: ChatPlatform;
   platformChatId: string;
   agentProfileId: number | null;
+  isMainAgentSession: boolean;
   isCompacting: boolean;
   //  Summary text from the last compaction, injected into the new thread on first run
   pendingSummary: string | null;
@@ -205,12 +206,14 @@ class AgentChatBridge {
         throw new Error(`AgentProfile #${session.agentProfileId} not found`);
       }
       if (profile.isMainAgent) {
+        session.isMainAgentSession = true;
         return createMainAgent({
           checkpointer: session.checkpointer,
           provider: session.provider,
           toolContext: session.toolContext,
         });
       }
+      session.isMainAgentSession = false;
       return createAgentFromProfile({
         profile,
         checkpointer: session.checkpointer,
@@ -218,6 +221,7 @@ class AgentChatBridge {
       });
     }
 
+    session.isMainAgentSession = true;
     return createMainAgent({
       checkpointer: session.checkpointer,
       provider: session.provider,
@@ -453,6 +457,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
       agentProfileId: null,
+      isMainAgentSession: false,
       isCompacting: false,
       pendingSummary: null,
       expectingEncryptKey: false,
@@ -514,6 +519,7 @@ class AgentChatBridge {
       platformId: ChatPlatform.KEEPER,
       platformChatId: ChatPlatform.KEEPER,
       agentProfileId,
+      isMainAgentSession: false,
       isCompacting: false,
       pendingSummary: null,
       expectingEncryptKey: false,
@@ -1009,6 +1015,15 @@ class AgentChatBridge {
     }
   };
 
+  getMainAgentSystemPrompt = (): string | null => {
+    for (const [, session] of this.sessions) {
+      if (session.isMainAgentSession) {
+        return session.agent?.systemPrompt || null;
+      }
+    }
+    return null;
+  };
+
   // Close and remove the session for a specific agent profile (called after profile delete)
   cleanupProfileSession = async (agentProfileId: number) => {
     for (const [sessionKey, session] of this.sessions) {
@@ -1066,6 +1081,7 @@ class AgentChatBridge {
         platformId: adapter.platformId,
         platformChatId: message.chatId,
         agentProfileId: null,
+        isMainAgentSession: false,
         isCompacting: false,
         pendingSummary: null,
         expectingEncryptKey: false,

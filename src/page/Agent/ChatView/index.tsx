@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { useTranslation, useGetListAgentProfile } from "@/hook";
+import {
+  useTranslation,
+  useGetListAgentProfile,
+  useGetOneAgentProfile,
+} from "@/hook";
 import { IAgentProfile } from "@/electron/type";
 import { actSetPageName } from "@/redux/layout";
 import {
   AGENT_LAYOUT_MODE,
   actSetSplitPercent,
-  actSaveSelectedAgentProfileId,
+  actSaveSelectedAgentProfile,
 } from "@/redux/agent";
 import { PageWrapper } from "./style";
 import TokenChart from "./TokenChart";
@@ -22,7 +26,7 @@ const ChatView = (props: any) => {
     layoutMode,
     splitPercent,
     actSetSplitPercent,
-    selectedAgentProfileId,
+    selectedAgentProfile,
     listAgentProfile,
     setEncryptKey,
     encryptKey,
@@ -38,40 +42,74 @@ const ChatView = (props: any) => {
   const pointerIdRef = useRef<number | null>(null);
 
   const { translate } = useTranslation();
-  const { getListAgentProfile } = useGetListAgentProfile();
-
-  const activeProfiles = useMemo(
-    () =>
-      (listAgentProfile || []).filter(
-        (profile: IAgentProfile) => profile.isActive,
-      ),
-    [listAgentProfile],
-  );
+  const { getListAgentProfile, loading: isProfileSearchLoading } =
+    useGetListAgentProfile();
+  const { getOneAgentProfile, data: fetchedAgentProfile } =
+    useGetOneAgentProfile();
+  const searchProfileTimeoutRef = useRef<any>(null);
+  const hasValidatedRef = useRef(false);
 
   useEffect(() => {
-    getListAgentProfile({ page: 1, pageSize: 100 });
+    getListAgentProfile({ page: 1, pageSize: 30, isActive: true });
   }, []);
-
-  useEffect(() => {
-    if (activeProfiles.length === 0) {
-      return;
-    }
-    const isCurrentValid = activeProfiles.some(
-      (profile: IAgentProfile) => profile.id === selectedAgentProfileId,
-    );
-    if (isCurrentValid) {
-      return;
-    }
-    const mainProfile = activeProfiles.find(
-      (profile: IAgentProfile) => profile.isMainAgent,
-    );
-    const fallback = mainProfile || activeProfiles[0];
-    props.actSaveSelectedAgentProfileId(fallback?.id ?? null);
-  }, [activeProfiles]);
 
   useEffect(() => {
     actSetPageName?.(translate("sidebar.askAgent"));
   }, [translate, actSetPageName]);
+
+  useEffect(() => {
+    if (!listAgentProfile?.length || hasValidatedRef.current) {
+      return;
+    }
+    hasValidatedRef.current = true;
+
+    if (selectedAgentProfile?.id) {
+      const isInList = listAgentProfile.some(
+        (profile: IAgentProfile) => profile?.id === selectedAgentProfile?.id,
+      );
+      if (!isInList) {
+        getOneAgentProfile(selectedAgentProfile.id);
+      }
+      return;
+    }
+
+    fallbackToMainProfile();
+  }, [listAgentProfile]);
+
+  useEffect(() => {
+    if (!fetchedAgentProfile) {
+      return;
+    }
+    if (fetchedAgentProfile.isActive) {
+      props.actSaveSelectedAgentProfile(fetchedAgentProfile);
+    } else {
+      fallbackToMainProfile();
+    }
+  }, [fetchedAgentProfile]);
+
+  const fallbackToMainProfile = () => {
+    const mainProfile = (listAgentProfile || []).find(
+      (profile: IAgentProfile) => profile.isMainAgent,
+    );
+    props.actSaveSelectedAgentProfile(
+      mainProfile || listAgentProfile?.[0] || null,
+    );
+  };
+
+  const onSearchProfile = (text: string) => {
+    if (searchProfileTimeoutRef.current) {
+      clearTimeout(searchProfileTimeoutRef.current);
+    }
+
+    searchProfileTimeoutRef.current = setTimeout(() => {
+      getListAgentProfile({
+        page: 1,
+        pageSize: 30,
+        searchText: text,
+        isActive: true,
+      });
+    }, 200);
+  };
 
   const applySplit = (percent: number) => {
     const clamped = Math.min(80, Math.max(20, percent));
@@ -206,15 +244,17 @@ const ChatView = (props: any) => {
               : { flexBasis: `${100 - splitPercent}%` }
           }
         >
-          {Boolean(props.selectedAgentProfileId) && (
+          {Boolean(selectedAgentProfile?.id) && (
             <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
           )}
 
           <div className="agent-view-wrapper" style={{ marginTop: "0.8rem" }}>
-            {Boolean(props.selectedAgentProfileId) && (
+            {Boolean(selectedAgentProfile?.id) && (
               <AgentView
-                key={String(props.selectedAgentProfileId)}
+                key={String(selectedAgentProfile?.id)}
                 encryptKey={encryptKey}
+                onSearchProfile={onSearchProfile}
+                isProfileSearchLoading={isProfileSearchLoading}
               />
             )}
           </div>
@@ -228,8 +268,8 @@ export default connect(
   (state: RootState) => ({
     layoutMode: state?.Agent?.layoutMode,
     splitPercent: state?.Agent?.splitPercent,
-    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
+    selectedAgentProfile: state?.Agent?.selectedAgentProfile || null,
     listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
   }),
-  { actSetPageName, actSetSplitPercent, actSaveSelectedAgentProfileId },
+  { actSetPageName, actSetSplitPercent, actSaveSelectedAgentProfile },
 )(ChatView);

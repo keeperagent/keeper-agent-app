@@ -10,11 +10,13 @@ import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { listChainConfig } from "@/page/Agent/config";
 import HistoryTab from "./HistoryTab";
 import MemoryTab from "./MemoryTab";
+import SystemPromptTab from "./SystemPromptTab";
 import { Wrapper, ContextChip } from "./style";
 
 const TAB = {
   HISTORY: "HISTORY",
   MEMORY: "MEMORY",
+  SYSTEM_PROMPT: "SYSTEM_PROMPT",
 };
 
 type Props = {
@@ -38,9 +40,10 @@ const AgentProfileDetail = (props: Props) => {
   const [activeTab, setActiveTab] = useState(
     selectedAgentProfile?.isMainAgent ? TAB.MEMORY : TAB.HISTORY,
   );
-  const effectiveTab = selectedAgentProfile?.isMainAgent
-    ? TAB.MEMORY
-    : activeTab;
+  const effectiveTab =
+    selectedAgentProfile?.isMainAgent && activeTab === TAB.HISTORY
+      ? TAB.MEMORY
+      : activeTab;
 
   const provider = LLM_PROVIDERS.find(
     (item) => item.key === selectedAgentProfile?.llmProvider,
@@ -167,6 +170,10 @@ const AgentProfileDetail = (props: Props) => {
               ? [{ key: TAB.HISTORY, label: translate("agent.history") }]
               : []),
             { key: TAB.MEMORY, label: translate("agent.memory") },
+            {
+              key: TAB.SYSTEM_PROMPT,
+              label: translate("agent.systemPrompt"),
+            },
           ]}
           className="chat-tabs"
         />
@@ -179,6 +186,10 @@ const AgentProfileDetail = (props: Props) => {
 
         {effectiveTab === TAB.MEMORY && (
           <MemoryTab agentProfileId={agentProfileId} />
+        )}
+
+        {effectiveTab === TAB.SYSTEM_PROMPT && selectedAgentProfile && (
+          <SystemPromptTab profile={selectedAgentProfile} />
         )}
       </div>
     </Wrapper>

@@ -47,19 +47,24 @@ import { MCP_TOOL_FILTER_K } from "./mcpTool/toolFilter";
 export const createMainAgent = async (
   options?: CreateAgentOptions,
 ): Promise<MainAgent> => {
-  const provider = options?.provider || LLMProvider.CLAUDE;
-  const [llm, backgroundLlm] = await Promise.all([
-    createLLM(provider, options?.temperature || 0),
-    createBackgroundLLM(provider),
-  ]);
+  const [llmSetting] = await getLlmSetting();
+  await agentProfileDB.initMainAgent();
+  const mainProfile = await agentProfileDB.getMainAgentProfile();
+
+  const provider =
+    (mainProfile?.llmProvider as LLMProvider) ||
+    options?.provider ||
+    LLMProvider.CLAUDE;
+  const llm = await createLLM(
+    provider,
+    options?.temperature || 0,
+    mainProfile?.llmModel || undefined,
+  );
+  const backgroundLlm = await createBackgroundLLM(provider);
 
   const memoryFile = options?.memoryFile || DEFAULT_MEMORY_FILE;
   const MEMORY_VIRTUAL_PATH = `/memories/${memoryFile}`;
   const toolContext = options?.toolContext || new ToolContext();
-
-  const [llmSetting] = await getLlmSetting();
-  await agentProfileDB.initMainAgent();
-  const mainProfile = await agentProfileDB.getMainAgentProfile();
   const disabledTools = new Set<string>(llmSetting?.disabledTools || []);
 
   // Profile allowlist for base tools (null = allow all)

@@ -473,7 +473,9 @@ export type IpcUpdateSettingPayload = {
 };
 
 // Agent profile
-export type IpcGetListAgentProfilePayload = IpcPagePayload;
+export type IpcGetListAgentProfilePayload = IpcPagePayload & {
+  isActive?: boolean;
+};
 export type IpcGetOneAgentProfilePayload = {
   id: number;
 };

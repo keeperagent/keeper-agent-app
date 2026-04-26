@@ -15,12 +15,17 @@ class AgentProfileDB {
     page: number,
     pageSize: number,
     searchText?: string,
+    isActive?: boolean,
   ): Promise<[IGetListResponse<IAgentProfile> | null, Error | null]> {
     try {
       const { Op } = await import("sequelize");
-      const condition = searchText
-        ? { name: { [Op.like]: `%${searchText}%` } }
-        : {};
+      const condition: any = {};
+      if (searchText) {
+        condition.name = { [Op.like]: `%${searchText}%` };
+      }
+      if (isActive !== undefined) {
+        condition.isActive = isActive;
+      }
 
       const totalDataAwait = AgentProfileModel.count({ where: condition });
       const listDataAwait = AgentProfileModel.findAll({

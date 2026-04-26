@@ -514,7 +514,7 @@ const ContextBar = (props: any) => {
 export default connect(
   (state: RootState) => ({
     agentContextMap: state?.Agent?.agentContextMap || {},
-    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
+    selectedAgentProfileId: state?.Agent?.selectedAgentProfile?.id || null,
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
     listCampaign: state?.Campaign?.listCampaign,
     listAgentSetting: state?.Setting?.listSetting,

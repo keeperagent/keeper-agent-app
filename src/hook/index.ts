@@ -198,6 +198,7 @@ export {
   useGetAgentProfileMemory,
   useSaveAgentProfileMemory,
   useGetListAgentProfileLog,
+  useGetMainAgentSystemPrompt,
 } from "./agentProfile";
 export {
   useGetListMcpToken,

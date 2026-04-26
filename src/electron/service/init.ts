@@ -15,7 +15,6 @@ import {
   EXTENSION_FOLDER,
 } from "@/electron/constant";
 import { preferenceService } from "@/electron/service/preference";
-import { LLMProvider } from "@/electron/type";
 import { logEveryWhere, removeLastTrailingSlash } from "./util";
 
 const createFolderIfNotExist = () => {
@@ -132,7 +131,6 @@ const initDeviceId = async () => {
 
   await preferenceService.updatePreference({
     deviceId: deviceId?.slice(0, 9),
-    llmProvider: LLMProvider.CLAUDE,
   });
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, Fragment } from "react";
+import { useEffect, useState, useCallback, useMemo, Fragment } from "react";
 import AnimatedNumbers from "react-animated-numbers";
 import type { CSSProperties } from "react";
 import { connect } from "react-redux";
@@ -20,6 +20,7 @@ import { preferenceSelector } from "@/redux/preference";
 import { RootState } from "@/redux/store";
 import {
   IAgentTask,
+  IAgentProfile,
   IPreference,
   AgentTaskStatus,
   AgentTaskPriority,
@@ -171,25 +172,38 @@ const DroppableColumn = ({
   );
 };
 
-const isLLMConfigured = (preference: IPreference | null): boolean => {
-  if (!preference?.llmProvider) {
+const isLLMConfigured = (
+  preference: IPreference | null,
+  provider: LLMProvider | null,
+): boolean => {
+  if (!preference || !provider) {
     return false;
   }
-  switch (preference.llmProvider as LLMProvider) {
+
+  switch (provider) {
     case LLMProvider.CLAUDE:
       return (
-        Boolean(preference.anthropicApiKey) &&
-        Boolean(preference.anthropicModel)
+        Boolean(preference.useClaudeCLI) ||
+        (Boolean(preference.anthropicApiKey) &&
+          Boolean(preference.anthropicModel))
       );
     case LLMProvider.OPENAI:
       return (
-        Boolean(preference.openAIApiKey) && Boolean(preference.openAIModel)
+        Boolean(preference.useCodexCLI) ||
+        (Boolean(preference.openAIApiKey) && Boolean(preference.openAIModel))
       );
     case LLMProvider.GEMINI:
       return (
         Boolean(preference.googleGeminiApiKey) &&
         Boolean(preference.googleGeminiModel)
       );
+    case LLMProvider.OPENROUTER:
+      return (
+        Boolean(preference.openRouterApiKey) &&
+        Boolean(preference.openRouterModel)
+      );
+    case LLMProvider.OLLAMA:
+      return Boolean(preference.ollamaModel);
     default:
       return false;
   }
@@ -203,6 +217,13 @@ const AgentTaskPage = (props: any) => {
   const { getListAgentProfile } = useGetListAgentProfile();
   const { updateAgentTask } = useUpdateAgentTask();
   const { deleteAgentTask } = useDeleteAgentTask();
+
+  const mainAgentProvider = useMemo((): LLMProvider | null => {
+    const mainProfile = (listAgentProfile || []).find(
+      (profile: IAgentProfile) => profile.isMainAgent,
+    );
+    return (mainProfile?.llmProvider as LLMProvider) || null;
+  }, [listAgentProfile]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<IAgentTask | null>(null);
@@ -419,7 +440,7 @@ const AgentTaskPage = (props: any) => {
         </div>
       </div>
 
-      {!isLLMConfigured(preference) && (
+      {!isLLMConfigured(preference, mainAgentProvider) && (
         <Alert
           type="warning"
           title={translate("agentTask.warning.llmNotConfigured")}

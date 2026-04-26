@@ -499,6 +499,7 @@ const ModalAgentProfile = (props: Props) => {
             <Form.Item
               label={`${translate("agent.llmModel")}:`}
               name="llmModel"
+              tooltip={translate("agent.llmModelTooltip")}
               rules={[
                 { required: true, message: translate("form.requiredField") },
               ]}
@@ -506,16 +507,18 @@ const ModalAgentProfile = (props: Props) => {
               <Input className="custom-input" size="large" />
             </Form.Item>
 
-            <Form.Item
-              label={`${translate("agent.systemPrompt")}:`}
-              name="systemPrompt"
-            >
-              <TextArea
-                placeholder={translate("agent.systemPromptPlaceholder")}
-                rows={7}
-                className="custom-input"
-              />
-            </Form.Item>
+            {!profile?.isMainAgent && (
+              <Form.Item
+                label={`${translate("agent.systemPrompt")}:`}
+                name="systemPrompt"
+              >
+                <TextArea
+                  placeholder={translate("agent.systemPromptPlaceholder")}
+                  rows={7}
+                  className="custom-input"
+                />
+              </Form.Item>
+            )}
 
             <Form.Item
               label={`${translate("agent.allowedTools")}:`}

@@ -3,15 +3,11 @@ import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
-import {
-  actSetLLMProvider,
-  actSaveSelectedAgentProfileId,
-  LLMProvider,
-} from "@/redux/agent";
+import { actSaveSelectedAgentProfile, LLMProvider } from "@/redux/agent";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
-import { useUpdatePreference } from "@/hook/preference";
+import { useUpdateAgentProfile } from "@/hook/agentProfile";
 import { LLM_PROVIDERS, isProviderConfigured } from "@/config/llmProviders";
 import { IAgentProfile } from "@/electron/type";
 import { Wrapper, StatBadgeWrapper, CliTag } from "./style";
@@ -49,15 +45,16 @@ const TAB = {
 
 const AgentPage = (props: any) => {
   const {
-    llmProvider,
-    actSetLLMProvider,
-    actSaveSelectedAgentProfileId,
+    actSaveSelectedAgentProfile,
     preference,
     agentStats,
+    selectedAgentProfile,
   } = props;
-  const currentProvider = llmProvider || LLMProvider.CLAUDE;
   const { translate } = useTranslation();
-  const { updatePreference } = useUpdatePreference();
+  const { updateAgentProfile } = useUpdateAgentProfile();
+
+  const currentProvider =
+    (selectedAgentProfile?.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
 
   const [activeTab, setActiveTab] = useState(TAB.AGENT);
   const [encryptKey, setEncryptKey] = useState("");
@@ -79,7 +76,7 @@ const AgentPage = (props: any) => {
   };
 
   const onOpenProfileChat = (profile: IAgentProfile) => {
-    actSaveSelectedAgentProfileId(profile.id);
+    actSaveSelectedAgentProfile(profile);
     setActiveTab(TAB.AGENT);
   };
 
@@ -87,22 +84,31 @@ const AgentPage = (props: any) => {
     if (provider === currentProvider) {
       return;
     }
-    actSetLLMProvider(provider);
-    updatePreference({ id: preference?.id, llmProvider: provider });
+    if (selectedAgentProfile) {
+      updateAgentProfile({
+        ...selectedAgentProfile,
+        llmProvider: provider,
+        llmModel: DEFAULT_LLM_MODELS[provider],
+      });
+    }
   };
 
   const currentModelName = useMemo(() => {
-    const providerKey = currentProvider as LLMProvider;
-    const provider = LLM_PROVIDERS.find((p) => p.key === providerKey);
-    if (!provider) {
-      return DEFAULT_LLM_MODELS[providerKey];
+    if (selectedAgentProfile?.llmModel) {
+      return selectedAgentProfile.llmModel;
     }
 
-    return (
-      (preference?.[provider.modelField] as string) ||
-      DEFAULT_LLM_MODELS[providerKey]
+    const providerConfig = LLM_PROVIDERS.find(
+      (provider) => provider.key === currentProvider,
     );
-  }, [currentProvider, preference]);
+    if (!providerConfig) {
+      return DEFAULT_LLM_MODELS[currentProvider];
+    }
+    return (
+      (preference?.[providerConfig.modelField] as string) ||
+      DEFAULT_LLM_MODELS[currentProvider]
+    );
+  }, [selectedAgentProfile, currentProvider, preference]);
 
   const isClaudeCLIActive =
     currentProvider === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
@@ -253,9 +259,9 @@ const AgentPage = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    llmProvider: state?.Agent?.llmProvider,
     preference: state?.Preference?.preference,
     agentStats: state?.Agent?.agentStats || null,
+    selectedAgentProfile: state?.Agent?.selectedAgentProfile || null,
   }),
-  { actSetLLMProvider, actSaveSelectedAgentProfileId },
+  { actSaveSelectedAgentProfile },
 )(AgentPage);
