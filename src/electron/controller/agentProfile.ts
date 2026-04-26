@@ -36,11 +36,12 @@ export const agentProfileController = () => {
     MESSAGE.GET_LIST_AGENT_PROFILE,
     MESSAGE.GET_LIST_AGENT_PROFILE_RES,
     async (event, payload) => {
-      const { page, pageSize, searchText } = payload || {};
+      const { page, pageSize, searchText, isActive } = payload || {};
       const [res] = await agentProfileDB.getListAgentProfile(
         page,
         pageSize,
         searchText,
+        isActive,
       );
       event.reply(MESSAGE.GET_LIST_AGENT_PROFILE_RES, { data: res });
     },

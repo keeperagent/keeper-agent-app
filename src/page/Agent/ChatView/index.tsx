@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { useTranslation, useGetListAgentProfile } from "@/hook";
+import {
+  useTranslation,
+  useGetListAgentProfile,
+  useGetOneAgentProfile,
+} from "@/hook";
 import { IAgentProfile } from "@/electron/type";
 import { actSetPageName } from "@/redux/layout";
 import {
@@ -38,40 +42,72 @@ const ChatView = (props: any) => {
   const pointerIdRef = useRef<number | null>(null);
 
   const { translate } = useTranslation();
-  const { getListAgentProfile } = useGetListAgentProfile();
-
-  const activeProfiles = useMemo(
-    () =>
-      (listAgentProfile || []).filter(
-        (profile: IAgentProfile) => profile.isActive,
-      ),
-    [listAgentProfile],
-  );
+  const { getListAgentProfile, loading: isProfileSearchLoading } =
+    useGetListAgentProfile();
+  const { getOneAgentProfile, data: fetchedAgentProfile } =
+    useGetOneAgentProfile();
+  const searchProfileTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
-    getListAgentProfile({ page: 1, pageSize: 100 });
+    getListAgentProfile({ page: 1, pageSize: 30, isActive: true });
   }, []);
-
-  useEffect(() => {
-    if (activeProfiles.length === 0) {
-      return;
-    }
-    const isCurrentValid = activeProfiles.some(
-      (profile: IAgentProfile) => profile.id === selectedAgentProfile?.id,
-    );
-    if (isCurrentValid) {
-      return;
-    }
-    const mainProfile = activeProfiles.find(
-      (profile: IAgentProfile) => profile.isMainAgent,
-    );
-    const agentProfile = mainProfile || activeProfiles[0];
-    props.actSaveSelectedAgentProfile(agentProfile ?? null);
-  }, [activeProfiles]);
 
   useEffect(() => {
     actSetPageName?.(translate("sidebar.askAgent"));
   }, [translate, actSetPageName]);
+
+  useEffect(() => {
+    if (!listAgentProfile?.length) {
+      return;
+    }
+
+    if (selectedAgentProfile?.id) {
+      const isInList = listAgentProfile.some(
+        (profile: IAgentProfile) => profile?.id === selectedAgentProfile?.id,
+      );
+      if (!isInList) {
+        getOneAgentProfile(selectedAgentProfile.id);
+      }
+      return;
+    }
+
+    fallbackToMainProfile();
+  }, [listAgentProfile]);
+
+  useEffect(() => {
+    if (!fetchedAgentProfile) {
+      return;
+    }
+    if (fetchedAgentProfile.isActive) {
+      props.actSaveSelectedAgentProfile(fetchedAgentProfile);
+    } else {
+      fallbackToMainProfile();
+    }
+  }, [fetchedAgentProfile]);
+
+  const fallbackToMainProfile = () => {
+    const mainProfile = (listAgentProfile || []).find(
+      (profile: IAgentProfile) => profile.isMainAgent,
+    );
+    props.actSaveSelectedAgentProfile(
+      mainProfile || listAgentProfile?.[0] || null,
+    );
+  };
+
+  const onSearchProfile = (text: string) => {
+    if (searchProfileTimeoutRef.current) {
+      clearTimeout(searchProfileTimeoutRef.current);
+    }
+
+    searchProfileTimeoutRef.current = setTimeout(() => {
+      getListAgentProfile({
+        page: 1,
+        pageSize: 30,
+        searchText: text,
+        isActive: true,
+      });
+    }, 200);
+  };
 
   const applySplit = (percent: number) => {
     const clamped = Math.min(80, Math.max(20, percent));
@@ -215,6 +251,8 @@ const ChatView = (props: any) => {
               <AgentView
                 key={String(selectedAgentProfile?.id)}
                 encryptKey={encryptKey}
+                onSearchProfile={onSearchProfile}
+                isProfileSearchLoading={isProfileSearchLoading}
               />
             )}
           </div>

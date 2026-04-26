@@ -67,6 +67,8 @@ const AgentView = (props: any) => {
     encryptKey,
     layoutMode,
     listAgentProfile,
+    onSearchProfile,
+    isProfileSearchLoading,
   } = props;
   const selectedAgentProfileId = selectedAgentProfile?.id || null;
   const {
@@ -261,32 +263,22 @@ const AgentView = (props: any) => {
     props.actSaveSelectedAgentProfile(profile);
   };
 
-  const activeProfiles = useMemo(
-    () =>
-      (listAgentProfile || []).filter(
-        (profile: IAgentProfile) => profile.isActive,
-      ),
-    [listAgentProfile],
-  );
-
-  const agentProfileOptions = useMemo(
-    () =>
-      activeProfiles.map((profile: IAgentProfile) => ({
-        value: profile.id,
-        label: profile.name,
-        description: profile.description,
-      })),
-    [activeProfiles],
-  );
-
   const agentProfilePicker = (
     <Select
       size="medium"
       value={selectedAgentProfileId || null}
       onChange={onSelectProfile}
-      options={agentProfileOptions}
+      options={listAgentProfile?.map((profile: IAgentProfile) => ({
+        value: profile.id,
+        label: profile.name,
+        description: profile.description,
+      }))}
       style={{ width: 170, marginRight: 8 }}
       className="custom-select"
+      showSearch
+      onSearch={onSearchProfile}
+      filterOption={false}
+      loading={isProfileSearchLoading}
       optionRender={(option) => (
         <OptionWrapper>
           <div className="name">{option.label}</div>
