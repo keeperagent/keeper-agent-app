@@ -153,7 +153,6 @@ class PreferenceService {
         "openAIBackgroundModel",
         "anthropicBackgroundModel",
         "googleGeminiBackgroundModel",
-        "llmProvider",
         "disabledTools",
         "isMcpServerOn",
         "mcpServerPort",

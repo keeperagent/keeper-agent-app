@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { LLMProvider } from "@/electron/type";
+import { IAgentProfile, LLMProvider } from "@/electron/type";
 import { RootState } from "./store";
 
 export enum AGENT_LAYOUT_MODE {
@@ -26,11 +26,10 @@ export const defaultAgentContext: IAgentContext = {
 };
 
 interface IAgentState {
-  selectedAgentProfileId: number | null;
+  selectedAgentProfile: IAgentProfile | null;
   agentContextMap: Record<number, IAgentContext>;
   layoutMode: AGENT_LAYOUT_MODE;
   splitPercent: number;
-  llmProvider: LLMProvider;
   agentStats: {
     subAgentsCount: number;
     toolsCount: number;
@@ -39,38 +38,36 @@ interface IAgentState {
 }
 
 const initialState: IAgentState = {
-  selectedAgentProfileId: null,
+  selectedAgentProfile: null,
   agentContextMap: {},
   layoutMode: AGENT_LAYOUT_MODE.TRADE_OPTIMIZE,
   splitPercent: 50,
-  llmProvider: LLMProvider.CLAUDE,
   agentStats: null,
 };
 
 const ensureContext = (state: IAgentState): IAgentContext | null => {
-  if (!state.selectedAgentProfileId) {
+  const profileId = state.selectedAgentProfile?.id;
+  if (!profileId) {
     return null;
   }
   if (!state.agentContextMap) {
     state.agentContextMap = {};
   }
-  if (!state.agentContextMap[state.selectedAgentProfileId]) {
-    state.agentContextMap[state.selectedAgentProfileId] = {
-      ...defaultAgentContext,
-    };
+  if (!state.agentContextMap[profileId]) {
+    state.agentContextMap[profileId] = { ...defaultAgentContext };
   }
-  return state.agentContextMap[state.selectedAgentProfileId];
+  return state.agentContextMap[profileId];
 };
 
 export const agentSlice = createSlice({
   name: "Agent",
   initialState,
   reducers: {
-    actSaveSelectedAgentProfileId: (
+    actSaveSelectedAgentProfile: (
       state: IAgentState,
-      action: PayloadAction<number | null>,
+      action: PayloadAction<IAgentProfile | null>,
     ) => {
-      state.selectedAgentProfileId = action.payload;
+      state.selectedAgentProfile = action.payload;
       state.agentStats = null;
     },
     actSaveChainKey: (state: IAgentState, action: PayloadAction<string>) => {
@@ -139,12 +136,6 @@ export const agentSlice = createSlice({
     actSetSplitPercent: (state: IAgentState, action: PayloadAction<number>) => {
       state.splitPercent = action.payload;
     },
-    actSetLLMProvider: (
-      state: IAgentState,
-      action: PayloadAction<LLMProvider>,
-    ) => {
-      state.llmProvider = action.payload;
-    },
     actSaveAgentStats: (
       state: IAgentState,
       action: PayloadAction<{
@@ -160,15 +151,26 @@ export const agentSlice = createSlice({
       action: PayloadAction<number>,
     ) => {
       delete state.agentContextMap[action.payload];
-      if (state.selectedAgentProfileId === action.payload) {
-        state.selectedAgentProfileId = null;
+      if (state.selectedAgentProfile?.id === action.payload) {
+        state.selectedAgentProfile = null;
       }
     },
+  },
+  extraReducers: (builder) => {
+    // Keep selectedAgentProfile fresh when the profile is updated
+    builder.addMatcher(
+      (action) => action.type === "AgentProfile/actSaveUpdateAgentProfile",
+      (state, action: PayloadAction<IAgentProfile>) => {
+        if (state.selectedAgentProfile?.id === action.payload?.id) {
+          state.selectedAgentProfile = action.payload;
+        }
+      },
+    );
   },
 });
 
 export const {
-  actSaveSelectedAgentProfileId,
+  actSaveSelectedAgentProfile,
   actSaveChainKey,
   actSaveNodeEndpointGroupId,
   actSaveTokenAddress,
@@ -177,7 +179,6 @@ export const {
   actSaveIsAllWallet,
   actSetLayoutMode,
   actSetSplitPercent,
-  actSetLLMProvider,
   actSaveAgentStats,
   actRemoveAgentContext,
 } = agentSlice.actions;

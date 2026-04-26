@@ -1,5 +1,3 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
   AgentTaskStatus,
   AppLogType,
@@ -29,6 +27,7 @@ const LLM_MATCH_TIMEOUT_MS = 15_000;
 
 interface UnassignedDispatchContext {
   preference: IPreference;
+  provider: LLMProvider;
   activeAgents: IAgentProfile[];
   allSkills: IAgentSkill[];
   allMcpServers: IMcpServer[];
@@ -157,11 +156,15 @@ class TaskDispatcher {
   private buildUnassignedContext =
     async (): Promise<UnassignedDispatchContext | null> => {
       const [preference, prefErr] = await preferenceService.getOnePreference();
-      if (prefErr || !preference?.llmProvider) {
+      if (prefErr || !preference) {
         return null;
       }
 
-      const llmConfig = this.getLLMConfig(preference);
+      const mainProfile = await agentProfileDB.getMainAgentProfile();
+      const provider =
+        (mainProfile?.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
+
+      const llmConfig = this.getLLMConfig(preference, provider);
       if (!llmConfig) {
         return null;
       }
@@ -178,6 +181,7 @@ class TaskDispatcher {
 
       return {
         preference,
+        provider,
         activeAgents,
         allSkills: allSkills || [],
         allMcpServers,
@@ -188,7 +192,8 @@ class TaskDispatcher {
     task: IAgentTask,
     context: UnassignedDispatchContext,
   ): Promise<void> => {
-    const { preference, activeAgents, allSkills, allMcpServers } = context;
+    const { preference, provider, activeAgents, allSkills, allMcpServers } =
+      context;
 
     const candidates = this.textPreFilter(task, activeAgents);
     const candidateIds = new Set(candidates.map((agent) => agent.id));
@@ -203,6 +208,7 @@ class TaskDispatcher {
       allSkills,
       allMcpServers,
       preference,
+      provider,
     );
     if (!chosenAgentId) {
       return;
@@ -276,8 +282,9 @@ class TaskDispatcher {
     allSkills: IAgentSkill[],
     allMcpServers: IMcpServer[],
     preference: IPreference,
+    provider: LLMProvider,
   ): Promise<number | null> => {
-    const llmConfig = this.getLLMConfig(preference);
+    const llmConfig = this.getLLMConfig(preference, provider);
     if (!llmConfig) {
       return null;
     }
@@ -329,9 +336,6 @@ Reply with a JSON object in this exact format: { "agentId": <number> }
 Use agentId 0 if no agent is suitable. Return only the JSON object, no other text.`;
 
     try {
-      const provider = preference.llmProvider as LLMProvider;
-      let responseContent: string;
-
       const abortController = new AbortController();
       let timeoutId: any = null;
       const timeoutPromise = new Promise<any>((_, reject) => {
@@ -345,53 +349,15 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
         }, LLM_MATCH_TIMEOUT_MS);
       });
 
-      switch (provider) {
-        case LLMProvider.CLAUDE:
-        case LLMProvider.OPENAI: {
-          const llm = await createLLM(provider, 0, llmConfig.model);
-          const result = await Promise.race([
-            llm.invoke([{ role: "user", content: prompt }], {
-              signal: abortController.signal,
-            }),
-            timeoutPromise,
-          ]);
-          clearTimeout(timeoutId!);
-          responseContent = String(result.content).trim();
-          break;
-        }
-        case LLMProvider.GEMINI: {
-          const llm = new ChatGoogleGenerativeAI({
-            apiKey: llmConfig.apiKey,
-            model: llmConfig.model,
-            temperature: 0,
-          });
-          const result = await Promise.race([
-            llm.invoke([{ role: "user", content: prompt }], {
-              signal: abortController.signal,
-            }),
-            timeoutPromise,
-          ]);
-          clearTimeout(timeoutId!);
-          responseContent = String(result.content).trim();
-          break;
-        }
-        default: {
-          const llm = new ChatOpenAI({
-            apiKey: llmConfig.apiKey,
-            model: llmConfig.model,
-            temperature: 0,
-          });
-          const result = await Promise.race([
-            llm.invoke([{ role: "user", content: prompt }], {
-              signal: abortController.signal,
-            }),
-            timeoutPromise,
-          ]);
-          clearTimeout(timeoutId!);
-          responseContent = String(result.content).trim();
-          break;
-        }
-      }
+      const llm = await createLLM(provider, 0, llmConfig.model);
+      const result = await Promise.race([
+        llm.invoke([{ role: "user", content: prompt }], {
+          signal: abortController.signal,
+        }),
+        timeoutPromise,
+      ]);
+      clearTimeout(timeoutId!);
+      const responseContent = String(result.content).trim();
 
       const parsed = JSON.parse(responseContent);
       const agentId = parsed?.agentId;
@@ -409,8 +375,8 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
 
   private getLLMConfig = (
     preference: IPreference,
+    provider: LLMProvider,
   ): { apiKey: string; model: string } | null => {
-    const provider = preference.llmProvider as LLMProvider;
     switch (provider) {
       case LLMProvider.CLAUDE: {
         if (preference.useClaudeCLI) {
@@ -444,6 +410,21 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
           apiKey: preference.googleGeminiApiKey,
           model: preference.googleGeminiModel,
         };
+      }
+      case LLMProvider.OPENROUTER: {
+        if (!preference.openRouterApiKey || !preference.openRouterModel) {
+          return null;
+        }
+        return {
+          apiKey: preference.openRouterApiKey,
+          model: preference.openRouterModel,
+        };
+      }
+      case LLMProvider.OLLAMA: {
+        if (!preference.ollamaModel) {
+          return null;
+        }
+        return { apiKey: "", model: preference.ollamaModel };
       }
       default:
         return null;

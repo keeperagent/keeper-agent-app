@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MESSAGE } from "@/electron/constant";
-import {
-  actSetLLMProvider,
-  actSaveAgentStats,
-  agentSelector,
-  LLMProvider,
-} from "@/redux/agent";
+import { actSaveAgentStats, agentSelector, LLMProvider } from "@/redux/agent";
 import { ChatRole } from "@/electron/chatGateway/types";
 import { type TurnUsage } from "@/electron/type";
 import {
@@ -102,7 +97,9 @@ const useDashboardAgent = (profileId: number | null = null) => {
 
   const dispatch = useDispatch();
   const agentState = useSelector(agentSelector);
-  const llmProvider = agentState?.llmProvider || LLMProvider.OPENAI;
+  const llmProvider =
+    (agentState?.selectedAgentProfile?.llmProvider as LLMProvider) ||
+    LLMProvider.CLAUDE;
 
   const [sessionId, setSessionId] = useState<string | null>(
     persistedSession?.sessionId ?? null,
@@ -882,18 +879,14 @@ const useDashboardAgent = (profileId: number | null = null) => {
     });
   }, []);
 
-  const changeProvider = useCallback(
-    (provider: LLMProvider) => {
-      dispatch(actSetLLMProvider(provider));
-      if (!sessionIdRef.current) return;
-      setAgentReady(false);
-      window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER, {
-        sessionId: sessionIdRef.current,
-        provider,
-      });
-    },
-    [dispatch],
-  );
+  const changeProvider = useCallback((provider: LLMProvider) => {
+    if (!sessionIdRef.current) return;
+    setAgentReady(false);
+    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER, {
+      sessionId: sessionIdRef.current,
+      provider,
+    });
+  }, []);
 
   const stopAgent = useCallback(() => {
     if (!sessionIdRef.current) return;

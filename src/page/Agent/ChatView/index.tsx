@@ -7,7 +7,7 @@ import { actSetPageName } from "@/redux/layout";
 import {
   AGENT_LAYOUT_MODE,
   actSetSplitPercent,
-  actSaveSelectedAgentProfileId,
+  actSaveSelectedAgentProfile,
 } from "@/redux/agent";
 import { PageWrapper } from "./style";
 import TokenChart from "./TokenChart";
@@ -22,7 +22,7 @@ const ChatView = (props: any) => {
     layoutMode,
     splitPercent,
     actSetSplitPercent,
-    selectedAgentProfileId,
+    selectedAgentProfile,
     listAgentProfile,
     setEncryptKey,
     encryptKey,
@@ -57,7 +57,7 @@ const ChatView = (props: any) => {
       return;
     }
     const isCurrentValid = activeProfiles.some(
-      (profile: IAgentProfile) => profile.id === selectedAgentProfileId,
+      (profile: IAgentProfile) => profile.id === selectedAgentProfile?.id,
     );
     if (isCurrentValid) {
       return;
@@ -65,8 +65,8 @@ const ChatView = (props: any) => {
     const mainProfile = activeProfiles.find(
       (profile: IAgentProfile) => profile.isMainAgent,
     );
-    const fallback = mainProfile || activeProfiles[0];
-    props.actSaveSelectedAgentProfileId(fallback?.id ?? null);
+    const agentProfile = mainProfile || activeProfiles[0];
+    props.actSaveSelectedAgentProfile(agentProfile ?? null);
   }, [activeProfiles]);
 
   useEffect(() => {
@@ -206,14 +206,14 @@ const ChatView = (props: any) => {
               : { flexBasis: `${100 - splitPercent}%` }
           }
         >
-          {Boolean(props.selectedAgentProfileId) && (
+          {Boolean(selectedAgentProfile?.id) && (
             <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
           )}
 
           <div className="agent-view-wrapper" style={{ marginTop: "0.8rem" }}>
-            {Boolean(props.selectedAgentProfileId) && (
+            {Boolean(selectedAgentProfile?.id) && (
               <AgentView
-                key={String(props.selectedAgentProfileId)}
+                key={String(selectedAgentProfile?.id)}
                 encryptKey={encryptKey}
               />
             )}
@@ -228,8 +228,8 @@ export default connect(
   (state: RootState) => ({
     layoutMode: state?.Agent?.layoutMode,
     splitPercent: state?.Agent?.splitPercent,
-    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
+    selectedAgentProfile: state?.Agent?.selectedAgentProfile || null,
     listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
   }),
-  { actSetPageName, actSetSplitPercent, actSaveSelectedAgentProfileId },
+  { actSetPageName, actSetSplitPercent, actSaveSelectedAgentProfile },
 )(ChatView);

@@ -2533,7 +2533,6 @@ export type IPreference = {
   isMcpServerOn?: boolean;
   mcpServerPort?: number;
   isScreenCaptureProtectionOn?: boolean;
-  llmProvider?: string;
   useClaudeCLI?: boolean;
   useCodexCLI?: boolean;
 };

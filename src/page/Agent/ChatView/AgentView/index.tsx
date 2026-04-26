@@ -9,12 +9,11 @@ import {
   useTranslation,
   useCheckModelCapability,
 } from "@/hook";
-import { IAgentProfile, LLMProvider } from "@/electron/type";
+import { IAgentProfile } from "@/electron/type";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
-import { preferenceSelector } from "@/redux/preference";
 import {
   actSetLayoutMode,
-  actSaveSelectedAgentProfileId,
+  actSaveSelectedAgentProfile,
   defaultAgentContext,
   IAgentContext,
 } from "@/redux/agent";
@@ -64,13 +63,12 @@ const OptionWrapper = styled.div`
 const AgentView = (props: any) => {
   const {
     agentContextMap,
-    selectedAgentProfileId,
+    selectedAgentProfile,
     encryptKey,
     layoutMode,
-    preference,
     listAgentProfile,
   } = props;
-
+  const selectedAgentProfileId = selectedAgentProfile?.id || null;
   const {
     tokenAddress,
     nodeEndpointGroupId,
@@ -111,27 +109,10 @@ const AgentView = (props: any) => {
     }
   }, [sessionId, creatingSession, createSession]);
 
-  const modelName = useMemo(() => {
-    const preferenceByProvider: Record<LLMProvider, string> = {
-      [LLMProvider.OPENAI]:
-        preference?.openAIModel || DEFAULT_LLM_MODELS[LLMProvider.OPENAI],
-      [LLMProvider.CLAUDE]:
-        preference?.anthropicModel || DEFAULT_LLM_MODELS[LLMProvider.CLAUDE],
-      [LLMProvider.GEMINI]:
-        preference?.googleGeminiModel || DEFAULT_LLM_MODELS[LLMProvider.GEMINI],
-      [LLMProvider.OPENROUTER]:
-        preference?.openRouterModel ||
-        DEFAULT_LLM_MODELS[LLMProvider.OPENROUTER],
-      [LLMProvider.OLLAMA]:
-        preference?.ollamaModel || DEFAULT_LLM_MODELS[LLMProvider.OLLAMA],
-    };
-    return preferenceByProvider[llmProvider];
-  }, [
-    llmProvider,
-    preference?.openAIModel,
-    preference?.anthropicModel,
-    preference?.googleGeminiModel,
-  ]);
+  const modelName = useMemo(
+    () => selectedAgentProfile?.llmModel || DEFAULT_LLM_MODELS[llmProvider],
+    [selectedAgentProfile?.llmModel, llmProvider],
+  );
 
   useEffect(() => {
     checkModelCapability(modelName, llmProvider);
@@ -273,7 +254,11 @@ const AgentView = (props: any) => {
   };
 
   const onSelectProfile = (profileId: number) => {
-    props.actSaveSelectedAgentProfileId(profileId);
+    const profile =
+      (listAgentProfile || []).find(
+        (item: IAgentProfile) => item.id === profileId,
+      ) || null;
+    props.actSaveSelectedAgentProfile(profile);
   };
 
   const activeProfiles = useMemo(
@@ -343,10 +328,9 @@ const AgentView = (props: any) => {
 export default connect(
   (state: RootState) => ({
     agentContextMap: state?.Agent?.agentContextMap || {},
-    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
+    selectedAgentProfile: state?.Agent?.selectedAgentProfile || null,
     layoutMode: state?.Agent?.layoutMode,
     listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
-    preference: preferenceSelector(state)?.preference,
   }),
-  { actSetLayoutMode, actSaveSelectedAgentProfileId },
+  { actSetLayoutMode, actSaveSelectedAgentProfile },
 )(AgentView);
