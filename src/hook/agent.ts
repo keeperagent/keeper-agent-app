@@ -970,4 +970,8 @@ const useAgentReadyStats = (active: boolean) => {
   }, [dispatch, active]);
 };
 
-export { useDashboardAgent, useAgentReadyStats };
+const invalidatePersistedSession = (profileId: number) => {
+  persistedSessions.delete(getSessionKey(profileId));
+};
+
+export { useDashboardAgent, useAgentReadyStats, invalidatePersistedSession };

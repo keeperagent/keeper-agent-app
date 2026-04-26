@@ -20,15 +20,24 @@ const TAB = {
 type Props = {
   agentProfileId: number;
   onBack: () => void;
+  onOpenChat?: (profile: IAgentProfile) => void;
   selectedAgentProfile?: IAgentProfile | null;
   listCampaign?: ICampaign[];
 };
 
 const AgentProfileDetail = (props: Props) => {
-  const { agentProfileId, onBack, selectedAgentProfile, listCampaign } = props;
+  const {
+    agentProfileId,
+    onBack,
+    onOpenChat,
+    selectedAgentProfile,
+    listCampaign,
+  } = props;
   const { translate } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState(TAB.HISTORY);
+  const [activeTab, setActiveTab] = useState(
+    selectedAgentProfile?.isMainAgent ? TAB.MEMORY : TAB.HISTORY,
+  );
 
   const provider = LLM_PROVIDERS.find(
     (item) => item.key === selectedAgentProfile?.llmProvider,
@@ -97,6 +106,16 @@ const AgentProfileDetail = (props: Props) => {
             )}
           </div>
 
+          {onOpenChat && selectedAgentProfile && (
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => onOpenChat(selectedAgentProfile)}
+            >
+              {translate("agent.chat")}
+            </Button>
+          )}
+
           {provider && (
             <ContextChip>
               {provider.icon && (
@@ -141,7 +160,9 @@ const AgentProfileDetail = (props: Props) => {
           activeKey={activeTab}
           onChange={setActiveTab}
           items={[
-            { key: TAB.HISTORY, label: translate("agent.history") },
+            ...(!selectedAgentProfile?.isMainAgent
+              ? [{ key: TAB.HISTORY, label: translate("agent.history") }]
+              : []),
             { key: TAB.MEMORY, label: translate("agent.memory") },
           ]}
           className="chat-tabs"

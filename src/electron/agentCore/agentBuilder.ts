@@ -95,8 +95,8 @@ export type CreateProfileAgentOptions = {
 
 export type MainAgent = {
   agent: DeepAgent;
-  llm: any;
-  systemPrompt: string;
+  llm?: any;
+  systemPrompt?: string;
   cleanup: () => Promise<void>;
   toolContext: ToolContext;
   subAgentsCount: number;

@@ -13,6 +13,7 @@ import { useTranslation } from "@/hook/useTranslation";
 import AgentProfileCard from "./AgentProfileCard";
 import AgentProfileDetail from "./AgentProfileDetail";
 import ModalAgentProfile from "./ModalAgentProfile";
+import { Wrapper } from "./style";
 
 const PAGE_SIZE = 12;
 
@@ -22,6 +23,7 @@ type Props = {
   page: number;
   selectedAgentProfile: IAgentProfile | null;
   actSaveSelectedAgentProfile: (profile: IAgentProfile | null) => void;
+  onOpenChat?: (profile: IAgentProfile) => void;
 };
 
 const AgentProfileManager = (props: Props) => {
@@ -30,6 +32,7 @@ const AgentProfileManager = (props: Props) => {
     totalData,
     page,
     selectedAgentProfile,
+    onOpenChat,
     actSaveSelectedAgentProfile,
   } = props;
   const { translate } = useTranslation();
@@ -104,12 +107,20 @@ const AgentProfileManager = (props: Props) => {
       <AgentProfileDetail
         agentProfileId={detailProfileId}
         onBack={onCloseDetail}
+        onOpenChat={
+          onOpenChat
+            ? (profile) => {
+                onCloseDetail();
+                onOpenChat(profile);
+              }
+            : undefined
+        }
       />
     );
   }
 
   return (
-    <Fragment>
+    <Wrapper>
       <div className="header">
         <div className="header-search">
           <SearchInput
@@ -145,6 +156,7 @@ const AgentProfileManager = (props: Props) => {
                 onEdit={onOpenEdit}
                 onDelete={onDelete}
                 onOpenChat={onOpenDetail}
+                onChat={onOpenChat}
               />
             ))}
           </div>
@@ -188,7 +200,7 @@ const AgentProfileManager = (props: Props) => {
         profile={selectedAgentProfile}
         onClose={onCloseModal}
       />
-    </Fragment>
+    </Wrapper>
   );
 };
 

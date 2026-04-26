@@ -445,10 +445,18 @@ class AgentTaskScheduler {
           `AgentProfile #${job.agentProfileId} not found for job ${job.id}`,
         );
       }
-      agentCreator = await createAgentFromProfile({
-        profile,
-        toolContext,
-      });
+      if (profile.isMainAgent) {
+        agentCreator = await createMainAgent({
+          provider: job.llmProvider as LLMProvider,
+          toolContext,
+          memoryFile,
+        });
+      } else {
+        agentCreator = await createAgentFromProfile({
+          profile,
+          toolContext,
+        });
+      }
     } else {
       agentCreator = await createMainAgent({
         provider: job.llmProvider as LLMProvider,

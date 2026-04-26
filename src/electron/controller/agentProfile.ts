@@ -11,6 +11,7 @@ import { sendToRenderer } from "@/electron/main";
 import { getMemoryDir } from "@/electron/service/agentSkill";
 import { MEMORY_TEMPLATE } from "@/electron/agentCore";
 import { agentProfileChatBridge } from "@/electron/chatGateway/agentProfileBridge";
+import { agentChatBridge } from "@/electron/chatGateway/bridge";
 import type {
   IpcGetListAgentProfilePayload,
   IpcGetOneAgentProfilePayload,
@@ -79,6 +80,9 @@ export const agentProfileController = () => {
         event.reply(MESSAGE.UPDATE_AGENT_PROFILE_RES, { error: err?.message });
         return;
       }
+      if (data?.id) {
+        agentChatBridge.invalidateProfileSession(data.id).catch(() => {});
+      }
       event.reply(MESSAGE.UPDATE_AGENT_PROFILE_RES, { data: res });
     },
   );
@@ -102,6 +106,9 @@ export const agentProfileController = () => {
           error: deleteErr?.message,
         });
         return;
+      }
+      for (const profileId of listId) {
+        agentChatBridge.cleanupProfileSession(profileId).catch(() => {});
       }
       if (unassignedCount > 0) {
         sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);

@@ -135,12 +135,12 @@ export const agentController = () => {
       createResponse(event, MESSAGE.DASHBOARD_AGENT_CREATE_SESSION_RES, {
         data: {
           sessionId,
-          agentReady: !!session.keeper,
+          agentReady: Boolean(session.agent),
           noApiKey: !keyExists,
-          ...(session.keeper && {
-            subAgentsCount: session.keeper.subAgentsCount,
-            toolsCount: session.keeper.toolsCount,
-            skillsCount: session.keeper.skillsCount,
+          ...(session.agent && {
+            subAgentsCount: session.agent.subAgentsCount,
+            toolsCount: session.agent.toolsCount,
+            skillsCount: session.agent.skillsCount,
           }),
         },
       });
@@ -290,11 +290,11 @@ export const agentController = () => {
       createResponse(event, MESSAGE.DASHBOARD_AGENT_GET_STATUS_RES, {
         data: {
           sessionId,
-          ready: !!session?.keeper,
-          ...(session?.keeper && {
-            subAgentsCount: session.keeper.subAgentsCount,
-            toolsCount: session.keeper.toolsCount,
-            skillsCount: session.keeper.skillsCount,
+          ready: !!session?.agent,
+          ...(session?.agent && {
+            subAgentsCount: session.agent.subAgentsCount,
+            toolsCount: session.agent.toolsCount,
+            skillsCount: session.agent.skillsCount,
           }),
         },
       });

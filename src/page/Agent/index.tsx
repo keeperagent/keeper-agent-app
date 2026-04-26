@@ -3,13 +3,18 @@ import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
-import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
+import {
+  actSetLLMProvider,
+  actSaveSelectedAgentProfileId,
+  LLMProvider,
+} from "@/redux/agent";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
 import { useUpdatePreference } from "@/hook/preference";
 import { LLM_PROVIDERS, isProviderConfigured } from "@/config/llmProviders";
-import { Wrapper, StatBadgeWrapper, CliTag, AgentHubTabWrapper } from "./style";
+import { IAgentProfile } from "@/electron/type";
+import { Wrapper, StatBadgeWrapper, CliTag } from "./style";
 import ChatView from "./ChatView";
 
 const AgentProfileManager = lazy(() => import("./AgentProfileManager"));
@@ -43,7 +48,13 @@ const TAB = {
 };
 
 const AgentPage = (props: any) => {
-  const { llmProvider, actSetLLMProvider, preference, agentStats } = props;
+  const {
+    llmProvider,
+    actSetLLMProvider,
+    actSaveSelectedAgentProfileId,
+    preference,
+    agentStats,
+  } = props;
   const currentProvider = llmProvider || LLMProvider.CLAUDE;
   const { translate } = useTranslation();
   const { updatePreference } = useUpdatePreference();
@@ -65,6 +76,11 @@ const AgentPage = (props: any) => {
 
   const onChangeTab = (key: string) => {
     setActiveTab(key);
+  };
+
+  const onOpenProfileChat = (profile: IAgentProfile) => {
+    actSaveSelectedAgentProfileId(profile.id);
+    setActiveTab(TAB.AGENT);
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
@@ -201,9 +217,9 @@ const AgentPage = (props: any) => {
           )}
 
           {activeTab === TAB.AGENTS && (
-            <AgentHubTabWrapper>
-              <AgentProfileManager />
-            </AgentHubTabWrapper>
+            <Suspense fallback={TabFallback}>
+              <AgentProfileManager onOpenChat={onOpenProfileChat} />
+            </Suspense>
           )}
 
           {activeTab === TAB.MCP_SERVER && (
@@ -241,5 +257,5 @@ export default connect(
     preference: state?.Preference?.preference,
     agentStats: state?.Agent?.agentStats || null,
   }),
-  { actSetLLMProvider },
+  { actSetLLMProvider, actSaveSelectedAgentProfileId },
 )(AgentPage);
