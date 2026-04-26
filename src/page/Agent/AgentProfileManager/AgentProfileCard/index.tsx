@@ -1,3 +1,4 @@
+import { Fragment, useState } from "react";
 import { Popconfirm } from "antd";
 import { IAgentProfile } from "@/electron/type";
 import { TrashIcon } from "@/component/Icon";
@@ -5,8 +6,8 @@ import { trimText, formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { EMPTY_STRING } from "@/config/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
-import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
 import Status from "@/component/Status";
+import { listChainConfig } from "@/page/Agent/config";
 import { Wrapper, ProviderBadge } from "./style";
 
 type Props = {
@@ -14,11 +15,13 @@ type Props = {
   onEdit: (profile: IAgentProfile) => void;
   onDelete: (profile: IAgentProfile) => void;
   onOpenChat: (profile: IAgentProfile) => void;
+  onChat?: (profile: IAgentProfile) => void;
 };
 
 const AgentProfileCard = (props: Props) => {
-  const { profile, onEdit, onDelete, onOpenChat } = props;
+  const { profile, onEdit, onDelete, onOpenChat, onChat } = props;
   const { translate, locale } = useTranslation();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const provider = LLM_PROVIDERS.find(
     (item) => item.key === profile?.llmProvider,
@@ -39,7 +42,7 @@ const AgentProfileCard = (props: Props) => {
   const allowedSkillCount = profile.allowedSkillIds?.length || 0;
 
   return (
-    <Wrapper>
+    <Wrapper className={deleteConfirmOpen ? "icons-pinned" : ""}>
       <div className="item-dots-row" aria-hidden>
         <div className="item-dots">
           <span className="item-dot item-dot-red" />
@@ -63,6 +66,13 @@ const AgentProfileCard = (props: Props) => {
         )}
 
         <span className="item-name">{profile.name}</span>
+
+        {profile.isMainAgent && (
+          <span className="item-main-badge">
+            {translate("agent.mainAgent")}
+          </span>
+        )}
+
         <Status
           content={
             profile.isActive ? translate("active") : translate("inActive")
@@ -78,13 +88,15 @@ const AgentProfileCard = (props: Props) => {
         tabIndex={0}
         onClick={() => onEdit(profile)}
       >
-        <div className="item-center-row">
-          <ProviderBadge>
-            {providerIcon && <img src={providerIcon} alt={providerLabel} />}
-            <span className="provider-name">{providerLabel}</span>
-            {modelLabel && <span className="model-name">{modelLabel}</span>}
-          </ProviderBadge>
-        </div>
+        {chainConfig && (
+          <div className="item-center-row">
+            <ProviderBadge>
+              {providerIcon && <img src={providerIcon} alt={providerLabel} />}
+              <span className="provider-name">{providerLabel}</span>
+              {modelLabel && <span className="model-name">{modelLabel}</span>}
+            </ProviderBadge>
+          </div>
+        )}
 
         <div className="item-center-row">
           <span className="item-label">{translate("description")}</span>
@@ -134,19 +146,29 @@ const AgentProfileCard = (props: Props) => {
         </span>
 
         <div className="item-actions">
-          <Popconfirm
-            title={translate("confirmDelete")}
-            onConfirm={() => onDelete(profile)}
-            okText={translate("yes")}
-            cancelText={translate("no")}
-          >
-            <div
-              className="btn-icon btn-delete"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <TrashIcon className="trash" />
-            </div>
-          </Popconfirm>
+          {!profile.isMainAgent && (
+            <Fragment>
+              <div className="item-icon-group">
+                <Popconfirm
+                  title={translate("confirmDelete")}
+                  open={deleteConfirmOpen}
+                  onOpenChange={setDeleteConfirmOpen}
+                  onConfirm={() => onDelete(profile)}
+                  okText={translate("yes")}
+                  cancelText={translate("no")}
+                >
+                  <div
+                    className="btn-icon btn-delete"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <TrashIcon className="trash" />
+                  </div>
+                </Popconfirm>
+              </div>
+
+              <div className="item-actions-separator" />
+            </Fragment>
+          )}
 
           <div
             className="btn-chat"
@@ -157,6 +179,18 @@ const AgentProfileCard = (props: Props) => {
           >
             {translate("agent.openChat")}
           </div>
+
+          {onChat && (
+            <div
+              className="btn-chat"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChat(profile);
+              }}
+            >
+              {translate("agent.chat")}
+            </div>
+          )}
         </div>
       </div>
     </Wrapper>

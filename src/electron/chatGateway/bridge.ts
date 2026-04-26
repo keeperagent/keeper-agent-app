@@ -16,6 +16,7 @@ import fs from "fs-extra";
 import { redact, guard } from "@keeperagent/crypto-key-guard";
 import {
   createMainAgent,
+  createAgentFromProfile,
   createBackgroundLLM,
   hasApiKey,
   getModelName,
@@ -23,6 +24,7 @@ import {
   ToolContext,
   type IAttachedFileContext,
 } from "@/electron/agentCore";
+import { agentProfileDB } from "@/electron/database/agentProfile";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
 import { looksLikeEncryptKey, isErrorResult } from "@/electron/agentCore/utils";
@@ -89,13 +91,14 @@ const truncateToolResultForIpc = (
 export type AgentSession = {
   checkpointer: MemorySaver;
   threadId: string;
-  keeper: MainAgent | null;
+  agent: MainAgent | null;
   initPromise: Promise<void> | null;
   provider: LLMProvider;
   contextTokens: number;
   toolContext: ToolContext;
   platformId: ChatPlatform;
   platformChatId: string;
+  agentProfileId: number | null;
   isCompacting: boolean;
   //  Summary text from the last compaction, injected into the new thread on first run
   pendingSummary: string | null;
@@ -193,13 +196,42 @@ class AgentChatBridge {
     });
   };
 
+  private buildAgent = async (session: AgentSession): Promise<MainAgent> => {
+    if (session.agentProfileId) {
+      const [profile] = await agentProfileDB.getOneAgentProfile(
+        session.agentProfileId,
+      );
+      if (!profile) {
+        throw new Error(`AgentProfile #${session.agentProfileId} not found`);
+      }
+      if (profile.isMainAgent) {
+        return createMainAgent({
+          checkpointer: session.checkpointer,
+          provider: session.provider,
+          toolContext: session.toolContext,
+        });
+      }
+      return createAgentFromProfile({
+        profile,
+        checkpointer: session.checkpointer,
+        toolContext: session.toolContext,
+      });
+    }
+
+    return createMainAgent({
+      checkpointer: session.checkpointer,
+      provider: session.provider,
+      toolContext: session.toolContext,
+    });
+  };
+
   private initAgentInBackground = (
     sessionKey: string,
     session: AgentSession,
   ) => {
     const notifyReady = (
       ready: boolean,
-      keeper?: {
+      agentInstance?: {
         subAgentsCount: number;
         toolsCount: number;
         skillsCount: number;
@@ -215,9 +247,9 @@ class AgentChatBridge {
         mainWindow?.webContents?.send(MESSAGE.DASHBOARD_AGENT_READY, {
           sessionId: sessionKey,
           ready,
-          subAgentsCount: keeper?.subAgentsCount || 0,
-          toolsCount: keeper?.toolsCount || 0,
-          skillsCount: keeper?.skillsCount || 0,
+          subAgentsCount: agentInstance?.subAgentsCount || 0,
+          toolsCount: agentInstance?.toolsCount || 0,
+          skillsCount: agentInstance?.skillsCount || 0,
           noApiKey: options?.noApiKey || false,
         });
       }
@@ -234,27 +266,23 @@ class AgentChatBridge {
         return;
       }
 
-      const keeper = await createMainAgent({
-        checkpointer: session.checkpointer,
-        provider: session.provider,
-        toolContext: session.toolContext,
-      });
+      const agentInstance = await this.buildAgent(session);
 
       if (
         this.sessions.has(sessionKey) &&
         this.sessions.get(sessionKey) === session
       ) {
-        session.keeper = keeper;
+        session.agent = agentInstance;
         logEveryWhere({
           message: `[AgentChatBridge] Agent initialised for ${sessionKey}`,
         });
-        notifyReady(true, keeper);
+        notifyReady(true, agentInstance);
       } else {
         logEveryWhere({
           message:
             "[AgentChatBridge] Agent init completed but session was replaced",
         });
-        keeper.cleanup().catch(() => {});
+        agentInstance.cleanup().catch(() => {});
       }
     })()
       .catch((err: any) => {
@@ -275,15 +303,13 @@ class AgentChatBridge {
       await session.initPromise;
       session.initPromise = null;
     }
-    if (session.keeper) return session.keeper;
+    if (session.agent) {
+      return session.agent;
+    }
 
-    const keeper = await createMainAgent({
-      checkpointer: session.checkpointer,
-      provider: session.provider,
-      toolContext: session.toolContext,
-    });
-    session.keeper = keeper;
-    return keeper;
+    const agentInstance = await this.buildAgent(session);
+    session.agent = agentInstance;
+    return agentInstance;
   };
 
   /**
@@ -305,6 +331,7 @@ class AgentChatBridge {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
+        session.agentProfileId,
       );
       if (messages.length < MIN_MESSAGES_FOR_COMPACTION) {
         return null;
@@ -347,6 +374,7 @@ class AgentChatBridge {
         lastId,
         session.platformId,
         session.platformChatId,
+        session.agentProfileId,
       );
       logEveryWhere({
         message: "[AgentChatBridge] Background summarisation completed",
@@ -371,6 +399,7 @@ class AgentChatBridge {
       const [messages] = await chatHistoryDB.getMessagesForSummarization(
         session.platformId,
         session.platformChatId,
+        session.agentProfileId,
       );
       if (messages.length === 0) {
         return;
@@ -394,9 +423,9 @@ class AgentChatBridge {
         if (!currentSession || currentSession !== session) {
           return;
         }
-        if (currentSession.keeper)
-          currentSession.keeper.cleanup().catch(() => {});
-        currentSession.keeper = null;
+        if (currentSession.agent)
+          currentSession.agent.cleanup().catch(() => {});
+        currentSession.agent = null;
         currentSession.initPromise = null;
         currentSession.threadId = randomUUID();
         currentSession.checkpointer = new MemorySaver();
@@ -416,13 +445,14 @@ class AgentChatBridge {
     const session: AgentSession = {
       checkpointer: new MemorySaver(),
       threadId: randomUUID(),
-      keeper: null,
+      agent: null,
       initPromise: null,
       provider,
       contextTokens: 0,
       toolContext: new ToolContext(),
       platformId: ChatPlatform.KEEPER,
       platformChatId: "default",
+      agentProfileId: null,
       isCompacting: false,
       pendingSummary: null,
       expectingEncryptKey: false,
@@ -438,6 +468,7 @@ class AgentChatBridge {
 
   createIpcSession = async (
     provider: LLMProvider,
+    agentProfileId: number | null = null,
   ): Promise<{
     sessionId: string;
     session: AgentSession;
@@ -452,7 +483,9 @@ class AgentChatBridge {
       const sessionKey = this.prewarmedSessionId;
       this.prewarmedSessionId = null;
       const session = this.sessions.get(sessionKey)!;
-      if (!session.keeper && session.initPromise) {
+      session.agentProfileId = agentProfileId;
+      session.platformChatId = ChatPlatform.KEEPER;
+      if (!session.agent && session.initPromise) {
         await session.initPromise.catch(() => {});
         session.initPromise = null;
       }
@@ -462,7 +495,9 @@ class AgentChatBridge {
     // Discard pre-warmed if provider differs
     if (this.prewarmedSessionId && this.sessions.has(this.prewarmedSessionId)) {
       const old = this.sessions.get(this.prewarmedSessionId)!;
-      if (old.keeper) old.keeper.cleanup().catch(() => {});
+      if (old.agent) {
+        old.agent.cleanup().catch(() => {});
+      }
       this.sessions.delete(this.prewarmedSessionId);
       this.prewarmedSessionId = null;
     }
@@ -471,13 +506,14 @@ class AgentChatBridge {
     const session: AgentSession = {
       checkpointer: new MemorySaver(),
       threadId: randomUUID(),
-      keeper: null,
+      agent: null,
       initPromise: null,
       provider: requestedProvider,
       contextTokens: 0,
       toolContext: new ToolContext(),
       platformId: ChatPlatform.KEEPER,
-      platformChatId: "default",
+      platformChatId: ChatPlatform.KEEPER,
+      agentProfileId,
       isCompacting: false,
       pendingSummary: null,
       expectingEncryptKey: false,
@@ -873,9 +909,9 @@ class AgentChatBridge {
     // Extract memory from remaining messages before clearing the session
     this.runMemoryExtractionForSession(session).catch(() => {});
 
-    if (session.keeper) {
-      await session.keeper.cleanup();
-      session.keeper = null;
+    if (session.agent) {
+      await session.agent.cleanup();
+      session.agent = null;
     }
     session.initPromise = null;
     session.threadId = randomUUID();
@@ -889,9 +925,9 @@ class AgentChatBridge {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found or has expired");
 
-    if (session.keeper) {
-      await session.keeper.cleanup();
-      session.keeper = null;
+    if (session.agent) {
+      await session.agent.cleanup();
+      session.agent = null;
     }
     session.initPromise = null;
     session.provider = provider;
@@ -904,7 +940,7 @@ class AgentChatBridge {
 
   getStatus = async (sessionId: string) => {
     const session = this.sessions.get(sessionId);
-    if (session && !session.keeper && !session.initPromise) {
+    if (session && !session.agent && !session.initPromise) {
       const keyExists = await hasApiKey(session.provider);
       if (keyExists) {
         logEveryWhere({
@@ -934,9 +970,9 @@ class AgentChatBridge {
         await session.initPromise.catch(() => {});
         session.initPromise = null;
       }
-      if (session.keeper) {
-        await session.keeper.cleanup().catch(() => {});
-        session.keeper = null;
+      if (session.agent) {
+        await session.agent.cleanup().catch(() => {});
+        session.agent = null;
       }
       session.threadId = randomUUID();
       session.checkpointer = new MemorySaver();
@@ -948,14 +984,58 @@ class AgentChatBridge {
     });
   };
 
+  // Recreate the session for a specific agent profile (called after profile update)
+  invalidateProfileSession = async (agentProfileId: number) => {
+    for (const [sessionKey, session] of this.sessions) {
+      if (session.agentProfileId !== agentProfileId) {
+        continue;
+      }
+      mainWindow?.webContents?.send(MESSAGE.DASHBOARD_AGENT_READY, {
+        sessionId: sessionKey,
+        ready: false,
+      });
+      if (session.initPromise) {
+        await session.initPromise.catch(() => {});
+        session.initPromise = null;
+      }
+      if (session.agent) {
+        await session.agent.cleanup().catch(() => {});
+        session.agent = null;
+      }
+      session.threadId = randomUUID();
+      session.checkpointer = new MemorySaver();
+      session.contextTokens = 0;
+      this.initAgentInBackground(sessionKey, session);
+    }
+  };
+
+  // Close and remove the session for a specific agent profile (called after profile delete)
+  cleanupProfileSession = async (agentProfileId: number) => {
+    for (const [sessionKey, session] of this.sessions) {
+      if (session.agentProfileId !== agentProfileId) {
+        continue;
+      }
+      if (session.initPromise) {
+        await session.initPromise.catch(() => {});
+        session.initPromise = null;
+      }
+      if (session.agent) {
+        await session.agent.cleanup().catch(() => {});
+      }
+      this.sessions.delete(sessionKey);
+      this.abortControllers.get(sessionKey)?.abort();
+      this.abortControllers.delete(sessionKey);
+    }
+  };
+
   // Cleanup all (app quit)
   cleanupAll = async () => {
     for (const [id, session] of this.sessions) {
       // Extract memory before closing app
       await this.runMemoryExtractionForSession(session).catch(() => {});
-      if (session.keeper) {
+      if (session.agent) {
         try {
-          await session.keeper.cleanup();
+          await session.agent.cleanup();
         } catch (err: any) {
           logEveryWhere({
             message: `[AgentChatBridge] Cleanup error for ${id}: ${err?.message}`,
@@ -978,13 +1058,14 @@ class AgentChatBridge {
       const session: AgentSession = {
         checkpointer: new MemorySaver(),
         threadId: randomUUID(),
-        keeper: null,
+        agent: null,
         initPromise: null,
         provider: LLMProvider.CLAUDE,
         contextTokens: 0,
         toolContext: new ToolContext(),
         platformId: adapter.platformId,
         platformChatId: message.chatId,
+        agentProfileId: null,
         isCompacting: false,
         pendingSummary: null,
         expectingEncryptKey: false,
@@ -1043,7 +1124,7 @@ class AgentChatBridge {
     if (session.initPromise) {
       await session.initPromise.catch(() => {});
     }
-    if (!session.keeper) {
+    if (!session.agent) {
       await adapter
         .sendText(
           message.chatId,

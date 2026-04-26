@@ -2804,6 +2804,7 @@ export type IAgentSetting = {
   campaignId: number | null;
   selectedProfileIds: number[];
   isAllWallet: boolean;
+  tokenAddress?: string | null;
 };
 
 export type IGeneralSetting = {
@@ -2872,6 +2873,7 @@ export type ISetting = {
   name: string;
   type: string;
   data: string;
+  scopeId?: number | null;
   createAt?: number;
   updateAt?: number;
   // parsed fields — populated by formatSetting, never stored in DB
@@ -2993,6 +2995,7 @@ export type IAgentProfile = {
   allowedSkillIds?: number[];
   allowedSubAgentIds?: number[];
   isAgentInteractionEnabled?: boolean;
+  isMainAgent?: boolean;
   isActive?: boolean;
   maxConcurrentTasks?: number;
   // Execution context

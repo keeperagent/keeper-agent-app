@@ -10,7 +10,7 @@ export const Wrapper = styled.div`
   font-size: 1.4rem;
   box-sizing: border-box;
   gap: 1.6rem;
-  padding: 0 1.6rem 1.6rem;
+  padding: 0.9rem 1.6rem 1.6rem 1.6rem;
 
   .header {
     display: flex;

@@ -82,24 +82,40 @@ const normalizeSteps = (steps: any[]): AgentToolStep[] => {
   }));
 };
 
-// Persist sessionId and agentReady across component mount/unmount so navigating away
-// and back reuses the same agent session (no MCP reconnection).
-let persistedSessionId: string | null = null;
-let persistedAgentReady = false;
+// Persist sessions per profile so switching back reuses the same session (no MCP reconnect, no cache loss).
+type PersistedAgentStats = {
+  subAgentsCount: number;
+  toolsCount: number;
+  skillsCount: number;
+};
 
-const useDashboardAgent = () => {
+const persistedSessions = new Map<
+  string,
+  { sessionId: string; agentReady: boolean; agentStats?: PersistedAgentStats }
+>();
+
+const getSessionKey = (profileId: number | null): string => String(profileId);
+
+const useDashboardAgent = (profileId: number | null = null) => {
+  const sessionKey = getSessionKey(profileId);
+  const persistedSession = persistedSessions.get(sessionKey);
+
   const dispatch = useDispatch();
   const agentState = useSelector(agentSelector);
   const llmProvider = agentState?.llmProvider || LLMProvider.OPENAI;
 
-  const [sessionId, setSessionId] = useState<string | null>(persistedSessionId);
+  const [sessionId, setSessionId] = useState<string | null>(
+    persistedSession?.sessionId ?? null,
+  );
   const [conversation, setConversation] = useState<AgentMessage[]>([]);
   const [steps, setSteps] = useState<AgentToolStep[]>([]);
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
   /** True once MCP is connected and tools are loaded for the current session. */
-  const [agentReady, setAgentReady] = useState(persistedAgentReady);
+  const [agentReady, setAgentReady] = useState(
+    persistedSession?.agentReady ?? false,
+  );
   const [error, setError] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState<string>("");
   const [executingTool, setExecutingTool] = useState<string | null>(null);
@@ -112,6 +128,10 @@ const useDashboardAgent = () => {
   } | null>(null);
 
   const sessionIdRef = useRef<string | null>(sessionId);
+  const profileIdRef = useRef<number | null>(profileId);
+  const agentStatsRef = useRef<PersistedAgentStats | null>(
+    persistedSession?.agentStats || null,
+  );
   const streamingContentRef = useRef<string>("");
   const preTurnContentRef = useRef<string>("");
   // Tracks full todo list across write_todos calls — agent sometimes drops earlier items
@@ -135,16 +155,21 @@ const useDashboardAgent = () => {
   } | null>(null);
 
   sessionIdRef.current = sessionId;
-  persistedSessionId = sessionId;
-  persistedAgentReady = agentReady;
+  persistedSessions.set(sessionKey, {
+    sessionId: sessionId || "",
+    agentReady,
+    agentStats: agentStatsRef.current ?? undefined,
+  });
   dispatchRef.current = dispatch;
   conversationRef.current = conversation;
+  profileIdRef.current = profileId;
 
   const saveMessageToDB = useCallback((msg: AgentMessage) => {
     window?.electron?.send(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE, {
       role: msg.role,
       content: msg.content,
       timestamp: msg.timestamp || Date.now(),
+      agentProfileId: profileIdRef.current,
     });
 
     // Detect when the agent asks the user for their encryptKey so the next
@@ -156,6 +181,14 @@ const useDashboardAgent = () => {
         lower.includes("encrypt key") ||
         lower.includes("secret key") ||
         lower.includes("encryption key");
+    }
+  }, []);
+
+  // Restore agentStats from the persisted session when switching back to a profile
+  // whose session is already ready (CREATE_SESSION_RES won't fire again).
+  useEffect(() => {
+    if (persistedSession?.agentReady && persistedSession?.agentStats) {
+      dispatch(actSaveAgentStats(persistedSession.agentStats));
     }
   }, []);
 
@@ -175,7 +208,9 @@ const useDashboardAgent = () => {
       MESSAGE.CHAT_HISTORY_LOAD_RES,
       handleLoad,
     );
-    window?.electron?.send(MESSAGE.CHAT_HISTORY_LOAD, {});
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_LOAD, {
+      agentProfileId: profileIdRef.current,
+    });
 
     return () => {
       unsubscribe?.();
@@ -207,23 +242,23 @@ const useDashboardAgent = () => {
       if (pending) {
         pendingReadyRef.current = null;
         setAgentReady(true);
-        dispatchRef.current(
-          actSaveAgentStats({
-            subAgentsCount: pending.subAgentsCount,
-            toolsCount: pending.toolsCount,
-            skillsCount: pending.skillsCount,
-          }),
-        );
+        const pendingStats = {
+          subAgentsCount: pending.subAgentsCount,
+          toolsCount: pending.toolsCount,
+          skillsCount: pending.skillsCount,
+        };
+        agentStatsRef.current = pendingStats;
+        dispatchRef.current(actSaveAgentStats(pendingStats));
       } else {
         setAgentReady(Boolean(data?.agentReady));
         if (data?.agentReady) {
-          dispatchRef.current(
-            actSaveAgentStats({
-              subAgentsCount: data.subAgentsCount,
-              toolsCount: data.toolsCount,
-              skillsCount: data.skillsCount,
-            }),
-          );
+          const sessionStats = {
+            subAgentsCount: data.subAgentsCount,
+            toolsCount: data.toolsCount,
+            skillsCount: data.skillsCount,
+          };
+          agentStatsRef.current = sessionStats;
+          dispatchRef.current(actSaveAgentStats(sessionStats));
         }
       }
       setSteps([]);
@@ -559,9 +594,9 @@ const useDashboardAgent = () => {
       if (payloadSessionId === sessionIdRef.current) {
         setAgentReady(payloadReady);
         if (payloadReady) {
-          dispatchRef.current(
-            actSaveAgentStats({ subAgentsCount, toolsCount, skillsCount }),
-          );
+          const readyStats = { subAgentsCount, toolsCount, skillsCount };
+          agentStatsRef.current = readyStats;
+          dispatchRef.current(actSaveAgentStats(readyStats));
         }
         pendingReadyRef.current = null;
       } else if (payloadSessionId && payloadReady) {
@@ -704,13 +739,13 @@ const useDashboardAgent = () => {
         return;
       }
       setAgentReady(true);
-      dispatchRef.current(
-        actSaveAgentStats({
-          subAgentsCount: data.subAgentsCount,
-          toolsCount: data.toolsCount,
-          skillsCount: data.skillsCount,
-        }),
-      );
+      const statusStats = {
+        subAgentsCount: data.subAgentsCount,
+        toolsCount: data.toolsCount,
+        skillsCount: data.skillsCount,
+      };
+      agentStatsRef.current = statusStats;
+      dispatchRef.current(actSaveAgentStats(statusStats));
     };
 
     const unsubscribe = window?.electron?.on(
@@ -750,6 +785,7 @@ const useDashboardAgent = () => {
     setError(null);
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CREATE_SESSION, {
       provider: llmProvider,
+      agentProfileId: profileIdRef.current,
     });
   }, [llmProvider]);
 
@@ -796,6 +832,7 @@ const useDashboardAgent = () => {
         role: userMessage.role,
         content: userMessage.content,
         timestamp: userMessage.timestamp,
+        agentProfileId: profileIdRef.current,
       });
 
       setLoading(true);
@@ -836,7 +873,9 @@ const useDashboardAgent = () => {
     toolCallMapRef.current.clear();
     expectingEncryptKeyRef.current = false;
     // Clear SQLite history so the next session starts fresh
-    window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {});
+    window?.electron?.send(MESSAGE.CHAT_HISTORY_CLEAR, {
+      agentProfileId: profileIdRef.current,
+    });
     // Reset the agent's LangGraph thread on the backend
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_RESET_SESSION, {
       sessionId: sessionIdRef.current,
@@ -931,4 +970,8 @@ const useAgentReadyStats = (active: boolean) => {
   }, [dispatch, active]);
 };
 
-export { useDashboardAgent, useAgentReadyStats };
+const invalidatePersistedSession = (profileId: number) => {
+  persistedSessions.delete(getSessionKey(profileId));
+};
+
+export { useDashboardAgent, useAgentReadyStats, invalidatePersistedSession };

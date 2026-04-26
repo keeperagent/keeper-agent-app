@@ -48,6 +48,9 @@ import { appLogController } from "./controller/appLog";
 import { agentTaskDispatcher } from "./service/agentTaskDispatcher";
 import { licenseService } from "./service/licenseService";
 import { keeperMcpServer } from "./mcpServer";
+import { agentProfileDB } from "./database/agentProfile";
+import { dbReady } from "./database";
+import { initDeviceId } from "./service/init";
 
 const runMainProcess = () => {
   licenseService.initialize();
@@ -103,6 +106,11 @@ const runMainProcess = () => {
 
   keeperMcpServer.startIfEnabled();
   applyScreenCaptureProtection();
+
+  dbReady.then(() => {
+    agentProfileDB.initMainAgent();
+    initDeviceId();
+  });
 };
 
 export { runMainProcess };

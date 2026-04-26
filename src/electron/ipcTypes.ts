@@ -463,6 +463,7 @@ export type IpcUpdateAgentSkillPayload = {
 // Setting
 export type IpcGetListSettingPayload = IpcSortedPagePayload & {
   type?: string;
+  scopeId?: number | null;
 };
 export type IpcCreateSettingPayload = {
   data: ISetting;
@@ -526,6 +527,7 @@ export type IpcGetAgentAnalyticsPayload = {
 // AgentCore
 export type IpcAgentCreateSessionPayload = {
   provider?: LLMProvider;
+  agentProfileId?: number | null;
 };
 export type IpcAgentRunPayload = {
   sessionId: string;
@@ -622,10 +624,16 @@ export type IpcChatHistorySaveMessagePayload = {
   timestamp?: number;
   sessionId?: string | null;
   runId?: string | null;
+  agentProfileId?: number | null;
 };
 
 export type IpcChatHistoryLoadPayload = {
   limit?: number;
+  agentProfileId?: number | null;
+};
+
+export type IpcChatHistoryClearPayload = {
+  agentProfileId?: number | null;
 };
 
 // Keeper MCP Token

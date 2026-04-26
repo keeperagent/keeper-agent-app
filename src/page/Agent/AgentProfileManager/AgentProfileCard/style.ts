@@ -17,6 +17,18 @@ export const Wrapper = styled.div`
     .item-top-bar .item-name {
       color: var(--color-text-hover);
     }
+
+    .item-actions .item-icon-group,
+    .item-actions .item-actions-separator {
+      visibility: visible;
+    }
+  }
+
+  &.icons-pinned {
+    .item-actions .item-icon-group,
+    .item-actions .item-actions-separator {
+      visibility: visible;
+    }
   }
 
   .item-dots-row {
@@ -77,6 +89,15 @@ export const Wrapper = styled.div`
       text-overflow: ellipsis;
       flex: 1;
       transition: all 0.2s ease-in-out;
+    }
+
+    .item-main-badge {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text-hover);
+      border: 1px solid var(--color-text-hover);
+      border-radius: 2rem;
+      padding: 0.1rem 0.7rem;
     }
   }
 
@@ -153,7 +174,7 @@ export const Wrapper = styled.div`
   .item-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 1rem;
     flex-shrink: 0;
 
     .btn-icon {
@@ -162,27 +183,27 @@ export const Wrapper = styled.div`
       justify-content: center;
 
       svg {
-        width: 1.3rem;
-        height: 1.3rem;
-        min-width: 1.3rem;
-        min-height: 1.3rem;
-        cursor: pointer;
-      }
-    }
-
-    .btn-delete {
-      .trash {
-        &:hover {
-          fill: var(--color-error);
-        }
-      }
-
-      svg {
         width: 1.4rem;
         height: 1.4rem;
         min-width: 1.4rem;
         min-height: 1.4rem;
+        cursor: pointer;
       }
+    }
+
+    .item-icon-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      visibility: hidden;
+    }
+
+    .item-actions-separator {
+      width: 1px;
+      height: 1.6rem;
+      background: ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+      flex-shrink: 0;
+      visibility: hidden;
     }
 
     .btn-chat {
@@ -198,6 +219,14 @@ export const Wrapper = styled.div`
       &:hover {
         background-color: var(--color-primary);
         color: #fff;
+      }
+    }
+
+    .btn-delete {
+      svg {
+        &:hover {
+          fill: var(--color-error);
+        }
       }
     }
   }

@@ -37,7 +37,7 @@ import {
 } from "@/hook";
 import { BASE_TOOL_REGISTRY } from "@/electron/agentCore/baseTool/registry";
 import { LlmProviderPicker, PasswordInput } from "@/component";
-import { listChainConfig } from "@/page/Agent/ChatAgent/WalletView/config";
+import { listChainConfig } from "@/page/Agent/config";
 import { getChainConfig, IChainConfig } from "@/service/util";
 import { OptionWrapper, ChainWrapper } from "./style";
 
@@ -155,12 +155,10 @@ const ModalAgentProfile = (props: Props) => {
 
   const onChangeProvider = (newProvider: string) => {
     setLlmProvider(newProvider);
-    if (!isEdit) {
-      form.setFieldValue(
-        "llmModel",
-        getDefaultModelForProvider(newProvider, preference),
-      );
-    }
+    form.setFieldValue(
+      "llmModel",
+      getDefaultModelForProvider(newProvider, preference),
+    );
   };
 
   const onChangeChain = () => {
@@ -195,7 +193,7 @@ const ModalAgentProfile = (props: Props) => {
         allowedBaseTools: values.allowedBaseTools || [],
         allowedSkillIds: values.allowedSkillIds || [],
         isAgentInteractionEnabled: Boolean(values.isAgentInteractionEnabled),
-        isActive: Boolean(values.isActive),
+        isActive: profile?.isMainAgent ? true : Boolean(values.isActive),
         chainKey: values?.chainKey,
         nodeEndpointGroupId: values?.nodeEndpointGroupId,
         campaignId: values?.campaignId,
@@ -494,6 +492,7 @@ const ModalAgentProfile = (props: Props) => {
               <LlmProviderPicker
                 value={llmProvider}
                 onChange={onChangeProvider}
+                preference={preference}
               />
             </Form.Item>
 
@@ -581,14 +580,16 @@ const ModalAgentProfile = (props: Props) => {
               <Switch />
             </Form.Item>
 
-            <Form.Item
-              label={translate("agent.isActive")}
-              name="isActive"
-              valuePropName="checked"
-              tooltip={translate("agent.isActiveTooltip")}
-            >
-              <Switch />
-            </Form.Item>
+            {!profile?.isMainAgent && (
+              <Form.Item
+                label={translate("agent.isActive")}
+                name="isActive"
+                valuePropName="checked"
+                tooltip={translate("agent.isActiveTooltip")}
+              >
+                <Switch />
+              </Form.Item>
+            )}
           </Col>
         </Row>
       </Form>

@@ -18,6 +18,7 @@ import type {
   IpcGetListAgentProfileLogPayload,
 } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
+import { invalidatePersistedSession } from "./agent";
 
 const useGetListAgentProfile = () => {
   const {
@@ -82,6 +83,9 @@ const useUpdateAgentProfile = () => {
         onSuccess: (payload, dispatch) => {
           if (payload?.data) {
             dispatch(actSaveUpdateAgentProfile(payload.data));
+            if (payload.data.id) {
+              invalidatePersistedSession(payload.data.id);
+            }
           }
         },
       },
@@ -102,6 +106,7 @@ const useDeleteAgentProfile = () => {
       onSuccess: (_payload, dispatch) => {
         if (pendingIdRef.current != null) {
           dispatch(actSaveDeleteAgentProfile(pendingIdRef.current));
+          invalidatePersistedSession(pendingIdRef.current);
           pendingIdRef.current = null;
         }
       },

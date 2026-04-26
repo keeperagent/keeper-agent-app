@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { FILE_PROTOCOL_NAME } from "./constant";
 import { runMainProcess } from "./mainProcess";
 import { dbReady } from "./database";
-import { createFolderIfNotExist, initDeviceId } from "./service/init";
+import { createFolderIfNotExist } from "./service/init";
 import {
   registerDeeplink,
   handleDeeplinkMacOS,
@@ -51,7 +51,6 @@ const installDevExtensions = async () => {
 
 const createWindow = async () => {
   createFolderIfNotExist();
-  await initDeviceId();
 
   if (!app.isPackaged) {
     await installDevExtensions();

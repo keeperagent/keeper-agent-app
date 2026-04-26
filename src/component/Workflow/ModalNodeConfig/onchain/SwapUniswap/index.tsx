@@ -441,7 +441,7 @@ const SwapUniswap = (props: Props) => {
                                   className="icon"
                                   onClick={() =>
                                     openExternalLink(
-                                      mapUniswapContractUrl.get(chainId),
+                                      mapUniswapContractUrl.get(chainId) || "",
                                     )
                                   }
                                 >

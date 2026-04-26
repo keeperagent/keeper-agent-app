@@ -20,7 +20,7 @@ import monadImg from "@/asset/chain/monad.svg";
 import plasmaImg from "@/asset/chain/plasma.svg";
 import { KYBERSWAP_CHAIN_KEY } from "@/electron/constant";
 
-type IChainDetail = {
+export type IChainDetail = {
   chainName: string;
   logo: string;
   dexscreenerKey: string;
@@ -103,7 +103,6 @@ export const listChainConfig: IChainDetail[] = [
     isEvm: true,
     isSolana: false,
   },
-
   {
     chainName: "ZkSync",
     logo: zksyncImg,

@@ -44,6 +44,8 @@ import {
   actSaveCampaignId,
   actSaveListProfileId,
   actSaveIsAllWallet,
+  defaultAgentContext,
+  IAgentContext,
 } from "@/redux/agent";
 import {
   ChainWrapper,
@@ -55,7 +57,7 @@ import {
 import { EMPTY_STRING } from "@/config/constant";
 import { PasswordInput } from "@/component/Input";
 import { CopyIcon, CheckIcon } from "@/component/Icon";
-import { listChainConfig } from "./config";
+import { listChainConfig } from "@/page/Agent/config";
 
 let searchNodeEndpointGroupTimeOut: any = null;
 let searchCampaignTimeOut: any = null;
@@ -66,18 +68,25 @@ const { TextArea } = Input;
 
 const WalletView = (props: any) => {
   const {
+    agentContextMap,
+    selectedAgentProfileId,
     listNodeEndpointGroup,
-    chainKey,
-    nodeEndpointGroupId,
-    tokenAddress,
     listCampaign,
-    campaignId,
     listCampaignProfile,
-    listProfileId,
-    isAllWallet,
     setEncryptKey,
     encryptKey,
   } = props;
+
+  const {
+    chainKey,
+    nodeEndpointGroupId,
+    tokenAddress,
+    campaignId,
+    listProfileId,
+    isAllWallet,
+  } =
+    (selectedAgentProfileId ? agentContextMap[selectedAgentProfileId] : null) ||
+    (defaultAgentContext as IAgentContext);
 
   const { translate, locale } = useTranslation();
   const [form] = Form.useForm();
@@ -202,6 +211,9 @@ const WalletView = (props: any) => {
   };
 
   const onSearchCampaignProfile = (text: string) => {
+    if (!campaignId) {
+      return;
+    }
     if (searchCampaignProfileTimeOut) {
       clearTimeout(searchCampaignProfileTimeOut);
     }
@@ -251,7 +263,7 @@ const WalletView = (props: any) => {
                 onChange={onChangeChainKey}
                 optionLabelProp="label"
                 showSearch
-                value={chainKey}
+                value={chainKey || null}
               >
                 {listChainConfig?.map((config) => {
                   return (
@@ -307,7 +319,7 @@ const WalletView = (props: any) => {
                 filterOption={false}
                 loading={isSelectLoading}
                 optionLabelProp="label"
-                value={nodeEndpointGroupId}
+                value={nodeEndpointGroupId || null}
                 onChange={onChangeNodeEndpointGroupId}
               >
                 {listValidNodeEndpointGroup?.map(
@@ -555,15 +567,11 @@ const WalletView = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
+    agentContextMap: state?.Agent?.agentContextMap || {},
+    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
     listNodeEndpointGroup: state?.NodeEndpointGroup?.listNodeEndpointGroup,
     listCampaign: state?.Campaign?.listCampaign,
     listCampaignProfile: state?.CampaignProfile?.listCampaignProfile,
-    chainKey: state?.Agent?.chainKey,
-    tokenAddress: state?.Agent?.tokenAddress,
-    nodeEndpointGroupId: state?.Agent?.nodeEndpointGroupId,
-    campaignId: state?.Agent?.campaignId,
-    listProfileId: state?.Agent?.listProfileId,
-    isAllWallet: state?.Agent?.isAllWallet,
   }),
   {
     actSaveChainKey,

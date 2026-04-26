@@ -13,11 +13,13 @@ class SettingDB {
     searchText?: string,
     sortField?: ISorter,
     type?: string,
+    scopeId?: number | null,
   ): Promise<[IGetListResponse<ISetting> | null, Error | null]> {
     try {
       const condition = {
         [Op.and]: [
           type ? { type } : {},
+          scopeId != null ? { scopeId } : {},
           searchText
             ? {
                 [Op.or]: [{ name: { [Op.like]: `%${searchText}%` } }],

@@ -25,7 +25,7 @@ type ProfileSession = {
   profile: IAgentProfile;
   checkpointer: MemorySaver;
   threadId: string;
-  keeper: MainAgent | null;
+  agent: MainAgent | null;
   initPromise: Promise<void> | null;
   toolContext: ToolContext;
   conversationHistory: Array<{ role: ChatRole; content: string }>;
@@ -56,7 +56,7 @@ class AgentProfileBridge {
       profile,
       checkpointer: new MemorySaver(),
       threadId: randomUUID(),
-      keeper: null,
+      agent: null,
       initPromise: null,
       toolContext: new ToolContext(),
       conversationHistory: [],
@@ -72,7 +72,7 @@ class AgentProfileBridge {
     session: ProfileSession,
   ) => {
     session.initPromise = (async () => {
-      const keeper = await createAgentFromProfile({
+      const agentInstance = await createAgentFromProfile({
         profile: session.profile,
         checkpointer: session.checkpointer,
         toolContext: session.toolContext,
@@ -82,7 +82,7 @@ class AgentProfileBridge {
         this.sessions.has(sessionKey) &&
         this.sessions.get(sessionKey) === session
       ) {
-        session.keeper = keeper;
+        session.agent = agentInstance;
         mainWindow?.webContents?.send(MESSAGE.AGENT_PROFILE_READY, {
           sessionId: sessionKey,
           agentProfileId: session.agentProfileId,
@@ -92,7 +92,7 @@ class AgentProfileBridge {
           message: `[AgentProfileBridge] Agent initialized for ${sessionKey}`,
         });
       } else {
-        keeper.cleanup().catch(() => {});
+        agentInstance.cleanup().catch(() => {});
       }
     })()
       .catch((err: any) => {
@@ -117,17 +117,17 @@ class AgentProfileBridge {
       await session.initPromise;
       session.initPromise = null;
     }
-    if (session.keeper) {
-      return session.keeper;
+    if (session.agent) {
+      return session.agent;
     }
 
-    const keeper = await createAgentFromProfile({
+    const agentInstance = await createAgentFromProfile({
       profile: session.profile,
       checkpointer: session.checkpointer,
       toolContext: session.toolContext,
     });
-    session.keeper = keeper;
-    return keeper;
+    session.agent = agentInstance;
+    return agentInstance;
   };
 
   runAgent = async (
@@ -322,9 +322,9 @@ class AgentProfileBridge {
     }
 
     this.runMemoryExtractionForSession(session).catch(() => {});
-    if (session.keeper) {
-      await session.keeper.cleanup();
-      session.keeper = null;
+    if (session.agent) {
+      await session.agent.cleanup();
+      session.agent = null;
     }
     session.initPromise = null;
     session.threadId = randomUUID();
@@ -338,9 +338,9 @@ class AgentProfileBridge {
     if (!session) {
       return;
     }
-    if (session.keeper) {
-      await session.keeper.cleanup().catch(() => {});
-      session.keeper = null;
+    if (session.agent) {
+      await session.agent.cleanup().catch(() => {});
+      session.agent = null;
     }
     session.initPromise = null;
 
@@ -358,8 +358,8 @@ class AgentProfileBridge {
   cleanupAll = async (): Promise<void> => {
     for (const session of this.sessions.values()) {
       await this.runMemoryExtractionForSession(session).catch(() => {});
-      if (session.keeper) {
-        await session.keeper.cleanup().catch(() => {});
+      if (session.agent) {
+        await session.agent.cleanup().catch(() => {});
       }
     }
     this.sessions.clear();

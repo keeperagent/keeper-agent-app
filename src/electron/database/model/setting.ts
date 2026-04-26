@@ -31,6 +31,11 @@ export default (db: Sequelize) =>
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      scopeId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       timestamps: false,
@@ -39,6 +44,7 @@ export default (db: Sequelize) =>
           unique: true,
           fields: ["name", "type"],
         },
+        { fields: ["scopeId"] },
       ],
     },
   );

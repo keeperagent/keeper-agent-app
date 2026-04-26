@@ -27,7 +27,7 @@ const useGetListSetting = () => {
   return { loading, isSuccess, getListSetting };
 };
 
-const useCreateSetting = (options?: { onSuccess?: () => void }) => {
+const useCreateSetting = (options?: { onSuccess?: (setting: ISetting) => void }) => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.CREATE_AGENT_SETTING,
     MESSAGE.CREATE_AGENT_SETTING_RES,
@@ -35,11 +35,11 @@ const useCreateSetting = (options?: { onSuccess?: () => void }) => {
       onSuccess: (payload, dispatch) => {
         if (payload?.data) {
           dispatch(actSaveCreateSetting(payload.data));
+          options?.onSuccess?.(payload.data);
         }
         if (payload?.error) {
           message.error(payload.error);
         }
-        options?.onSuccess?.();
       },
     },
   );

@@ -27,6 +27,15 @@ export const ProviderItem = styled.div`
     border-color: var(--color-primary);
   }
 
+  &.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+
+    &:hover {
+      border-color: transparent;
+    }
+  }
+
   img {
     width: 1.6rem;
     height: 1.6rem;

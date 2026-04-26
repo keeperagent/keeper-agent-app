@@ -7,13 +7,27 @@ export enum AGENT_LAYOUT_MODE {
   CHAT_OPTIMIZE = "CHAT_OPTIMIZE",
 }
 
-interface IAgentState {
-  chainKey: string; // @chainKey will equal to dexscreener key
+export interface IAgentContext {
+  chainKey: string;
   nodeEndpointGroupId: number | null;
   tokenAddress: string;
   campaignId: number | null;
   listProfileId: number[] | null;
   isAllWallet: boolean;
+}
+
+export const defaultAgentContext: IAgentContext = {
+  chainKey: "",
+  nodeEndpointGroupId: null,
+  tokenAddress: "",
+  campaignId: null,
+  listProfileId: [],
+  isAllWallet: false,
+};
+
+interface IAgentState {
+  selectedAgentProfileId: number | null;
+  agentContextMap: Record<number, IAgentContext>;
   layoutMode: AGENT_LAYOUT_MODE;
   splitPercent: number;
   llmProvider: LLMProvider;
@@ -25,54 +39,96 @@ interface IAgentState {
 }
 
 const initialState: IAgentState = {
-  chainKey: "",
-  nodeEndpointGroupId: null,
-  tokenAddress: "",
-  campaignId: null,
-  listProfileId: [],
-  isAllWallet: false,
+  selectedAgentProfileId: null,
+  agentContextMap: {},
   layoutMode: AGENT_LAYOUT_MODE.TRADE_OPTIMIZE,
   splitPercent: 50,
   llmProvider: LLMProvider.CLAUDE,
   agentStats: null,
 };
 
+const ensureContext = (state: IAgentState): IAgentContext | null => {
+  if (!state.selectedAgentProfileId) {
+    return null;
+  }
+  if (!state.agentContextMap) {
+    state.agentContextMap = {};
+  }
+  if (!state.agentContextMap[state.selectedAgentProfileId]) {
+    state.agentContextMap[state.selectedAgentProfileId] = {
+      ...defaultAgentContext,
+    };
+  }
+  return state.agentContextMap[state.selectedAgentProfileId];
+};
+
 export const agentSlice = createSlice({
   name: "Agent",
   initialState,
   reducers: {
+    actSaveSelectedAgentProfileId: (
+      state: IAgentState,
+      action: PayloadAction<number | null>,
+    ) => {
+      state.selectedAgentProfileId = action.payload;
+      state.agentStats = null;
+    },
     actSaveChainKey: (state: IAgentState, action: PayloadAction<string>) => {
-      state.chainKey = action.payload;
+      const context = ensureContext(state);
+      if (!context) {
+        return;
+      }
+      context.chainKey = action.payload;
     },
     actSaveNodeEndpointGroupId: (
       state: IAgentState,
       action: PayloadAction<number | null>,
     ) => {
-      state.nodeEndpointGroupId = action.payload;
+      const context = ensureContext(state);
+      if (!context) {
+        return;
+      }
+      context.nodeEndpointGroupId = action.payload;
     },
     actSaveTokenAddress: (
       state: IAgentState,
       action: PayloadAction<string>,
     ) => {
-      state.tokenAddress = action.payload;
+      const context = ensureContext(state);
+      if (!context) {
+        return;
+      }
+      context.tokenAddress = action.payload;
     },
     actSaveCampaignId: (
       state: IAgentState,
       action: PayloadAction<number | null>,
     ) => {
-      state.campaignId = action.payload;
+      const context = ensureContext(state);
+      if (!context) {
+        return;
+      }
+      context.campaignId = action.payload;
     },
     actSaveListProfileId: (
       state: IAgentState,
       action: PayloadAction<number[] | null>,
     ) => {
-      state.listProfileId = action.payload;
+      const context = ensureContext(state);
+      if (!context) {
+        return;
+      }
+      context.listProfileId = action.payload;
     },
     actSaveIsAllWallet: (
       state: IAgentState,
       action: PayloadAction<boolean>,
     ) => {
-      state.isAllWallet = action.payload;
+      const context = ensureContext(state);
+      if (!context) {
+        return;
+      }
+      context.isAllWallet = action.payload;
     },
     actSetLayoutMode: (
       state: IAgentState,
@@ -99,10 +155,20 @@ export const agentSlice = createSlice({
     ) => {
       state.agentStats = action.payload;
     },
+    actRemoveAgentContext: (
+      state: IAgentState,
+      action: PayloadAction<number>,
+    ) => {
+      delete state.agentContextMap[action.payload];
+      if (state.selectedAgentProfileId === action.payload) {
+        state.selectedAgentProfileId = null;
+      }
+    },
   },
 });
 
 export const {
+  actSaveSelectedAgentProfileId,
   actSaveChainKey,
   actSaveNodeEndpointGroupId,
   actSaveTokenAddress,
@@ -113,7 +179,10 @@ export const {
   actSetSplitPercent,
   actSetLLMProvider,
   actSaveAgentStats,
+  actRemoveAgentContext,
 } = agentSlice.actions;
+
 export { LLMProvider };
+
 export const agentSelector = (state: RootState) => state.Agent;
 export default agentSlice.reducer;

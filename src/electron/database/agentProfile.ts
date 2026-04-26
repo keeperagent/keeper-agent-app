@@ -9,6 +9,8 @@ import { encryptionService } from "@/electron/service/encrypt";
 import { AgentProfileModel, CampaignModel, JobModel } from "./index";
 
 class AgentProfileDB {
+  private _mainAgentReadyPromise: Promise<void> | null = null;
+
   async getListAgentProfile(
     page: number,
     pageSize: number,
@@ -22,7 +24,10 @@ class AgentProfileDB {
 
       const totalDataAwait = AgentProfileModel.count({ where: condition });
       const listDataAwait = AgentProfileModel.findAll({
-        order: [["createAt", "DESC"]],
+        order: [
+          ["isMainAgent", "DESC"],
+          ["createAt", "DESC"],
+        ],
         ...(searchText
           ? {}
           : { limit: pageSize, offset: (page - 1) * pageSize }),
@@ -89,6 +94,7 @@ class AgentProfileDB {
       const row = await AgentProfileModel.create(
         {
           ...data,
+          isMainAgent: Boolean(data?.isMainAgent),
           allowedBaseTools: JSON.stringify(data?.allowedBaseTools || []),
           allowedMcpServerIds: JSON.stringify(data?.allowedMcpServerIds || []),
           allowedSkillIds: JSON.stringify(data?.allowedSkillIds || []),
@@ -190,7 +196,9 @@ class AgentProfileDB {
         { agentProfileId: null },
         { where: { agentProfileId: listId } },
       );
-      const count = await AgentProfileModel.destroy({ where: { id: listId } });
+      const count = await AgentProfileModel.destroy({
+        where: { id: listId, isMainAgent: false },
+      });
       return [count, null];
     } catch (err: any) {
       logEveryWhere({
@@ -198,6 +206,47 @@ class AgentProfileDB {
       });
       return [null, err];
     }
+  }
+
+  async getMainAgentProfile(): Promise<IAgentProfile | null> {
+    try {
+      const data = await AgentProfileModel.findOne({
+        where: { isMainAgent: true },
+      });
+      if (!data) {
+        return null;
+      }
+      return formatAgentProfile(data.toJSON());
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getMainAgentProfile() error: ${err?.message}`,
+      });
+      return null;
+    }
+  }
+
+  initMainAgent(): Promise<void> {
+    if (!this._mainAgentReadyPromise) {
+      this._mainAgentReadyPromise = (async () => {
+        try {
+          const existing = await AgentProfileModel.findOne({
+            where: { isMainAgent: true },
+          });
+          if (existing) {
+            return;
+          }
+          await this.createAgentProfile({
+            name: "Main Agent",
+            description: "The built-in main agent",
+            isMainAgent: true,
+            isActive: true,
+          });
+        } catch (err: any) {
+          logEveryWhere({ message: `initMainAgent() error: ${err?.message}` });
+        }
+      })();
+    }
+    return this._mainAgentReadyPromise;
   }
 }
 

@@ -3,18 +3,25 @@ import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
-import { actSetLLMProvider, LLMProvider } from "@/redux/agent";
+import {
+  actSetLLMProvider,
+  actSaveSelectedAgentProfileId,
+  LLMProvider,
+} from "@/redux/agent";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
 import { useAgentReadyStats } from "@/hook/agent";
 import { useUpdatePreference } from "@/hook/preference";
-import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { LLM_PROVIDERS, isProviderConfigured } from "@/config/llmProviders";
+import { IAgentProfile } from "@/electron/type";
 import { Wrapper, StatBadgeWrapper, CliTag } from "./style";
-import ChatAgent from "./ChatAgent";
+import ChatView from "./ChatView";
 
+const AgentProfileManager = lazy(() => import("./AgentProfileManager"));
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
 const ToolsManager = lazy(() => import("./ToolsManager"));
+const AgentAnalytic = lazy(() => import("@/component/AgentAnalytic"));
 
 const AgentStatBadge = ({ count, label }: { count: number; label: string }) => (
   <StatBadgeWrapper title={label}>
@@ -33,14 +40,21 @@ const TabFallback = (
 
 const TAB = {
   AGENT: "AGENT",
+  AGENTS: "AGENTS",
   MCP_SERVER: "MCP_SERVER",
   SKILLS: "SKILLS",
   TOOLS: "TOOLS",
+  ANALYTIC: "ANALYTIC",
 };
 
 const AgentPage = (props: any) => {
-  const { llmProvider, actSetLLMProvider, preference, agentStatsFromReady } =
-    props;
+  const {
+    llmProvider,
+    actSetLLMProvider,
+    actSaveSelectedAgentProfileId,
+    preference,
+    agentStats,
+  } = props;
   const currentProvider = llmProvider || LLMProvider.CLAUDE;
   const { translate } = useTranslation();
   const { updatePreference } = useUpdatePreference();
@@ -54,8 +68,8 @@ const AgentPage = (props: any) => {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setContentReady(true), 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setContentReady(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useAgentReadyStats(activeTab !== TAB.AGENT);
@@ -64,14 +78,9 @@ const AgentPage = (props: any) => {
     setActiveTab(key);
   };
 
-  const isProviderConfigured = (provider: (typeof LLM_PROVIDERS)[number]) => {
-    const isClaudeCLIMode =
-      provider.key === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
-    let hasApiKey = true;
-    if (!isClaudeCLIMode && provider.apiKeyField) {
-      hasApiKey = Boolean(preference?.[provider.apiKeyField]);
-    }
-    return hasApiKey && Boolean(preference?.[provider.modelField]);
+  const onOpenProfileChat = (profile: IAgentProfile) => {
+    actSaveSelectedAgentProfileId(profile.id);
+    setActiveTab(TAB.AGENT);
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
@@ -100,14 +109,6 @@ const AgentPage = (props: any) => {
   const isCodexCLIActive =
     currentProvider === LLMProvider.OPENAI && Boolean(preference?.useCodexCLI);
 
-  const agentStats = useMemo(() => {
-    const subAgents = agentStatsFromReady?.subAgentsCount || 0;
-    const tools = agentStatsFromReady?.toolsCount || 0;
-    const skills = agentStatsFromReady?.skillsCount || 0;
-
-    return { subAgents, tools, skills };
-  }, [agentStatsFromReady]);
-
   return (
     <Wrapper
       style={{
@@ -117,11 +118,15 @@ const AgentPage = (props: any) => {
       <div className="tab">
         <Tabs
           onChange={onChangeTab}
-          size="small"
+          size="medium"
           items={[
             {
               key: TAB.AGENT,
               label: translate("agent.tabAgent"),
+            },
+            {
+              key: TAB.AGENTS,
+              label: translate("agent.tabAgents"),
             },
             {
               key: TAB.MCP_SERVER,
@@ -135,59 +140,70 @@ const AgentPage = (props: any) => {
               key: TAB.TOOLS,
               label: translate("agent.tabTools"),
             },
+            {
+              key: TAB.ANALYTIC,
+              label: translate("agent.tabAnalytic"),
+            },
           ]}
           activeKey={activeTab}
         />
 
-        <div className="agent-status">
-          <AgentStatBadge
-            count={agentStats.subAgents}
-            label={translate("agent.subAgents")}
-          />
-          <AgentStatBadge
-            count={agentStats.tools}
-            label={translate("agent.tools")}
-          />
-          <AgentStatBadge
-            count={agentStats.skills}
-            label={translate("agent.skills")}
-          />
-        </div>
+        {activeTab === TAB.AGENT && (
+          <Fragment>
+            <div className="agent-status">
+              <AgentStatBadge
+                count={agentStats?.subAgentsCount || 0}
+                label={translate("agent.subAgents")}
+              />
+              <AgentStatBadge
+                count={agentStats?.toolsCount || 0}
+                label={translate("agent.tools")}
+              />
+              <AgentStatBadge
+                count={agentStats?.skillsCount || 0}
+                label={translate("agent.skills")}
+              />
+            </div>
 
-        <div className="list-provider">
-          <span
-            className="model-name-wrapper"
-            style={{
-              marginRight: isClaudeCLIActive || isCodexCLIActive ? "1.5rem" : 0,
-            }}
-          >
-            <span className="current-model">{currentModelName}</span>
-            {(isClaudeCLIActive || isCodexCLIActive) && (
-              <CliTag color="cyan">CLI</CliTag>
-            )}
-          </span>
+            <div className="list-provider">
+              <span
+                className="model-name-wrapper"
+                style={{
+                  marginRight:
+                    isClaudeCLIActive || isCodexCLIActive ? "1.5rem" : 0,
+                }}
+              >
+                <span className="current-model">{currentModelName}</span>
+                {(isClaudeCLIActive || isCodexCLIActive) && (
+                  <CliTag color="cyan">CLI</CliTag>
+                )}
+              </span>
 
-          {LLM_PROVIDERS.map((provider) => {
-            const isDisabled = !isProviderConfigured(provider);
-            const tooltipTitle = isDisabled
-              ? translate("agent.apiKeyNotConfigured").replace(
-                  "{provider}",
-                  provider.label,
-                )
-              : provider.label;
+              {LLM_PROVIDERS.map((provider) => {
+                const isDisabled = !isProviderConfigured(provider, preference);
+                const tooltipTitle = isDisabled
+                  ? translate("agent.apiKeyNotConfigured").replace(
+                      "{provider}",
+                      provider.label,
+                    )
+                  : provider.label;
 
-            return (
-              <Tooltip key={provider.key} title={tooltipTitle}>
-                <div
-                  className={`provider-item ${currentProvider === provider.key ? "active" : ""} ${isDisabled ? "disabled" : ""}`}
-                  onClick={() => !isDisabled && onSelectProvider(provider.key)}
-                >
-                  <img src={provider.icon} alt={provider.label} />
-                </div>
-              </Tooltip>
-            );
-          })}
-        </div>
+                return (
+                  <Tooltip key={provider.key} title={tooltipTitle}>
+                    <div
+                      className={`provider-item ${currentProvider === provider.key ? "active" : ""} ${isDisabled ? "disabled" : ""}`}
+                      onClick={() =>
+                        !isDisabled && onSelectProvider(provider.key)
+                      }
+                    >
+                      <img src={provider.icon} alt={provider.label} />
+                    </div>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </Fragment>
+        )}
       </div>
 
       {!contentReady ? (
@@ -197,7 +213,13 @@ const AgentPage = (props: any) => {
       ) : (
         <Fragment>
           {activeTab === TAB.AGENT && (
-            <ChatAgent setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+            <ChatView setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+          )}
+
+          {activeTab === TAB.AGENTS && (
+            <Suspense fallback={TabFallback}>
+              <AgentProfileManager onOpenChat={onOpenProfileChat} />
+            </Suspense>
           )}
 
           {activeTab === TAB.MCP_SERVER && (
@@ -217,6 +239,12 @@ const AgentPage = (props: any) => {
               <ToolsManager />
             </Suspense>
           )}
+
+          {activeTab === TAB.ANALYTIC && (
+            <Suspense fallback={TabFallback}>
+              <AgentAnalytic showToolbar showStatStrip defaultPeriod={7} />
+            </Suspense>
+          )}
         </Fragment>
       )}
     </Wrapper>
@@ -227,7 +255,7 @@ export default connect(
   (state: RootState) => ({
     llmProvider: state?.Agent?.llmProvider,
     preference: state?.Preference?.preference,
-    agentStatsFromReady: state?.Agent?.agentStats || null,
+    agentStats: state?.Agent?.agentStats || null,
   }),
-  { actSetLLMProvider },
+  { actSetLLMProvider, actSaveSelectedAgentProfileId },
 )(AgentPage);

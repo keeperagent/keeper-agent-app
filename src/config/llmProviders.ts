@@ -5,6 +5,23 @@ import geminiLogo from "@/asset/gemini.webp";
 import openrouterLogo from "@/asset/openrouter.png";
 import ollamaLogo from "@/asset/ollama.png";
 
+export const isProviderConfigured = (
+  provider: {
+    key: string;
+    apiKeyField: keyof IPreference | null;
+    modelField: keyof IPreference;
+  },
+  preference: IPreference | null | undefined,
+): boolean => {
+  const isClaudeCLIMode =
+    provider.key === LLMProvider.CLAUDE && Boolean(preference?.useClaudeCLI);
+  const hasApiKey =
+    isClaudeCLIMode || !provider.apiKeyField
+      ? true
+      : Boolean(preference?.[provider.apiKeyField]);
+  return hasApiKey && Boolean(preference?.[provider.modelField]);
+};
+
 export const LLM_PROVIDERS: {
   key: LLMProvider;
   label: string;

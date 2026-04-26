@@ -11,20 +11,29 @@ import { RootState } from "@/redux/store";
 import { IAgentProfile } from "@/electron/type";
 import { useTranslation } from "@/hook/useTranslation";
 import AgentProfileCard from "./AgentProfileCard";
+import AgentProfileDetail from "./AgentProfileDetail";
 import ModalAgentProfile from "./ModalAgentProfile";
-import ChatRegistry from "./ChatRegistry";
-import { ChatRegistryPage } from "../style";
+import { Wrapper } from "./style";
 
 const PAGE_SIZE = 12;
 
-const ListAgent = (props: any) => {
+type Props = {
+  listAgentProfile: IAgentProfile[];
+  totalData: number;
+  page: number;
+  selectedAgentProfile: IAgentProfile | null;
+  actSaveSelectedAgentProfile: (profile: IAgentProfile | null) => void;
+  onOpenChat?: (profile: IAgentProfile) => void;
+};
+
+const AgentProfileManager = (props: Props) => {
   const {
     listAgentProfile,
     totalData,
     page,
     selectedAgentProfile,
+    onOpenChat,
     actSaveSelectedAgentProfile,
-    onChatRegistryOpenChange,
   } = props;
   const { translate } = useTranslation();
 
@@ -34,15 +43,11 @@ const ListAgent = (props: any) => {
 
   const [searchText, setSearchText] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [chatProfileId, setChatProfileId] = useState<number | null>(null);
+  const [detailProfileId, setDetailProfileId] = useState<number | null>(null);
 
   useEffect(() => {
     getListAgentProfile({ page: 1, pageSize: PAGE_SIZE });
   }, []);
-
-  useEffect(() => {
-    onChatRegistryOpenChange?.(Boolean(chatProfileId));
-  }, [chatProfileId]);
 
   const onSearch = (value: string) => {
     setSearchText(value);
@@ -79,16 +84,6 @@ const ListAgent = (props: any) => {
     deleteAgentProfile(profile.id!);
   };
 
-  const onOpenChat = (profile: IAgentProfile) => {
-    actSaveSelectedAgentProfile(profile);
-    setChatProfileId(profile.id!);
-  };
-
-  const onCloseChat = () => {
-    setChatProfileId(null);
-    actSaveSelectedAgentProfile(null);
-  };
-
   const onPageChange = (newPage: number) => {
     getListAgentProfile({
       page: newPage,
@@ -97,16 +92,35 @@ const ListAgent = (props: any) => {
     });
   };
 
-  if (chatProfileId) {
+  const onOpenDetail = (profile: IAgentProfile) => {
+    actSaveSelectedAgentProfile(profile);
+    setDetailProfileId(profile.id!);
+  };
+
+  const onCloseDetail = () => {
+    setDetailProfileId(null);
+    actSaveSelectedAgentProfile(null);
+  };
+
+  if (detailProfileId) {
     return (
-      <ChatRegistryPage>
-        <ChatRegistry agentProfileId={chatProfileId} onBack={onCloseChat} />
-      </ChatRegistryPage>
+      <AgentProfileDetail
+        agentProfileId={detailProfileId}
+        onBack={onCloseDetail}
+        onOpenChat={
+          onOpenChat
+            ? (profile) => {
+                onCloseDetail();
+                onOpenChat(profile);
+              }
+            : undefined
+        }
+      />
     );
   }
 
   return (
-    <Fragment>
+    <Wrapper>
       <div className="header">
         <div className="header-search">
           <SearchInput
@@ -141,7 +155,8 @@ const ListAgent = (props: any) => {
                 profile={profile}
                 onEdit={onOpenEdit}
                 onDelete={onDelete}
-                onOpenChat={onOpenChat}
+                onOpenChat={onOpenDetail}
+                onChat={onOpenChat}
               />
             ))}
           </div>
@@ -185,7 +200,7 @@ const ListAgent = (props: any) => {
         profile={selectedAgentProfile}
         onClose={onCloseModal}
       />
-    </Fragment>
+    </Wrapper>
   );
 };
 
@@ -197,4 +212,4 @@ export default connect(
     selectedAgentProfile: state?.AgentProfile?.selectedAgentProfile || null,
   }),
   { actSaveSelectedAgentProfile },
-)(ListAgent);
+)(AgentProfileManager);

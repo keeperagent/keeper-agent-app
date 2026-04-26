@@ -1,14 +1,6 @@
 import styled from "styled-components";
 
-export const ChatRegistryPage = styled.div`
-  position: absolute;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  inset: 0;
-`;
-
-export const Wrapper = styled.div`
+const Wrapper = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
@@ -16,12 +8,6 @@ export const Wrapper = styled.div`
   justify-content: flex-start;
   font-size: 1.6rem;
   overflow-y: auto;
-
-  .tab {
-    display: flex;
-    justify-content: flex-start;
-    width: 100%;
-  }
 
   .header {
     display: flex;
@@ -85,3 +71,5 @@ export const Wrapper = styled.div`
     padding: 1.6rem 0;
   }
 `;
+
+export { Wrapper };

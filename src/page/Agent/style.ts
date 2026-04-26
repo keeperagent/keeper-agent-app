@@ -4,6 +4,7 @@ import { ITheme } from "@/style/theme";
 
 const Wrapper = styled.div`
   width: 100%;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;

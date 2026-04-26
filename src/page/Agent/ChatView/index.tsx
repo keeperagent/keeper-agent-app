@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState, Fragment } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
-import { useTranslation } from "@/hook";
+import { useTranslation, useGetListAgentProfile } from "@/hook";
+import { IAgentProfile } from "@/electron/type";
 import { actSetPageName } from "@/redux/layout";
-import { AGENT_LAYOUT_MODE, actSetSplitPercent } from "@/redux/agent";
+import {
+  AGENT_LAYOUT_MODE,
+  actSetSplitPercent,
+  actSaveSelectedAgentProfileId,
+} from "@/redux/agent";
 import { PageWrapper } from "./style";
 import TokenChart from "./TokenChart";
 import AgentView from "./AgentView";
@@ -11,17 +16,18 @@ import ContextBar from "./ContextBar";
 
 const DEFAULT_SPLIT_PERCENT = 50;
 
-const AgentPage = (props: any) => {
+const ChatView = (props: any) => {
   const {
     actSetPageName,
     layoutMode,
     splitPercent,
     actSetSplitPercent,
+    selectedAgentProfileId,
+    listAgentProfile,
     setEncryptKey,
     encryptKey,
   } = props;
 
-  const { translate } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const mainRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
@@ -30,6 +36,38 @@ const AgentPage = (props: any) => {
   const rafIdRef = useRef<number | null>(null);
   const isResizingRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
+
+  const { translate } = useTranslation();
+  const { getListAgentProfile } = useGetListAgentProfile();
+
+  const activeProfiles = useMemo(
+    () =>
+      (listAgentProfile || []).filter(
+        (profile: IAgentProfile) => profile.isActive,
+      ),
+    [listAgentProfile],
+  );
+
+  useEffect(() => {
+    getListAgentProfile({ page: 1, pageSize: 100 });
+  }, []);
+
+  useEffect(() => {
+    if (activeProfiles.length === 0) {
+      return;
+    }
+    const isCurrentValid = activeProfiles.some(
+      (profile: IAgentProfile) => profile.id === selectedAgentProfileId,
+    );
+    if (isCurrentValid) {
+      return;
+    }
+    const mainProfile = activeProfiles.find(
+      (profile: IAgentProfile) => profile.isMainAgent,
+    );
+    const fallback = mainProfile || activeProfiles[0];
+    props.actSaveSelectedAgentProfileId(fallback?.id ?? null);
+  }, [activeProfiles]);
 
   useEffect(() => {
     actSetPageName?.(translate("sidebar.askAgent"));
@@ -168,10 +206,17 @@ const AgentPage = (props: any) => {
               : { flexBasis: `${100 - splitPercent}%` }
           }
         >
-          <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+          {Boolean(props.selectedAgentProfileId) && (
+            <ContextBar setEncryptKey={setEncryptKey} encryptKey={encryptKey} />
+          )}
 
           <div className="agent-view-wrapper" style={{ marginTop: "0.8rem" }}>
-            <AgentView encryptKey={encryptKey} />
+            {Boolean(props.selectedAgentProfileId) && (
+              <AgentView
+                key={String(props.selectedAgentProfileId)}
+                encryptKey={encryptKey}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -183,6 +228,8 @@ export default connect(
   (state: RootState) => ({
     layoutMode: state?.Agent?.layoutMode,
     splitPercent: state?.Agent?.splitPercent,
+    selectedAgentProfileId: state?.Agent?.selectedAgentProfileId,
+    listAgentProfile: state?.AgentProfile?.listAgentProfile || [],
   }),
-  { actSetPageName, actSetSplitPercent },
-)(AgentPage);
+  { actSetPageName, actSetSplitPercent, actSaveSelectedAgentProfileId },
+)(ChatView);
