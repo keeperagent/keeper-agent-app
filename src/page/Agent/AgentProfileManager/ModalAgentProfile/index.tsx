@@ -499,6 +499,7 @@ const ModalAgentProfile = (props: Props) => {
             <Form.Item
               label={`${translate("agent.llmModel")}:`}
               name="llmModel"
+              tooltip={translate("agent.llmModelTooltip")}
               rules={[
                 { required: true, message: translate("form.requiredField") },
               ]}

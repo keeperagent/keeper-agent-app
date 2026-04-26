@@ -47,6 +47,7 @@ const ChatView = (props: any) => {
   const { getOneAgentProfile, data: fetchedAgentProfile } =
     useGetOneAgentProfile();
   const searchProfileTimeoutRef = useRef<any>(null);
+  const hasValidatedRef = useRef(false);
 
   useEffect(() => {
     getListAgentProfile({ page: 1, pageSize: 30, isActive: true });
@@ -57,9 +58,10 @@ const ChatView = (props: any) => {
   }, [translate, actSetPageName]);
 
   useEffect(() => {
-    if (!listAgentProfile?.length) {
+    if (!listAgentProfile?.length || hasValidatedRef.current) {
       return;
     }
+    hasValidatedRef.current = true;
 
     if (selectedAgentProfile?.id) {
       const isInList = listAgentProfile.some(

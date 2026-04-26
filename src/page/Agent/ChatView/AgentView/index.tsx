@@ -263,22 +263,44 @@ const AgentView = (props: any) => {
     props.actSaveSelectedAgentProfile(profile);
   };
 
+  const onDropdownOpenChange = (open: boolean) => {
+    if (open) {
+      onSearchProfile("");
+    }
+  };
+
+  const agentProfileOptions = useMemo(() => {
+    const options = (listAgentProfile || []).map((profile: IAgentProfile) => ({
+      value: profile.id,
+      label: profile.name,
+      description: profile.description,
+    }));
+    const isSelectedInList = (listAgentProfile || []).some(
+      (profile: IAgentProfile) => profile.id === selectedAgentProfileId,
+    );
+    if (!isSelectedInList && selectedAgentProfile) {
+      options.unshift({
+        value: selectedAgentProfile.id!,
+        label: selectedAgentProfile.name || "",
+        description: selectedAgentProfile.description || "",
+      });
+    }
+    return options;
+  }, [listAgentProfile, selectedAgentProfile, selectedAgentProfileId]);
+
   const agentProfilePicker = (
     <Select
       size="medium"
       value={selectedAgentProfileId || null}
       onChange={onSelectProfile}
-      options={listAgentProfile?.map((profile: IAgentProfile) => ({
-        value: profile.id,
-        label: profile.name,
-        description: profile.description,
-      }))}
+      options={agentProfileOptions}
       style={{ width: 170, marginRight: 8 }}
       className="custom-select"
       showSearch
       onSearch={onSearchProfile}
       filterOption={false}
       loading={isProfileSearchLoading}
+      onDropdownVisibleChange={onDropdownOpenChange}
       optionRender={(option) => (
         <OptionWrapper>
           <div className="name">{option.label}</div>

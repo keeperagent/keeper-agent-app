@@ -16,12 +16,10 @@ const SystemPromptTab = ({ profile }: Props) => {
   const isMainAgent = Boolean(profile.isMainAgent);
 
   const [draft, setDraft] = useState(profile.systemPrompt || "");
+  const [hasFetched, setHasFetched] = useState(false);
 
-  const {
-    systemPrompt: liveSystemPrompt,
-    fetchSystemPrompt,
-    loading: loadingLive,
-  } = useGetMainAgentSystemPrompt();
+  const { systemPrompt: liveSystemPrompt, fetchSystemPrompt } =
+    useGetMainAgentSystemPrompt();
 
   const {
     updateAgentProfile,
@@ -39,10 +37,11 @@ const SystemPromptTab = ({ profile }: Props) => {
     if (!isMainAgent) {
       setDraft(profile.systemPrompt || "");
     }
-  }, [profile.systemPrompt]);
+  }, [profile.id]);
 
   useEffect(() => {
     if (isMainAgent && liveSystemPrompt !== null) {
+      setHasFetched(true);
       setDraft(liveSystemPrompt || "");
     }
   }, [liveSystemPrompt]);
@@ -65,7 +64,7 @@ const SystemPromptTab = ({ profile }: Props) => {
     updateAgentProfile({ ...profile, systemPrompt: draft });
   };
 
-  const isLoading = isMainAgent && loadingLive && !draft;
+  const isLoading = isMainAgent && !hasFetched;
 
   if (isLoading) {
     return (

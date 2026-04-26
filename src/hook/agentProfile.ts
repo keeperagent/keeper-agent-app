@@ -182,7 +182,7 @@ const useGetMainAgentSystemPrompt = () => {
     MESSAGE.DASHBOARD_AGENT_GET_MAIN_SYSTEM_PROMPT_RES,
     {
       onSuccess: (payload: any) =>
-        setSystemPrompt(payload?.data?.systemPrompt || null),
+        setSystemPrompt(payload?.data?.systemPrompt ?? null),
     },
   );
 

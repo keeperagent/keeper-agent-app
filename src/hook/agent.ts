@@ -879,15 +879,6 @@ const useDashboardAgent = (profileId: number | null = null) => {
     });
   }, []);
 
-  const changeProvider = useCallback((provider: LLMProvider) => {
-    if (!sessionIdRef.current) return;
-    setAgentReady(false);
-    window?.electron?.send(MESSAGE.DASHBOARD_AGENT_CHANGE_PROVIDER, {
-      sessionId: sessionIdRef.current,
-      provider,
-    });
-  }, []);
-
   const stopAgent = useCallback(() => {
     if (!sessionIdRef.current) return;
     window?.electron?.send(MESSAGE.DASHBOARD_AGENT_STOP, {
@@ -930,7 +921,6 @@ const useDashboardAgent = (profileId: number | null = null) => {
     sendMessage,
     stopAgent,
     resetSession,
-    changeProvider,
     approvePlan,
     setError,
   };
