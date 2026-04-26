@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import CodeMirror from "@uiw/react-codemirror";
+import { EditorView } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
@@ -12,8 +13,10 @@ type CodeEditorProps = {
   value?: string;
   onChange?: (value: string) => void;
   height?: string;
+  minHeight?: string;
   language?: CodeEditorLanguage;
   readOnly?: boolean;
+  lineWrapping?: boolean;
   fontSize?: number;
   className?: string;
   theme?: "dark" | "light";
@@ -31,19 +34,28 @@ export default function CodeEditor(props: CodeEditorProps) {
     value = "",
     onChange,
     height = "200px",
+    minHeight,
     language = "javascript",
     readOnly = false,
+    lineWrapping = false,
     fontSize = 14,
     className,
     theme: editorTheme = "dark",
   } = props;
 
-  const extensions = useMemo(() => [langExtensions[language]()], [language]);
+  const extensions = useMemo(() => {
+    const result: Extension[] = [langExtensions[language]()];
+    if (lineWrapping) {
+      result.push(EditorView.lineWrapping);
+    }
+    return result;
+  }, [language, lineWrapping]);
 
   return (
     <CodeMirror
       value={value}
       height={height}
+      minHeight={minHeight}
       theme={editorTheme}
       extensions={extensions}
       onChange={(v) => onChange?.(v)}

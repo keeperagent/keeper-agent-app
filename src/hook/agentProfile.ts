@@ -174,6 +174,21 @@ const useGetListAgentProfileLog = () => {
   return { loading, isSuccess, data, getListAgentProfileLog };
 };
 
+const useGetMainAgentSystemPrompt = () => {
+  const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+
+  const { execute: fetchSystemPrompt, loading } = useIpcAction(
+    MESSAGE.DASHBOARD_AGENT_GET_MAIN_SYSTEM_PROMPT,
+    MESSAGE.DASHBOARD_AGENT_GET_MAIN_SYSTEM_PROMPT_RES,
+    {
+      onSuccess: (payload: any) =>
+        setSystemPrompt(payload?.data?.systemPrompt || null),
+    },
+  );
+
+  return { systemPrompt, loading, fetchSystemPrompt };
+};
+
 export {
   useGetListAgentProfile,
   useGetOneAgentProfile,
@@ -183,4 +198,5 @@ export {
   useGetAgentProfileMemory,
   useSaveAgentProfileMemory,
   useGetListAgentProfileLog,
+  useGetMainAgentSystemPrompt,
 };

@@ -559,7 +559,7 @@ const ManageCampaignProfile = (props: IProps) => {
             order: selectedCampaign?.sortOrder || "",
           },
         });
-      }, 15 * 1000);
+      }, 30 * 1000);
     }, 200);
   }, [page, pageSize, searchText, campaignId, encryptKey, selectedCampaign]);
 

@@ -314,6 +314,21 @@ export const agentController = () => {
     },
   );
 
+  onIpc(
+    MESSAGE.DASHBOARD_AGENT_GET_MAIN_SYSTEM_PROMPT,
+    MESSAGE.DASHBOARD_AGENT_GET_MAIN_SYSTEM_PROMPT_RES,
+    async (event) => {
+      const systemPrompt = agentChatBridge.getMainAgentSystemPrompt();
+      createResponse(
+        event,
+        MESSAGE.DASHBOARD_AGENT_GET_MAIN_SYSTEM_PROMPT_RES,
+        {
+          data: { systemPrompt },
+        },
+      );
+    },
+  );
+
   ipcMain.on(
     MESSAGE.DASHBOARD_AGENT_PLAN_APPROVAL,
     (_event, payload: { sessionId: string; approved: boolean }) => {

@@ -1391,6 +1391,8 @@
   "agent.clickToExpand": "Click to expand",
   "agent.memorySaved": "Memory saved",
   "agent.memoryFileLabel": "Agent memory file (Markdown)",
+  "agent.systemPromptSaved": "System prompt saved",
+  "agent.systemPromptReadOnly": "System prompt is auto-generated for the main agent. Create an agent profile to customize it.",
   "agent.memoryPlaceholder": "Agent memory and persistent context",
   "agent.encryptKey": "Encrypt key",
   "agent.encryptKeyPlaceholder": "Optional encrypt key for encrypted wallets",
