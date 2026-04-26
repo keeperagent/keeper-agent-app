@@ -58,6 +58,7 @@ export const createMainAgent = async (
   const toolContext = options?.toolContext || new ToolContext();
 
   const [llmSetting] = await getLlmSetting();
+  await agentProfileDB.initMainAgent();
   const mainProfile = await agentProfileDB.getMainAgentProfile();
   const disabledTools = new Set<string>(llmSetting?.disabledTools || []);
 
@@ -96,10 +97,10 @@ export const createMainAgent = async (
           }));
 
   // Profile allowlist for MCP servers (null = allow all)
-  const allowedMcpServerIds: Set<number> | null =
-    mainProfile?.allowedMcpServerIds !== undefined
-      ? new Set<number>(mainProfile.allowedMcpServerIds || [])
-      : null;
+  const allowedMcpServerIds: Set<number> | null = mainProfile
+    ?.allowedMcpServerIds?.length
+    ? new Set<number>(mainProfile.allowedMcpServerIds)
+    : null;
 
   const { subAgents: mcpSubAgentInfos, closeClients } =
     await mcpToolLoader.loadMcpSubAgents();

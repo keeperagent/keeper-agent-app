@@ -193,7 +193,7 @@ const ModalAgentProfile = (props: Props) => {
         allowedBaseTools: values.allowedBaseTools || [],
         allowedSkillIds: values.allowedSkillIds || [],
         isAgentInteractionEnabled: Boolean(values.isAgentInteractionEnabled),
-        isActive: Boolean(values.isActive),
+        isActive: profile?.isMainAgent ? true : Boolean(values.isActive),
         chainKey: values?.chainKey,
         nodeEndpointGroupId: values?.nodeEndpointGroupId,
         campaignId: values?.campaignId,

@@ -160,6 +160,9 @@ export const agentSlice = createSlice({
       action: PayloadAction<number>,
     ) => {
       delete state.agentContextMap[action.payload];
+      if (state.selectedAgentProfileId === action.payload) {
+        state.selectedAgentProfileId = null;
+      }
     },
   },
 });

@@ -69,11 +69,11 @@ const AgentProfileDetail = (props: Props) => {
     if (!selectedAgentProfile?.campaignId) {
       return null;
     }
-    if (selectedAgentProfile?.isAllWallet !== false) {
+    const profileIds = selectedAgentProfile?.profileIds || [];
+    if (selectedAgentProfile?.isAllWallet === true || profileIds.length === 0) {
       return translate("agent.allWallet");
     }
-    const profileCount = (selectedAgentProfile?.profileIds || []).length;
-    return `${profileCount} ${translate("agent.wallets")}`;
+    return `${profileIds.length} ${translate("agent.wallets")}`;
   }, [selectedAgentProfile]);
 
   const agentName = selectedAgentProfile?.name || `Agent #${agentProfileId}`;

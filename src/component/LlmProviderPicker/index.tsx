@@ -1,6 +1,7 @@
 import { Tooltip } from "antd";
 import { IPreference } from "@/electron/type";
 import { LLM_PROVIDERS, isProviderConfigured } from "@/config/llmProviders";
+import { useTranslation } from "@/hook/useTranslation";
 import { ProviderRow, ProviderItem } from "./style";
 
 type Props = {
@@ -16,6 +17,8 @@ const LlmProviderPicker = ({
   listBlackList,
   preference,
 }: Props) => {
+  const { translate } = useTranslation();
+
   const providers = listBlackList?.length
     ? LLM_PROVIDERS.filter((provider) => !listBlackList.includes(provider.key))
     : LLM_PROVIDERS;
@@ -25,7 +28,10 @@ const LlmProviderPicker = ({
       {providers.map((provider) => {
         const isDisabled = !isProviderConfigured(provider, preference);
         const tooltipTitle = isDisabled
-          ? `${provider.label} API key or model is not configured`
+          ? translate("agent.apiKeyNotConfigured").replace(
+              "{provider}",
+              provider.label,
+            )
           : provider.label;
 
         return (

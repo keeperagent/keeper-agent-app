@@ -9,6 +9,8 @@ import { encryptionService } from "@/electron/service/encrypt";
 import { AgentProfileModel, CampaignModel, JobModel } from "./index";
 
 class AgentProfileDB {
+  private _mainAgentReadyPromise: Promise<void> | null = null;
+
   async getListAgentProfile(
     page: number,
     pageSize: number,
@@ -223,23 +225,28 @@ class AgentProfileDB {
     }
   }
 
-  async initMainAgent(): Promise<void> {
-    try {
-      const existing = await AgentProfileModel.findOne({
-        where: { isMainAgent: true },
-      });
-      if (existing) {
-        return;
-      }
-      await this.createAgentProfile({
-        name: "Main Agent",
-        description: "The built-in main agent",
-        isMainAgent: true,
-        isActive: true,
-      });
-    } catch (err: any) {
-      logEveryWhere({ message: `initMainAgent() error: ${err?.message}` });
+  initMainAgent(): Promise<void> {
+    if (!this._mainAgentReadyPromise) {
+      this._mainAgentReadyPromise = (async () => {
+        try {
+          const existing = await AgentProfileModel.findOne({
+            where: { isMainAgent: true },
+          });
+          if (existing) {
+            return;
+          }
+          await this.createAgentProfile({
+            name: "Main Agent",
+            description: "The built-in main agent",
+            isMainAgent: true,
+            isActive: true,
+          });
+        } catch (err: any) {
+          logEveryWhere({ message: `initMainAgent() error: ${err?.message}` });
+        }
+      })();
     }
+    return this._mainAgentReadyPromise;
   }
 }
 
