@@ -429,7 +429,7 @@ const ManageProfile = (props: any) => {
           className="custom-select"
           style={{
             marginRight: "var(--margin-right)",
-            width: "17rem",
+            width: "20rem",
           }}
           value={selectedProfileGroup?.id}
           onChange={onChangeProfileGroup}

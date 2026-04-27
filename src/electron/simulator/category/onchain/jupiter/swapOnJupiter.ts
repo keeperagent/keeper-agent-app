@@ -12,6 +12,8 @@ import {
   PLATFORM_SOL_WALLET,
   PLATFORM_SWAP_FEE_BPS,
   SOL_MINT_ADDRESS,
+  USDC_MINT_ADDRESS_ON_SOLANA,
+  USDT_MINT_ADDRESS_ON_SOLANA,
   USD1_MINT_ADDRESS_ON_SOLANA,
 } from "@/electron/constant";
 import { JupiterClient } from "./client";
@@ -24,6 +26,8 @@ export class SwapOnJupiter {
   private currentJupiterApiKeyIndex: number;
   private platformFeeBps: number;
   private platformFeeTokenAccountWithSol: PublicKey | null; // with SOL
+  private platformFeeTokenAccountWithUsdc: PublicKey | null; // with USDC
+  private platformFeeTokenAccountWithUsdt: PublicKey | null; // with USDT
   private platformFeeTokenAccountWithUsd1: PublicKey | null; // with USD1
 
   constructor(
@@ -36,40 +40,58 @@ export class SwapOnJupiter {
     this.provider = solanaProvider;
     this.platformFeeBps = PLATFORM_SWAP_FEE_BPS;
     this.platformFeeTokenAccountWithSol = null;
+    this.platformFeeTokenAccountWithUsdc = null;
+    this.platformFeeTokenAccountWithUsdt = null;
     this.platformFeeTokenAccountWithUsd1 = null;
     this.jupiterClient = new JupiterClient(this.platformFeeBps);
     this.currentJupiterApiKeyIndex = 0;
   }
 
-  private getFeeTokenAccountWithSol = async (): Promise<PublicKey | null> => {
-    if (this.platformFeeTokenAccountWithSol) {
-      return this.platformFeeTokenAccountWithSol;
+  private getFeeTokenAccount = async (
+    mintAddress: string,
+    cachedTokenAccount: PublicKey | null,
+  ): Promise<PublicKey | null> => {
+    if (cachedTokenAccount) {
+      return cachedTokenAccount;
     }
 
-    const solTokenAccount = await getAssociatedTokenAddress(
-      new PublicKey(SOL_MINT_ADDRESS),
+    return getAssociatedTokenAddress(
+      new PublicKey(mintAddress),
       new PublicKey(PLATFORM_SOL_WALLET),
       false,
       TOKEN_PROGRAM_ID,
     );
+  };
 
-    this.platformFeeTokenAccountWithSol = solTokenAccount;
+  private getFeeTokenAccountWithSol = async (): Promise<PublicKey | null> => {
+    this.platformFeeTokenAccountWithSol = await this.getFeeTokenAccount(
+      SOL_MINT_ADDRESS,
+      this.platformFeeTokenAccountWithSol,
+    );
     return this.platformFeeTokenAccountWithSol;
   };
 
-  private getFeeTokenAccountWithUsd1 = async (): Promise<PublicKey | null> => {
-    if (this.platformFeeTokenAccountWithUsd1) {
-      return this.platformFeeTokenAccountWithUsd1;
-    }
-
-    const usd1TokenAccount = await getAssociatedTokenAddress(
-      new PublicKey(USD1_MINT_ADDRESS_ON_SOLANA),
-      new PublicKey(PLATFORM_SOL_WALLET),
-      false,
-      TOKEN_PROGRAM_ID,
+  private getFeeTokenAccountWithUsdc = async (): Promise<PublicKey | null> => {
+    this.platformFeeTokenAccountWithUsdc = await this.getFeeTokenAccount(
+      USDC_MINT_ADDRESS_ON_SOLANA,
+      this.platformFeeTokenAccountWithUsdc,
     );
+    return this.platformFeeTokenAccountWithUsdc;
+  };
 
-    this.platformFeeTokenAccountWithUsd1 = usd1TokenAccount;
+  private getFeeTokenAccountWithUsdt = async (): Promise<PublicKey | null> => {
+    this.platformFeeTokenAccountWithUsdt = await this.getFeeTokenAccount(
+      USDT_MINT_ADDRESS_ON_SOLANA,
+      this.platformFeeTokenAccountWithUsdt,
+    );
+    return this.platformFeeTokenAccountWithUsdt;
+  };
+
+  private getFeeTokenAccountWithUsd1 = async (): Promise<PublicKey | null> => {
+    this.platformFeeTokenAccountWithUsd1 = await this.getFeeTokenAccount(
+      USD1_MINT_ADDRESS_ON_SOLANA,
+      this.platformFeeTokenAccountWithUsd1,
+    );
     return this.platformFeeTokenAccountWithUsd1;
   };
 
@@ -168,24 +190,23 @@ export class SwapOnJupiter {
       ];
     }
 
-    let platformFeeTokenAccountWithSol = null;
-    // we can only take fee if input token or output token is SOL
-    if (
-      swapInput.inputTokenAddress === SOL_MINT_ADDRESS ||
-      swapInput.outputTokenAddress === SOL_MINT_ADDRESS
-    ) {
-      platformFeeTokenAccountWithSol = await this.getFeeTokenAccountWithSol();
-    }
+    const swapPair = new Set([
+      swapInput.inputTokenAddress,
+      swapInput.outputTokenAddress,
+    ]);
+    let platformFeeTokenAccount = null;
 
-    let platformFeeTokenAccountWithUsd1 = null;
-    if (
-      swapInput.inputTokenAddress === USD1_MINT_ADDRESS_ON_SOLANA ||
-      swapInput.outputTokenAddress === USD1_MINT_ADDRESS_ON_SOLANA
-    ) {
-      platformFeeTokenAccountWithUsd1 = await this.getFeeTokenAccountWithUsd1();
+    // Fee account mint must be part of the Jupiter swap pair. Prefer SOL,
+    // then stablecoins in explicit priority order for eligible routes.
+    if (swapPair.has(SOL_MINT_ADDRESS)) {
+      platformFeeTokenAccount = await this.getFeeTokenAccountWithSol();
+    } else if (swapPair.has(USDC_MINT_ADDRESS_ON_SOLANA)) {
+      platformFeeTokenAccount = await this.getFeeTokenAccountWithUsdc();
+    } else if (swapPair.has(USDT_MINT_ADDRESS_ON_SOLANA)) {
+      platformFeeTokenAccount = await this.getFeeTokenAccountWithUsdt();
+    } else if (swapPair.has(USD1_MINT_ADDRESS_ON_SOLANA)) {
+      platformFeeTokenAccount = await this.getFeeTokenAccountWithUsd1();
     }
-    const platformFeeTokenAccount =
-      platformFeeTokenAccountWithSol || platformFeeTokenAccountWithUsd1;
 
     const [quote, errQuote] = await this.jupiterClient.getQuote(
       swapInput,

@@ -12,7 +12,7 @@ export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
 export const NUMBER_OF_COLUMN = 30;
 export const DEFAULT_MCP_PORT = 53535;
 
-/** Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users. */
+//  Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users.
 export const FILE_KEY = "67keeperA@";
 
 export const PLATFORM_SOL_WALLET =
@@ -21,6 +21,10 @@ export const PLATFORM_EVM_WALLET = "0x3dbc7856d635b8576241e572532b40c18dd8badf";
 export const PLATFORM_SWAP_FEE_BPS = 5; // 0.05%
 
 export const SOL_MINT_ADDRESS = "So11111111111111111111111111111111111111112";
+export const USDC_MINT_ADDRESS_ON_SOLANA =
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+export const USDT_MINT_ADDRESS_ON_SOLANA =
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
 export const USD1_MINT_ADDRESS_ON_SOLANA =
   "USD1ttGY1N17NEEHLmELoaybftRBUSErhqYiQzvEmuB";
 
