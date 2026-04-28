@@ -112,6 +112,7 @@ const renderColumns = (
     title: translate("wallet.walletGroup"),
     dataIndex: "group",
     width: 170,
+    ellipsis: true,
     render: (value: any, record: IWallet) => record.group?.name,
   },
   {
@@ -467,7 +468,7 @@ const ManageWallet = (props: any) => {
           className="custom-select"
           style={{
             marginRight: "var(--margin-right)",
-            width: "17rem",
+            width: "20rem",
           }}
           value={selectedWalletGroup?.id}
           onChange={onChangeWalletGroup}

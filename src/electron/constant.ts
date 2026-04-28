@@ -12,17 +12,8 @@ export const DEFAULT_LLM_MODELS: Record<LLMProvider, string> = {
 export const NUMBER_OF_COLUMN = 30;
 export const DEFAULT_MCP_PORT = 53535;
 
-/** Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users. */
+//  Shared key for campaign config, workflow, database, and resource config export/import so files can be shared between users.
 export const FILE_KEY = "67keeperA@";
-
-export const PLATFORM_SOL_WALLET =
-  "ELGTTNvs4AwAcKKdpMqBdSbFU5Nw9mDwHF7sFvLAMp3d";
-export const PLATFORM_EVM_WALLET = "0x3dbc7856d635b8576241e572532b40c18dd8badf";
-export const PLATFORM_SWAP_FEE_BPS = 5; // 0.05%
-
-export const SOL_MINT_ADDRESS = "So11111111111111111111111111111111111111112";
-export const USD1_MINT_ADDRESS_ON_SOLANA =
-  "USD1ttGY1N17NEEHLmELoaybftRBUSErhqYiQzvEmuB";
 
 export const MESSAGE = {
   // WalletGroup
@@ -1077,6 +1068,12 @@ export enum TELEGRAM_SNIPER_MODE {
   ONE_EVENT_ONE_PROFILE = "ONE_EVENT_ONE_PROFILE",
 }
 
+// Swap config
+export const PLATFORM_SOL_WALLET =
+  "ELGTTNvs4AwAcKKdpMqBdSbFU5Nw9mDwHF7sFvLAMp3d";
+export const PLATFORM_EVM_WALLET = "0x3dbc7856d635b8576241e572532b40c18dd8badf";
+export const PLATFORM_SWAP_FEE_BPS = 5; // 0.05%
+
 export const MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN: { [key: string]: string } = {
   ethereum: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   bsc: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
@@ -1142,6 +1139,114 @@ export const EVM_CHAIN_ID: Record<string, number> = {
   [KYBERSWAP_CHAIN_KEY.PLASMA]: 9745,
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: 999,
 };
+
+export enum EvmStableCoinSymbol {
+  USDC = "USDC",
+  USDT = "USDT",
+  DAI = "DAI",
+  USDB = "USDB",
+}
+
+export enum SwapDirection {
+  BUY = "BUY",
+  SELL = "SELL",
+}
+
+export const mapEvmStableCoinAddress: Record<
+  string,
+  Partial<Record<EvmStableCoinSymbol, string>>
+> = {
+  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: {
+    [EvmStableCoinSymbol.USDC]: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    [EvmStableCoinSymbol.USDT]: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    [EvmStableCoinSymbol.DAI]: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+  },
+  [KYBERSWAP_CHAIN_KEY.BSC]: {
+    [EvmStableCoinSymbol.USDC]: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+    [EvmStableCoinSymbol.USDT]: "0x55d398326f99059fF775485246999027B3197955",
+    [EvmStableCoinSymbol.DAI]: "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
+  },
+  [KYBERSWAP_CHAIN_KEY.POLYGON]: {
+    [EvmStableCoinSymbol.USDC]: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    [EvmStableCoinSymbol.USDT]: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+  },
+  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: {
+    [EvmStableCoinSymbol.USDC]: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    [EvmStableCoinSymbol.USDT]: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+    [EvmStableCoinSymbol.DAI]: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+  },
+  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: {
+    [EvmStableCoinSymbol.USDC]: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+    [EvmStableCoinSymbol.USDT]: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+    [EvmStableCoinSymbol.DAI]: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+  },
+  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: {
+    [EvmStableCoinSymbol.USDC]: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+    [EvmStableCoinSymbol.USDT]: "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
+    [EvmStableCoinSymbol.DAI]: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
+  },
+  [KYBERSWAP_CHAIN_KEY.BASE]: {
+    [EvmStableCoinSymbol.USDC]: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    [EvmStableCoinSymbol.USDT]: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
+    [EvmStableCoinSymbol.DAI]: "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+  },
+  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: {
+    [EvmStableCoinSymbol.USDC]: "0x3355df6d4c9c3035724fd0e3914de96a5a83aaf4",
+    [EvmStableCoinSymbol.USDT]: "0x493257fD37EDB34451f62EDf8D2a0C418852bA4C",
+    [EvmStableCoinSymbol.DAI]: "0x4B9eb6c0b6ea15176BBF62841C6B2A8a398cb656",
+  },
+  [KYBERSWAP_CHAIN_KEY.LINEA]: {
+    [EvmStableCoinSymbol.USDC]: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
+    [EvmStableCoinSymbol.USDT]: "0xA219439258ca9da29E9Cc4cE5596924745e12B93",
+    [EvmStableCoinSymbol.DAI]: "0x4AF15ec2A0BD43Db75dd04E62FAA3B8EF36b00d5",
+  },
+  [KYBERSWAP_CHAIN_KEY.SCROLL]: {
+    [EvmStableCoinSymbol.USDC]: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4",
+    [EvmStableCoinSymbol.USDT]: "0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df",
+    [EvmStableCoinSymbol.DAI]: "0xcA77eB3fEFe3725Dc33bccB54eDEFc3D9f764f97",
+  },
+  [KYBERSWAP_CHAIN_KEY.MANTLE]: {
+    [EvmStableCoinSymbol.USDC]: "0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9",
+    [EvmStableCoinSymbol.USDT]: "0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE",
+  },
+  [KYBERSWAP_CHAIN_KEY.BLAST]: {
+    [EvmStableCoinSymbol.USDB]: "0x4300000000000000000000000000000000000003",
+  },
+  [KYBERSWAP_CHAIN_KEY.SONIC]: {
+    [EvmStableCoinSymbol.USDC]: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
+    [EvmStableCoinSymbol.USDT]: "0x6047828dc181963ba44974801FF68e538dA5eaF9",
+  },
+  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: {
+    [EvmStableCoinSymbol.USDC]: "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
+    [EvmStableCoinSymbol.USDT]: "0x588CE4F028D8e7B53B687865d6A67b3A54C75518",
+  },
+  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: {
+    [EvmStableCoinSymbol.USDC]: "0x549943e04f40284185054145c6E4e9568C1D3241",
+    [EvmStableCoinSymbol.USDT]: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+  },
+  [KYBERSWAP_CHAIN_KEY.RONIN]: {
+    [EvmStableCoinSymbol.USDC]: "0x0b7007c13325c48911f73a2dad5fa5dcbf808adc",
+  },
+  [KYBERSWAP_CHAIN_KEY.MONAD]: {
+    [EvmStableCoinSymbol.USDC]: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+    [EvmStableCoinSymbol.USDT]: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+  },
+  [KYBERSWAP_CHAIN_KEY.PLASMA]: {
+    [EvmStableCoinSymbol.USDT]: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+  },
+  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: {
+    [EvmStableCoinSymbol.USDC]: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+    [EvmStableCoinSymbol.USDT]: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+  },
+};
+
+export const SOL_MINT_ADDRESS = "So11111111111111111111111111111111111111112";
+export const USDC_MINT_ADDRESS_ON_SOLANA =
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+export const USDT_MINT_ADDRESS_ON_SOLANA =
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
+export const USD1_MINT_ADDRESS_ON_SOLANA =
+  "USD1ttGY1N17NEEHLmELoaybftRBUSErhqYiQzvEmuB";
 
 export const CHAIN_KEY_ALIASES: Partial<Record<string, string[]>> = {
   [KYBERSWAP_CHAIN_KEY.ETHEREUM]: ["Ethereum", "Eth"],

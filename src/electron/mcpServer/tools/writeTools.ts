@@ -4,6 +4,7 @@ import { containsSecret } from "@keeperagent/crypto-key-guard";
 import { IMcpToken } from "@/electron/type";
 import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
 import { ToolContext } from "@/electron/agentCore/toolContext";
+import { SwapDirection } from "@/electron/constant";
 import {
   createWalletGroupTool,
   generateWalletsForGroupTool,
@@ -454,12 +455,14 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     "swap_on_jupiter",
     {
       description:
-        "Swap SOL ↔ SPL token on Jupiter for all wallets in a campaign on Solana",
+        "Swap SPL tokens on Jupiter for all wallets in a campaign on Solana. BUY supports explicit SOL or stablecoin funding, or auto per-wallet funding when inputTokenAddress is empty. AUTO priority is USDC, then USDT, then USD1, then SOL. Each wallet must fully fund the BUY from one token only. SELL remains token -> SOL.",
       inputSchema: {
         ...walletContextSchema,
         swapDirection: z
-          .enum(["BUY", "SELL"])
-          .describe("BUY = SOL → token, SELL = token → SOL"),
+          .nativeEnum(SwapDirection)
+          .describe(
+            "BUY = explicit funding token or AUTO per-wallet funding (USDC -> USDT -> USD1 -> SOL) -> token, SELL = token -> SOL",
+          ),
         outputTokenAddress: z
           .string()
           .optional()
@@ -467,7 +470,9 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         inputTokenAddress: z
           .string()
           .optional()
-          .describe("SPL mint address of the token to sell (SELL only)"),
+          .describe(
+            "BUY: optional funding token mint. Leave empty to auto-resolve one funding token per wallet in this order: USDC, USDT, USD1, SOL. SELL: SPL mint address of the token to sell.",
+          ),
         amountStrategy: z
           .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
           .optional()

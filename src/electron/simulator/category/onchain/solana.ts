@@ -7,6 +7,7 @@ import {
   SystemProgram,
   sendAndConfirmTransaction,
   ComputeBudgetProgram,
+  ParsedAccountData,
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
@@ -258,6 +259,118 @@ export class SolanaProvider {
       return [null, error];
     }
   };
+
+  async getTokenBalancesByOwner(
+    walletAddress: string,
+    listNodeProvider: string[],
+    tokenAddresses: string[],
+    timeout: number
+  ): Promise<[Record<string, string> | null, Error | null | undefined]> {
+    try {
+      if (!this.isValidAddress(walletAddress)) {
+        return [null, Error("@walletAddress is not Solana address")];
+      }
+
+      const uniqueTokenAddresses = [...new Set(tokenAddresses)];
+      const requestedMintMap = uniqueTokenAddresses.reduce(
+        (map, tokenAddress) => {
+          if (this.isValidAddress(tokenAddress)) {
+            map[new PublicKey(tokenAddress).toBase58()] = tokenAddress;
+          }
+          return map;
+        },
+        {} as Record<string, string>
+      );
+
+      const balancesByMint = uniqueTokenAddresses.reduce(
+        (map, tokenAddress) => {
+          map[tokenAddress] = "0";
+          return map;
+        },
+        {} as Record<string, string>
+      );
+
+      if (!Object.keys(requestedMintMap).length) {
+        return [balancesByMint, null];
+      }
+
+      const [provider, , err] = this.getNextProvider(listNodeProvider);
+      if (err || !provider) {
+        return [null, err];
+      }
+
+      const walletPublicKey = new PublicKey(walletAddress);
+      const [tokenProgramAccounts, token2022Accounts] = await Promise.all([
+        sendWithTimeout(
+          provider.getParsedTokenAccountsByOwner(walletPublicKey, {
+            programId: TOKEN_PROGRAM_ID,
+          }),
+          timeout
+        ),
+        sendWithTimeout(
+          provider.getParsedTokenAccountsByOwner(walletPublicKey, {
+            programId: TOKEN_2022_PROGRAM_ID,
+          }),
+          timeout
+        ),
+      ]);
+
+      const parsedAccounts = [
+        ...tokenProgramAccounts.value,
+        ...token2022Accounts.value,
+      ];
+
+      // Accumulate raw integer amounts per mint so multiple token accounts for
+      // the same mint are summed correctly and floating-point precision is avoided.
+      const mintRawTotals = new Map<string, { amount: bigint; decimals: number }>();
+
+      parsedAccounts.forEach((accountInfo) => {
+        const parsedData = accountInfo.account.data as ParsedAccountData;
+        const parsedInfo = parsedData?.parsed?.info;
+        const mint = parsedInfo?.mint;
+        if (!mint || !this.isValidAddress(mint)) { return; }
+
+        const canonicalMint = new PublicKey(mint).toBase58();
+        if (!requestedMintMap[canonicalMint]) { return; }
+
+        const tokenAmount = parsedInfo?.tokenAmount;
+        const rawAmount: string | undefined = tokenAmount?.amount;
+        const decimals: number | undefined = tokenAmount?.decimals;
+        if (rawAmount === undefined || rawAmount === null || decimals === undefined) { return; }
+
+        const amountBigInt = BigInt(rawAmount);
+        const existing = mintRawTotals.get(canonicalMint);
+        if (existing) {
+          existing.amount += amountBigInt;
+        } else {
+          mintRawTotals.set(canonicalMint, { amount: amountBigInt, decimals: Number(decimals) });
+        }
+      });
+
+      mintRawTotals.forEach(({ amount, decimals }, canonicalMint) => {
+        const requestedMint = requestedMintMap[canonicalMint];
+        if (!requestedMint) { return; }
+
+        const divisor = 10n ** BigInt(decimals);
+        const integerPart = amount / divisor;
+        const fractionalPart = amount % divisor;
+
+        if (decimals === 0 || fractionalPart === 0n) {
+          balancesByMint[requestedMint] = integerPart.toString();
+        } else {
+          const fractionalStr = fractionalPart.toString().padStart(decimals, "0");
+          balancesByMint[requestedMint] = `${integerPart}.${fractionalStr}`;
+        }
+      });
+
+      return [balancesByMint, null];
+    } catch (error: any) {
+      logEveryWhere({
+        message: `Solana getTokenBalancesByOwner() error: ${error?.message}`,
+      });
+      return [null, error];
+    }
+  }
 
   transferToken = async (
     privateKey: string,
