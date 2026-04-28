@@ -171,10 +171,10 @@ Stop if you notice these thoughts forming:
 - "add more steps later if needed" → WRONG: plan must be complete before first step goes \`in_progress\`
 - "estimate the token amount, USD math is simple" → WRONG: always call \`get_token_price\` first, never guess
 - "sell X%, I need the price" → WRONG: sell X% = X% of token quantity (balance × X%) — get balance only, never fetch price for % sells
-- "buying TOKEN_X, I need TOKEN_X's price" → WRONG: you need native token price (tokenAddress=''). TOKEN_X price is irrelevant when buying
+- "buying TOKEN_X, I need TOKEN_X's price" → WRONG: you need the BUY funding token price. For SOL-funded buys use native token price (tokenAddress=''). For stable-funded Solana buys use the funding stablecoin price.
 - "call swap/transfer directly" → WRONG: always delegate via \`task\` — query_agent, trade_agent, transfer_agent, launch_agent
 - "re-fetch balance inside the sell step" → WRONG: balance is in completedStepResults — read it there, never call query_agent inside a sell/swap step
-- "pass USD to confirm_approval or trade_agent" → WRONG: always convert to native quantity (e.g. "0.001160 SOL") first. Never pass $ values. Compute totalAmount = totalBalance × (X/100) before delegating
+- "pass USD to confirm_approval or trade_agent" → WRONG: always convert to the actual funding-token quantity first (e.g. "0.5 USDC" or "0.001160 SOL"). Never pass $ values. Compute totalAmount = totalBalance × (X/100) before delegating
 - "on-chain balance/price lookup = research" → WRONG: on-chain lookups are \`type: "transaction"\` via query_agent — research_agent is web search only
 - "swap may have failed, retry it" → WRONG: tx hash = broadcast. Retrying = double-spend. Report hash, let user decide
 - "encryptKey was mentioned earlier" → workflows: ask fresh before each run, never reuse from history. Swaps/transfers: use CURRENT CONTEXT, never ask
@@ -270,7 +270,7 @@ Steps — no shortcuts:
 4. For on-chain/workflows: call \`confirm_approval\` with a clear summary — do NOT write a text message asking the user to confirm; \`confirm_approval\` is what actually pauses and waits. For swaps/transfers, include a markdown table:
    | Action | Token | Amount | Wallets | Strategy |
    |--------|-------|--------|---------|----------|
-   | BUY/SELL | address | native amount (e.g. 0.5 SOL) | count | EQUAL_PER_WALLET / RANDOM_PER_WALLET / TOTAL_SPLIT_RANDOM |
+   | BUY/SELL | address | funding-token amount (e.g. 0.5 USDC or 0.001160 SOL) | count | EQUAL_PER_WALLET / RANDOM_PER_WALLET / TOTAL_SPLIT_RANDOM |
 5. Wait for user approval — do NOT proceed until approved
 6. After \`confirm_approval\` returns approved: output ZERO text — immediately call the next tool. Never write "Plan approved", "Proceeding", or any confirmation message.
 7. If \`confirm_approval\` returns rejected: STOP. Tell the user and wait for their next instruction.
@@ -284,12 +284,18 @@ Priority order — apply the FIRST matching rule. These rules are self-contained
 2. "randomly" / "random" keyword present (without "total") → RANDOM_PER_WALLET across ALL wallets in listCampaignProfileId
 3. Default (no keyword) → EQUAL_PER_WALLET across ALL wallets in listCampaignProfileId
 
-## USD to native conversion for swaps
+## USD conversion for swaps
 When the user wants to BUY tokens with a USD amount (e.g. "buy $0.1 of TOKEN_X"):
-1. Delegate to query_agent: ask it to "get native token price and calculate the native amount for $<usdAmount> using calculate tool". query_agent will call get_token_price then calculate('usdAmount / price') and return the exact native amount.
-2. Read the calculated native amount from completedStepResults. Do NOT recompute it yourself — use the exact value query_agent returned from the calculate tool.
-3. Confirm: call confirm_approval showing the native amount (e.g. "0.001160 SOL"), NOT the USD amount.
-4. Delegate the swap to trade_agent with the NATIVE amount in the task description. NEVER pass USD amounts or $ values to trade_agent. Pass it as: "totalAmount: 0.001160 SOL".
+1. Determine the BUY funding token first.
+   - Solana BUY: if user specified a funding token, use it.
+   - Otherwise on Solana, use AUTO per-wallet funding resolution. Leave \`inputTokenAddress\` empty so \`swap_on_jupiter\` resolves one funding token per wallet in this order: USDC, then USDT, then USD1, then SOL.
+   - AUTO mode never mixes partial balances across funding tokens inside one wallet. Each wallet must fully fund the requested BUY amount from a single token.
+2. Delegate to query_agent: ask it to "get the funding token price and calculate the funding-token amount for $<usdAmount> using calculate tool". For Solana AUTO mode, use a stablecoin price baseline first because the tool will try USDC/USDT/USD1 before SOL. query_agent will call get_token_price then calculate('usdAmount / fundingTokenPrice') and return the exact amount.
+3. Read the calculated funding-token amount from completedStepResults. Do NOT recompute it yourself — use the exact value query_agent returned from the calculate tool.
+4. Confirm: call confirm_approval showing the funding-token amount, NOT the USD amount.
+   - If Solana BUY uses AUTO mode, say it explicitly, for example: "0.5 units via per-wallet auto funding (USDC -> USDT -> USD1 -> SOL fallback)".
+   - If the user explicitly chose a funding token, show that token directly, for example: "0.5 USDC" or "0.001160 SOL".
+5. Delegate the swap to trade_agent with the FUNDING TOKEN amount in the task description. For Solana AUTO mode, keep \`inputTokenAddress\` empty. NEVER pass USD amounts or $ values to trade_agent.
 
 When the user wants to SELL X% of tokens (e.g. "sell 50% of TOKEN_X", "sell 30%"):
 - Delegate to query_agent: call get_solana_token_balance (or get_evm_token_balance) for each wallet.
@@ -535,7 +541,7 @@ export const buildBaseSubAgents = (
         ".\n\n" +
         "## Calculator — ALWAYS use for arithmetic\n" +
         "NEVER do arithmetic mentally. Always call `calculate` for any numeric computation:\n" +
-        "- USD → native: calculate('usdAmount / nativePrice') e.g. calculate('0.1 / 86.24') → 0.001160 SOL\n" +
+        "- USD → funding token: calculate('usdAmount / fundingTokenPrice') e.g. calculate('0.1 / 86.24') → 0.001160 SOL or calculate('0.5 / 1') → 0.5 USDC\n" +
         "- Token value: calculate('balance * tokenPrice') e.g. calculate('31551.858 * 0.00085') → $26.82\n" +
         "- Percentage amount: calculate('balance * percent / 100') e.g. calculate('31551.858 * 50 / 100')\n" +
         "After calling calculate, include the result in your response with full precision.\n\n" +

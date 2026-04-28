@@ -8,6 +8,7 @@ import {
   TOKEN_TYPE,
   KYBERSWAP_CHAIN_KEY,
   EVM_TRANSACTION_TYPE,
+  SwapDirection,
 } from "@/electron/constant";
 import {
   ISwapKyberswapInput,
@@ -32,7 +33,7 @@ const BALANCE_BATCH_SIZE = 10;
 const swapOnKyberswapSchema = z
   .object({
     swapDirection: z
-      .enum(["BUY", "SELL"])
+      .nativeEnum(SwapDirection)
       .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
@@ -137,7 +138,7 @@ export const swapOnKyberswapTool = (
       "Swap tokens on EVM chains via Kyberswap. BUY = native→ERC20, SELL = ERC20→native. Strategies: EQUAL_PER_WALLET, RANDOM_PER_WALLET, TOTAL_SPLIT_RANDOM. EVM only — use swap_on_jupiter for Solana.",
     schema: swapOnKyberswapSchema,
     func: async ({
-      swapDirection = "BUY",
+      swapDirection = SwapDirection.BUY,
       inputTokenAddress,
       outputTokenAddress,
       amountStrategy,
@@ -172,7 +173,7 @@ export const swapOnKyberswapTool = (
         !toolContext?.chainKey ||
         toolContext.chainKey.toLowerCase() !== "solana";
       const effectiveOutputTokenAddress = (() => {
-        if (swapDirection !== "BUY") return outputTokenAddress;
+        if (swapDirection !== SwapDirection.BUY) return outputTokenAddress;
         if (outputTokenAddress && isValidEVMAddress(outputTokenAddress)) {
           return outputTokenAddress;
         }
@@ -182,7 +183,7 @@ export const swapOnKyberswapTool = (
       })();
 
       const effectiveInputTokenAddress = (() => {
-        if (swapDirection !== "SELL") return inputTokenAddress;
+        if (swapDirection !== SwapDirection.SELL) return inputTokenAddress;
         if (inputTokenAddress && isValidEVMAddress(inputTokenAddress)) {
           return inputTokenAddress;
         }
@@ -192,7 +193,7 @@ export const swapOnKyberswapTool = (
       })();
 
       // For BUY operations: only validate outputTokenAddress (ERC20 token), never validate inputTokenAddress (native token has no address)
-      if (swapDirection === "BUY" && effectiveOutputTokenAddress) {
+      if (swapDirection === SwapDirection.BUY && effectiveOutputTokenAddress) {
         if (!isValidEVMAddress(effectiveOutputTokenAddress)) {
           throw new Error(
             `Invalid EVM token address: ${effectiveOutputTokenAddress}. Please provide a valid EVM token address (0x followed by 40 hex characters).`,
@@ -201,7 +202,7 @@ export const swapOnKyberswapTool = (
       }
 
       // For SELL operations: validate inputTokenAddress (ERC20 token)
-      if (swapDirection === "SELL" && effectiveInputTokenAddress) {
+      if (swapDirection === SwapDirection.SELL && effectiveInputTokenAddress) {
         if (!isValidEVMAddress(effectiveInputTokenAddress)) {
           throw new Error(
             `Invalid EVM token address: ${effectiveInputTokenAddress}. Please provide a valid EVM token address (0x followed by 40 hex characters).`,
@@ -308,7 +309,7 @@ export const swapOnKyberswapTool = (
         );
       }
 
-      const isBuy = swapDirection === "BUY";
+      const isBuy = swapDirection === SwapDirection.BUY;
       const tokenAddress = isBuy
         ? effectiveOutputTokenAddress
         : effectiveInputTokenAddress;
