@@ -206,6 +206,7 @@ const swapOnJupiterSchema = z
   .object({
     swapDirection: z
       .nativeEnum(SwapDirection)
+      .default(SwapDirection.BUY)
       .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
@@ -659,8 +660,42 @@ export const swapOnJupiterTool = (
         message: `[Agent] Fetching balance for ${wallets.length} wallets done, take: ${(endTime - startTime) / 1000} seconds`,
       });
 
-      const availableTotal = balanceInfo.reduce(
-        (sum, b) => sum + (b?.available || 0),
+      // For auto-resolve BUY, pick a single global common funding mint so all
+      // wallets use the same denomination when summing and clamping amounts.
+      // Highest-priority mint (USDC > USDT > USD1 > SOL) that any wallet holds.
+      const globalCommonFundingMint = (() => {
+        if (!shouldAutoResolveBuyInputToken) {
+          return null;
+        }
+        for (const mint of SOLANA_AUTO_BUY_FUNDING_PRIORITY) {
+          const anyWalletHasMint = balanceInfo.some((balanceItem) => {
+            const option = balanceItem.fundingOptions?.[mint];
+            return option && new Big(option.availableStr || "0").gt(0);
+          });
+          if (anyWalletHasMint) {
+            return mint;
+          }
+        }
+        return null;
+      })();
+
+      // Per-wallet capacity in a consistent unit:
+      // - Auto-resolve: use each wallet's available in globalCommonFundingMint so sums
+      //   are comparable. Wallets that lack the common mint get 0 and are skipped cleanly.
+      // - Explicit funding token: use each wallet's own available as before.
+      const availableArr = (() => {
+        if (shouldAutoResolveBuyInputToken && globalCommonFundingMint) {
+          return balanceInfo.map((balanceItem) => {
+            const option =
+              balanceItem.fundingOptions?.[globalCommonFundingMint];
+            return option ? Number(option.availableStr || "0") : 0;
+          });
+        }
+        return balanceInfo.map((balanceItem) => balanceItem.available || 0);
+      })();
+
+      const availableTotal = availableArr.reduce(
+        (sum, available) => sum + available,
         0,
       );
       if (availableTotal <= 0) {
@@ -755,13 +790,12 @@ export const swapOnJupiterTool = (
         throw new Error(`Unknown amountStrategy: ${resolvedAmountStrategy}`);
       })();
 
-      // Adjust planned amounts based on available balances
-      const availableArr = balanceInfo.map((b) => b.available || 0);
+      // Clamp planned amounts to per-wallet capacity (availableArr is in a consistent unit).
+      // TOTAL_SPLIT_RANDOM redistributes leftover capacity; all other strategies clamp only.
+      // For auto-resolve BUY, wallets that lack the globalCommonFundingMint have 0 capacity
+      // and are skipped rather than silently spending in a different mint's unit.
       let plannedAdjusted = plannedPerWalletAmounts;
 
-      // For EQUAL_PER_WALLET: Only clamp to capacity, don't redistribute (keep amounts equal)
-      // For TOTAL_SPLIT_RANDOM: Use redistributeToCapacity to fill remaining capacity
-      // For RANDOM_PER_WALLET: Only clamp to capacity (amounts are already random)
       if (resolvedAmountStrategy === "TOTAL_SPLIT_RANDOM") {
         const targetTotal = plannedPerWalletAmounts.reduce((a, b) => a + b, 0);
         plannedAdjusted = redistributeToCapacity(
@@ -769,10 +803,7 @@ export const swapOnJupiterTool = (
           availableArr,
           targetTotal,
         );
-      } else if (isBuy && shouldAutoResolveBuyInputToken) {
-        plannedAdjusted = plannedPerWalletAmounts;
       } else {
-        // For EQUAL_PER_WALLET and RANDOM_PER_WALLET: Just clamp to capacity, don't redistribute
         plannedAdjusted = plannedPerWalletAmounts.map((amt, idx) =>
           Math.min(amt, availableArr[idx] || 0),
         );

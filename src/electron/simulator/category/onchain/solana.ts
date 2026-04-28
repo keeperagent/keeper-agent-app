@@ -275,7 +275,7 @@ export class SolanaProvider {
       const requestedMintMap = uniqueTokenAddresses.reduce(
         (map, tokenAddress) => {
           if (this.isValidAddress(tokenAddress)) {
-            map[this.formatKey(tokenAddress)] = tokenAddress;
+            map[new PublicKey(tokenAddress).toBase58()] = tokenAddress;
           }
           return map;
         },
@@ -320,22 +320,47 @@ export class SolanaProvider {
         ...token2022Accounts.value,
       ];
 
+      // Accumulate raw integer amounts per mint so multiple token accounts for
+      // the same mint are summed correctly and floating-point precision is avoided.
+      const mintRawTotals = new Map<string, { amount: bigint; decimals: number }>();
+
       parsedAccounts.forEach((accountInfo) => {
         const parsedData = accountInfo.account.data as ParsedAccountData;
         const parsedInfo = parsedData?.parsed?.info;
         const mint = parsedInfo?.mint;
-        if (!mint) return;
+        if (!mint || !this.isValidAddress(mint)) { return; }
 
-        const requestedMint = requestedMintMap[this.formatKey(mint)];
-        if (!requestedMint) return;
+        const canonicalMint = new PublicKey(mint).toBase58();
+        if (!requestedMintMap[canonicalMint]) { return; }
 
         const tokenAmount = parsedInfo?.tokenAmount;
-        const balanceStr =
-          tokenAmount?.uiAmountString ??
-          (tokenAmount?.uiAmount !== undefined
-            ? String(tokenAmount.uiAmount)
-            : "0");
-        balancesByMint[requestedMint] = balanceStr || "0";
+        const rawAmount: string | undefined = tokenAmount?.amount;
+        const decimals: number | undefined = tokenAmount?.decimals;
+        if (rawAmount === undefined || rawAmount === null || decimals === undefined) { return; }
+
+        const amountBigInt = BigInt(rawAmount);
+        const existing = mintRawTotals.get(canonicalMint);
+        if (existing) {
+          existing.amount += amountBigInt;
+        } else {
+          mintRawTotals.set(canonicalMint, { amount: amountBigInt, decimals: Number(decimals) });
+        }
+      });
+
+      mintRawTotals.forEach(({ amount, decimals }, canonicalMint) => {
+        const requestedMint = requestedMintMap[canonicalMint];
+        if (!requestedMint) { return; }
+
+        const divisor = 10n ** BigInt(decimals);
+        const integerPart = amount / divisor;
+        const fractionalPart = amount % divisor;
+
+        if (decimals === 0 || fractionalPart === 0n) {
+          balancesByMint[requestedMint] = integerPart.toString();
+        } else {
+          const fractionalStr = fractionalPart.toString().padStart(decimals, "0");
+          balancesByMint[requestedMint] = `${integerPart}.${fractionalStr}`;
+        }
       });
 
       return [balancesByMint, null];

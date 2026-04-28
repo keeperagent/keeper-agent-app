@@ -34,6 +34,7 @@ const swapOnKyberswapSchema = z
   .object({
     swapDirection: z
       .nativeEnum(SwapDirection)
+      .default(SwapDirection.BUY)
       .describe("BUY or SELL (default BUY)"),
     inputTokenAddress: z
       .string()
