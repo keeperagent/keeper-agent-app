@@ -306,7 +306,6 @@ export const sendWithTimeout = async (
   funcPromise: Promise<any> | undefined,
   timeout: number,
 ): Promise<any> => {
-  // Use Promise.race to implement a timeout
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(Error("Timeout")), timeout),
   );

@@ -82,10 +82,10 @@ const ContextBar = (props: any) => {
   const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
   const { getListCampaign } = useGetListCampaign();
   const { getListSetting } = useGetListSetting();
-  const { createSetting } = useCreateSetting({
+  const { createSetting, loading: isCreateLoading } = useCreateSetting({
     onSuccess: (setting) => setActivePresetId(setting.id || null),
   });
-  const { updateSetting } = useUpdateSetting();
+  const { updateSetting, loading: isUpdateLoading } = useUpdateSetting();
   const { deleteSetting } = useDeleteSetting();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -94,8 +94,8 @@ const ContextBar = (props: any) => {
   const [activePresetId, setActivePresetId] = useState<number | null>(null);
 
   useEffect(() => {
-    getListNodeEndpointGroup({ page: 1, pageSize: 1000 });
-    getListCampaign({ page: 1, pageSize: 1000 });
+    getListNodeEndpointGroup({ page: 1, pageSize: 100 });
+    getListCampaign({ page: 1, pageSize: 100 });
     getListSetting({
       page: 1,
       pageSize: 1000,
@@ -107,20 +107,19 @@ const ContextBar = (props: any) => {
   const matchingPreset = useMemo(() => {
     const currentProfileIds = JSON.stringify(listProfileId || []);
 
-    return (
-      listAgentSetting?.find((setting: ISetting) => {
-        const agentSetting = setting.agentSetting;
-        return (
-          agentSetting?.chainKey === chainKey &&
-          agentSetting?.nodeEndpointGroupId === nodeEndpointGroupId &&
-          agentSetting?.campaignId === campaignId &&
-          JSON.stringify(agentSetting?.selectedProfileIds || []) ===
-            currentProfileIds &&
-          agentSetting?.isAllWallet === isAllWallet &&
-          (agentSetting?.tokenAddress || "") === (tokenAddress || "")
-        );
-      }) || null
-    );
+    return listAgentSetting?.find((setting: ISetting) => {
+      const agentSetting = setting.agentSetting;
+
+      return (
+        agentSetting?.chainKey === chainKey &&
+        agentSetting?.nodeEndpointGroupId === nodeEndpointGroupId &&
+        agentSetting?.campaignId === campaignId &&
+        JSON.stringify(agentSetting?.selectedProfileIds || []) ===
+          currentProfileIds &&
+        agentSetting?.isAllWallet === isAllWallet &&
+        (agentSetting?.tokenAddress || "") === (tokenAddress || "")
+      );
+    });
   }, [
     listAgentSetting,
     chainKey,
@@ -476,6 +475,7 @@ const ContextBar = (props: any) => {
                 type="primary"
                 size="middle"
                 disabled={!drawerPresetName.trim()}
+                loading={isCreateLoading || isUpdateLoading}
               >
                 {translate("button.save")}
               </Button>

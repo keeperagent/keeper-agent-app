@@ -1165,7 +1165,7 @@ const ManageCampaignProfile = (props: IProps) => {
           listRunningWorkflow,
           <ScriptIcon />,
           translate,
-          "calculator",
+          "calculator script-icon",
         )}
 
         <Tooltip title={translate("campaign.syncProfile")}>

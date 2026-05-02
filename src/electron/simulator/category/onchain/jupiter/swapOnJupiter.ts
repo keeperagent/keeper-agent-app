@@ -1,13 +1,19 @@
 import Big from "big.js";
 import { AxiosProxyConfig } from "axios";
-import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  VersionedTransaction,
+} from "@solana/web3.js";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { logEveryWhere } from "@/electron/service/util";
-import { sendWithTimeout } from "@/electron/simulator/util";
 import type { IStructuredLogPayload } from "@/electron/type";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { IJupiterSwapInput } from "@/electron/type";
-import { getKeypairFromPrivateKey } from "@/electron/simulator/category/onchain/util";
+import {
+  getKeypairFromPrivateKey,
+  sendSolanaTransactionWithRetry,
+} from "@/electron/simulator/category/onchain/util";
 import {
   PLATFORM_SOL_WALLET,
   PLATFORM_SWAP_FEE_BPS,
@@ -261,28 +267,33 @@ export class SwapOnJupiter {
     }
 
     const transactionBase64 = swapResponse.swapTransaction;
+    const lastValidBlockHeight = swapResponse.lastValidBlockHeight as number;
     const transaction = VersionedTransaction.deserialize(
       Buffer.from(transactionBase64, "base64") as any,
     );
 
     transaction.sign([wallet]);
     const transactionBinary = transaction.serialize();
+    const blockhash = transaction.message.recentBlockhash;
 
     const startTime = new Date().getTime();
     const signature = await provider.sendRawTransaction(transactionBinary, {
-      maxRetries: 5,
+      maxRetries: 0,
       skipPreflight: true,
     });
     if (!swapInput.shouldWaitTransactionComfirmed) {
       return [signature, null];
     }
 
-    const confirmation = await sendWithTimeout(
-      provider.confirmTransaction(signature, "confirmed"),
-      15000,
+    const confirmErr = await sendSolanaTransactionWithRetry(
+      provider,
+      transactionBinary,
+      signature,
+      blockhash,
+      lastValidBlockHeight,
     );
-    if (confirmation.value.err) {
-      return [signature, Error(confirmation?.value?.err?.toString())];
+    if (confirmErr) {
+      return [signature, confirmErr];
     }
 
     const endTime = new Date().getTime();
@@ -295,4 +306,5 @@ export class SwapOnJupiter {
     });
     return [signature, null];
   };
+
 }

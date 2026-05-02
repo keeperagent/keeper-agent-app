@@ -17,7 +17,6 @@ const Wrapper = styled.div`
     align-items: center;
     justify-content: flex-start;
     left: 21.5rem;
-    padding: 1.2rem 0rem;
 
     & > * {
       margin-right: 1rem;
@@ -35,7 +34,7 @@ const Wrapper = styled.div`
       .label {
         margin-right: 0.5rem;
         font-size: 0.8rem;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0rem;
         color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
         white-space: nowrap;
       }
@@ -77,9 +76,9 @@ const Wrapper = styled.div`
       .item {
         display: flex;
         flex-direction: column;
+        align-items: center;
         padding: 0.2rem 0.5rem;
         cursor: pointer;
-        align-items: center;
 
         &.disable {
           cursor: not-allowed;
@@ -99,11 +98,14 @@ const Wrapper = styled.div`
         }
 
         .icon {
+          height: 2rem;
+          width: 1rem;
+
           svg {
-            height: 1.5rem;
-            width: 1.5rem;
-            min-width: 1.5rem;
-            min-height: 1.5rem;
+            height: 1rem;
+            width: 1rem;
+            min-width: 1rem;
+            min-height: 1rem;
             fill: ${({ theme }: { theme: ITheme }) =>
               theme?.colorTextSecondary};
           }
@@ -115,6 +117,7 @@ const Wrapper = styled.div`
           color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
           display: flex;
           align-items: center;
+          justify-content: center;
 
           .count {
             padding: 2px 5px;

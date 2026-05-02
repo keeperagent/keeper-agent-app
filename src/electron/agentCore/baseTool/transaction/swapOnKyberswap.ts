@@ -2,58 +2,86 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod/v3";
 import { ethers } from "ethers";
 import Big from "big.js";
-import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
+import _ from "lodash";
 import { KyberswapManager } from "@/electron/simulator/category/onchain/kyberswap";
 import {
   TOKEN_TYPE,
   KYBERSWAP_CHAIN_KEY,
   EVM_TRANSACTION_TYPE,
   SwapDirection,
+  mapEvmStableCoinAddress,
+  EvmStableCoinSymbol,
+  PRICE_DATA_SOURCE,
 } from "@/electron/constant";
-import {
-  ISwapKyberswapInput,
-  ICampaignProfile,
-  IWallet,
-} from "@/electron/type";
-import { campaignProfileDB } from "@/electron/database/campaignProfile";
-import { decryptWallet } from "@/electron/service/wallet";
+import { ISwapKyberswapInput, IWallet } from "@/electron/type";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import { logEveryWhere, sleep } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
 import { safeStringify } from "@/electron/agentCore/utils";
+import { Pricing } from "@/electron/simulator/category/pricing";
 import {
   redistributeToCapacity,
   capitalizeFirstLetter,
   extractErrorMessage,
+  AmountStrategy,
 } from "../utils";
 import { TOOL_KEYS } from "@/electron/constant";
+import {
+  FundingOptions,
+  WalletBalanceInfo,
+  makeBalanceError,
+  getMaxAvailableFundingAmountUsd,
+  selectFundingOptionForAmount,
+  countByKey,
+  computePlannedAmounts,
+  resolveSellPercentage,
+  resolveAmountStrategy,
+  resolveNodeProviders,
+  resolveWalletsFromCampaign,
+  BALANCE_SKIP_REASONS,
+  SwapFailureReason,
+} from "./utils";
 
 const BALANCE_BATCH_SIZE = 10;
+const NATIVE_TOKEN_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+const EVM_BUY_FUNDING_PRIORITY: EvmStableCoinSymbol[] = [
+  EvmStableCoinSymbol.USDC,
+  EvmStableCoinSymbol.USDT,
+  EvmStableCoinSymbol.DAI,
+  EvmStableCoinSymbol.USDB,
+];
 
 const swapOnKyberswapSchema = z
   .object({
-    swapDirection: z
-      .nativeEnum(SwapDirection)
-      .default(SwapDirection.BUY)
-      .describe("BUY or SELL (default BUY)"),
+    swapDirection: z.nativeEnum(SwapDirection).describe("BUY or SELL"),
+    inputTokenSymbol: z
+      .string()
+      .nullish()
+      .describe(
+        "Token symbol for BUY funding — use this when specifying a named token (e.g. 'ETH', 'BNB', 'USDT', 'USDC', 'DAI'). The tool resolves the symbol to the correct chain address. Do NOT put a symbol in inputTokenAddress.",
+      ),
     inputTokenAddress: z
       .string()
       .refine(
         (val) => {
-          if (!val || val.trim() === "") return true;
+          if (!val || val.trim() === "") {
+            return true;
+          }
           return ethers.utils.isAddress(val);
         },
         {
           message:
-            "Must be a valid EVM address (0x + 40 hex chars). Pass empty string for BUY.",
+            "Must be a valid EVM address (0x + 40 hex chars). For named tokens use inputTokenSymbol instead. Pass empty string to auto-resolve for BUY.",
         },
       )
-      .describe("ERC20 address. SELL only — pass empty string for BUY."),
+      .describe(
+        "Raw ERC20 address only — no symbols. BUY: optional explicit funding token (leave empty to auto-resolve native→USDC→USDT→DAI→USDB per wallet; amounts in USD). SELL: token to sell. Use inputTokenSymbol for named tokens.",
+      ),
     outputTokenAddress: z
       .string()
       .describe("ERC20 address. BUY only — pass empty string for SELL."),
     amountStrategy: z
-      .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
+      .nativeEnum(AmountStrategy)
       .describe("Amount allocation strategy across wallets"),
     amount: z
       .number()
@@ -95,9 +123,12 @@ const swapOnKyberswapSchema = z
   })
   .refine(
     (data) => {
-      if (data.amountStrategy === "RANDOM_PER_WALLET" && !data.sellPercentage) {
-        const effectiveMax = data.maxAmount ?? data.amount;
-        return effectiveMax !== undefined && effectiveMax > 0;
+      if (
+        data.amountStrategy === AmountStrategy.RANDOM_PER_WALLET &&
+        !data.sellPercentage
+      ) {
+        const effectiveMax = data.maxAmount || data.amount;
+        return Boolean(effectiveMax);
       }
       return true;
     },
@@ -130,16 +161,56 @@ export const mapNativeTokenName: Record<KYBERSWAP_CHAIN_KEY, string> = {
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "HYPE",
 };
 
+const mapChainKeyToNativeTokenCoingeckoId: Partial<
+  Record<KYBERSWAP_CHAIN_KEY, string>
+> = {
+  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.BASE]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.LINEA]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.BLAST]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.BSC]: "binancecoin",
+  [KYBERSWAP_CHAIN_KEY.POLYGON]: "polygon-ecosystem-token",
+  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "avalanche-2",
+  [KYBERSWAP_CHAIN_KEY.MANTLE]: "mantle",
+  [KYBERSWAP_CHAIN_KEY.SONIC]: "sonic-3",
+  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "berachain-bera",
+  [KYBERSWAP_CHAIN_KEY.RONIN]: "ronin",
+  [KYBERSWAP_CHAIN_KEY.MONAD]: "monad",
+  [KYBERSWAP_CHAIN_KEY.PLASMA]: "plasma",
+  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "hyperliquid",
+};
+
+const resolveFundingLabel = (
+  address: string,
+  nativeTokenLabel: string,
+  stablecoinEntries: Array<{ address: string; label: string }>,
+): string => {
+  if (address.toLowerCase() === NATIVE_TOKEN_ADDRESS) {
+    return nativeTokenLabel;
+  }
+  return (
+    stablecoinEntries.find(
+      (entry) => entry.address.toLowerCase() === address.toLowerCase(),
+    )?.label || address
+  );
+};
+
 export const swapOnKyberswapTool = (
   toolContext?: ToolContext,
 ): DynamicStructuredTool =>
   new DynamicStructuredTool({
     name: TOOL_KEYS.SWAP_ON_KYBERSWAP,
     description:
-      "Swap tokens on EVM chains via Kyberswap. BUY = native→ERC20, SELL = ERC20→native. Strategies: EQUAL_PER_WALLET, RANDOM_PER_WALLET, TOTAL_SPLIT_RANDOM. EVM only — use swap_on_jupiter for Solana.",
+      "Swap tokens on EVM chains via Kyberswap. BUY = swap one funding token per wallet into the target ERC20. If the user names a funding token (e.g. 'USDC', 'USDT', 'ETH', 'BNB'), pass the symbol in inputTokenSymbol and the amount in that token's native quantity (e.g. 'buy with 10 USDT' means inputTokenSymbol='USDT', amount=10). If the user does not specify a funding token, leave both inputTokenSymbol and inputTokenAddress empty to auto-resolve by priority (native coin, then USDC, then USDT, then DAI, then USDB) with amount in USD. SELL = swap the target ERC20 back to the native coin. Strategies: EQUAL_PER_WALLET, RANDOM_PER_WALLET, TOTAL_SPLIT_RANDOM. EVM only — use swap_on_jupiter for Solana.",
     schema: swapOnKyberswapSchema,
     func: async ({
-      swapDirection = SwapDirection.BUY,
+      swapDirection,
+      inputTokenSymbol,
       inputTokenAddress,
       outputTokenAddress,
       amountStrategy,
@@ -161,40 +232,64 @@ export const swapOnKyberswapTool = (
           status: "blocked_planning_mode",
         });
       }
-      const chainKey = toolContext?.chainKey as KYBERSWAP_CHAIN_KEY;
-      // Validate token addresses are valid EVM addresses
-      const isValidEVMAddress = (address: string): boolean => {
-        return ethers.utils.isAddress(address);
-      };
 
-      // Apply ToolContext fallback for token addresses when the model provides
-      // an invalid or wrong-chain address (e.g. Solana base58 address on EVM).
-      // Only fall back to context tokenAddress when chainKey confirms an EVM chain.
+      const chainKey = toolContext?.chainKey as KYBERSWAP_CHAIN_KEY;
+      const isBuy = swapDirection === SwapDirection.BUY;
+
+      if (inputTokenSymbol) {
+        const symbolUpper = inputTokenSymbol.toUpperCase();
+        const nativeLabel = (mapNativeTokenName[chainKey] || "").toUpperCase();
+        if (symbolUpper === nativeLabel) {
+          inputTokenAddress = NATIVE_TOKEN_ADDRESS;
+        } else {
+          const chainStablecoins = mapEvmStableCoinAddress[chainKey] || {};
+          const resolved = chainStablecoins[symbolUpper as EvmStableCoinSymbol];
+          if (resolved) {
+            inputTokenAddress = resolved;
+          }
+        }
+      }
+
+      if (isBuy && sellPercentage) {
+        throw new Error("sellPercentage can only be used for SELL operations");
+      }
+
+      const isValidEVMAddress = (address: string): boolean =>
+        ethers.utils.isAddress(address);
+
       const isEvmChain =
         !toolContext?.chainKey ||
         toolContext.chainKey.toLowerCase() !== "solana";
+
       const effectiveOutputTokenAddress = (() => {
-        if (swapDirection !== SwapDirection.BUY) return outputTokenAddress;
+        if (swapDirection !== SwapDirection.BUY) {
+          return outputTokenAddress;
+        }
         if (outputTokenAddress && isValidEVMAddress(outputTokenAddress)) {
           return outputTokenAddress;
         }
         const ctxAddr = toolContext?.tokenAddress;
-        if (isEvmChain && ctxAddr && isValidEVMAddress(ctxAddr)) return ctxAddr;
-        return outputTokenAddress; // let validation below surface the error
+        if (isEvmChain && ctxAddr && isValidEVMAddress(ctxAddr)) {
+          return ctxAddr;
+        }
+        return outputTokenAddress;
       })();
 
       const effectiveInputTokenAddress = (() => {
-        if (swapDirection !== SwapDirection.SELL) return inputTokenAddress;
+        if (swapDirection !== SwapDirection.SELL) {
+          return inputTokenAddress;
+        }
         if (inputTokenAddress && isValidEVMAddress(inputTokenAddress)) {
           return inputTokenAddress;
         }
         const ctxAddr = toolContext?.tokenAddress;
-        if (isEvmChain && ctxAddr && isValidEVMAddress(ctxAddr)) return ctxAddr;
-        return inputTokenAddress; // let validation below surface the error
+        if (isEvmChain && ctxAddr && isValidEVMAddress(ctxAddr)) {
+          return ctxAddr;
+        }
+        return inputTokenAddress;
       })();
 
-      // For BUY operations: only validate outputTokenAddress (ERC20 token), never validate inputTokenAddress (native token has no address)
-      if (swapDirection === SwapDirection.BUY && effectiveOutputTokenAddress) {
+      if (isBuy && effectiveOutputTokenAddress) {
         if (!isValidEVMAddress(effectiveOutputTokenAddress)) {
           throw new Error(
             `Invalid EVM token address: ${effectiveOutputTokenAddress}. Please provide a valid EVM token address (0x followed by 40 hex characters).`,
@@ -202,8 +297,7 @@ export const swapOnKyberswapTool = (
         }
       }
 
-      // For SELL operations: validate inputTokenAddress (ERC20 token)
-      if (swapDirection === SwapDirection.SELL && effectiveInputTokenAddress) {
+      if (!isBuy && effectiveInputTokenAddress) {
         if (!isValidEVMAddress(effectiveInputTokenAddress)) {
           throw new Error(
             `Invalid EVM token address: ${effectiveInputTokenAddress}. Please provide a valid EVM token address (0x followed by 40 hex characters).`,
@@ -211,78 +305,22 @@ export const swapOnKyberswapTool = (
         }
       }
 
-      const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
-      const effectiveEncryptKey = toolContext?.encryptKey;
-      const effectiveCampaignId = toolContext?.campaignId;
-      if (!effectiveCampaignId) {
-        throw new Error(
-          "campaignId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
+      // For BUY: fundingTokenAddress is the explicit ERC20 input token (stablecoin).
+      // Empty means auto-resolve native→stablecoins per wallet.
+      const fundingTokenAddress =
+        isBuy && effectiveInputTokenAddress ? effectiveInputTokenAddress : null;
+      const shouldAutoResolveBuyInputToken = isBuy && !fundingTokenAddress;
 
-      if (!effectiveNodeEndpointGroupId) {
-        throw new Error(
-          "nodeEndpointGroupId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
+      const listNodeProvider = await resolveNodeProviders(
+        toolContext?.nodeEndpointGroupId,
+      );
 
-      const [listNodeEndpoint, errList] =
-        await nodeEndpointDB.getListNodeEndpointByGroupId(
-          effectiveNodeEndpointGroupId,
-        );
-      if (errList) {
-        throw errList;
-      }
-      const listNodeProvider =
-        listNodeEndpoint
-          ?.map((node) => node?.endpoint || "")
-          ?.filter((endpoint) => Boolean(endpoint)) || [];
-      if (!listNodeProvider.length) {
-        throw new Error(
-          "The configured node endpoint group has no active endpoints",
-        );
-      }
-
-      const effectiveIsAllWallet = toolContext?.isAllWallet || false;
-      const effectiveListCampaignProfileId =
-        toolContext?.listCampaignProfileId || [];
-
-      // Resolve wallets from campaign profiles
-      let profiles: ICampaignProfile[] = [];
-      if (effectiveIsAllWallet) {
-        const [allProfiles, errAll] =
-          await campaignProfileDB.getAllProfileOfCampaign(
-            effectiveCampaignId,
-            true,
-          );
-        if (errAll) throw errAll;
-        profiles = allProfiles || [];
-      } else {
-        if (!effectiveListCampaignProfileId.length) {
-          throw new Error(
-            "listCampaignProfileId is required when isAllWallet is false",
-          );
-        }
-        const [resProfiles, errListProfiles] =
-          await campaignProfileDB.getListCampaignProfile({
-            page: 1,
-            pageSize: effectiveListCampaignProfileId.length,
-            campaignId: effectiveCampaignId,
-            listId: effectiveListCampaignProfileId,
-          });
-        if (errListProfiles) throw errListProfiles;
-        profiles = resProfiles?.data || [];
-      }
-
-      const wallets: IWallet[] =
-        profiles
-          ?.map((profile) => {
-            const wallet = profile?.wallet
-              ? decryptWallet(profile?.wallet, effectiveEncryptKey || "")
-              : profile?.wallet;
-            return wallet;
-          })
-          ?.filter((wallet): wallet is IWallet => Boolean(wallet)) || [];
+      const wallets: IWallet[] = await resolveWalletsFromCampaign({
+        campaignId: toolContext?.campaignId,
+        isAllWallet: toolContext?.isAllWallet || false,
+        listProfileIds: toolContext?.listCampaignProfileId || [],
+        encryptKey: toolContext?.encryptKey || "",
+      });
 
       if (!wallets.length) {
         throw new Error(
@@ -290,15 +328,16 @@ export const swapOnKyberswapTool = (
         );
       }
 
-      // Validate wallet addresses are valid EVM addresses
       const invalidWallets = wallets.filter((wallet) => {
-        if (!wallet?.address) return true;
+        if (!wallet?.address) {
+          return true;
+        }
         return !ethers.utils.isAddress(wallet.address);
       });
 
       if (invalidWallets.length > 0) {
         const invalidAddresses = invalidWallets
-          .map((w) => w?.address || "unknown")
+          .map((wallet) => wallet?.address || "unknown")
           .slice(0, 3)
           .join(", ");
         throw new Error(
@@ -310,7 +349,6 @@ export const swapOnKyberswapTool = (
         );
       }
 
-      const isBuy = swapDirection === SwapDirection.BUY;
       const tokenAddress = isBuy
         ? effectiveOutputTokenAddress
         : effectiveInputTokenAddress;
@@ -323,195 +361,192 @@ export const swapOnKyberswapTool = (
         );
       }
 
-      // Validate that sellPercentage is not used for BUY operations
-      if (isBuy && sellPercentage) {
-        throw new Error("sellPercentage can only be used for SELL operations");
-      }
-
       const evmProvider = new EVMProvider();
       const kyberswapManager = new KyberswapManager();
       const kyberswap = await kyberswapManager.getKyberswap(listNodeProvider);
 
-      // Fetch balances for all wallets
-      const balanceInfo: Array<{
-        balance: number | null;
-        balanceStr: string | null; // Store original balance string for precision
-        available: number;
-        availableStr: string | null; // Store original available string for precision
-        error: string | null;
-      }> = [];
+      const nativeTokenLabel = mapNativeTokenName[chainKey] || "native";
+
+      // Build the list of stablecoins available on this chain in priority order
+      const chainStablecoins = mapEvmStableCoinAddress[chainKey] || {};
+      const stablecoinEntries = EVM_BUY_FUNDING_PRIORITY.filter(
+        (symbol) => chainStablecoins[symbol],
+      )
+        .map((symbol) => ({
+          symbol,
+          address: chainStablecoins[symbol]!,
+          label: symbol as string,
+        }))
+        .filter(
+          (entry) =>
+            entry.address.toLowerCase() !==
+            effectiveOutputTokenAddress?.toLowerCase(),
+        );
+      const fundingPriorityAddresses = [
+        NATIVE_TOKEN_ADDRESS,
+        ...stablecoinEntries.map((entry) => entry.address),
+      ].filter(
+        (address) =>
+          address.toLowerCase() !== effectiveOutputTokenAddress?.toLowerCase(),
+      );
+
+      const explicitBuyFundingLabel = fundingTokenAddress
+        ? resolveFundingLabel(
+            fundingTokenAddress,
+            nativeTokenLabel,
+            stablecoinEntries,
+          )
+        : "AUTO";
+
+      const balanceInfo: WalletBalanceInfo[] = [];
+      let nativePrice = 0;
+
+      if (shouldAutoResolveBuyInputToken) {
+        const nativeCoingeckoId = mapChainKeyToNativeTokenCoingeckoId[chainKey];
+        if (nativeCoingeckoId) {
+          const pricing = new Pricing(1000);
+          const [price] = await pricing.getTokenPrice({
+            name: "native_price_for_swap",
+            sleep: 0,
+            dataSource: PRICE_DATA_SOURCE.COINGECKO,
+            coingeckoId: nativeCoingeckoId,
+            timeout: 10,
+          });
+          nativePrice = price || 0;
+        }
+      }
 
       logEveryWhere({
         message: `[Agent] Fetching balance for ${wallets.length} wallets...`,
       });
       const startTime = new Date().getTime();
 
-      for (let i = 0; i < wallets.length; i += BALANCE_BATCH_SIZE) {
-        const batch = wallets.slice(i, i + BALANCE_BATCH_SIZE);
+      for (const batch of _.chunk(wallets, BALANCE_BATCH_SIZE)) {
         const batchResults = await Promise.all(
           batch.map(async (wallet) => {
-            let balanceStr: string | null = null;
-            let balanceErr: Error | null = null;
-
-            if (isBuy) {
-              // For BUY: fetch native token balance (ETH, BNB, etc.)
-              const [balance, err] = await evmProvider.getWalletBalance(
+            if (shouldAutoResolveBuyInputToken) {
+              return resolveAutoEvmBuyFundingForWallet({
+                walletAddress: wallet?.address || "",
                 listNodeProvider,
-                TOKEN_TYPE.NATIVE_TOKEN,
-                wallet?.address || "",
-                "",
-                15000,
-              );
-              balanceStr = balance;
-              balanceErr = err || null;
-            } else {
-              // For SELL: fetch ERC20 token balance
-              const [balance, err] = await evmProvider.getWalletBalance(
-                listNodeProvider,
-                TOKEN_TYPE.EVM_ERC20_TOKEN,
-                wallet?.address || "",
-                tokenAddress,
-                15000,
-              );
-              balanceStr = balance;
-              balanceErr = err || null;
+                evmProvider,
+                nativePrice,
+                stablecoinEntries,
+                outputTokenAddress: effectiveOutputTokenAddress || "",
+              });
             }
 
-            if (balanceErr) {
+            if (isBuy && fundingTokenAddress) {
+              // Explicit ERC20 funding token for BUY
+              const [balanceStr, balanceErr] =
+                await evmProvider.getWalletBalance(
+                  listNodeProvider,
+                  TOKEN_TYPE.EVM_ERC20_TOKEN,
+                  wallet?.address || "",
+                  fundingTokenAddress,
+                  15000,
+                );
+              if (balanceErr) {
+                return makeBalanceError(
+                  extractErrorMessage(balanceErr),
+                  SwapFailureReason.BALANCE_FETCH_FAILED,
+                );
+              }
+              const balanceNum = Number(balanceStr || "0");
               return {
-                balance: null,
-                balanceStr: null,
-                available: 0,
-                availableStr: null,
-                error: extractErrorMessage(balanceErr),
-              };
+                balance: balanceNum,
+                balanceStr,
+                available: balanceNum,
+                availableStr: balanceStr || "0",
+                fundingTokenAddress,
+                fundingTokenLabel: explicitBuyFundingLabel,
+                error: null,
+              } as WalletBalanceInfo;
             }
-            const bal = Number(balanceStr || "0");
-            // Store original balance string to preserve precision
-            const availableStr = balanceStr || "0";
+
+            // SELL: fetch ERC20 token balance
+            const [balanceStr, balanceErr] = await evmProvider.getWalletBalance(
+              listNodeProvider,
+              TOKEN_TYPE.EVM_ERC20_TOKEN,
+              wallet?.address || "",
+              tokenAddress,
+              15000,
+            );
+            if (balanceErr) {
+              return makeBalanceError(
+                extractErrorMessage(balanceErr),
+                SwapFailureReason.BALANCE_FETCH_FAILED,
+              );
+            }
+            const balanceNum = Number(balanceStr || "0");
             return {
-              balance: bal,
-              balanceStr: balanceStr,
-              available: bal,
-              availableStr: availableStr,
+              balance: balanceNum,
+              balanceStr,
+              available: balanceNum,
+              availableStr: balanceStr || "0",
+              fundingTokenAddress: null,
+              fundingTokenLabel: null,
               error: null,
-            };
+            } as WalletBalanceInfo;
           }),
         );
         balanceInfo.push(...batchResults);
       }
+
       const endTime = new Date().getTime();
       logEveryWhere({
         message: `[Agent] Fetching balance for ${wallets.length} wallets done, take: ${(endTime - startTime) / 1000} seconds`,
       });
 
-      const availableTotal = balanceInfo.reduce(
-        (sum, b) => sum + (b?.available || 0),
-        0,
+      const availableArr = balanceInfo.map(
+        (balanceItem) => balanceItem.available || 0,
       );
+      const availableTotal = _.sum(availableArr);
       if (availableTotal <= 0) {
-        const assetName = isBuy
-          ? "native token after gas buffer"
-          : "token balance";
+        let assetName: string;
+        if (!isBuy) {
+          assetName = "token balance";
+        } else if (shouldAutoResolveBuyInputToken) {
+          assetName = `funding balance across ${nativeTokenLabel}/USDC/USDT/DAI/USDB`;
+        } else {
+          assetName = explicitBuyFundingLabel;
+        }
         throw new Error(`All wallets have zero available ${assetName}`);
       }
 
-      // Prefer total split when a total amount is provided
-      const effectiveTotalAmount = totalAmount;
-      let resolvedAmountStrategy = amountStrategy;
-      if (effectiveTotalAmount) {
-        resolvedAmountStrategy = "TOTAL_SPLIT_RANDOM";
-      } else if (!resolvedAmountStrategy) {
-        if (amount) {
-          resolvedAmountStrategy = "EQUAL_PER_WALLET";
-        } else if (maxAmount) {
-          resolvedAmountStrategy = "RANDOM_PER_WALLET";
-        }
-      }
+      const resolvedAmountStrategy = resolveAmountStrategy({
+        amountStrategy,
+        totalAmount,
+        amount,
+        maxAmount,
+      });
 
-      // Handle sellPercentage for SELL direction
-      let sellPercentageValue: number | null = null;
-      if (!isBuy && sellPercentage) {
-        if (sellPercentage === "all") {
-          sellPercentageValue = 100;
-        } else if (sellPercentage === "half") {
-          sellPercentageValue = 50;
-        } else if (typeof sellPercentage === "number") {
-          sellPercentageValue = sellPercentage;
-        }
-      }
+      const sellPercentageValue =
+        !isBuy && sellPercentage ? resolveSellPercentage(sellPercentage) : null;
 
-      const plannedPerWalletAmounts = (() => {
-        const count = wallets.length;
-        const randBetween = (min: number, max: number) =>
-          min + Math.random() * (max - min);
+      const plannedPerWalletAmounts = computePlannedAmounts({
+        count: wallets.length,
+        isBuy,
+        sellPercentageValue,
+        balanceInfo,
+        resolvedAmountStrategy,
+        amount,
+        maxAmount,
+        minAmount,
+        totalAmount,
+      });
 
-        // For SELL with sellPercentage: calculate based on token balance percentage
-        if (!isBuy && sellPercentageValue !== null) {
-          return balanceInfo.map((b) => {
-            const balance = b.balance || 0;
-            return (balance * sellPercentageValue!) / 100;
-          });
-        }
-
-        if (
-          resolvedAmountStrategy === "EQUAL_PER_WALLET" ||
-          !resolvedAmountStrategy
-        ) {
-          if (!amount || amount <= 0) {
-            throw new Error("amount must be > 0 for EQUAL_PER_WALLET");
-          }
-          return Array(count).fill(amount);
-        }
-
-        if (resolvedAmountStrategy === "RANDOM_PER_WALLET") {
-          const effectiveMax = maxAmount || amount;
-          if (!effectiveMax || effectiveMax <= 0) {
-            throw new Error(
-              "maxAmount (or amount) is required and must be > 0 for RANDOM_PER_WALLET strategy",
-            );
-          }
-          const min = minAmount || 0;
-          const max = Math.max(effectiveMax, min);
-          if (max === min) {
-            return Array(count).fill(min);
-          }
-          return Array.from({ length: count }, () => randBetween(min, max));
-        }
-
-        if (resolvedAmountStrategy === "TOTAL_SPLIT_RANDOM") {
-          if (!effectiveTotalAmount || effectiveTotalAmount <= 0) {
-            throw new Error("totalAmount must be > 0 for TOTAL_SPLIT_RANDOM");
-          }
-          const randomAmounts = Array.from({ length: count }, () =>
-            Math.random(),
-          );
-          const sum = randomAmounts.reduce((a, b) => a + b, 0);
-          const normalized = randomAmounts.map(
-            (r) => (r / sum) * effectiveTotalAmount,
-          );
-          return normalized;
-        }
-
-        throw new Error(`Unknown amount strategy: ${resolvedAmountStrategy}`);
-      })();
-
-      // Adjust planned amounts based on available balances
-      const availableArr = balanceInfo.map((b) => b.available || 0);
+      // Clamp planned amounts to per-wallet capacity (USD for auto-resolve BUY, token amount otherwise).
+      // TOTAL_SPLIT_RANDOM redistributes leftover capacity; all other strategies clamp only.
       let plannedAdjusted = plannedPerWalletAmounts;
 
-      // For EQUAL_PER_WALLET: Only clamp to capacity, don't redistribute (keep amounts equal)
-      // For TOTAL_SPLIT_RANDOM: Use redistributeToCapacity to fill remaining capacity
-      // For RANDOM_PER_WALLET: Only clamp to capacity (amounts are already random)
-      if (resolvedAmountStrategy === "TOTAL_SPLIT_RANDOM") {
-        const targetTotal = plannedPerWalletAmounts.reduce((a, b) => a + b, 0);
+      if (resolvedAmountStrategy === AmountStrategy.TOTAL_SPLIT_RANDOM) {
+        const targetTotal = _.sum(plannedPerWalletAmounts);
         plannedAdjusted = redistributeToCapacity(
           plannedPerWalletAmounts,
           availableArr,
           targetTotal,
         );
       } else {
-        // For EQUAL_PER_WALLET and RANDOM_PER_WALLET: Just clamp to capacity, don't redistribute
         plannedAdjusted = plannedPerWalletAmounts.map((amt, idx) =>
           Math.min(amt, availableArr[idx] || 0),
         );
@@ -520,11 +555,14 @@ export const swapOnKyberswapTool = (
       const results: Array<{
         wallet: string;
         amount: number;
+        fundingToken?: string;
         txHash: string | null;
         error: string | null;
+        failureReason?: SwapFailureReason;
       }> = [];
 
       const actualPerWalletAmounts: number[] = [];
+      const usedFundingTokenLabels: string[] = [];
 
       for (let i = 0; i < wallets.length; i++) {
         const wallet = wallets[i];
@@ -538,44 +576,121 @@ export const swapOnKyberswapTool = (
             amount: plannedAmount,
             txHash: null,
             error: balance.error,
+            failureReason: balance.failureReason,
           });
           continue;
         }
 
-        // Use original balance string with Big.js to preserve full precision
+        let selectedFundingTokenAddress: string;
+        let selectedFundingTokenLabel: string;
+
+        if (shouldAutoResolveBuyInputToken) {
+          const plannedAmountBig = new Big(plannedAmount.toString());
+          const fundingResolution = selectFundingOptionForAmount(
+            balance.fundingOptions,
+            plannedAmountBig,
+            fundingPriorityAddresses,
+          );
+
+          if (!fundingResolution) {
+            actualPerWalletAmounts.push(0);
+            results.push({
+              wallet: wallet?.address || "",
+              amount: plannedAmount,
+              txHash: null,
+              error:
+                "No single funding token can fully cover the requested BUY amount. Supported auto funding order: native, USDC, USDT, DAI, USDB.",
+              failureReason:
+                SwapFailureReason.NO_SINGLE_FUNDING_TOKEN_COVERS_AMOUNT,
+            });
+            continue;
+          }
+
+          selectedFundingTokenAddress = fundingResolution.fundingTokenAddress;
+          selectedFundingTokenLabel = resolveFundingLabel(
+            selectedFundingTokenAddress,
+            nativeTokenLabel,
+            stablecoinEntries,
+          );
+        } else {
+          selectedFundingTokenAddress = isBuy
+            ? fundingTokenAddress || NATIVE_TOKEN_ADDRESS
+            : tokenAddress;
+          selectedFundingTokenLabel = isBuy
+            ? explicitBuyFundingLabel
+            : nativeTokenLabel;
+        }
+
+        // For auto-resolve BUY: get the selected funding option's available balance.
+        // For explicit funding or SELL: use the wallet-level available balance.
         const availableStr =
-          balance.availableStr || balance.available?.toString() || "0";
-        const plannedAmountBig = new Big(plannedAmount.toString());
+          shouldAutoResolveBuyInputToken && balance.fundingOptions
+            ? balance.fundingOptions[selectedFundingTokenAddress]
+                ?.availableStr || "0"
+            : balance.availableStr || balance.available?.toString() || "0";
         const availableBig = new Big(availableStr);
-        const effectiveAmountBig = plannedAmountBig.lt(availableBig)
-          ? plannedAmountBig
-          : availableBig;
-        const effectiveAmount = effectiveAmountBig.toNumber();
+        const plannedAmountBig = new Big(plannedAmount.toString());
+
+        // For auto-resolve BUY: plannedAmountBig is in USD — convert to token amount.
+        // Native token: divide by price; stablecoins: 1:1.
+        // For explicit funding or SELL: compare token amount directly.
+        let swapAmountBig: Big;
+        if (isBuy && shouldAutoResolveBuyInputToken) {
+          if (
+            selectedFundingTokenAddress.toLowerCase() ===
+              NATIVE_TOKEN_ADDRESS &&
+            nativePrice > 0
+          ) {
+            swapAmountBig = plannedAmountBig.div(
+              new Big(nativePrice.toString()),
+            );
+          } else {
+            swapAmountBig = plannedAmountBig;
+          }
+          if (swapAmountBig.gt(availableBig)) {
+            swapAmountBig = availableBig;
+          }
+        } else {
+          swapAmountBig = plannedAmountBig.lt(availableBig)
+            ? plannedAmountBig
+            : availableBig;
+        }
+
+        const effectiveAmount = swapAmountBig.toNumber();
         actualPerWalletAmounts.push(effectiveAmount > 0 ? effectiveAmount : 0);
 
         if (!effectiveAmount || effectiveAmount <= 0) {
-          const assetName = isBuy ? "native token" : "token";
+          const assetName = isBuy ? selectedFundingTokenLabel : "token";
           results.push({
             wallet: wallet?.address || "",
             amount: plannedAmount,
+            fundingToken: isBuy ? selectedFundingTokenLabel : undefined,
             txHash: null,
             error: `Insufficient ${assetName} balance`,
+            failureReason: SwapFailureReason.INSUFFICIENT_BALANCE,
           });
           continue;
         }
 
+        if (isBuy) {
+          usedFundingTokenLabels.push(selectedFundingTokenLabel);
+        }
+
         try {
-          const NATIVE_TOKEN_ADDRESS =
-            "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+          const isInputNative =
+            !isBuy ||
+            selectedFundingTokenAddress.toLowerCase() === NATIVE_TOKEN_ADDRESS;
           const swapInput: ISwapKyberswapInput = {
             chainKey,
-            inputTokenAddress: isBuy ? NATIVE_TOKEN_ADDRESS : tokenAddress,
-            isInputNativeToken: isBuy,
-            inputTokenDecimal: 0, // Will be set by swap method
+            inputTokenAddress: isInputNative
+              ? NATIVE_TOKEN_ADDRESS
+              : selectedFundingTokenAddress,
+            isInputNativeToken: isInputNative,
+            inputTokenDecimal: 0,
             outputTokenAddress: isBuy ? tokenAddress : NATIVE_TOKEN_ADDRESS,
             isOutputNativeToken: !isBuy,
-            outputTokenDecimal: 0, // Will be set by swap method
-            amount: effectiveAmountBig.toString(), // Use Big.js string to preserve full precision
+            outputTokenDecimal: 0,
+            amount: swapAmountBig.toString(),
             slippage,
             priceImpact,
             dealineInSecond: 15,
@@ -592,8 +707,8 @@ export const swapOnKyberswapTool = (
           };
 
           const logInfo = {
-            campaignId: effectiveCampaignId,
-            workflowId: 0, // Agent doesn't have workflowId
+            campaignId: toolContext?.campaignId,
+            workflowId: 0,
           };
 
           const [txHash, err] = await kyberswap.swapNormal(
@@ -605,67 +720,104 @@ export const swapOnKyberswapTool = (
           results.push({
             wallet: wallet?.address || "",
             amount: effectiveAmount,
+            fundingToken: isBuy ? selectedFundingTokenLabel : undefined,
             txHash: txHash || null,
             error: err ? extractErrorMessage(err) : null,
           });
         } catch (err: any) {
-          // Catch any unexpected errors and continue with next wallet
           results.push({
             wallet: wallet?.address || "",
             amount: effectiveAmount,
+            fundingToken: isBuy ? selectedFundingTokenLabel : undefined,
             txHash: null,
             error: extractErrorMessage(err),
+            failureReason: SwapFailureReason.SWAP_EXECUTION_FAILED,
           });
         }
 
-        // Small delay between swaps to avoid rate limiting
         if (i < wallets.length - 1) {
           await sleep(100);
         }
       }
 
-      const successCount = results.filter((r) => r.txHash && !r.error).length;
-      const failedEntries = results.filter((r) => r.error);
-      const totalSwapped = actualPerWalletAmounts.reduce((a, b) => a + b, 0);
+      const successCount = results.filter(
+        (result) => result.txHash && !result.error,
+      ).length;
+      const skippedEntries = results.filter(
+        (result) =>
+          result.error &&
+          Boolean(result.failureReason) &&
+          BALANCE_SKIP_REASONS.has(result.failureReason as SwapFailureReason),
+      );
+      const failedEntries = results.filter(
+        (result) =>
+          result.error &&
+          (!result.failureReason ||
+            !BALANCE_SKIP_REASONS.has(result.failureReason)),
+      );
+      const totalSwapped = _.sum(actualPerWalletAmounts);
+      const failureReasonSummary = countByKey(
+        failedEntries,
+        (entry) => entry.failureReason,
+      );
 
       if (successCount > 0) {
         toolContext?.resetPlanState();
       }
 
+      let inputTokenDisplay: string;
+      if (!isBuy) {
+        inputTokenDisplay = tokenAddress;
+      } else if (shouldAutoResolveBuyInputToken) {
+        inputTokenDisplay = "AUTO";
+      } else {
+        inputTokenDisplay = explicitBuyFundingLabel;
+      }
+
       const toolResult = safeStringify({
         chain: capitalizeFirstLetter(chainKey),
         swapDirection,
-        inputToken: isBuy
-          ? mapNativeTokenName[chainKey] || "native"
-          : tokenAddress,
+        inputToken: inputTokenDisplay,
         outputToken: isBuy
           ? tokenAddress
           : mapNativeTokenName[chainKey] || "native",
+        strategy:
+          sellPercentageValue !== null
+            ? `SELL_${sellPercentageValue}%`
+            : resolvedAmountStrategy,
         summary: {
           total: wallets.length,
-          success: successCount,
-          failed: failedEntries.length,
+          successCount,
+          skippedCount: skippedEntries.length,
+          failedCount: failedEntries.length,
           totalAmount: totalSwapped,
+          ...(isBuy &&
+            shouldAutoResolveBuyInputToken &&
+            usedFundingTokenLabels.length > 0 && {
+              fundingTokens: countByKey(
+                usedFundingTokenLabels,
+                (label) => label,
+              ),
+            }),
+          ...(failedEntries.length > 0 && {
+            failureReasons: failureReasonSummary,
+          }),
         },
         ...(wallets.length <= 5 && {
-          results: results.map((r) => ({
-            wallet: r.wallet,
-            amount: r.amount,
-            txHash: r.txHash,
-            ...(r.error && { error: r.error }),
+          results: results.map((result) => ({
+            wallet: result.wallet,
+            amount: result.amount,
+            ...(result.fundingToken && { fundingToken: result.fundingToken }),
+            txHash: result.txHash,
+            ...(result.error && { error: result.error }),
+            ...(result.failureReason && { failureReason: result.failureReason }),
           })),
         }),
         ...(wallets.length > 5 &&
-          failedEntries.length > 0 && {
-            failures: failedEntries.map((r) => ({
-              wallet: r.wallet,
-              amount: r.amount,
-              error: r.error,
-            })),
-          }),
+          failedEntries.length > 0 && { failures: failedEntries }),
       });
 
-      const firstTxHash = results.find((r) => r.txHash)?.txHash;
+      const firstTxHash = results.find((result) => result.txHash)?.txHash;
       const txHashSummary = firstTxHash
         ? ` tx=${firstTxHash.slice(0, 8)}...`
         : "";
@@ -675,3 +827,92 @@ export const swapOnKyberswapTool = (
       return toolResult;
     },
   });
+
+const resolveAutoEvmBuyFundingForWallet = async ({
+  walletAddress,
+  listNodeProvider,
+  evmProvider,
+  nativePrice,
+  stablecoinEntries,
+  outputTokenAddress,
+}: {
+  walletAddress: string;
+  listNodeProvider: string[];
+  evmProvider: EVMProvider;
+  nativePrice: number;
+  stablecoinEntries: Array<{
+    symbol: EvmStableCoinSymbol;
+    address: string;
+    label: string;
+  }>;
+  outputTokenAddress: string;
+}): Promise<WalletBalanceInfo> => {
+  const [nativeResult, ...stableResults] = await Promise.all([
+    evmProvider.getWalletBalance(
+      listNodeProvider,
+      TOKEN_TYPE.NATIVE_TOKEN,
+      walletAddress,
+      "",
+      15000,
+    ),
+    ...stablecoinEntries.map((entry) =>
+      evmProvider.getWalletBalance(
+        listNodeProvider,
+        TOKEN_TYPE.EVM_ERC20_TOKEN,
+        walletAddress,
+        entry.address,
+        15000,
+      ),
+    ),
+  ]);
+
+  const [nativeBalanceStr, nativeErr] = nativeResult;
+  if (nativeErr) {
+    return makeBalanceError(
+      extractErrorMessage(nativeErr),
+      SwapFailureReason.BALANCE_FETCH_FAILED,
+    );
+  }
+
+  const fundingOptions: FundingOptions = {};
+
+  const nativeBalanceBig = new Big(nativeBalanceStr || "0");
+  const nativeAvailableUsd =
+    nativePrice > 0
+      ? nativeBalanceBig.times(new Big(nativePrice.toString())).toNumber()
+      : 0;
+  if (outputTokenAddress.toLowerCase() !== NATIVE_TOKEN_ADDRESS) {
+    fundingOptions[NATIVE_TOKEN_ADDRESS] = {
+      balance: nativeBalanceBig.toNumber(),
+      balanceStr: nativeBalanceBig.toString(),
+      available: nativeBalanceBig.toNumber(),
+      availableStr: nativeBalanceBig.toString(),
+      availableUsd: nativeAvailableUsd,
+    };
+  }
+
+  stablecoinEntries.forEach((entry, idx) => {
+    const [stableBalanceStr] = stableResults[idx];
+    const stableBalanceBig = new Big(stableBalanceStr || "0");
+    fundingOptions[entry.address] = {
+      balance: stableBalanceBig.toNumber(),
+      balanceStr: stableBalanceBig.toString(),
+      available: stableBalanceBig.toNumber(),
+      availableStr: stableBalanceBig.toString(),
+      availableUsd: stableBalanceBig.toNumber(), // stablecoins are 1:1 USD
+    };
+  });
+
+  const maxAvailableUsdBig = getMaxAvailableFundingAmountUsd(fundingOptions);
+
+  return {
+    balance: maxAvailableUsdBig.toNumber(),
+    balanceStr: maxAvailableUsdBig.toString(),
+    available: maxAvailableUsdBig.toNumber(),
+    availableStr: maxAvailableUsdBig.toString(),
+    fundingTokenAddress: null,
+    fundingTokenLabel: null,
+    fundingOptions,
+    error: null,
+  };
+};

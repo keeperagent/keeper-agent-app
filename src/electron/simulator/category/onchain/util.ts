@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { ethers } from "ethers";
-import { Keypair } from "@solana/web3.js";
+import { Connection, Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 
 export const convertArgsToAbiTypesEVM = (
@@ -77,6 +77,57 @@ const convertSingleArgToAbiType = (
   }
 
   return [null, Error(`Unsupported type ${type} with parameter ${arg}`)];
+};
+
+export const sendSolanaTransactionWithRetry = async (
+  provider: Connection,
+  transactionBinary: Uint8Array,
+  signature: string,
+  blockhash: string,
+  lastValidBlockHeight: number,
+): Promise<Error | null> => {
+  let confirmed = false;
+  let confirmationErr: Error | null = null;
+
+  const confirmationPromise = provider
+    .confirmTransaction(
+      { signature, blockhash, lastValidBlockHeight },
+      "confirmed",
+    )
+    .then((result) => {
+      confirmed = true;
+      if (result.value.err) {
+        confirmationErr = Error(result.value.err.toString());
+      }
+    })
+    .catch((err: any) => {
+      confirmationErr = err;
+    });
+
+  let blockHeight = await provider.getBlockHeight("confirmed");
+  while (!confirmed && blockHeight <= lastValidBlockHeight) {
+    provider
+      .sendRawTransaction(transactionBinary, {
+        maxRetries: 0,
+        skipPreflight: true,
+      })
+      .catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    blockHeight = await provider.getBlockHeight("confirmed");
+  }
+
+  if (!confirmed) {
+    await Promise.race([
+      confirmationPromise,
+      new Promise((resolve) => setTimeout(resolve, 1000)),
+    ]);
+  }
+
+  if (!confirmed) {
+    return Error("Transaction expired — blockhash no longer valid");
+  }
+
+  return confirmationErr;
 };
 
 export const getKeypairFromPrivateKey = (

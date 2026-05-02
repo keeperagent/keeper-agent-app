@@ -42,7 +42,7 @@ export default (db: Sequelize) =>
       indexes: [
         {
           unique: true,
-          fields: ["name", "type"],
+          fields: ["name", "type", "scopeId"],
         },
         { fields: ["scopeId"] },
       ],

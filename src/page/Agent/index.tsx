@@ -59,6 +59,9 @@ const AgentPage = (props: any) => {
   const [activeTab, setActiveTab] = useState(TAB.AGENT);
   const [encryptKey, setEncryptKey] = useState("");
   const [contentReady, setContentReady] = useState(false);
+  const [modelByProvider, setModelByProvider] = useState<
+    Partial<Record<LLMProvider, string>>
+  >({});
 
   useEffect(() => {
     setEncryptKey("");
@@ -81,16 +84,20 @@ const AgentPage = (props: any) => {
   };
 
   const onSelectProvider = (provider: LLMProvider) => {
-    if (provider === currentProvider) {
+    if (provider === currentProvider || !selectedAgentProfile) {
       return;
     }
-    if (selectedAgentProfile) {
-      updateAgentProfile({
-        ...selectedAgentProfile,
-        llmProvider: provider,
-        llmModel: DEFAULT_LLM_MODELS[provider],
-      });
-    }
+    const savedModelByProvider = {
+      ...modelByProvider,
+      [currentProvider]:
+        selectedAgentProfile.llmModel || DEFAULT_LLM_MODELS[currentProvider],
+    };
+    setModelByProvider(savedModelByProvider);
+    updateAgentProfile({
+      ...selectedAgentProfile,
+      llmProvider: provider,
+      llmModel: savedModelByProvider[provider] || DEFAULT_LLM_MODELS[provider],
+    });
   };
 
   const currentModelName = useMemo(() => {

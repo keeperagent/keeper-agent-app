@@ -7,7 +7,7 @@ const TopBarWrapper = styled.div`
   padding: 1.1rem 3rem;
   font-size: 1.5rem;
   border-bottom: 1px solid
-    ${({ theme }: { theme: ITheme; }) => theme.colorBorder};
+    ${({ theme }: { theme: ITheme }) => theme.colorBorder};
   display: flex;
   justify-content: space-between;
   margin-left: ${(props: any) =>
@@ -21,7 +21,7 @@ const TopBarWrapper = styled.div`
       ? `calc(100%-${sidebarWidth})`
       : `calc(100%-${collapsedSidebarWidth})`};
   z-index: 3;
-  background-color: ${({ theme }: { theme: ITheme; }) => theme.colorBgSecondary};
+  background-color: ${({ theme }: { theme: ITheme }) => theme.colorBgSecondary};
 
   &.fullscreen {
     margin-left: 0;
@@ -34,7 +34,7 @@ const TopBarWrapper = styled.div`
     display: flex;
 
     .heading {
-      color: ${({ theme }: { theme: ITheme; }) => theme.colorTextPrimary};
+      color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
       font-weight: 700;
       font-size: 2rem;
       display: flex;
@@ -53,7 +53,7 @@ const TopBarWrapper = styled.div`
           height: 1.5rem;
           min-width: 1.5rem;
           min-height: 1.5rem;
-          fill: ${({ theme }: { theme: ITheme; }) => theme.colorTextSecondary};
+          fill: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
         }
       }
 
@@ -64,8 +64,8 @@ const TopBarWrapper = styled.div`
           margin-left: var(--margin-left);
           display: flex;
           flex-direction: column;
-          background-color: ${({ theme }: { theme: ITheme; }) =>
-    theme?.colorBorder};
+          background-color: ${({ theme }: { theme: ITheme }) =>
+            theme?.colorBorder};
           padding: 0.7rem 1.5rem;
           border-radius: var(--border-radius);
 
@@ -73,13 +73,13 @@ const TopBarWrapper = styled.div`
             margin-right: 0.5rem;
             font-size: 0.8rem;
             margin-bottom: 0.3rem;
-            color: ${({ theme }: { theme: ITheme; }) => theme?.colorTextPrimary};
+            color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
           }
 
           .value {
             font-weight: 600;
             font-size: 1rem;
-            color: ${({ theme }: { theme: ITheme; }) => theme?.colorTextPrimary};
+            color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
           }
         }
       }

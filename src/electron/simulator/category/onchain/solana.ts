@@ -5,7 +5,6 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   SystemProgram,
-  sendAndConfirmTransaction,
   ComputeBudgetProgram,
   ParsedAccountData,
 } from "@solana/web3.js";
@@ -22,7 +21,10 @@ import { TOKEN_TYPE } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { ListNodeEndpoint } from "./evm";
 import { sendWithTimeout } from "@/electron/simulator/util";
-import { getKeypairFromPrivateKey } from "./util";
+import {
+  getKeypairFromPrivateKey,
+  sendSolanaTransactionWithRetry,
+} from "./util";
 
 export class SolanaProvider {
   private provider: { [key: string]: Connection };
@@ -41,7 +43,7 @@ export class SolanaProvider {
   }
 
   getNextProvider(
-    listNodeEndpoint: string[]
+    listNodeEndpoint: string[],
   ): [Connection | null, string | null, Error | null] {
     if (listNodeEndpoint?.length === 0) {
       return [null, null, Error("node endpoint is empty")];
@@ -94,7 +96,7 @@ export class SolanaProvider {
     listNodeProvider: string[],
     tokenType: string,
     tokenAddress: string,
-    rawAmount: string
+    rawAmount: string,
   ): Promise<[number | null, Error | null]> {
     let tokenAmount = 0;
     if (tokenType === TOKEN_TYPE.SOLANA_TOKEN) {
@@ -120,7 +122,7 @@ export class SolanaProvider {
     tokenType: string,
     walletAddress: string,
     contractAddress: string,
-    timeout: number
+    timeout: number,
   ): Promise<[string | null, Error | null | undefined]> {
     let balance = null,
       error = null;
@@ -128,7 +130,7 @@ export class SolanaProvider {
       [balance, error] = await this.getNativeBalance(
         walletAddress,
         listNodeProvider,
-        timeout
+        timeout,
       );
       return [balance, error];
     } else if (tokenType === TOKEN_TYPE.SOLANA_TOKEN) {
@@ -136,7 +138,7 @@ export class SolanaProvider {
         walletAddress,
         contractAddress,
         listNodeProvider,
-        timeout
+        timeout,
       );
     }
     if (error) {
@@ -149,7 +151,7 @@ export class SolanaProvider {
   async getNativeBalance(
     walletAddress: string,
     listNodeProvider: string[],
-    timeout: number
+    timeout: number,
   ): Promise<[string | null, Error | null | undefined]> {
     try {
       if (!this.isValidAddress(walletAddress)) {
@@ -166,18 +168,20 @@ export class SolanaProvider {
       const balance = await sendWithTimeout(balancePromise, timeout);
       const balanceBigInt = new Big(balance.toString());
       const balanceFloat = balanceBigInt.div(
-        new Big(LAMPORTS_PER_SOL.toString())
+        new Big(LAMPORTS_PER_SOL.toString()),
       );
       return [balanceFloat.toString(), null];
     } catch (error: any) {
-      logEveryWhere({ message: `Solana getNativeBalance() error: ${error?.message}` });
+      logEveryWhere({
+        message: `Solana getNativeBalance() error: ${error?.message}`,
+      });
       return [null, error];
     }
   }
 
   async getTokenDecimal(
     tokenAddress: string,
-    provider: Connection
+    provider: Connection,
   ): Promise<number> {
     if (this.mapTokenDecimal[this.formatKey(tokenAddress)]) {
       return this.mapTokenDecimal[this.formatKey(tokenAddress)];
@@ -190,7 +194,7 @@ export class SolanaProvider {
         provider,
         tokenPublicKey,
         "finalized",
-        TOKEN_PROGRAM_ID
+        TOKEN_PROGRAM_ID,
       );
     } catch {
       metadata = null;
@@ -202,7 +206,7 @@ export class SolanaProvider {
           provider,
           tokenPublicKey,
           "finalized",
-          TOKEN_2022_PROGRAM_ID
+          TOKEN_2022_PROGRAM_ID,
         );
       } catch {
         metadata = null;
@@ -221,7 +225,7 @@ export class SolanaProvider {
     walletAddress: string,
     tokenAddress: string,
     listNodeProvider: string[],
-    _timeout: number
+    timeout: number,
   ): Promise<[string | null, Error | null]> => {
     try {
       if (!this.isValidAddress(walletAddress)) {
@@ -231,31 +235,21 @@ export class SolanaProvider {
         return [null, Error("@tokenAddress is not Solana address")];
       }
 
-      const [provider, , err] = this.getNextProvider(listNodeProvider);
-      if (err || !provider) {
+      const [balances, err] = await this.getTokenBalancesByOwner(
+        walletAddress,
+        listNodeProvider,
+        [tokenAddress],
+        timeout,
+      );
+      if (err) {
         return [null, err];
       }
 
-      const walletPublicKey = new PublicKey(walletAddress);
-      const tokenPublicKey = new PublicKey(tokenAddress);
-
-      const accounts = await provider.getTokenAccountsByOwner(walletPublicKey, {
-        mint: tokenPublicKey,
-      });
-      if (accounts?.value?.length === 0) {
-        return ["0", null];
-      }
-      const balance = await provider.getTokenAccountBalance(
-        accounts.value[0].pubkey
-      );
-      const balanceAmount = balance?.value?.amount || "0";
-      const balanceBigInt = new Big(balanceAmount);
-      const tokenDecimal = await this.getTokenDecimal(tokenAddress, provider);
-      const balanceFloat = balanceBigInt.div(new Big(10).pow(tokenDecimal));
-
-      return [balanceFloat?.toString(), null];
+      return [balances?.[tokenAddress] || "0", null];
     } catch (error: any) {
-      logEveryWhere({ message: `Solana getTokenBalance() error: ${error?.message}` });
+      logEveryWhere({
+        message: `Solana getTokenBalance() error: ${error?.message}`,
+      });
       return [null, error];
     }
   };
@@ -264,33 +258,20 @@ export class SolanaProvider {
     walletAddress: string,
     listNodeProvider: string[],
     tokenAddresses: string[],
-    timeout: number
-  ): Promise<[Record<string, string> | null, Error | null | undefined]> {
+    timeout: number,
+  ): Promise<[Record<string, string> | null, Error | null]> {
     try {
       if (!this.isValidAddress(walletAddress)) {
         return [null, Error("@walletAddress is not Solana address")];
       }
 
-      const uniqueTokenAddresses = [...new Set(tokenAddresses)];
-      const requestedMintMap = uniqueTokenAddresses.reduce(
-        (map, tokenAddress) => {
-          if (this.isValidAddress(tokenAddress)) {
-            map[new PublicKey(tokenAddress).toBase58()] = tokenAddress;
-          }
-          return map;
-        },
-        {} as Record<string, string>
+      const uniqueTokenAddresses = [...new Set(tokenAddresses)].filter((addr) =>
+        this.isValidAddress(addr),
       );
-
-      const balancesByMint = uniqueTokenAddresses.reduce(
-        (map, tokenAddress) => {
-          map[tokenAddress] = "0";
-          return map;
-        },
-        {} as Record<string, string>
+      const balancesByMint = Object.fromEntries(
+        uniqueTokenAddresses.map((addr) => [addr, "0"]),
       );
-
-      if (!Object.keys(requestedMintMap).length) {
+      if (!uniqueTokenAddresses.length) {
         return [balancesByMint, null];
       }
 
@@ -305,13 +286,13 @@ export class SolanaProvider {
           provider.getParsedTokenAccountsByOwner(walletPublicKey, {
             programId: TOKEN_PROGRAM_ID,
           }),
-          timeout
+          timeout,
         ),
         sendWithTimeout(
           provider.getParsedTokenAccountsByOwner(walletPublicKey, {
             programId: TOKEN_2022_PROGRAM_ID,
           }),
-          timeout
+          timeout,
         ),
       ]);
 
@@ -320,47 +301,37 @@ export class SolanaProvider {
         ...token2022Accounts.value,
       ];
 
-      // Accumulate raw integer amounts per mint so multiple token accounts for
-      // the same mint are summed correctly and floating-point precision is avoided.
-      const mintRawTotals = new Map<string, { amount: bigint; decimals: number }>();
+      const mintRawTotals = new Map<
+        string,
+        { amount: Big; decimals: number }
+      >();
 
       parsedAccounts.forEach((accountInfo) => {
         const parsedData = accountInfo.account.data as ParsedAccountData;
         const parsedInfo = parsedData?.parsed?.info;
         const mint = parsedInfo?.mint;
-        if (!mint || !this.isValidAddress(mint)) { return; }
-
-        const canonicalMint = new PublicKey(mint).toBase58();
-        if (!requestedMintMap[canonicalMint]) { return; }
+        if (!mint || !this.isValidAddress(mint)) {
+          return;
+        }
+        if (!uniqueTokenAddresses.includes(mint)) {
+          return;
+        }
 
         const tokenAmount = parsedInfo?.tokenAmount;
-        const rawAmount: string | undefined = tokenAmount?.amount;
-        const decimals: number | undefined = tokenAmount?.decimals;
-        if (rawAmount === undefined || rawAmount === null || decimals === undefined) { return; }
+        const rawAmount: string = tokenAmount?.amount || "0";
+        const decimals: number = Number(tokenAmount?.decimals || 0);
 
-        const amountBigInt = BigInt(rawAmount);
-        const existing = mintRawTotals.get(canonicalMint);
+        const amountBig = new Big(rawAmount);
+        const existing = mintRawTotals.get(mint);
         if (existing) {
-          existing.amount += amountBigInt;
+          existing.amount = existing.amount.plus(amountBig);
         } else {
-          mintRawTotals.set(canonicalMint, { amount: amountBigInt, decimals: Number(decimals) });
+          mintRawTotals.set(mint, { amount: amountBig, decimals });
         }
       });
 
-      mintRawTotals.forEach(({ amount, decimals }, canonicalMint) => {
-        const requestedMint = requestedMintMap[canonicalMint];
-        if (!requestedMint) { return; }
-
-        const divisor = 10n ** BigInt(decimals);
-        const integerPart = amount / divisor;
-        const fractionalPart = amount % divisor;
-
-        if (decimals === 0 || fractionalPart === 0n) {
-          balancesByMint[requestedMint] = integerPart.toString();
-        } else {
-          const fractionalStr = fractionalPart.toString().padStart(decimals, "0");
-          balancesByMint[requestedMint] = `${integerPart}.${fractionalStr}`;
-        }
+      mintRawTotals.forEach(({ amount, decimals }, mint) => {
+        balancesByMint[mint] = amount.div(new Big(10).pow(decimals)).toString();
       });
 
       return [balancesByMint, null];
@@ -381,7 +352,7 @@ export class SolanaProvider {
     listNodeEndpoint: string[],
     timeout: number,
     gasPrice: string,
-    gasLimit: string
+    gasLimit: string,
   ): Promise<[string | null, string | null, Error | null]> => {
     try {
       if (!this.isValidAddress(recipientAddress)) {
@@ -407,7 +378,7 @@ export class SolanaProvider {
             fromPubkey: sender.publicKey,
             toPubkey: recipient,
             lamports: BigInt(amountToTransfer?.toString()),
-          })
+          }),
         );
       } else {
         const tokenPublicKey = new PublicKey(tokenAddress);
@@ -415,14 +386,14 @@ export class SolanaProvider {
           provider,
           sender,
           tokenPublicKey,
-          sender.publicKey
+          sender.publicKey,
         );
 
         const recipientTokenAccount = await getOrCreateAssociatedTokenAccount(
           provider,
           sender,
           tokenPublicKey,
-          recipient
+          recipient,
         );
 
         const tokenDecimal = await this.getTokenDecimal(tokenAddress, provider);
@@ -434,8 +405,8 @@ export class SolanaProvider {
             recipientTokenAccount.address,
             sender.publicKey,
             BigInt(amountTransfer.toString()),
-            tokenDecimal
-          )
+            tokenDecimal,
+          ),
         );
       }
 
@@ -465,20 +436,40 @@ export class SolanaProvider {
         transaction.add(instruction);
       }
 
-      const txHash = await sendWithTimeout(
-        sendAndConfirmTransaction(provider, transaction, [sender]),
-        timeout
+      const { blockhash, lastValidBlockHeight } =
+        await provider.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.sign(sender);
+      const transactionBinary = transaction.serialize();
+
+      const signature = await provider.sendRawTransaction(transactionBinary, {
+        maxRetries: 0,
+        skipPreflight: true,
+      });
+
+      const confirmErr = await sendSolanaTransactionWithRetry(
+        provider,
+        transactionBinary,
+        signature,
+        blockhash,
+        lastValidBlockHeight,
       );
-      return [txHash, sender.publicKey.toBase58(), null];
+      if (confirmErr) {
+        return [signature, sender.publicKey.toBase58(), confirmErr];
+      }
+
+      return [signature, sender.publicKey.toBase58(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `Solana transferToken() error: ${err?.message}` });
+      logEveryWhere({
+        message: `Solana transferToken() error: ${err?.message}`,
+      });
       return [null, null, err];
     }
   };
 
   getPriorityFee = async (
     listNodeEndpoint: string[],
-    accounts: string[]
+    accounts: string[],
   ): Promise<[number | null, Error | null]> => {
     try {
       const [provider, , err] = this.getNextProvider(listNodeEndpoint);
