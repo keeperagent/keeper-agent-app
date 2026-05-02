@@ -455,23 +455,29 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
     "swap_on_jupiter",
     {
       description:
-        "Swap SPL tokens on Jupiter for all wallets in a campaign on Solana. BUY supports explicit SOL or stablecoin funding, or auto per-wallet funding when inputTokenAddress is empty. AUTO priority is USDC, then USDT, then USD1, then SOL. Each wallet must fully fund the BUY from one token only. SELL remains token -> SOL.",
+        "Swap SPL tokens on Jupiter for all wallets in a campaign on Solana. BUY supports explicit SOL or stablecoin funding, or auto per-wallet funding when inputTokenAddress is empty. AUTO priority is SOL, then USDC, then USDT, then USD1. Each wallet must fully fund the BUY from one token only. SELL remains token -> SOL.",
       inputSchema: {
         ...walletContextSchema,
         swapDirection: z
           .nativeEnum(SwapDirection)
           .describe(
-            "BUY = explicit funding token or AUTO per-wallet funding (USDC -> USDT -> USD1 -> SOL) -> token, SELL = token -> SOL",
+            "BUY = explicit funding token or AUTO per-wallet funding (SOL -> USDC -> USDT -> USD1) -> token, SELL = token -> SOL",
           ),
         outputTokenAddress: z
           .string()
           .optional()
           .describe("SPL mint address of the token to buy (BUY only)"),
+        inputTokenSymbol: z
+          .string()
+          .optional()
+          .describe(
+            "Token symbol for BUY funding (e.g. 'SOL', 'USDC', 'USDT', 'USD1'). Use this for named tokens; omit if using inputTokenAddress or auto-resolve.",
+          ),
         inputTokenAddress: z
           .string()
           .optional()
           .describe(
-            "BUY: optional funding token mint. Leave empty to auto-resolve one funding token per wallet in this order: USDC, USDT, USD1, SOL. SELL: SPL mint address of the token to sell.",
+            "BUY: optional funding token mint (raw address only — use inputTokenSymbol for named tokens). Leave empty to auto-resolve SOL→USDC→USDT→USD1. SELL: SPL mint address of the token to sell.",
           ),
         amountStrategy: z
           .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
@@ -549,6 +555,12 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
         swapDirection: z
           .enum(["BUY", "SELL"])
           .describe("BUY = native → token, SELL = token → native"),
+        inputTokenSymbol: z
+          .string()
+          .optional()
+          .describe(
+            "Token symbol for BUY funding (e.g. 'ETH', 'BNB', 'USDT', 'USDC', 'DAI'). Use this for named tokens; leave empty to auto-resolve.",
+          ),
         tokenAddress: z
           .string()
           .describe("ERC-20 token contract address to buy or sell"),

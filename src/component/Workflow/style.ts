@@ -58,6 +58,36 @@ const PageWrapper = styled.div`
       z-index: 5;
     }
 
+    .react-flow__controls {
+      background-color: ${({ theme }: { theme: ITheme }) =>
+        theme?.colorBgInput};
+      border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+      border-radius: var(--border-radius);
+      box-shadow: none;
+
+      .react-flow__controls-button {
+        background-color: ${({ theme }: { theme: ITheme }) =>
+          theme?.colorBgInput};
+        border-bottom: 1px solid
+          ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+
+        svg {
+          fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+          max-width: 1.2rem;
+          max-height: 1.2rem;
+        }
+
+        &:hover {
+          background-color: ${({ theme }: { theme: ITheme }) =>
+            theme?.colorBgTag};
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+
     .alignment-guide {
       position: absolute;
       background-color: var(--color-primary);

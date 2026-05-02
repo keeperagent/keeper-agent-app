@@ -31,12 +31,13 @@ const TokenChart = (props: any) => {
   );
 };
 
-export default connect(
-  (state: RootState) => ({
+export default connect((state: RootState) => {
+  const profileId = state?.Agent?.selectedAgentProfile?.id;
+  const context = profileId ? state?.Agent?.agentContextMap?.[profileId] : null;
+  return {
     isLightMode: state?.Layout?.isLightMode,
-    chainKey: state?.Agent?.chainKey,
-    tokenAddress: state?.Agent?.tokenAddress,
+    chainKey: context?.chainKey || "",
+    tokenAddress: context?.tokenAddress || "",
     layoutMode: state?.Agent?.layoutMode,
-  }),
-  {},
-)(TokenChart);
+  };
+}, {})(TokenChart);

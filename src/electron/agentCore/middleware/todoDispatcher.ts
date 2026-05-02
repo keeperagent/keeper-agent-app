@@ -1,5 +1,5 @@
 import { createMiddleware } from "langchain";
-import { AIMessage, ToolMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { TodoItemStatus } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
@@ -33,6 +33,7 @@ const ALWAYS_APPROVAL_REQUIRED = new Set([
   "trade_agent",
   "transfer_agent",
   "launch_agent",
+  "code_execution_agent",
 ]);
 
 // Tools that require a todo plan to exist before they can be called
@@ -47,7 +48,6 @@ const extractResultContent = (result: any): string => {
         return parsed.result;
       }
     } catch {}
-
     return raw;
   };
 
@@ -55,7 +55,6 @@ const extractResultContent = (result: any): string => {
     if (typeof content === "string") {
       return content;
     }
-
     if (Array.isArray(content)) {
       return content
         .map((block: any) => {
@@ -65,7 +64,6 @@ const extractResultContent = (result: any): string => {
           if (typeof block?.text === "string") {
             return block.text;
           }
-
           return "";
         })
         .join("")
@@ -108,26 +106,36 @@ const extractResultContent = (result: any): string => {
   return "";
 };
 
-// Appends text to the system message (handles both string and array forms)
+// Returns the total character length of an AI message's text content (handles string and array forms)
+const getTextLen = (content: any): number => {
+  if (typeof content === "string") {
+    return content.length;
+  }
+  if (Array.isArray(content)) {
+    return content
+      .filter((block: any) => block.type === "text")
+      .reduce((sum: number, block: any) => sum + (block.text || "").length, 0);
+  }
+  return 0;
+};
+
+// Appends text to the system message (used only for one-time hints, not dynamic reminders)
 const appendToSystemMessage = (request: any, text: string): any => {
   const currentSystem = request?.systemMessage;
   if (typeof currentSystem === "string") {
     return { ...request, systemMessage: currentSystem + text };
   }
-
   if (Array.isArray(currentSystem) && currentSystem.length > 0) {
     const last = currentSystem[currentSystem.length - 1];
     const updatedLast =
       typeof last === "string"
         ? last + text
         : { ...last, content: (last?.content || "") + text };
-
     return {
       ...request,
       systemMessage: [...currentSystem.slice(0, -1), updatedLast],
     };
   }
-
   return request;
 };
 
@@ -158,13 +166,15 @@ const buildInProgressReminder = (
     let transactionNextStep: string;
     if (!planState) {
       transactionNextStep =
-        "Your next action MUST be: call request_approval now.";
+        "If this step requires on-chain data (price, balance), call task(query_agent) now. " +
+        "If you have all required data and are ready to execute a swap or transfer, call request_approval next.";
     } else if (planState === "drafted") {
       transactionNextStep =
         "request_approval already called. Your next action MUST be: call confirm_approval with a summary table now. Do NOT call task yet.";
     } else if (planState === "approved") {
       transactionNextStep =
-        "Approval granted. Your next action MUST be: call task with the appropriate subagent now.";
+        "Approval granted. If your plan has a separate execute step next, call write_todos to mark the current step completed and the execute step in_progress — the approval carries over. " +
+        "If execution is part of the current step, call task() with the execution subagent immediately. Do NOT write any text response.";
     } else {
       transactionNextStep =
         "Follow the approval gate: request_approval → confirm_approval → task.";
@@ -195,7 +205,7 @@ const buildPendingReminder = (
   const currentPlan = lastKnownTodos
     .map(
       (item: any) =>
-        `  {"id":${item.id},"content":${JSON.stringify(item.content)},"status":"${item.status === TodoItemStatus.COMPLETED ? "completed" : item.content === nextName ? "in_progress" : item.status}","type":${JSON.stringify(item.type || "")}}`,
+        `  {"id":${item.id},"content":${JSON.stringify(item.content)},"status":"${item.status === TodoItemStatus.COMPLETED ? "completed" : item.id === nextTodo?.id ? "in_progress" : item.status}","type":${JSON.stringify(item.type || "")}}`,
     )
     .join(",\n");
   let reminder =
@@ -207,17 +217,103 @@ const buildPendingReminder = (
       .map((r) => `\n- "${r.stepName}": ${r.content}`)
       .join("");
     reminder += `\n\nData from completed steps (use this — do NOT re-fetch):${resultsContext}`;
-    reminder += `\n\nCRITICAL: The data above is already fetched. Use it directly for the next step — do NOT re-fetch. Follow the planned approval gate before delegating to any execution subagent.`;
+    const isCommunicateNext = nextTodo?.type === "communicate";
+    if (isCommunicateNext) {
+      reminder +=
+        `\n\nCRITICAL: The next step is to share results with the user. ` +
+        `Write a FULL response now — do NOT just say "Done" or repeat the step name. ` +
+        `Your response MUST include: (1) how many wallets succeeded vs failed, ` +
+        `(2) transaction hash(es) for successful wallets, ` +
+        `(3) reason for any failures. ` +
+        `Use the data from completed steps above. The framework will mark this step completed automatically.`;
+    } else {
+      reminder += `\n\nCRITICAL: The data above is already fetched. Use it directly for the next step — do NOT re-fetch. Follow the planned approval gate before delegating to any execution subagent.`;
+    }
   }
   return reminder;
 };
 
+// Builds the nudge message for a stalled non-communicate step (no tool call produced)
+const buildStallNudge = (
+  stalledStep: any,
+  planState: string | null | undefined,
+): string => {
+  if (planState === PlanState.APPROVED) {
+    return (
+      "CRITICAL: Approval is granted but you produced no tool call. " +
+      "If your plan has a separate execute step next, call write_todos to advance to it — the approval carries over automatically. " +
+      "If execution is part of the current step, call task() with the execution subagent immediately. " +
+      "Do NOT output any text."
+    );
+  }
+
+  const stepName = stalledStep.content;
+  const stepType = stalledStep.type;
+
+  if (stepType === "transaction") {
+    return (
+      `CRITICAL: Step "${stepName}" is in_progress but you produced no tool call. ` +
+      "If this step needs on-chain data (balance, price), call task(query_agent) NOW. " +
+      "If you have all required data and are ready to execute, call request_approval NOW. " +
+      "Do NOT output any text."
+    );
+  }
+
+  if (stepType === "workflow") {
+    return (
+      `CRITICAL: Step "${stepName}" is in_progress but you produced no tool call. ` +
+      "Call request_approval to begin the approval gate, then confirm_approval, then task(workflow_agent). " +
+      "Do NOT output any text."
+    );
+  }
+
+  if (stepType === "code") {
+    return (
+      `CRITICAL: Step "${stepName}" is in_progress but you produced no tool call. ` +
+      "Call write_javascript with the complete code first, then confirm_approval so the user can review, " +
+      "then task(code_execution_agent). Do NOT output any text."
+    );
+  }
+
+  const stepTypeToSubagent: Record<string, string> = {
+    research: "research_agent",
+    visualize: "visualization_agent",
+    manage:
+      "the appropriate management subagent (scheduler_agent, data_management_agent, task_management_agent, or team_mailbox_agent)",
+  };
+
+  const subagent = stepTypeToSubagent[stepType] || "the appropriate subagent";
+  return (
+    `CRITICAL: Step "${stepName}" is in_progress but you produced no tool call. ` +
+    `Call task(${subagent}) NOW. Do NOT output any text.`
+  );
+};
+
 /**
- * Enforces typed todo-driven execution:
- * 1. Intercepts write_todos to read the `type` field on in_progress items (before zod strips it)
- *    and stores it in toolContext.currentStepType.
- * 2. Filters the tool list in wrapModelCall so only tools relevant to the current step are visible.
- * 3. Prevents multiple subagent (task) calls in the same model turn via afterModel.
+ * Guards the agent's todo-driven execution loop. Responsibilities:
+ *
+ * 1. Plan lifecycle — tracks the active plan across turns:
+ *    - Locks the plan once any step goes in_progress (no new items allowed mid-execution).
+ *    - Lazily resets lock and state when the model starts a brand-new plan after the previous one fully completed.
+ *    - Assigns stable IDs to todo items so they survive across write_todos calls.
+ *
+ * 2. Step scoping — restricts available tools to what the current step type allows:
+ *    - Reads the `type` field on the in_progress item from write_todos.
+ *    - Stores it in toolContext.currentStepType so the allowlist middleware can enforce it.
+ *
+ * 3. Approval gate — blocks execution subagents (trade/transfer/launch/workflow) until
+ *    the user has approved via request_approval → confirm_approval.
+ *
+ * 4. Auto-advance — marks steps completed automatically after a successful task() call,
+ *    and auto-completes communicate steps when the model outputs a text response.
+ *
+ * 5. Safety rails — prevents retries on failed steps, multiple task() calls per turn,
+ *    and status regression (completed → non-completed).
+ *
+ * 6. Stall recovery — detects zero-output turns and injects a nudge to resume:
+ *    - Non-communicate step in_progress but no tool call → nudge based on approval state.
+ *    - No plan and zero output → nudge to call write_todos.
+ *    - Communicate ready and model produced text → auto-advance and complete.
  */
 export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
   let lastKnownTodos: any[] = [];
@@ -225,21 +321,113 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
   let taskCallCounts = new Map<string, number>(); // subagent_type → calls in current step
   let completedStepResults: { stepName: string; content: string }[] = [];
   let planLocked = false;
+  let stallCountPerStep = new Map<number, number>(); // stepId → consecutive stall count
+  let betweenStepsStallCount = 0;
 
-  toolContext.update({
-    resetStepState: () => {
-      lastKnownTodos = [];
-      nextTodoId = 1;
-      taskCallCounts.clear();
-      completedStepResults = [];
-      planLocked = false;
-    },
-  });
+  const MAX_STALLS_PER_STEP = 3;
+  const MAX_BETWEEN_STEPS_STALLS = 3;
+
+  const resetStepState = () => {
+    lastKnownTodos = [];
+    nextTodoId = 1;
+    taskCallCounts.clear();
+    completedStepResults = [];
+    planLocked = false;
+    stallCountPerStep.clear();
+    betweenStepsStallCount = 0;
+  };
+
+  toolContext.update({ resetStepState });
+
+  const getArgs = (request: any): any =>
+    request?.toolCall?.args || request?.toolCall?.kwargs || {};
+
+  const blockError = (content: string, request: any): ToolMessage =>
+    new ToolMessage({
+      content,
+      tool_call_id: request?.toolCall?.id || "",
+      status: "error",
+    });
+
+  // Advances a todo step to completed, fires callbacks, and returns logging metadata.
+  // Used by both handleTask (on success) and afterModel (communicate auto-advance).
+  const advanceStepToCompleted = (
+    stepIndex: number,
+  ): {
+    completedStep: any;
+    allDone: boolean;
+    nextStep: any;
+  } => {
+    const completedStep = lastKnownTodos[stepIndex];
+    lastKnownTodos = lastKnownTodos.map((item: any, index: number) =>
+      index === stepIndex
+        ? { ...item, status: TodoItemStatus.COMPLETED }
+        : item,
+    );
+    toolContext.update({ currentStepType: null });
+    taskCallCounts.clear();
+    stallCountPerStep.clear();
+    betweenStepsStallCount = 0;
+
+    const allDone = lastKnownTodos.every(
+      (item: any) => item.status === TodoItemStatus.COMPLETED,
+    );
+    const nextStep = !allDone
+      ? lastKnownTodos.find(
+          (item: any) => item.status !== TodoItemStatus.COMPLETED,
+        )
+      : null;
+
+    logEveryWhere({
+      message: allDone
+        ? `[Step] Completed: "${completedStep.content}" — all done`
+        : `[Step] Completed: "${completedStep.content}" → next: "${nextStep?.content}"`,
+    });
+
+    toolContext.onStepAdvanced?.(completedStep.content, lastKnownTodos);
+    if (allDone) {
+      toolContext.onAllDone?.(lastKnownTodos);
+    }
+
+    return { completedStep, allDone, nextStep };
+  };
 
   const handleWriteTodos = async (request: any, handler: any): Promise<any> => {
     const argsKey = request?.toolCall?.args != null ? "args" : "kwargs";
     let todos: any[] =
       request?.toolCall?.args?.todos || request?.toolCall?.kwargs?.todos || [];
+
+    logEveryWhere({
+      message:
+        `[TodoDispatcher] handleWriteTodos — incoming todos=${todos.length} ` +
+        `statuses=[${todos.map((t: any) => t.status).join(",")}] ` +
+        `planLocked=${planLocked} existingTodos=${lastKnownTodos.length}`,
+    });
+
+    // Lazy reset: if the previous plan fully completed/rejected and the incoming todos
+    // are an entirely new plan (no matching IDs or content), reset state so the new
+    // plan is not blocked by the stale planLocked flag.
+    const allExistingDone =
+      planLocked &&
+      lastKnownTodos.length > 0 &&
+      lastKnownTodos.every(
+        (item: any) =>
+          item.status === TodoItemStatus.COMPLETED ||
+          item.status === "rejected",
+      );
+    const incomingMatchesExisting = todos.some((todo: any) =>
+      lastKnownTodos.some(
+        (knownTodo: any) =>
+          (todo.id && String(knownTodo.id) === String(todo.id)) ||
+          knownTodo.content === todo.content,
+      ),
+    );
+    if (allExistingDone && !incomingMatchesExisting) {
+      logEveryWhere({
+        message: `[TodoDispatcher] Previous plan fully done — lazy reset for new plan`,
+      });
+      resetStepState();
+    }
 
     // Block new items once execution has started (plan locked after first in_progress)
     if (planLocked) {
@@ -249,7 +437,6 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
             (knownTodo: any) => String(knownTodo.id) === String(todo.id),
           );
         }
-        // No id (some models omit id fields): treat as known if content matches
         return !lastKnownTodos.some(
           (knownTodo: any) => knownTodo.content === todo.content,
         );
@@ -264,14 +451,11 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         logEveryWhere({
           message: `[TodoDispatcher] Blocked write_todos — plan locked, attempted to add ${newItems.length} new item(s)`,
         });
-
-        return new ToolMessage({
-          content:
-            `Error: Plan is locked. Use your existing steps with their original IDs — do not create new items. ` +
+        return blockError(
+          `Error: Plan is locked. Use your existing steps with their original IDs — do not create new items. ` +
             `Existing steps: {${existingList}}. The pending reminder contains the exact write_todos payload to use.`,
-          tool_call_id: request?.toolCall?.id || "",
-          status: "error",
-        });
+          request,
+        );
       }
     }
 
@@ -307,7 +491,6 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
     }
 
     // Prevent status regression (completed → non-completed) and re-add dropped completed items
-    // Only re-add "completed" items — never re-add in_progress/pending from a previous plan
     const mergedTodos = todos.map((item: any) => {
       const known = lastKnownTodos.find(
         (knownItem: any) => knownItem.id && knownItem.id === item.id,
@@ -318,7 +501,6 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       ) {
         return { ...item, status: TodoItemStatus.COMPLETED };
       }
-
       return item;
     });
 
@@ -376,23 +558,19 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
           (todo: any) => `"${todo.content || todo.title || "unknown title"}"`,
         )
         .join(", ");
-
-      return new ToolMessage({
-        content: `Error: Only one step can be in_progress at a time. Found ${inProgressItems.length} in_progress items: [${titles}]. Mark the current step done before starting the next.`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+      return blockError(
+        `Error: Only one step can be in_progress at a time. Found ${inProgressItems.length} in_progress items: [${titles}]. Mark the current step done before starting the next.`,
+        request,
+      );
     }
 
     const activeStep = inProgressItems[0] || null;
     if (activeStep && !activeStep.type) {
-      return new ToolMessage({
-        content:
-          `Error: Todo item "${activeStep.content || "unknown content"}" is missing the required "type" field. ` +
+      return blockError(
+        `Error: Todo item "${activeStep.content || "unknown content"}" is missing the required "type" field. ` +
           `Every in_progress item must have a type: research, visualize, code, transaction, workflow, manage, or communicate.`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+        request,
+      );
     }
 
     if (activeStep) {
@@ -418,71 +596,61 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
   };
 
   const handleTask = async (request: any, handler: any): Promise<any> => {
+    const taskArgs = getArgs(request);
+    const subagentType = taskArgs?.subagent_type || "unknown subagent_type";
+
     // Block task call if write_todos has never been called (no plan exists yet)
     if (lastKnownTodos.length === 0) {
-      const earlyArgs =
-        request?.toolCall?.args || request?.toolCall?.kwargs || {};
-      const requestedSubagent = earlyArgs?.subagent_type || "unknown";
       logEveryWhere({
-        message: `[TodoDispatcher] Blocked task("${requestedSubagent}") — write_todos not called yet`,
+        message: `[TodoDispatcher] Blocked task("${subagentType}") — write_todos not called yet`,
       });
-
-      return new ToolMessage({
-        content: `Error: You must call write_todos to create your plan before calling task. Create your full todo plan first, mark the first step as in_progress, then call task.`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+      return blockError(
+        `Error: You must call write_todos to create your plan before calling task. Create your full todo plan first, mark the first step as in_progress, then call task.`,
+        request,
+      );
     }
 
     const stepType = toolContext.currentStepType;
     const allowedSubagents = stepType ? STEP_ALLOWED_SUBAGENTS[stepType] : null;
-    if (allowedSubagents) {
-      const args = request?.toolCall?.args || request?.toolCall?.kwargs || {};
-      const requestedType: string = args?.subagent_type || "";
-      if (requestedType && !allowedSubagents.includes(requestedType)) {
-        logEveryWhere({
-          message: `[TodoDispatcher] Blocked task call — stepType="${stepType}" requested="${requestedType}" description="${args?.description || ""}"`,
-        });
-
-        return new ToolMessage({
-          content:
-            `Error: Step type "${stepType}" only allows [${allowedSubagents.join(", ")}] as subagent_type. Got "${requestedType}". ` +
-            `Do NOT add new todo items. Call write_todos to mark the next planned step in_progress and proceed according to your existing todo plan.`,
-          tool_call_id: request?.toolCall?.id || "",
-          status: "error",
-        });
-      }
-    }
-
-    // Block code_execution_agent if no code has been approved yet
-    const taskArgs = request?.toolCall?.args || request?.toolCall?.kwargs || {};
     if (
-      taskArgs?.subagent_type === "code_execution_agent" &&
-      !toolContext.pendingCode
+      allowedSubagents &&
+      subagentType &&
+      !allowedSubagents.includes(subagentType)
     ) {
       logEveryWhere({
-        message: `[TodoDispatcher] Blocked code_execution_agent — no pending code`,
+        message: `[TodoDispatcher] Blocked task call — stepType="${stepType}" requested="${subagentType}" description="${taskArgs?.description || ""}"`,
       });
-      return new ToolMessage({
-        content:
-          "Error: No approved code found. You must call `write_javascript` with the complete code first, then call `confirm_approval` so the user can review it. Only after approval is granted should you delegate to code_execution_agent.",
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
+      return blockError(
+        `Error: Step type "${stepType}" only allows [${allowedSubagents.join(", ")}] as subagent_type. Got "${subagentType}". ` +
+          `Do NOT add new todo items. Call write_todos to mark the next planned step in_progress and proceed according to your existing todo plan.`,
+        request,
+      );
+    }
+
+    // Block code_execution_agent if no code has been written or approval not yet granted
+    if (
+      subagentType === "code_execution_agent" &&
+      (!toolContext.pendingCode || toolContext.planState !== PlanState.APPROVED)
+    ) {
+      logEveryWhere({
+        message: `[TodoDispatcher] Blocked code_execution_agent — no approved code (pendingCode=${Boolean(toolContext.pendingCode)} planState=${toolContext.planState})`,
       });
+      return blockError(
+        "Error: No approved code found. You must call `write_javascript` with the complete code first, then call `confirm_approval` so the user can review it. Only after approval is granted should you delegate to code_execution_agent.",
+        request,
+      );
     }
 
     // Enforce retry limit: max 1 call per subagent_type per step (no retries)
-    const subagentType = taskArgs?.subagent_type || "unknown subagent_type";
     const callCount = taskCallCounts.get(subagentType) || 0;
     if (callCount >= 1) {
       logEveryWhere({
         message: `[TodoDispatcher] Retry limit hit — ${subagentType} already called once in current step`,
       });
-      return new ToolMessage({
-        content: `Error: ${subagentType} already failed for this step. Do not retry — report the failure to the user instead.`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+      return blockError(
+        `Error: ${subagentType} already failed for this step. Do not retry — report the failure to the user instead.`,
+        request,
+      );
     }
 
     // Block task call if no step is currently in_progress (retry after auto-advance)
@@ -493,11 +661,10 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       logEveryWhere({
         message: `[TodoDispatcher] Blocked "${subagentType}" — no step in_progress, retrying a completed step`,
       });
-      return new ToolMessage({
-        content: `Error: No step is currently in_progress. You cannot retry a completed step. Call write_todos to mark the next step as in_progress and proceed with your plan.`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+      return blockError(
+        `Error: No step is currently in_progress. You cannot retry a completed step. Call write_todos to mark the next step as in_progress and proceed with your plan.`,
+        request,
+      );
     }
 
     // Enforce approval gate — block execution subagents until planState is APPROVED.
@@ -512,16 +679,14 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       logEveryWhere({
         message: `[TodoDispatcher] Blocked task("${subagentType}") — planState="${toolContext.planState}" stepType="${toolContext.currentStepType}" (APPROVED required)`,
       });
-      return new ToolMessage({
-        content:
-          `Error: Cannot delegate to ${subagentType} without user approval. ` +
+      return blockError(
+        `Error: Cannot delegate to ${subagentType} without user approval. ` +
           `You MUST follow the approval gate in order: ` +
           `(1) call request_approval now, ` +
           `(2) call confirm_approval with a markdown summary table, ` +
           `(3) only AFTER approval is granted, call task("${subagentType}").`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+        request,
+      );
     }
 
     // Count this as an execution attempt only after all soft blocks pass
@@ -531,14 +696,29 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
     const resultContent = extractResultContent(taskResult);
     const taskFailed =
       taskResult?.status === "error" ||
-      resultContent.startsWith("Error:") ||
-      resultContent.startsWith("error:") ||
+      resultContent.toLowerCase().startsWith("error:") ||
       resultContent.includes("blocked_planning_mode");
 
     if (taskFailed) {
       logEveryWhere({
         message: `[Step] Failed: "${subagentType}" — ${resultContent.slice(0, 200)}`,
       });
+      // Mark the failed step and all remaining pending steps as rejected so the plan terminates cleanly
+      lastKnownTodos = lastKnownTodos.map((item: any) => {
+        if (
+          item.status === TodoItemStatus.IN_PROGRESS ||
+          (item.status !== TodoItemStatus.COMPLETED &&
+            item.status !== "rejected")
+        ) {
+          return { ...item, status: "rejected" };
+        }
+        return item;
+      });
+      planLocked = false;
+      toolContext.update({ currentStepType: null });
+      taskCallCounts.clear();
+      stallCountPerStep.clear();
+      betweenStepsStallCount = 0;
       return taskResult;
     }
 
@@ -547,42 +727,20 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
     );
     if (inProgressIndex !== -1) {
-      const completedStep = lastKnownTodos[inProgressIndex];
-      lastKnownTodos = lastKnownTodos.map((item: any, index: number) =>
-        index === inProgressIndex
-          ? { ...item, status: TodoItemStatus.COMPLETED }
-          : item,
-      );
-      toolContext.update({ currentStepType: null });
-      taskCallCounts.clear();
-
       if (resultContent) {
         const truncated =
           resultContent.length > 1200
             ? resultContent.slice(0, 1200) + "..."
             : resultContent;
         completedStepResults.push({
-          stepName: completedStep.content,
+          stepName: lastKnownTodos[inProgressIndex].content,
           content: truncated,
         });
       }
-      const allDone = lastKnownTodos.every(
-        (item: any) => item.status === TodoItemStatus.COMPLETED,
-      );
-      const nextStep = !allDone
-        ? lastKnownTodos.find(
-            (item: any) => item.status !== TodoItemStatus.COMPLETED,
-          )
-        : null;
-      logEveryWhere({
-        message: allDone
-          ? `[Step] Completed: "${completedStep.content}" — all done`
-          : `[Step] Completed: "${completedStep.content}" → next: "${nextStep?.content}"`,
-      });
-      toolContext.onStepAdvanced?.(completedStep.content, lastKnownTodos);
-      if (allDone) {
-        toolContext.onAllDone?.(lastKnownTodos);
-      }
+
+      const { completedStep, allDone } =
+        advanceStepToCompleted(inProgressIndex);
+
       const allDoneNote =
         completedStep.type === "visualize"
           ? `\n\n[Framework] Step "${completedStep.content}" has been automatically marked as completed. The chart is now displayed to the user. Your final response MUST be empty or at most one sentence — absolutely no tables, bullet points, or analysis. The chart speaks for itself.`
@@ -620,12 +778,18 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
             : item,
         );
         planLocked = false;
+        stallCountPerStep.clear();
+        betweenStepsStallCount = 0;
         toolContext.update({ currentStepType: null });
         logEveryWhere({
           message: `[TodoDispatcher] Plan rejected — marked step as rejected, released plan lock`,
         });
       }
-    } catch {}
+    } catch (parseErr: any) {
+      logEveryWhere({
+        message: `[TodoDispatcher] confirm_approval response parse error — rejection may not have registered: ${parseErr?.message}`,
+      });
+    }
     return result;
   };
 
@@ -638,18 +802,16 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       logEveryWhere({
         message: `[TodoDispatcher] Blocked "${toolName}" — no todo plan yet`,
       });
-      return new ToolMessage({
-        content: `Error: You must call write_todos to create your plan before calling "${toolName}". Create your full todo plan first, mark the first step as in_progress, then gather any needed data before requesting approval.`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+      return blockError(
+        `Error: You must call write_todos to create your plan before calling "${toolName}". Create your full todo plan first, mark the first step as in_progress, then gather any needed data before requesting approval.`,
+        request,
+      );
     }
 
     // Block execution tools when plan exists but no step is in_progress
     const hasInProgress = lastKnownTodos.some(
       (todo: any) => todo.status === TodoItemStatus.IN_PROGRESS,
     );
-
     if (
       hasTodoPlan &&
       !hasInProgress &&
@@ -659,14 +821,11 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       logEveryWhere({
         message: `[TodoDispatcher] Blocked "${toolName}" — todo plan exists but no step is in_progress`,
       });
-
-      return new ToolMessage({
-        content:
-          `Error: You have a todo plan but no step is currently in_progress. ` +
+      return blockError(
+        `Error: You have a todo plan but no step is currently in_progress. ` +
           `Call write_todos to mark the next step as in_progress before calling "${toolName}".`,
-        tool_call_id: request?.toolCall?.id || "",
-        status: "error",
-      });
+        request,
+      );
     }
 
     return handler(request);
@@ -692,6 +851,12 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
     wrapModelCall: async (request: any, handler: any) => {
       let updatedRequest = request;
 
+      logEveryWhere({
+        message:
+          `[TodoDispatcher] wrapModelCall — planLocked=${planLocked} todos=${lastKnownTodos.length} ` +
+          `statuses=[${lastKnownTodos.map((t: any) => t.status).join(",")}]`,
+      });
+
       // Inject experience hint once on the first model call of a run, then clear it
       const hint = toolContext.experienceHint;
       if (hint) {
@@ -704,20 +869,18 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
       );
       if (inProgressTodos.length > 0) {
-        const isTransaction = inProgressTodos.some(
-          (item: any) => item.type === "transaction",
-        );
-        const currentPlanState = toolContext.planState;
-
-        if (isTransaction) {
-          logEveryWhere({
-            message: `[TodoDispatcher] In-progress reminder — isTransaction=true planState="${currentPlanState}"`,
-          });
-        }
-        updatedRequest = appendToSystemMessage(
-          updatedRequest,
-          buildInProgressReminder(inProgressTodos, currentPlanState),
-        );
+        updatedRequest = {
+          ...updatedRequest,
+          messages: [
+            ...(updatedRequest.messages || []),
+            new HumanMessage(
+              buildInProgressReminder(
+                inProgressTodos,
+                toolContext.planState,
+              ).trim(),
+            ),
+          ],
+        };
       }
 
       // Inject reminder when plan has pending todos but nothing is in_progress
@@ -740,90 +903,277 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         logEveryWhere({
           message: `[TodoDispatcher] Pending reminder — nextStep="${nextTodo?.content || "the next step"}" completedStepResults=${completedStepResults.length}`,
         });
-        updatedRequest = appendToSystemMessage(
-          updatedRequest,
-          buildPendingReminder(lastKnownTodos, completedStepResults),
-        );
+        updatedRequest = {
+          ...updatedRequest,
+          messages: [
+            ...(updatedRequest.messages || []),
+            new HumanMessage(
+              buildPendingReminder(lastKnownTodos, completedStepResults).trim(),
+            ),
+          ],
+        };
       }
 
       return handler(updatedRequest);
     },
 
-    afterModel: (state: any) => {
-      const messages: any[] = state?.messages;
-      if (!messages?.length) {
-        return;
-      }
+    // afterModel is declared as { canJumpTo, hook } instead of a plain function so that
+    // the hook can return jumpTo: "model" to re-invoke the agent node. Plain functions
+    // cannot use jumpTo — it requires canJumpTo to be declared so the framework allows
+    // the jump target. Without this, the only escape from a bad model turn is END.
+    afterModel: {
+      canJumpTo: ["model"],
+      hook: (state: any) => {
+        const messages: any[] = state?.messages;
+        if (!messages?.length) {
+          return;
+        }
 
-      const lastAiMsg = [...messages]
-        .reverse()
-        .find((msg: any) => AIMessage.isInstance(msg));
-      if (!lastAiMsg) {
-        return;
-      }
+        const lastAiMsg = [...messages]
+          .reverse()
+          .find((msg: any) => AIMessage.isInstance(msg));
+        if (!lastAiMsg) {
+          return;
+        }
 
-      // Strip preamble text when tool calls are present — it's reasoning noise that
-      // wastes input tokens on every subsequent turn without adding value
-      if (lastAiMsg?.tool_calls?.length && lastAiMsg.content) {
-        lastAiMsg.content = "";
-      }
+        const toolCallNames = (lastAiMsg.tool_calls || []).map(
+          (tc: any) => tc.name,
+        );
+        const hasToolCalls = toolCallNames.length > 0;
+        const textLen = getTextLen(lastAiMsg.content);
 
-      // Auto-advance communicate steps when LLM gives a text response (no tool calls)
-      if (!lastAiMsg?.tool_calls?.length) {
-        const communicateIndex = lastKnownTodos.findIndex(
+        logEveryWhere({
+          message:
+            `[TodoDispatcher] afterModel — toolCalls=[${toolCallNames.join(",") || "none"}] textLen=${textLen} ` +
+            `planLocked=${planLocked} todos=${lastKnownTodos.length} ` +
+            `statuses=[${lastKnownTodos.map((t: any) => t.status).join(",")}]`,
+        });
+
+        const hasPendingTodos = lastKnownTodos.some(
+          (item: any) =>
+            item.status !== TodoItemStatus.COMPLETED &&
+            item.status !== "rejected",
+        );
+
+        if (hasToolCalls) {
+          // Strip preamble text — reasoning noise that wastes tokens on subsequent turns
+          if (lastAiMsg.content) {
+            lastAiMsg.content = "";
+          }
+
+          // Any tool call counts as progress — reset stall counters
+          const activeStep = lastKnownTodos.find(
+            (item: any) => item.status === TodoItemStatus.IN_PROGRESS,
+          );
+          if (activeStep?.id) {
+            stallCountPerStep.delete(activeStep.id);
+          }
+          betweenStepsStallCount = 0;
+
+          const taskCalls = (lastAiMsg.tool_calls || []).filter(
+            (tc: any) => tc.name === "task",
+          );
+
+          // Warn when write_todos was the only call and model also produced text —
+          // indicates the model is trying to finalize without delegating execution
+          const onlyWriteTodos =
+            taskCalls.length === 0 &&
+            toolCallNames.every((name: string) => name === "write_todos");
+          if (onlyWriteTodos && hasPendingTodos && textLen > 0) {
+            logEveryWhere({
+              message:
+                `[TodoDispatcher] afterModel — write_todos only with no task delegated, ` +
+                `pending: [${lastKnownTodos.map((t: any) => `"${String(t.content).slice(0, 40)}"(${t.status})`).join(", ")}] ` +
+                `planState=${toolContext.planState}`,
+            });
+          }
+
+          // Block multiple task calls in the same turn
+          if (taskCalls.length > 1) {
+            return {
+              messages: taskCalls.slice(1).map(
+                (tc: any) =>
+                  new ToolMessage({
+                    content:
+                      "Error: Only one subagent delegation per turn. Wait for the current task to complete, mark it done in write_todos, then start the next.",
+                    tool_call_id: tc.id,
+                    status: "error",
+                  }),
+              ),
+            };
+          }
+
+          return;
+        }
+
+        // Find an in_progress step that is NOT a communicate step.
+        // Communicate steps are excluded — the model is expected to produce text for
+        // them, not call a tool, so stall detection does not apply.
+        const stalledStep = lastKnownTodos.find(
           (item: any) =>
             item.status === TodoItemStatus.IN_PROGRESS &&
-            item.type === "communicate",
+            item.type !== "communicate",
+        );
+
+        // Any output (text or empty) without a tool call while a non-communicate step
+        // is in_progress means the agent stalled. Nudge based on approval state.
+        // After MAX_STALLS_PER_STEP consecutive nudges with no progress, force-reject
+        // the plan to prevent infinite loops hitting the recursion limit.
+        if (stalledStep) {
+          const stepId = stalledStep.id;
+          const stallCount = (stallCountPerStep.get(stepId) || 0) + 1;
+          stallCountPerStep.set(stepId, stallCount);
+
+          if (stallCount > MAX_STALLS_PER_STEP) {
+            logEveryWhere({
+              message: `[TodoDispatcher] afterModel — stall limit reached (${stallCount}) on "${stalledStep.content}", force-rejecting plan`,
+            });
+            lastKnownTodos = lastKnownTodos.map((item: any) => {
+              if (
+                item.status === TodoItemStatus.IN_PROGRESS ||
+                (item.status !== TodoItemStatus.COMPLETED &&
+                  item.status !== "rejected")
+              ) {
+                return { ...item, status: "rejected" };
+              }
+              return item;
+            });
+            planLocked = false;
+            stallCountPerStep.clear();
+            toolContext.update({ currentStepType: null });
+            return {
+              messages: [
+                new HumanMessage(
+                  `The step "${stalledStep.content}" could not be completed after ${MAX_STALLS_PER_STEP} attempts. ` +
+                    "Please report this failure to the user and stop — do not retry.",
+                ),
+              ],
+              jumpTo: "model",
+            };
+          }
+
+          logEveryWhere({
+            message: `[TodoDispatcher] afterModel — stalled on "${stalledStep.content}" type="${stalledStep.type}" (planState=${toolContext.planState}), nudging (attempt ${stallCount}/${MAX_STALLS_PER_STEP})`,
+          });
+          return {
+            messages: [
+              new HumanMessage(
+                buildStallNudge(stalledStep, toolContext.planState),
+              ),
+            ],
+            jumpTo: "model",
+          };
+        }
+
+        // Between-steps stall: model produced zero output but pending todos remain.
+        // Covers two cases:
+        //   (a) Transition gap — no step is in_progress, pending reminder was injected but model produced nothing.
+        //   (b) Communicate step is in_progress but model produced no text instead of a response.
+        if (textLen === 0 && hasPendingTodos) {
+          betweenStepsStallCount += 1;
+
+          if (betweenStepsStallCount > MAX_BETWEEN_STEPS_STALLS) {
+            logEveryWhere({
+              message: `[TodoDispatcher] afterModel — between-steps stall limit reached (${betweenStepsStallCount}), force-rejecting plan`,
+            });
+            lastKnownTodos = lastKnownTodos.map((item: any) => {
+              if (
+                item.status === TodoItemStatus.IN_PROGRESS ||
+                (item.status !== TodoItemStatus.COMPLETED &&
+                  item.status !== "rejected")
+              ) {
+                return { ...item, status: "rejected" };
+              }
+              return item;
+            });
+            planLocked = false;
+            betweenStepsStallCount = 0;
+            stallCountPerStep.clear();
+            toolContext.update({ currentStepType: null });
+            return {
+              messages: [
+                new HumanMessage(
+                  "The plan could not advance after multiple attempts. " +
+                    "Please report this failure to the user and stop — do not retry.",
+                ),
+              ],
+              jumpTo: "model",
+            };
+          }
+
+          const inProgressCommunicate = lastKnownTodos.find(
+            (item: any) =>
+              item.status === TodoItemStatus.IN_PROGRESS &&
+              item.type === "communicate",
+          );
+          const nextPendingStep = lastKnownTodos.find(
+            (item: any) =>
+              item.status !== TodoItemStatus.COMPLETED &&
+              item.status !== "rejected",
+          );
+          const nudgeMsg = inProgressCommunicate
+            ? `CRITICAL: Step "${inProgressCommunicate.content}" is in_progress. ` +
+              "Give your full text response now — the framework will mark it completed automatically. Do NOT call any tools."
+            : `CRITICAL: You have pending todo steps but produced no output. ` +
+              `Call write_todos to mark "${nextPendingStep?.content || "the next step"}" as in_progress, then proceed.`;
+          logEveryWhere({
+            message: `[TodoDispatcher] afterModel — between-steps stall (attempt ${betweenStepsStallCount}/${MAX_BETWEEN_STEPS_STALLS}, inProgressCommunicate=${!!inProgressCommunicate}), nudging`,
+          });
+          return {
+            messages: [new HumanMessage(nudgeMsg)],
+            jumpTo: "model",
+          };
+        }
+
+        // No plan at all and zero output — model failed to call write_todos.
+        // Happens when a short message ("yes", "ok") arrives after the model broke
+        // the contract by asking for verbal confirmation before planning.
+        if (textLen === 0 && lastKnownTodos.length === 0) {
+          logEveryWhere({
+            message: `[TodoDispatcher] afterModel — zero output with no plan, nudging model to call write_todos`,
+          });
+          return {
+            messages: [
+              new HumanMessage(
+                "CRITICAL: You produced no output at all. " +
+                  "If the user's message is an action request (swap, sell, buy, transfer), call write_todos immediately to plan your steps. " +
+                  "If the user said 'yes' or 'ok', treat it as 'proceed with the action you just described' and call write_todos now.",
+              ),
+            ],
+            jumpTo: "model",
+          };
+        }
+
+        // Communicate auto-advance: when the model produces a text response and ALL
+        // prior steps are explicitly completed or rejected, mark the communicate step
+        // completed automatically. Requires strict completion — no orphaned exceptions.
+        const communicateIndex = lastKnownTodos.findIndex(
+          (item: any) =>
+            item.type === "communicate" &&
+            item.status === TodoItemStatus.IN_PROGRESS,
         );
         if (communicateIndex !== -1) {
-          const completedStep = lastKnownTodos[communicateIndex];
-          lastKnownTodos = lastKnownTodos.map((item: any, index: number) =>
-            index === communicateIndex
-              ? { ...item, status: TodoItemStatus.COMPLETED }
-              : item,
-          );
-          toolContext.update({ currentStepType: null });
-          taskCallCounts.clear();
-          const allDone = lastKnownTodos.every(
-            (item: any) => item.status === TodoItemStatus.COMPLETED,
-          );
-          const nextStep = !allDone
-            ? lastKnownTodos.find(
-                (item: any) => item.status !== TodoItemStatus.COMPLETED,
-              )
-            : null;
-          logEveryWhere({
-            message: allDone
-              ? `[Step] Completed: "${completedStep.content}" — all done`
-              : `[Step] Completed: "${completedStep.content}" → next: "${nextStep?.content}"`,
-          });
-          toolContext.onStepAdvanced?.(completedStep.content, lastKnownTodos);
-          if (allDone) {
-            toolContext.onAllDone?.(lastKnownTodos);
+          const allPriorStepsDone = lastKnownTodos
+            .slice(0, communicateIndex)
+            .every(
+              (item: any) =>
+                item.status === TodoItemStatus.COMPLETED ||
+                item.status === "rejected",
+            );
+          if (allPriorStepsDone) {
+            lastKnownTodos = lastKnownTodos.map((item: any, idx: number) => {
+              if (
+                idx < communicateIndex &&
+                item.status === TodoItemStatus.IN_PROGRESS
+              ) {
+                return { ...item, status: TodoItemStatus.COMPLETED };
+              }
+              return item;
+            });
+            advanceStepToCompleted(communicateIndex);
           }
         }
-        return;
-      }
-
-      const taskCalls = lastAiMsg.tool_calls.filter(
-        (taskCall: any) => taskCall.name === "task",
-      );
-      if (taskCalls.length <= 1) {
-        return;
-      }
-
-      // Block multiple task (subagent) calls in the same turn
-      return {
-        messages: taskCalls.slice(1).map(
-          (taskCall: any) =>
-            new ToolMessage({
-              content:
-                "Error: Only one subagent delegation per turn. Wait for the current task to complete, mark it done in write_todos, then start the next.",
-              tool_call_id: taskCall.id,
-              status: "error",
-            }),
-        ),
-      };
+      },
     },
   });
 };

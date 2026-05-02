@@ -195,9 +195,7 @@ const ChatView = (props: any) => {
     pointerIdRef.current = event.pointerId;
     try {
       (event.target as HTMLElement)?.setPointerCapture?.(event.pointerId);
-    } catch {
-      // capture may fail; safe to ignore
-    }
+    } catch {}
     isResizingRef.current = true;
     setIsDragging(true);
     document.body.style.userSelect = "none";

@@ -78,7 +78,7 @@ export class JupiterClient {
 
       let maxLamports = Number(input?.pritorityFeeMicroLamport || 0);
       if (maxLamports === 0) {
-        maxLamports = 100;
+        maxLamports = 10000;
       }
 
       let swapPayload: any = {
@@ -89,7 +89,7 @@ export class JupiterClient {
         dynamicSlippage: input.dynamicSlippage,
         prioritizationFeeLamports: {
           priorityLevelWithMaxLamports: {
-            maxLamports: maxLamports * 1.25,
+            maxLamports,
             priorityLevel: "high",
           },
         },

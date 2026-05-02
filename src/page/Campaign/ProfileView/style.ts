@@ -358,39 +358,39 @@ const StatisticWrapper = styled.div`
     }
   }
 
-  .setting {
-    margin-left: var(--margin-left);
-    cursor: pointer;
-
-    svg {
-      width: 2.3rem;
-      height: 2.3rem;
-      min-width: 2.3rem;
-      min-height: 2.3rem;
-      padding: 0.2rem;
-      fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
-    }
-  }
-
+  .setting,
   .calculator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-left: var(--margin-left);
     cursor: pointer;
     background-color: ${({ theme }: { theme: ITheme }) => theme?.colorBgInput};
     border-radius: 3px;
-    padding: 0.4rem 0.5rem;
+    padding: 0.6rem 0.8rem;
 
     svg {
-      width: 2rem;
-      height: 2rem;
-      min-width: 2rem;
-      min-height: 2rem;
-      padding: 0.2rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      min-width: 1.5rem;
+      min-height: 1.5rem;
       fill: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
     }
 
     &:hover {
       svg {
         fill: var(--color-text-hover);
+      }
+    }
+
+    &.script-icon {
+      svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        min-width: 1.5rem;
+        min-height: 1.5rem;
+        padding: 0;
+        transform: none;
       }
     }
   }

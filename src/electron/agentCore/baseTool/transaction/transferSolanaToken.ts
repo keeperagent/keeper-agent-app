@@ -1,8 +1,6 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { PublicKey } from "@solana/web3.js";
 import Big from "big.js";
-import { nodeEndpointDB } from "@/electron/database/nodeEndpoint";
 import { TOKEN_TYPE } from "@/electron/constant";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { safeStringify } from "@/electron/agentCore/utils";
@@ -11,19 +9,16 @@ import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
-import { redistributeToCapacity, extractErrorMessage } from "../utils";
+import {
+  redistributeToCapacity,
+  extractErrorMessage,
+  isValidSolanaAddress,
+  AmountStrategy,
+} from "../utils";
+import { resolveNodeProviders } from "./utils";
 import { TOOL_KEYS } from "@/electron/constant";
 
 const GAS_BUFFER_SOL = 0.0005;
-
-const isValidSolanaAddress = (address: string): boolean => {
-  try {
-    new PublicKey(address);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
   new DynamicStructuredTool({
@@ -39,7 +34,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
         .string()
         .describe("SPL mint address or empty for native SOL"),
       amountStrategy: z
-        .enum(["EQUAL_PER_WALLET", "RANDOM_PER_WALLET", "TOTAL_SPLIT_RANDOM"])
+        .nativeEnum(AmountStrategy)
         .describe("Amount distribution strategy"),
       amount: z
         .number()
@@ -85,16 +80,6 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
           status: "blocked_planning_mode",
         });
       }
-      const effectiveNodeEndpointGroupId = toolContext?.nodeEndpointGroupId;
-      const effectiveEncryptKey = toolContext?.encryptKey;
-      const effectiveCampaignId = toolContext?.campaignId;
-
-      if (!effectiveNodeEndpointGroupId) {
-        throw new Error(
-          "nodeEndpointGroupId is required. Please provide it from context or specify it explicitly.",
-        );
-      }
-
       if (!isValidSolanaAddress(sourceWalletAddress)) {
         throw new Error(
           `Invalid source wallet address: ${sourceWalletAddress}`,
@@ -105,22 +90,11 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
         throw new Error(`Invalid token mint address: ${tokenAddress}`);
       }
 
-      const [listNodeEndpoint, errList] =
-        await nodeEndpointDB.getListNodeEndpointByGroupId(
-          effectiveNodeEndpointGroupId,
-        );
-      if (errList) throw errList;
-      const listNodeProvider =
-        listNodeEndpoint
-          ?.map((node) => node?.endpoint || "")
-          ?.filter(Boolean) || [];
-      if (!listNodeProvider.length) {
-        throw new Error(
-          "The configured node endpoint group has no active endpoints.",
-        );
-      }
+      const listNodeProvider = await resolveNodeProviders(
+        toolContext?.nodeEndpointGroupId,
+      );
 
-      if (!effectiveCampaignId) {
+      if (!toolContext?.campaignId) {
         throw new Error(
           "campaignId is required. Please provide it from context or specify it explicitly.",
         );
@@ -129,7 +103,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
       // Fetch all campaign profiles
       const [allProfiles, errAll] =
         await campaignProfileDB.getAllProfileOfCampaign(
-          effectiveCampaignId,
+          toolContext?.campaignId,
           true,
         );
       if (errAll) throw errAll;
@@ -142,9 +116,13 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
       const allWallets: Array<{ wallet: IWallet; profile: ICampaignProfile }> =
         profiles
           .map((profile) => {
-            const wallet = profile?.wallet
-              ? decryptWallet(profile.wallet, effectiveEncryptKey || "")
-              : profile?.wallet;
+            if (!profile?.wallet) {
+              return null;
+            }
+            const wallet = decryptWallet(
+              profile.wallet,
+              toolContext?.encryptKey || "",
+            );
             return wallet ? { wallet, profile } : null;
           })
           .filter(
@@ -159,7 +137,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
       );
       if (!sourceEntry) {
         throw new Error(
-          `Source wallet ${sourceWalletAddress} not found in campaign ${effectiveCampaignId}.`,
+          `Source wallet ${sourceWalletAddress} not found in campaign ${toolContext?.campaignId}.`,
         );
       }
       if (!sourceEntry.wallet.privateKey) {
@@ -185,7 +163,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
 
       // Validate all target addresses
       const invalidTargets = targetWallets.filter(
-        (w) => !w.address || !isValidSolanaAddress(w.address),
+        (w) => !isValidSolanaAddress(w.address || ""),
       );
       if (invalidTargets.length) {
         throw new Error(
@@ -244,12 +222,12 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
         min + Math.random() * (max - min);
 
       let plannedAmounts: number[];
-      if (amountStrategy === "EQUAL_PER_WALLET") {
+      if (amountStrategy === AmountStrategy.EQUAL_PER_WALLET) {
         if (!amount || amount <= 0) {
           throw new Error("amount must be > 0 for EQUAL_PER_WALLET.");
         }
         plannedAmounts = Array(count).fill(amount);
-      } else if (amountStrategy === "RANDOM_PER_WALLET") {
+      } else if (amountStrategy === AmountStrategy.RANDOM_PER_WALLET) {
         if (!maxAmount || maxAmount <= 0) {
           throw new Error(
             "maxAmount is required and must be > 0 for RANDOM_PER_WALLET.",
@@ -277,7 +255,7 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
       // Cap total to source available balance
       const plannedTotal = plannedAmounts.reduce((a, b) => a + b, 0);
       if (plannedTotal > sourceAvailable) {
-        if (amountStrategy === "TOTAL_SPLIT_RANDOM") {
+        if (amountStrategy === AmountStrategy.TOTAL_SPLIT_RANDOM) {
           plannedAmounts = redistributeToCapacity(
             plannedAmounts,
             Array(count).fill(sourceAvailable / count),
@@ -378,11 +356,11 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
           totalTransferred,
         },
         ...(targetWallets.length <= 5 && {
-          results: results.map((r) => ({
-            wallet: r.targetWallet,
-            amount: r.amount,
-            txHash: r.txHash,
-            ...(r.error && { error: r.error }),
+          results: results.map((result) => ({
+            wallet: result.targetWallet,
+            amount: result.amount,
+            txHash: result.txHash,
+            ...(result.error && { error: result.error }),
           })),
         }),
         ...(targetWallets.length > 5 &&

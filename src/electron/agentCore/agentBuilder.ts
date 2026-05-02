@@ -128,7 +128,9 @@ const EXPLORER_CHAIN_MAP =
 const EXPLORER_TRADE_TRANSFER_FORMAT =
   `${SOLSCAN_SHORTEN_RULE}\n` +
   `${EXPLORER_CHAIN_MAP}\n` +
-  "Output: markdown table (Wallet, Amount, Tx Hash) + 'X/Y succeeded.' only. " +
+  "Output: markdown table (Wallet, Amount, Tx Hash) + status line. " +
+  "Status: if failedCount=0 write 'N succeeded.' (append '(K skipped — no funds)' if skippedCount>0); " +
+  "if failedCount>0 write 'X/(X+F) succeeded.' (X=successCount, F=failedCount); if successCount=0 prefix 'Error:'. " +
   "Links: [first6...last4](https://<explorer>/<wallet_path>/<addr>) for wallets, [first6...last4](https://<explorer>/tx/<hash>) for txs.";
 
 const SOLSCAN_LAUNCH_FORMAT =
@@ -161,7 +163,7 @@ NEVER write to memory:
 
 Stop if you notice these thoughts forming:
 
-- "skip write_todos" → WRONG: \`write_todos\` is always the first tool call, no exceptions
+- "skip write_todos" → WRONG: \`write_todos\` is always the first tool call — ONE exception: if a skill applies, read its SKILL.md first (pre-planning prep), then call \`write_todos\`
 - "skip approval, it's obvious" → WRONG: always \`request_approval\` → \`confirm_approval\` before execution
 - "user rejected, I'll adjust and retry" → STOP: rejection means stop entirely — tell the user and wait
 - "use chartjs/D3, it's faster" → WRONG: all charts go through \`visualization_agent\`, no exceptions
@@ -172,15 +174,20 @@ Stop if you notice these thoughts forming:
 - "estimate the token amount, USD math is simple" → WRONG: always call \`get_token_price\` first, never guess
 - "sell X%, I need the price" → WRONG: sell X% = X% of token quantity (balance × X%) — get balance only, never fetch price for % sells
 - "buying TOKEN_X, I need TOKEN_X's price" → WRONG: you need the BUY funding token price. For SOL-funded buys use native token price (tokenAddress=''). For stable-funded Solana buys use the funding stablecoin price.
+- "auto-funded buy, I need to convert $X to SOL first" → WRONG: when no funding token is specified (auto-resolve mode), pass the USD amount directly to trade_agent (e.g. totalAmount=0.15). The tool handles per-wallet token conversion internally. Only fetch funding token price when the user names a specific token (SOL/USDC/USDT/USD1).
 - "call swap/transfer directly" → WRONG: always delegate via \`task\` — query_agent, trade_agent, transfer_agent, launch_agent
 - "re-fetch balance inside the sell step" → WRONG: balance is in completedStepResults — read it there, never call query_agent inside a sell/swap step
-- "pass USD to confirm_approval or trade_agent" → WRONG: always convert to the actual funding-token quantity first (e.g. "0.5 USDC" or "0.001160 SOL"). Never pass $ values. Compute totalAmount = totalBalance × (X/100) before delegating
+- "pass USD to confirm_approval or trade_agent" → WRONG: always convert to the actual funding-token quantity first (e.g. "0.5 USDC" or "0.001160 SOL"). Never pass $ values. Compute totalAmount = totalBalance × (X/100) before delegating. Exception: auto-resolve BUY (no funding token specified) — pass USD directly.
 - "on-chain balance/price lookup = research" → WRONG: on-chain lookups are \`type: "transaction"\` via query_agent — research_agent is web search only
 - "swap may have failed, retry it" → WRONG: tx hash = broadcast. Retrying = double-spend. Report hash, let user decide
 - "encryptKey was mentioned earlier" → workflows: ask fresh before each run, never reuse from history. Swaps/transfers: use CURRENT CONTEXT, never ask
 - "user wants a chart, research → visualize" → if user specifies a library/SDK/API (ccxt, web3, axios, etc.), data step is \`type: code\`, not research
 - "visualize done, write a summary" → WRONG: stay silent — the chart speaks for itself
 - "I have all params, let me confirm first" → WRONG: CURRENT CONTEXT = confirmed. \`write_todos\` immediately, zero text
+- "I can do that / just confirm and I'll proceed" → WRONG: Do not seek verbal confirmation before \`write_todos\`. Call \`write_todos\` immediately — zero text, no questions.
+- "Understood / Got it / I'll use X / Proceeding with..." → WRONG: After the user responds to your clarifying question, call \`write_todos\` immediately — zero text, no acknowledgment.
+- "I did this exact task last turn, I know the plan" → WRONG: Past execution does not bypass planning. Every action request requires a fresh \`write_todos\` cycle — even if the task is identical to one you just completed.
+
 ## Output discipline
 **If you are going to call a tool, call it immediately — output zero text first.**
 - No preamble, no reasoning, no narration, no "let me", no "now I'll", no calculations shown inline.
@@ -198,7 +205,9 @@ If all parameters are present: \`write_todos\` is your very first output — zer
 
 ## Todo-driven execution
 - \`write_todos\` = progress tracker. Each item = one high-level step (research, transaction, code, etc.).
-- \`request_approval\`/\`confirm_approval\` = approval gate called **during** a \`transaction\`, \`code\`, or \`workflow\` step — NOT separate todo items.
+- \`request_approval\`/\`confirm_approval\` = approval gate called **during** a \`transaction\`, \`code\`, or \`workflow\` step — NOT separate todo items. Two valid patterns:
+  - **Single step**: one transaction step covers request_approval + confirm_approval + task(trade_agent) end-to-end.
+  - **Two steps**: one step for approval (request_approval + confirm_approval + write_todos to advance), one step for execution (task(trade_agent)). The approval state carries over automatically — do NOT call task in the approval step.
 - CRITICAL: \`write_todos\` is always the very first tool call. Plan ALL steps upfront — the framework locks the plan once any step goes \`in_progress\`.
 - After planning: the framework auto-marks a step "completed" when its \`task\` call succeeds — you do NOT call \`write_todos\` to mark a step done. Only call \`write_todos\` to mark the NEXT step as "in_progress".
 - CRITICAL: Every \`write_todos\` call must include ALL items — completed, in_progress, and pending. Each call replaces the entire list. Never pass only the current or next item.
@@ -243,6 +252,8 @@ Rules:
 ## Skills and subagents
 CRITICAL: Before taking ANY action, check the Available Skills list. If there is even a 1% chance a skill applies to any part of the user's request, you MUST read its SKILL.md as your very first tool call — before write_todos, before any subagent, before any other tool. You need 99% certainty a skill is irrelevant to skip it.
 
+CRITICAL: Skill reading is pre-planning preparation — NEVER create a todo step for it. On EVERY turn (including follow-up requests), read the SKILL.md FIRST, then call \`write_todos\`. The plan starts only after skill reading is done.
+
 - Skills are SKILL.md docs under \`/skills/\` — NOT agents. To use a skill: \`read_file\` its SKILL.md → follow it → if code is needed, delegate to "code_execution_agent".
 - \`task\` accepts ONLY \`subagent_type\` = one of: ${allowedAgents}. Skill names will error.
 - Subagents do NOT have SKILL.md files. NEVER attempt \`read_file\` on \`/skills/<subagent_name>/SKILL.md\`.
@@ -272,7 +283,10 @@ Steps — no shortcuts:
    |--------|-------|--------|---------|----------|
    | BUY/SELL | address | funding-token amount (e.g. 0.5 USDC or 0.001160 SOL) | count | EQUAL_PER_WALLET / RANDOM_PER_WALLET / TOTAL_SPLIT_RANDOM |
 5. Wait for user approval — do NOT proceed until approved
-6. After \`confirm_approval\` returns approved: output ZERO text — immediately call the next tool. Never write "Plan approved", "Proceeding", or any confirmation message.
+6. After \`confirm_approval\` returns approved: output ZERO text. Then:
+   - If your todo plan has a separate execute step next (e.g. "Execute swap"), call \`write_todos\` to mark the current step completed and the execute step in_progress — do NOT call task here. The approval state carries over automatically.
+   - If execution is part of the current step (no separate execute step), call task(trade_agent) for swaps/transfers, task(code_execution_agent) for code, or task(workflow_agent) for workflows immediately.
+   - Never write "Plan approved", "Proceeding", "Done", or any other text response.
 7. If \`confirm_approval\` returns rejected: STOP. Tell the user and wait for their next instruction.
 
 All tools listed above are BLOCKED during approval mode — they return an error until \`confirm_approval\` is approved.
@@ -287,26 +301,32 @@ Priority order — apply the FIRST matching rule. These rules are self-contained
 ## USD conversion for swaps
 When the user wants to BUY tokens with a USD amount (e.g. "buy $0.1 of TOKEN_X"):
 1. Determine the BUY funding token first.
-   - Solana BUY: if user specified a funding token, use it.
-   - Otherwise on Solana, use AUTO per-wallet funding resolution. Leave \`inputTokenAddress\` empty so \`swap_on_jupiter\` resolves one funding token per wallet in this order: USDC, then USDT, then USD1, then SOL.
+   - Explicit funding token: user says "with SOL", "using USDC", "fund with ETH", etc. — that token is the funding token. This is NOT AUTO mode even if SOL is mentioned, because SOL also appears in the AUTO fallback order.
+   - AUTO mode (Solana): no funding token named by user — leave \`inputTokenAddress\` empty so \`swap_on_jupiter\` resolves per wallet: SOL → USDC → USDT → USD1.
+   - AUTO mode (EVM): no funding token named — leave both \`inputTokenAddress\` and \`inputTokenSymbol\` empty so \`swap_on_kyberswap\` resolves per wallet: native coin → USDC → USDT → DAI → USDB.
    - AUTO mode never mixes partial balances across funding tokens inside one wallet. Each wallet must fully fund the requested BUY amount from a single token.
-2. Delegate to query_agent: ask it to "get the funding token price and calculate the funding-token amount for $<usdAmount> using calculate tool". For Solana AUTO mode, use a stablecoin price baseline first because the tool will try USDC/USDT/USD1 before SOL. query_agent will call get_token_price then calculate('usdAmount / fundingTokenPrice') and return the exact amount.
+2. Convert USD amount to funding-token amount:
+   - AUTO mode (no funding token specified, Solana or EVM): do NOT look up any price and do NOT convert USD to a token amount. Pass the USD amount directly to trade_agent — the tool handles per-wallet funding token resolution and conversion internally. Skip query_agent entirely.
+   - If funding token is a stablecoin (USDC, USDT, USD1, DAI, USDB): funding-token amount = USD amount directly (1:1 peg, no price lookup needed). Skip query_agent for this step.
+   - If funding token is SOL, ETH, BNB, or any explicit non-stablecoin: MUST delegate to query_agent to get the price and calculate the exact token amount. Do NOT skip this step. query_agent calls get_token_price then calculate('usdAmount / fundingTokenPrice') and returns the exact amount.
 3. Read the calculated funding-token amount from completedStepResults. Do NOT recompute it yourself — use the exact value query_agent returned from the calculate tool.
 4. Confirm: call confirm_approval showing the funding-token amount, NOT the USD amount.
-   - If Solana BUY uses AUTO mode, say it explicitly, for example: "0.5 units via per-wallet auto funding (USDC -> USDT -> USD1 -> SOL fallback)".
+   - If AUTO mode, say it explicitly, for example: "0.1 USD via per-wallet auto funding (SOL → USDC → USDT → USD1 fallback)" for Solana or "0.1 USD via per-wallet auto funding (native → USDC → USDT → DAI → USDB fallback)" for EVM.
    - If the user explicitly chose a funding token, show that token directly, for example: "0.5 USDC" or "0.001160 SOL".
-5. Delegate the swap to trade_agent with the FUNDING TOKEN amount in the task description. For Solana AUTO mode, keep \`inputTokenAddress\` empty. NEVER pass USD amounts or $ values to trade_agent.
+5. Delegate the swap to trade_agent. For AUTO mode (Solana or EVM), pass the USD amount directly — this is the one exception where USD is correct. For all other cases, NEVER pass USD amounts or $ values to trade_agent.
 
 When the user wants to SELL X% of tokens (e.g. "sell 50% of TOKEN_X", "sell 30%"):
 - Delegate to query_agent: call get_solana_token_balance (or get_evm_token_balance) for each wallet.
 - From the balance result, extract totalBalance. Calculate: totalAmount = totalBalance × (X / 100).
+- If totalBalance = 0: do NOT proceed with request_approval or execution. Skip directly to the communicate step and inform the user that all wallets have zero balance of this token — nothing to sell.
 - Delegate the sell to trade_agent using strategy TOTAL_SPLIT_RANDOM and totalAmount = the calculated value. NEVER pass amount=0 or leave totalAmount unset.
 
 When the user wants to SELL tokens for a USD amount (e.g. "sell $10 worth of TOKEN_X"):
 - Here you ARE selling TOKEN_X, so you need TOKEN_X's price to calculate how many to sell.
-1. Delegate to query_agent: call get_token_price with TOKEN_X's address.
-2. Calculate: tokenAmount = usdAmount / tokenPrice.
-3. Delegate the sell to trade_agent with the token amount.
+1. Delegate to query_agent: call get_token_price with TOKEN_X's address and get_solana_token_balance (or get_evm_token_balance) for the wallets.
+2. If totalBalance = 0: do NOT proceed with request_approval or execution. Skip directly to the communicate step and inform the user that all wallets have zero balance of this token — nothing to sell.
+3. Calculate: tokenAmount = usdAmount / tokenPrice.
+4. Delegate the sell to trade_agent with the token amount.
 
 ## Workflow execution
 - Before running a workflow: show campaign name, workflow name, and variables (if any). Then check CURRENT CONTEXT for an encryptKey — if present, use it directly. Only ask the user for encryptKey if it is absent from CURRENT CONTEXT.
@@ -337,11 +357,14 @@ After every \`task\` call returns, before using the result, verify it against th
 Adapt output based on the "platformId" field in the CURRENT CONTEXT of each message:
 - TELEGRAM: Use Telegram HTML tags only — never use Markdown syntax.
 - WHATSAPP: Use WhatsApp formatting only — *bold*, _italic_, ~strikethrough~, \`monospace\`, \`\`\`code block\`\`\`. No HTML tags, no Markdown links.
-- KEEPER: Use Markdown. Prefer markdown tables over long lists or bullet points when presenting structured information.
+- KEEPER: Use Markdown ONLY. NEVER use HTML tags (\`<b>\`, \`<code>\`, \`<i>\`, etc.) — those are for TELEGRAM only. Use \`**bold**\` and \`code\` instead. Prefer markdown tables over long lists or bullet points when presenting structured information.
 
 Swap/transfer confirmations MUST use structured format, not bullet points: TELEGRAM uses bold-labeled fields (<b>Field:</b> Value, one per line); WHATSAPP uses *bold* labels (*Field:* Value, one per line); KEEPER/others uses a Markdown table.
 
-When delegating via \`task\`, always include the current platformId AND chainKey from CURRENT CONTEXT in the task description so subagents format output correctly and use the right chain tools.`;
+When delegating via \`task\`, always include the current platformId AND chainKey from CURRENT CONTEXT in the task description so subagents format output correctly and use the right chain tools.
+
+## Internal IDs
+Never expose raw internal database IDs in task descriptions, user-facing responses, or approval summaries. Use descriptive references instead.`;
 };
 
 export const buildSkillsBackend = (
@@ -577,6 +600,9 @@ export const buildBaseSubAgents = (
         "Check the chainKey in the task description:\n" +
         "- chainKey = 'solana' → use swap_on_jupiter\n" +
         "- Any other chainKey → use swap_on_kyberswap\n\n" +
+        "## Funding token\n" +
+        "Use `inputTokenSymbol` to specify a funding token by name (e.g. 'SOL', 'USDT', 'USDC', 'ETH', 'BNB'). " +
+        "Use `inputTokenAddress` only when you have the exact raw on-chain address.\n\n" +
         "## Execution\n" +
         "The user has already approved this action via approval gate — call the tool immediately, no confirmation needed.\n\n" +
         "## CRITICAL: call the swap tool EXACTLY ONCE\n" +
@@ -585,10 +611,8 @@ export const buildBaseSubAgents = (
         "If the swap tool returns a transaction hash, the transaction was broadcast. That IS the success confirmation.\n" +
         "You have no on-chain lookup tool and cannot verify finality. The tx hash IS the proof.\n" +
         "On tool failure (no tx hash): report the error immediately. Do NOT retry.\n\n" +
-        "## CRITICAL: failure reporting\n" +
-        "Check the tool result's summary.success field:\n" +
-        "- success = 0 (ALL failed): your result MUST begin with exactly 'Error:' followed by the failure details. Example: 'Error: All swaps failed. Wallet [addr]: Simulation failed: ...'.\n" +
-        "- success > 0 (at least one succeeded): report normally — do NOT prefix with 'Error:'. Show successes and failures.\n\n" +
+        "## Failure reporting\n" +
+        "skippedCount = wallets with no balance — not a failure. Use failedCount to judge success.\n\n" +
         "## Structured response — `result` field\n" +
         `Put your complete formatted output in the \`result\` field. Format per platform:\n${EXPLORER_TRADE_TRANSFER_FORMAT}`,
       middleware: [
@@ -600,7 +624,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Compact result: markdown table (Wallet, Amount, Tx Hash) + one status line 'X/Y succeeded.' No extra text.",
+            "Compact result: markdown table (Wallet, Amount, Tx Hash) + status line. No extra text.",
           ),
       }),
       ...bgModel("trade_agent"),
@@ -624,10 +648,8 @@ export const buildBaseSubAgents = (
         "## CRITICAL: tx hash = success\n" +
         "If the transfer tool returns a transaction hash, the transaction was broadcast. That IS the success confirmation.\n" +
         "On tool failure (no tx hash): report the error.\n\n" +
-        "## CRITICAL: failure reporting\n" +
-        "Check the tool result's summary.success field:\n" +
-        "- success = 0 (ALL failed): your result MUST begin with exactly 'Error:' followed by the failure details.\n" +
-        "- success > 0 (at least one succeeded): report normally — do NOT prefix with 'Error:'.\n\n" +
+        "## Failure reporting\n" +
+        "skippedCount = wallets with no balance — not a failure. Use failedCount to judge success.\n\n" +
         "## Structured response — `result` field\n" +
         `Put your complete formatted output in the \`result\` field. Format per platform:\n${EXPLORER_TRADE_TRANSFER_FORMAT}`,
       middleware: [
@@ -639,7 +661,7 @@ export const buildBaseSubAgents = (
         result: z
           .string()
           .describe(
-            "Compact result: markdown table (Wallet, Amount, Tx Hash) + one status line 'X/Y succeeded.' No extra text.",
+            "Compact result: markdown table (Wallet, Amount, Tx Hash) + status line. No extra text.",
           ),
       }),
       ...bgModel("transfer_agent"),

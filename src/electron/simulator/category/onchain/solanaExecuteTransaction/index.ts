@@ -2,8 +2,10 @@ import { Connection, Transaction, VersionedTransaction } from "@solana/web3.js";
 import { IExecuteTransactionNodeConfig } from "@/electron/type";
 import { IStructuredLogPayload } from "@/electron/type";
 import { logEveryWhere } from "@/electron/service/util";
-import { sendWithTimeout } from "@/electron/simulator/util";
-import { getKeypairFromPrivateKey } from "@/electron/simulator/category/onchain/util";
+import {
+  getKeypairFromPrivateKey,
+  sendSolanaTransactionWithRetry,
+} from "@/electron/simulator/category/onchain/util";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 
 export class SolanaTransactionExecutor {
@@ -57,39 +59,39 @@ export class SolanaTransactionExecutor {
 
       let signature: string;
 
+      let transactionBinary: Uint8Array;
       try {
         const versionedTx = VersionedTransaction.deserialize(txBuffer as any);
         versionedTx.message.recentBlockhash = blockhash;
         versionedTx.sign([keypair]);
-        signature = await connection.sendRawTransaction(
-          versionedTx.serialize(),
-          { maxRetries: 5, skipPreflight: true },
-        );
+        transactionBinary = versionedTx.serialize();
       } catch {
         // Fall back to legacy Transaction
         const legacyTx = Transaction.from(txBuffer);
         legacyTx.recentBlockhash = blockhash;
         legacyTx.partialSign(keypair);
-        signature = await connection.sendRawTransaction(legacyTx.serialize(), {
-          maxRetries: 5,
-          skipPreflight: true,
-        });
+        transactionBinary = legacyTx.serialize();
       }
+
+      signature = await connection.sendRawTransaction(transactionBinary, {
+        maxRetries: 0,
+        skipPreflight: true,
+      });
 
       if (!shouldWaitConfirmed) {
         return [signature, null];
       }
 
       const startTime = new Date().getTime();
-      const confirmation = await sendWithTimeout(
-        connection.confirmTransaction(
-          { signature, blockhash, lastValidBlockHeight },
-          "confirmed",
-        ),
-        timeout,
+      const confirmErr = await sendSolanaTransactionWithRetry(
+        connection,
+        transactionBinary,
+        signature,
+        blockhash,
+        lastValidBlockHeight,
       );
-      if (confirmation.value.err) {
-        return [signature, Error(confirmation.value.err.toString())];
+      if (confirmErr) {
+        return [signature, confirmErr];
       }
 
       const endTime = new Date().getTime();

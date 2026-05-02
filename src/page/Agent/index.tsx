@@ -59,10 +59,17 @@ const AgentPage = (props: any) => {
   const [activeTab, setActiveTab] = useState(TAB.AGENT);
   const [encryptKey, setEncryptKey] = useState("");
   const [contentReady, setContentReady] = useState(false);
+  const [modelByProvider, setModelByProvider] = useState<
+    Partial<Record<LLMProvider, string>>
+  >({});
 
   useEffect(() => {
     setEncryptKey("");
   }, []);
+
+  useEffect(() => {
+    setModelByProvider({});
+  }, [selectedAgentProfile?.id]);
 
   useEffect(() => {
     const timer = setTimeout(() => setContentReady(true), 0);
@@ -80,34 +87,41 @@ const AgentPage = (props: any) => {
     setActiveTab(TAB.AGENT);
   };
 
+  const resolveModelForProvider = (provider: LLMProvider): string => {
+    const providerConfig = LLM_PROVIDERS.find((p) => p.key === provider);
+    if (!providerConfig) {
+      return DEFAULT_LLM_MODELS[provider];
+    }
+    return (
+      (preference?.[providerConfig.modelField] as string) ||
+      DEFAULT_LLM_MODELS[provider]
+    );
+  };
+
   const onSelectProvider = (provider: LLMProvider) => {
-    if (provider === currentProvider) {
+    if (provider === currentProvider || !selectedAgentProfile) {
       return;
     }
-    if (selectedAgentProfile) {
-      updateAgentProfile({
-        ...selectedAgentProfile,
-        llmProvider: provider,
-        llmModel: DEFAULT_LLM_MODELS[provider],
-      });
-    }
+    const savedModelByProvider = {
+      ...modelByProvider,
+      [currentProvider]:
+        selectedAgentProfile.llmModel ||
+        resolveModelForProvider(currentProvider),
+    };
+    setModelByProvider(savedModelByProvider);
+    updateAgentProfile({
+      ...selectedAgentProfile,
+      llmProvider: provider,
+      llmModel:
+        savedModelByProvider[provider] || resolveModelForProvider(provider),
+    });
   };
 
   const currentModelName = useMemo(() => {
     if (selectedAgentProfile?.llmModel) {
       return selectedAgentProfile.llmModel;
     }
-
-    const providerConfig = LLM_PROVIDERS.find(
-      (provider) => provider.key === currentProvider,
-    );
-    if (!providerConfig) {
-      return DEFAULT_LLM_MODELS[currentProvider];
-    }
-    return (
-      (preference?.[providerConfig.modelField] as string) ||
-      DEFAULT_LLM_MODELS[currentProvider]
-    );
+    return resolveModelForProvider(currentProvider);
   }, [selectedAgentProfile, currentProvider, preference]);
 
   const isClaudeCLIActive =
