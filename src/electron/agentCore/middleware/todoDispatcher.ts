@@ -33,6 +33,7 @@ const ALWAYS_APPROVAL_REQUIRED = new Set([
   "trade_agent",
   "transfer_agent",
   "launch_agent",
+  "code_execution_agent",
 ]);
 
 // Tools that require a todo plan to exist before they can be called
@@ -626,10 +627,13 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
       );
     }
 
-    // Block code_execution_agent if no code has been approved yet
-    if (subagentType === "code_execution_agent" && !toolContext.pendingCode) {
+    // Block code_execution_agent if no code has been written or approval not yet granted
+    if (
+      subagentType === "code_execution_agent" &&
+      (!toolContext.pendingCode || toolContext.planState !== PlanState.APPROVED)
+    ) {
       logEveryWhere({
-        message: `[TodoDispatcher] Blocked code_execution_agent — no pending code`,
+        message: `[TodoDispatcher] Blocked code_execution_agent — no approved code (pendingCode=${Boolean(toolContext.pendingCode)} planState=${toolContext.planState})`,
       });
       return blockError(
         "Error: No approved code found. You must call `write_javascript` with the complete code first, then call `confirm_approval` so the user can review it. Only after approval is granted should you delegate to code_execution_agent.",
@@ -1146,8 +1150,7 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
         const communicateIndex = lastKnownTodos.findIndex(
           (item: any) =>
             item.type === "communicate" &&
-            item.status !== TodoItemStatus.COMPLETED &&
-            item.status !== "rejected",
+            item.status === TodoItemStatus.IN_PROGRESS,
         );
         if (communicateIndex !== -1) {
           const allPriorStepsDone = lastKnownTodos
@@ -1158,11 +1161,10 @@ export const createTodoDispatcherMiddleware = (toolContext: ToolContext) => {
                 item.status === "rejected",
             );
           if (allPriorStepsDone) {
-            lastKnownTodos = lastKnownTodos.map((item: any) => {
+            lastKnownTodos = lastKnownTodos.map((item: any, idx: number) => {
               if (
-                item.status !== TodoItemStatus.COMPLETED &&
-                item.status !== "rejected" &&
-                item.type !== "communicate"
+                idx < communicateIndex &&
+                item.status === TodoItemStatus.IN_PROGRESS
               ) {
                 return { ...item, status: TodoItemStatus.COMPLETED };
               }

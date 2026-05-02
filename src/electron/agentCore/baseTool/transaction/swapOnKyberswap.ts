@@ -62,6 +62,7 @@ const swapOnKyberswapSchema = z
       ),
     inputTokenAddress: z
       .string()
+      .nullish()
       .refine(
         (val) => {
           if (!val || val.trim() === "") {
@@ -82,6 +83,7 @@ const swapOnKyberswapSchema = z
       .describe("ERC20 address. BUY only — pass empty string for SELL."),
     amountStrategy: z
       .nativeEnum(AmountStrategy)
+      .nullish()
       .describe("Amount allocation strategy across wallets"),
     amount: z
       .number()
@@ -436,11 +438,14 @@ export const swapOnKyberswapTool = (
             }
 
             if (isBuy && fundingTokenAddress) {
-              // Explicit ERC20 funding token for BUY
+              const isNativeFunding =
+                fundingTokenAddress.toLowerCase() === NATIVE_TOKEN_ADDRESS;
               const [balanceStr, balanceErr] =
                 await evmProvider.getWalletBalance(
                   listNodeProvider,
-                  TOKEN_TYPE.EVM_ERC20_TOKEN,
+                  isNativeFunding
+                    ? TOKEN_TYPE.NATIVE_TOKEN
+                    : TOKEN_TYPE.EVM_ERC20_TOKEN,
                   wallet?.address || "",
                   fundingTokenAddress,
                   15000,
@@ -810,7 +815,9 @@ export const swapOnKyberswapTool = (
             ...(result.fundingToken && { fundingToken: result.fundingToken }),
             txHash: result.txHash,
             ...(result.error && { error: result.error }),
-            ...(result.failureReason && { failureReason: result.failureReason }),
+            ...(result.failureReason && {
+              failureReason: result.failureReason,
+            }),
           })),
         }),
         ...(wallets.length > 5 &&
@@ -891,8 +898,23 @@ const resolveAutoEvmBuyFundingForWallet = async ({
     };
   }
 
+  let firstStableError: string | null = null;
   stablecoinEntries.forEach((entry, idx) => {
-    const [stableBalanceStr] = stableResults[idx];
+    const [stableBalanceStr, stableErr] = stableResults[idx];
+    if (stableErr) {
+      if (!firstStableError) {
+        firstStableError = extractErrorMessage(stableErr);
+      }
+      fundingOptions[entry.address] = {
+        balance: 0,
+        balanceStr: "0",
+        available: 0,
+        availableStr: "0",
+        availableUsd: 0,
+        fetchFailed: true,
+      };
+      return;
+    }
     const stableBalanceBig = new Big(stableBalanceStr || "0");
     fundingOptions[entry.address] = {
       balance: stableBalanceBig.toNumber(),
@@ -904,6 +926,13 @@ const resolveAutoEvmBuyFundingForWallet = async ({
   });
 
   const maxAvailableUsdBig = getMaxAvailableFundingAmountUsd(fundingOptions);
+
+  if (firstStableError && maxAvailableUsdBig.eq(0)) {
+    return makeBalanceError(
+      firstStableError,
+      SwapFailureReason.BALANCE_FETCH_FAILED,
+    );
+  }
 
   return {
     balance: maxAvailableUsdBig.toNumber(),

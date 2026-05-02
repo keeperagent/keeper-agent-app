@@ -157,7 +157,7 @@ class SettingDB {
   ): Promise<[ISetting | null, Error | null]> {
     try {
       const data = await SettingModel.findOne({
-        where: { type, name: "" },
+        where: { type, name: "", scopeId: null },
         raw: true,
       });
       if (!data) {
@@ -176,17 +176,18 @@ class SettingDB {
   ): Promise<[ISetting | null, Error | null]> {
     try {
       const existing = await SettingModel.findOne({
-        where: { type, name: "" },
+        where: { type, name: "", scopeId: null },
       });
       if (existing) {
         await SettingModel.update(
           { data, updateAt: new Date().getTime() },
-          { where: { type, name: "" } },
+          { where: { type, name: "", scopeId: null } },
         );
       } else {
         await SettingModel.create({
           type,
           name: "",
+          scopeId: null,
           data,
           createAt: new Date().getTime(),
           updateAt: new Date().getTime(),

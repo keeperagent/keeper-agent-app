@@ -84,6 +84,7 @@ const swapOnJupiterSchema = z
       ),
     inputTokenAddress: z
       .string()
+      .nullish()
       .refine(
         (val) => {
           if (!val || val.trim() === "") {
@@ -104,6 +105,7 @@ const swapOnJupiterSchema = z
       .describe("SPL mint address. BUY only — pass empty string for SELL."),
     amountStrategy: z
       .nativeEnum(AmountStrategy)
+      .nullish()
       .describe("Amount allocation strategy across wallets"),
     amount: z
       .number()

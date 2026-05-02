@@ -102,6 +102,7 @@ export const sendSolanaTransactionWithRetry = async (
     })
     .catch((err: any) => {
       confirmationErr = err;
+      confirmed = true;
     });
 
   let blockHeight = await provider.getBlockHeight("confirmed");

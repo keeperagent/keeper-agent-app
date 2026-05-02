@@ -12,6 +12,7 @@ export type FundingOption = {
   available: number; // spendable amount — may be less than balance if a gas reserve is deducted
   availableStr: string;
   availableUsd: number;
+  fetchFailed?: boolean;
 };
 
 export type FundingOptions = Partial<Record<string, FundingOption>>;
@@ -63,8 +64,9 @@ export const makeBalanceError = (
 export const getDefinedFundingOptions = (
   fundingOptions: FundingOptions,
 ): FundingOption[] =>
-  Object.values(fundingOptions).filter((option): option is FundingOption =>
-    Boolean(option),
+  Object.values(fundingOptions).filter(
+    (option): option is FundingOption =>
+      Boolean(option) && !option?.fetchFailed,
   );
 
 export const getMaxAvailableFundingAmountUsd = (
@@ -206,7 +208,7 @@ export const resolveAmountStrategy = ({
   amount,
   maxAmount,
 }: {
-  amountStrategy: AmountStrategy;
+  amountStrategy: AmountStrategy | null | undefined;
   totalAmount: number;
   amount: number;
   maxAmount: number;
@@ -222,7 +224,7 @@ export const resolveAmountStrategy = ({
       return AmountStrategy.RANDOM_PER_WALLET;
     }
   }
-  return amountStrategy;
+  return amountStrategy || AmountStrategy.EQUAL_PER_WALLET;
 };
 
 export const resolveNodeProviders = async (

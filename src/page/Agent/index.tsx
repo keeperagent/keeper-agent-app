@@ -68,6 +68,10 @@ const AgentPage = (props: any) => {
   }, []);
 
   useEffect(() => {
+    setModelByProvider({});
+  }, [selectedAgentProfile?.id]);
+
+  useEffect(() => {
     const timer = setTimeout(() => setContentReady(true), 0);
     return () => clearTimeout(timer);
   }, []);
@@ -83,6 +87,17 @@ const AgentPage = (props: any) => {
     setActiveTab(TAB.AGENT);
   };
 
+  const resolveModelForProvider = (provider: LLMProvider): string => {
+    const providerConfig = LLM_PROVIDERS.find((p) => p.key === provider);
+    if (!providerConfig) {
+      return DEFAULT_LLM_MODELS[provider];
+    }
+    return (
+      (preference?.[providerConfig.modelField] as string) ||
+      DEFAULT_LLM_MODELS[provider]
+    );
+  };
+
   const onSelectProvider = (provider: LLMProvider) => {
     if (provider === currentProvider || !selectedAgentProfile) {
       return;
@@ -90,13 +105,15 @@ const AgentPage = (props: any) => {
     const savedModelByProvider = {
       ...modelByProvider,
       [currentProvider]:
-        selectedAgentProfile.llmModel || DEFAULT_LLM_MODELS[currentProvider],
+        selectedAgentProfile.llmModel ||
+        resolveModelForProvider(currentProvider),
     };
     setModelByProvider(savedModelByProvider);
     updateAgentProfile({
       ...selectedAgentProfile,
       llmProvider: provider,
-      llmModel: savedModelByProvider[provider] || DEFAULT_LLM_MODELS[provider],
+      llmModel:
+        savedModelByProvider[provider] || resolveModelForProvider(provider),
     });
   };
 
@@ -104,17 +121,7 @@ const AgentPage = (props: any) => {
     if (selectedAgentProfile?.llmModel) {
       return selectedAgentProfile.llmModel;
     }
-
-    const providerConfig = LLM_PROVIDERS.find(
-      (provider) => provider.key === currentProvider,
-    );
-    if (!providerConfig) {
-      return DEFAULT_LLM_MODELS[currentProvider];
-    }
-    return (
-      (preference?.[providerConfig.modelField] as string) ||
-      DEFAULT_LLM_MODELS[currentProvider]
-    );
+    return resolveModelForProvider(currentProvider);
   }, [selectedAgentProfile, currentProvider, preference]);
 
   const isClaudeCLIActive =
