@@ -30,19 +30,11 @@ const useGetListMcpServer = () => {
 
   useEffect(() => {
     const handler = (_event: any, payload: any) => {
-      const { id, status, lastError, toolsCount } = payload?.data || {};
-      if (id == null) {
+      const data = payload?.data;
+      if (data?.id == null) {
         return;
       }
-
-      dispatch(
-        actSaveUpdateMcpServer({
-          id,
-          status,
-          lastError,
-          toolsCount,
-        } as IMcpServer),
-      );
+      dispatch(actSaveUpdateMcpServer(data as IMcpServer));
     };
     const unsubscribe = window?.electron?.on(
       MESSAGE.MCP_SERVER_STATUS_UPDATED,

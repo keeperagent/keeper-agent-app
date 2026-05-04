@@ -528,7 +528,14 @@ export class McpToolLoader {
     } as IMcpServer);
 
     sendToRenderer(MESSAGE.MCP_SERVER_STATUS_UPDATED, {
-      data: { id, status, lastError, toolsCount },
+      data: {
+        ...server,
+        id,
+        status,
+        lastError,
+        toolsCount,
+        commandOrUrl: this.getMcpServerDisplayLine(server.config),
+      },
     });
   };
 }

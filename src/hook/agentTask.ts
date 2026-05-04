@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import { IAgentTask } from "@/electron/type";
 import {
@@ -58,6 +59,9 @@ const useUpdateAgentTask = () => {
           if (payload?.data) {
             dispatch(actSaveUpdateAgentTask(payload.data));
           }
+        },
+        onError: (errorMsg) => {
+          message.error(errorMsg);
         },
       },
     );

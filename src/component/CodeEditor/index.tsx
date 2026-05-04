@@ -16,7 +16,6 @@ type CodeEditorProps = {
   minHeight?: string;
   language?: CodeEditorLanguage;
   readOnly?: boolean;
-  lineWrapping?: boolean;
   fontSize?: number;
   className?: string;
   theme?: "dark" | "light";
@@ -29,7 +28,7 @@ const langExtensions: Record<CodeEditorLanguage, () => Extension> = {
   python: python,
 };
 
-export default function CodeEditor(props: CodeEditorProps) {
+const CodeEditor = (props: CodeEditorProps) => {
   const {
     value = "",
     onChange,
@@ -37,19 +36,14 @@ export default function CodeEditor(props: CodeEditorProps) {
     minHeight,
     language = "javascript",
     readOnly = false,
-    lineWrapping = false,
     fontSize = 14,
     className,
     theme: editorTheme = "dark",
   } = props;
 
   const extensions = useMemo(() => {
-    const result: Extension[] = [langExtensions[language]()];
-    if (lineWrapping) {
-      result.push(EditorView.lineWrapping);
-    }
-    return result;
-  }, [language, lineWrapping]);
+    return [langExtensions[language](), EditorView.lineWrapping];
+  }, [language]);
 
   return (
     <CodeMirror
@@ -70,4 +64,6 @@ export default function CodeEditor(props: CodeEditorProps) {
       className={className}
     />
   );
-}
+};
+
+export default CodeEditor;

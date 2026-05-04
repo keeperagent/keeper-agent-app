@@ -7,6 +7,8 @@ import { keeperMcpServer } from "@/electron/mcpServer/index";
 import { logEveryWhere } from "@/electron/service/util";
 import { claudeCliAuth } from "@/electron/agentCore/claudeCli/claudeCliAuth";
 import { codexCliAuth } from "@/electron/agentCore/codexCli/codexCliAuth";
+import { agentTaskDispatcher } from "@/electron/service/agentTaskDispatcher";
+import { agentTaskExecutor } from "@/electron/service/agentTaskExecutor";
 import { onIpc } from "./helpers";
 import { recreateAllAgents } from "./appAgent";
 
@@ -85,6 +87,14 @@ export const perferenceController = () => {
         const enabled = Boolean(res?.isScreenCaptureProtectionOn);
         for (const win of BrowserWindow.getAllWindows()) {
           win.setContentProtection(enabled);
+        }
+      }
+
+      if (data?.isStopAllAgentTask !== undefined) {
+        if (res?.isStopAllAgentTask) {
+          agentTaskExecutor.cancelAllRunningTasks();
+        } else {
+          agentTaskDispatcher.dispatch();
         }
       }
     },

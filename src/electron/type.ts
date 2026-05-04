@@ -2507,6 +2507,7 @@ export type IPreference = {
   deviceId?: string;
   isChromeDownloaded?: boolean;
   isStopAllSchedule?: boolean;
+  isStopAllAgentTask?: boolean;
   dayResetJobStatus?: number;
   maxLogAge?: number;
   maxHistoryLogAge?: number;
@@ -2811,6 +2812,7 @@ export type IGeneralSetting = {
   hideMinimap?: boolean;
   deviceId?: string;
   isStopAllSchedule?: boolean;
+  isStopAllAgentTask?: boolean;
   dayResetJobStatus?: number;
   maxLogAge?: number;
   maxHistoryLogAge?: number;

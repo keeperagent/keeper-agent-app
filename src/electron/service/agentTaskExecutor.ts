@@ -40,6 +40,12 @@ class AgentTaskExecutor {
     }
   };
 
+  cancelAllRunningTasks = (): void => {
+    for (const taskId of this.runningTasks.keys()) {
+      this.cancelTask(taskId);
+    }
+  };
+
   private runTask = async (
     taskId: number,
     agentId: number,

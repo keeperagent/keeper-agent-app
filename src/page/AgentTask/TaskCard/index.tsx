@@ -1,6 +1,6 @@
 import type React from "react";
 import type { CSSProperties } from "react";
-import { Popconfirm } from "antd";
+import { Popconfirm, Tooltip } from "antd";
 import { useDraggable } from "@dnd-kit/core";
 import {
   IAgentTask,
@@ -8,7 +8,7 @@ import {
   AgentTaskCreatorType,
   AgentTaskStatus,
 } from "@/electron/type";
-import { AgentIcon, DeleteIcon, PinIcon } from "@/component/Icon";
+import { AgentIcon, DeleteIcon, PinIcon, ReloadIcon } from "@/component/Icon";
 import { formatTime, formatDuration, trimText } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { EMPTY_STRING } from "@/config/constant";
@@ -84,16 +84,19 @@ export interface TaskCardProps {
   onEdit: (task: IAgentTask) => void;
   onDelete: (id: number) => void;
   onPin: (id: number, isPinned: boolean) => void;
+  onRetry: (id: number) => void;
   isDragging?: boolean;
 }
 
 type TaskCardInnerProps = {
   task: IAgentTask;
   isDragging?: boolean;
+  isFinished?: boolean;
   hideActions?: boolean;
   onEdit?: (task: IAgentTask) => void;
   onDelete?: (id: number) => void;
   onPin?: (id: number, isPinned: boolean) => void;
+  onRetry?: (id: number) => void;
   wrapperRef?: (node: HTMLElement | null) => void;
   style?: CSSProperties;
   // Drag handle props from useDraggable; omit for drag overlay / static preview
@@ -104,10 +107,12 @@ type TaskCardInnerProps = {
 const TaskCardInner = ({
   task,
   isDragging,
+  isFinished,
   hideActions,
   onEdit,
   onDelete,
   onPin,
+  onRetry,
   wrapperRef,
   style,
   dragListeners,
@@ -119,12 +124,15 @@ const TaskCardInner = ({
   const priorityLabel = priority.charAt(0) + priority.slice(1).toLowerCase();
   const sourceBadge = getSourceBadge(task.creatorType);
   const taskAge = getTaskAge(task);
+  const isRunning = task.status === AgentTaskStatus.IN_PROGRESS;
 
   return (
     <Wrapper
       ref={wrapperRef as React.Ref<HTMLDivElement>}
       style={style}
       isDragging={isDragging}
+      isFinished={isFinished}
+      className={isRunning ? "is-running" : undefined}
       {...dragAttributes}
       {...dragListeners}
       onClick={() => {
@@ -199,7 +207,7 @@ const TaskCardInner = ({
         </div>
       </div>
 
-      {!hideActions && (onDelete || onPin) && (
+      {!hideActions && (onDelete || onPin || onRetry) && (
         <div className="task-actions">
           {onDelete && (
             <Popconfirm
@@ -223,18 +231,42 @@ const TaskCardInner = ({
             </Popconfirm>
           )}
 
+          {onRetry && task.status === AgentTaskStatus.FAILED && (
+            <Tooltip title={translate("agentTask.retryTooltip")}>
+              <span
+                className="task-action-btn"
+                onClick={(event) => {
+                  event?.stopPropagation();
+                  onRetry(task.id!);
+                }}
+              >
+                <ReloadIcon color="currentColor" />
+              </span>
+            </Tooltip>
+          )}
+
           {onPin && (
-            <span
-              className={`task-action-btn ${task.isPinned ? "task-pin--active" : ""}`}
-              onClick={(event) => {
-                event?.stopPropagation();
-                onPin(task.id!, !task.isPinned);
-              }}
+            <Tooltip
+              title={translate(
+                task.isPinned
+                  ? "agentTask.unpinTooltip"
+                  : "agentTask.pinTooltip",
+              )}
             >
-              <PinIcon
-                color={task.isPinned ? "var(--color-primary)" : "currentColor"}
-              />
-            </span>
+              <span
+                className={`task-action-btn ${task.isPinned ? "task-pin--active" : ""}`}
+                onClick={(event) => {
+                  event?.stopPropagation();
+                  onPin(task.id!, !task.isPinned);
+                }}
+              >
+                <PinIcon
+                  color={
+                    task.isPinned ? "var(--color-primary)" : "currentColor"
+                  }
+                />
+              </span>
+            </Tooltip>
           )}
         </div>
       )}
@@ -246,15 +278,24 @@ export const TaskCardDragOverlay = ({ task }: { task: IAgentTask }) => (
   <TaskCardInner task={task} hideActions isDragging={false} />
 );
 
+const FINISHED_STATUSES = [
+  AgentTaskStatus.DONE,
+  AgentTaskStatus.FAILED,
+  AgentTaskStatus.EXPIRED,
+];
+
 export const TaskCard = ({
   task,
   onEdit,
   onDelete,
   onPin,
+  onRetry,
   isDragging,
 }: TaskCardProps) => {
+  const isFinished = FINISHED_STATUSES.includes(task.status!);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: String(task.id),
+    disabled: isFinished,
   });
 
   // When dragging, keep the original card in place as a placeholder.
@@ -268,14 +309,16 @@ export const TaskCard = ({
     <TaskCardInner
       task={task}
       isDragging={isDragging}
+      isFinished={isFinished}
       hideActions={false}
       onEdit={onEdit}
       onDelete={onDelete}
       onPin={onPin}
+      onRetry={onRetry}
       wrapperRef={setNodeRef}
       style={dragStyle}
-      dragListeners={listeners}
-      dragAttributes={attributes}
+      dragListeners={isFinished ? undefined : listeners}
+      dragAttributes={isFinished ? undefined : attributes}
     />
   );
 };

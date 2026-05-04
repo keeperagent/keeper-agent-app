@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { connect } from "react-redux";
 import { Select } from "antd";
-import styled from "styled-components";
+import { AgentPickerWrapper, OptionWrapper } from "./style";
 import { ChatPlatform } from "@/electron/chatGateway/types";
 import { RootState } from "@/redux/store";
 import {
@@ -30,35 +30,6 @@ import {
   deriveClassName,
   type ToolCallState,
 } from "@/component/AgentChatView/util";
-
-const OptionWrapper = styled.div`
-  padding-bottom: 0.5rem;
-  cursor: pointer;
-  overflow: hidden;
-
-  &:hover {
-    .name {
-      color: var(--color-text-hover);
-    }
-  }
-
-  .name {
-    font-size: 1.3rem;
-    font-weight: 500;
-    transition: all 0.1s ease-in-out;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .description {
-    font-size: 1rem;
-    font-weight: 300;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-`;
 
 const AgentView = (props: any) => {
   const {
@@ -289,27 +260,37 @@ const AgentView = (props: any) => {
   }, [listAgentProfile, selectedAgentProfile, selectedAgentProfileId]);
 
   const agentProfilePicker = (
-    <Select
-      size="medium"
-      value={selectedAgentProfileId || null}
-      onChange={onSelectProfile}
-      options={agentProfileOptions}
-      style={{ width: 170, marginRight: 8 }}
-      className="custom-select"
-      showSearch
-      onSearch={onSearchProfile}
-      filterOption={false}
-      loading={isProfileSearchLoading}
-      onDropdownVisibleChange={onDropdownOpenChange}
-      optionRender={(option) => (
-        <OptionWrapper>
-          <div className="name">{option.label}</div>
-          {option.data.description && (
-            <div className="description">{option.data.description}</div>
-          )}
-        </OptionWrapper>
-      )}
-    />
+    <AgentPickerWrapper>
+      <Select
+        size="medium"
+        value={selectedAgentProfileId || null}
+        onChange={onSelectProfile}
+        options={agentProfileOptions}
+        style={{ width: 180, marginRight: 8 }}
+        className="custom-select"
+        showSearch
+        onSearch={onSearchProfile}
+        filterOption={false}
+        loading={isProfileSearchLoading}
+        onDropdownVisibleChange={onDropdownOpenChange}
+        labelRender={(option) => (
+          <div className="picker-label">
+            <span className="picker-avatar">
+              {String(option.label || "").charAt(0)}
+            </span>
+            <span className="picker-name">{option.label}</span>
+          </div>
+        )}
+        optionRender={(option) => (
+          <OptionWrapper>
+            <div className="name">{option.label}</div>
+            {option.data.description && (
+              <div className="description">{option.data.description}</div>
+            )}
+          </OptionWrapper>
+        )}
+      />
+    </AgentPickerWrapper>
   );
 
   const hasPlanReview = displayedMessages.some((msg) => !!msg.planReview);

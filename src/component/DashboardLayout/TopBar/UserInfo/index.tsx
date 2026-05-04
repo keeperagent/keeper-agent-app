@@ -4,7 +4,6 @@ import { connect } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import { actSetMasterKeyUnlocked } from "@/redux/session";
-import userAvatarImg from "@/asset/user-avatar.png";
 import { getTranslateContent } from "@/service/util";
 import { useTranslation } from "@/hook";
 import { UserInfoWrapper } from "./style";
@@ -45,6 +44,11 @@ const UserInfo = (props: any) => {
     },
   ];
 
+  const displayName = user?.username || user?.email || "";
+  const initial = displayName.charAt(0).toUpperCase();
+  const tierName =
+    getTranslateContent(user?.tierStatus?.pricingTier?.name, locale) || "";
+
   return (
     <UserInfoWrapper>
       <Dropdown
@@ -53,18 +57,9 @@ const UserInfo = (props: any) => {
         styles={{ root: { minWidth: 150 } }}
       >
         <div className="user" data-tut="reactour-step-4">
-          <div className="user-info">
-            <div className="user-position">
-              {getTranslateContent(
-                user?.tierStatus?.pricingTier?.name,
-                locale,
-              ) || ""}
-            </div>
-          </div>
-
-          <div className="user-avatar">
-            <img src={userAvatarImg} alt="" />
-          </div>
+          <div className="user-avatar">{initial}</div>
+          {displayName && <span className="user-name">{displayName}</span>}
+          {tierName && <span className="user-tier">{tierName}</span>}
         </div>
       </Dropdown>
     </UserInfoWrapper>

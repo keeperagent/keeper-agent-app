@@ -1,9 +1,8 @@
-import { Popconfirm, Switch, Tooltip } from "antd";
+import { Button, Popconfirm, Switch } from "antd";
 import { IAgentSkill } from "@/electron/type";
 import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { MESSAGE } from "@/electron/constant";
-import { OpenFolderIcon, TrashIcon } from "@/component/Icon";
 import { EMPTY_STRING } from "@/config/constant";
 import { Wrapper } from "./style";
 
@@ -13,7 +12,6 @@ function formatDescription(desc: string | null | undefined): string {
   }
 
   let result = desc.replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
-  // Remove one surrounding double quote at start and end if both present (e.g. "Convert files..." -> Convert files...)
   if (result.length >= 2 && result.startsWith('"') && result.endsWith('"')) {
     result = result.slice(1, -1).trim();
   }
@@ -43,37 +41,32 @@ const AgentSkillItem = (props: IAgentSkillItemProps) => {
 
   return (
     <Wrapper>
-      <div className="item-dots-row" aria-hidden>
-        <div className="item-dots">
+      <div className="item-header">
+        <div className="item-dots" aria-hidden>
           <span className="item-dot item-dot-red" />
           <span className="item-dot item-dot-yellow" />
           <span className="item-dot item-dot-green" />
         </div>
+
+        <Switch
+          size="small"
+          checked={item.isEnabled}
+          disabled={item?.id == null}
+          onChange={() => onToggle(item)}
+        />
       </div>
 
       <div
-        className="item-top-bar"
+        className="item-body"
         role="button"
         tabIndex={0}
         onClick={() => onEdit(item)}
       >
         <span className="item-name">{item.name}</span>
+        {description && <span className="item-description">{description}</span>}
       </div>
 
-      <div
-        className="item-center"
-        role="button"
-        tabIndex={0}
-        onClick={() => onEdit(item)}
-      >
-        <div className="item-center-row">
-          <span className="item-value item-description">
-            {description || EMPTY_STRING}
-          </span>
-        </div>
-      </div>
-
-      <div className="item-bottom-bar">
+      <div className="item-footer">
         <span className="item-updated">
           {translate("updatedAt")}:{" "}
           {item?.updateAt
@@ -82,39 +75,26 @@ const AgentSkillItem = (props: IAgentSkillItemProps) => {
         </span>
 
         <div className="item-actions">
+          {item?.folderName && (
+            <Button size="small" onClick={onOpenFolder}>
+              {translate("agent.openSkillFolder")}
+            </Button>
+          )}
+
+          <Button size="small" onClick={() => onEdit(item)}>
+            {translate("button.edit")}
+          </Button>
+
           <Popconfirm
             title={translate("agent.deleteSkill")}
             onConfirm={() => onDelete(item.id!)}
             okText={translate("yes")}
             cancelText={translate("no")}
           >
-            <div className="btn-delete">
-              <TrashIcon className="trash" />
-            </div>
+            <Button size="small" danger onClick={(e) => e.stopPropagation()}>
+              {translate("button.delete")}
+            </Button>
           </Popconfirm>
-
-          <Tooltip title={translate("agent.openSkillFolder")}>
-            <div
-              className="item-action-open-folder"
-              onClick={onOpenFolder}
-              role="button"
-              tabIndex={0}
-              aria-label={translate("agent.openSkillFolderAria")}
-            >
-              <OpenFolderIcon
-                className="open-folder-icon"
-                width={20}
-                height={20}
-              />
-            </div>
-          </Tooltip>
-
-          <Switch
-            size="small"
-            checked={item.isEnabled}
-            disabled={item?.id == null}
-            onChange={() => onToggle(item)}
-          />
         </div>
       </div>
     </Wrapper>

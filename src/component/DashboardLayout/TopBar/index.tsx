@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { Alert } from "antd";
 import { connect } from "react-redux";
 import { useLocation } from "react-router-dom";
 import qs from "qs";
@@ -64,6 +65,14 @@ const TopBar = (props: IProps) => {
     ]?.includes(pathname);
   }, [pathname]);
 
+  const isAgentTaskPage = useMemo(() => {
+    return pathname === "/dashboard/agent-task";
+  }, [pathname]);
+
+  const isSchedulePage = useMemo(() => {
+    return pathname === "/dashboard/schedule";
+  }, [pathname]);
+
   useEffect(() => {
     window?.electron?.on(
       TELEGRAM_BOT.ACTION_RUN_WORKFLOW_USING_TELEGRAM,
@@ -98,10 +107,29 @@ const TopBar = (props: IProps) => {
         ) : (
           <div className="heading">
             <span>{pageName}</span>
+
             {isShowInstruction && (
               <span className="icon" onClick={onOpenModalInstruction}>
                 <QuestionIcon />
               </span>
+            )}
+
+            {isAgentTaskPage && preference?.isStopAllAgentTask && (
+              <Alert
+                className="inline-alert"
+                type="warning"
+                title={translate("agentTaskGloballyPausedWarning")}
+                showIcon
+              />
+            )}
+
+            {isSchedulePage && preference?.isStopAllSchedule && (
+              <Alert
+                className="inline-alert"
+                type="warning"
+                title={translate("scheduleGloballyPausedWarning")}
+                showIcon
+              />
             )}
 
             {mode === CAMPAIGN_VIEW_MODE.VIEW_PROFILE && (

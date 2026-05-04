@@ -1,13 +1,62 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { ITheme } from "@/style/theme";
 
-export const Wrapper = styled.div<{ isDragging?: boolean }>`
-  background: ${({ theme }: { theme: ITheme }) => theme.colorBgPrimary};
+const borderSpin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+export const Wrapper = styled.div<{
+  isDragging?: boolean;
+  isFinished?: boolean;
+}>`
+  --card-bg: ${({ theme }: { theme: ITheme }) => theme.colorBgPrimary};
+  background: var(--card-bg);
   border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
   border-radius: 0.8rem;
   padding: 1.1rem 1.2rem;
-  cursor: grab;
+  cursor: ${(props) => (props.isFinished ? "default" : "grab")};
   opacity: ${(props) => (props.isDragging ? 0.35 : 1)};
+
+  &.is-running {
+    border-color: transparent;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: -100%;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        #3b82f6 15%,
+        #93c5fd 30%,
+        transparent 45%
+      );
+      animation: ${borderSpin} 3s linear infinite;
+      z-index: 0;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      background: var(--card-bg);
+      border-radius: 0.6rem;
+      z-index: 1;
+    }
+
+    .task-title,
+    .task-description,
+    .task-meta {
+      position: relative;
+      z-index: 2;
+    }
+
+    .task-actions {
+      z-index: 2;
+    }
+  }
+
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -137,15 +186,15 @@ export const Wrapper = styled.div<{ isDragging?: boolean }>`
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    padding: 0.3rem;
+    padding: 0.5rem;
     border-radius: 0.4rem;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
     transition: background 0.15s ease;
     outline: none;
 
     svg {
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 1.3rem;
+      height: 1.3rem;
     }
 
     &:hover {

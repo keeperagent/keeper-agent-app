@@ -90,6 +90,12 @@ class TaskDispatcher {
   };
 
   private runDispatch = async (): Promise<void> => {
+    const [preference, preferenceErr] =
+      await preferenceService.getOnePreference();
+    if (preferenceErr || preference?.isStopAllAgentTask) {
+      return;
+    }
+
     const [tasks, tasksErr] = await agentTaskDB.getTasksByStatus(
       AgentTaskStatus.INIT,
     );
@@ -357,7 +363,14 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
         timeoutPromise,
       ]);
       clearTimeout(timeoutId!);
-      const responseContent = String(result.content).trim();
+      const rawContent = result.content;
+      const responseContent = (
+        typeof rawContent === "string"
+          ? rawContent
+          : Array.isArray(rawContent)
+            ? rawContent.find((block: any) => block.type === "text")?.text || ""
+            : String(rawContent)
+      ).trim();
 
       const parsed = JSON.parse(responseContent);
       const agentId = parsed?.agentId;

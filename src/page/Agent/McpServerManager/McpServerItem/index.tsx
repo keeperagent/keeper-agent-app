@@ -1,10 +1,8 @@
-import { Popconfirm, Switch, Tooltip } from "antd";
+import { Button, Popconfirm, Switch, Tooltip } from "antd";
 import { IMcpServer, MCPServerStatus } from "@/electron/type";
-import { EyeOpenIcon, TrashIcon } from "@/component/Icon";
 import Status from "@/component/Status";
-import { formatTime, trimText } from "@/service/util";
+import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
-import { EMPTY_STRING } from "@/config/constant";
 import { Wrapper } from "./style";
 
 type IMcpServerItemProps = {
@@ -17,7 +15,7 @@ type IMcpServerItemProps = {
 
 const McpServerItem = (props: IMcpServerItemProps) => {
   const { item, onEdit, onDelete, onToggle, onViewTools } = props;
-  const { locale, translate } = useTranslation();
+  const { translate, locale } = useTranslation();
 
   const statusContent =
     item.status === MCPServerStatus.CONNECTED
@@ -25,96 +23,68 @@ const McpServerItem = (props: IMcpServerItemProps) => {
       : item.status === MCPServerStatus.ERROR
         ? translate("error")
         : translate("disconnected");
+
   const isConnected = item.status === MCPServerStatus.CONNECTED;
-  const fullError =
-    item.status === MCPServerStatus.ERROR ? item.lastError || "" : "";
-  const showErrorTooltip =
-    item.status === MCPServerStatus.ERROR && fullError.length > 0;
+  const isError = item.status === MCPServerStatus.ERROR;
+  const fullError = isError ? item.lastError || "" : "";
   const showToolCount = isConnected && Boolean(item.toolsCount);
 
   return (
     <Wrapper>
-      <div className="item-dots-row" aria-hidden>
-        <div className="item-dots">
+      <div className="item-header">
+        <div className="item-dots" aria-hidden>
           <span className="item-dot item-dot-red" />
           <span className="item-dot item-dot-yellow" />
           <span className="item-dot item-dot-green" />
         </div>
+
+        <Switch
+          size="small"
+          checked={item.isEnabled}
+          disabled={item?.id == null}
+          onChange={() => item?.id != null && onToggle(item)}
+        />
       </div>
 
       <div
-        className="item-top-bar"
+        className="item-body"
         role="button"
         tabIndex={0}
         onClick={() => onEdit(item)}
       >
         <span className="item-name">{item.name}</span>
-        {showErrorTooltip ? (
-          <Tooltip title={fullError} placement="topLeft">
-            <span style={{ flexShrink: 0, display: "inline-block" }}>
-              <Status
-                content={statusContent}
-                isSuccess={isConnected}
-                style={{ flexShrink: 0 }}
-              />
-            </span>
-          </Tooltip>
-        ) : (
-          <Status
-            content={statusContent}
-            isSuccess={isConnected}
-            style={{ flexShrink: 0 }}
-          />
+
+        {item.description && (
+          <span className="item-description">{item.description}</span>
         )}
-      </div>
 
-      <div
-        className="item-center"
-        role="button"
-        tabIndex={0}
-        onClick={() => onEdit(item)}
-      >
-        <div className="item-center-row">
-          <span className="item-label">{translate("commandOrUrl")}:</span>
-          <span className="item-value item-command-or-url">
-            {item.commandOrUrl || ""}
-          </span>
-        </div>
+        {item.commandOrUrl && (
+          <div className="item-command-or-url-row">
+            <span className="item-label">{translate("commandOrUrl")}:</span>
+            <span className="item-command-or-url">{item.commandOrUrl}</span>
+          </div>
+        )}
 
-        <div className="item-center-row">
-          <span className="item-label">{translate("toolsCount")}:</span>
-          <Tooltip title={translate("agent.viewTools")}>
-            <span
-              className="item-value item-tools-row"
-              onClick={(e) => {
-                e.stopPropagation();
-                showToolCount && onViewTools(item);
-              }}
-            >
-              {showToolCount
-                ? `${item.toolsCount} ${translate("tools")}`
-                : EMPTY_STRING}
+        <div className="item-status-row">
+          {isError && fullError ? (
+            <Tooltip title={fullError} placement="topLeft">
+              <span>
+                <Status content={statusContent} isSuccess={false} />
+              </span>
+            </Tooltip>
+          ) : (
+            <Status content={statusContent} isSuccess={isConnected} />
+          )}
 
-              {showToolCount && (
-                <div className="view-icon">
-                  <EyeOpenIcon />
-                </div>
-              )}
+          {showToolCount && (
+            <span className="item-tool-count">
+              {item.toolsCount} {translate("tools")}
             </span>
-          </Tooltip>
-        </div>
-
-        <div className="item-center-row">
-          <span className="item-label">{translate("description")}:</span>
-          <span className="item-value item-description">
-            {item?.description
-              ? trimText(item?.description, 105)
-              : EMPTY_STRING}
-          </span>
+          )}
         </div>
       </div>
 
-      <div className="item-bottom-bar">
+      <div className="item-footer">
         <span className="item-updated">
           {translate("updatedAt")}:{" "}
           {item?.updateAt != null
@@ -123,23 +93,32 @@ const McpServerItem = (props: IMcpServerItemProps) => {
         </span>
 
         <div className="item-actions">
+          {showToolCount && (
+            <Button
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewTools(item);
+              }}
+            >
+              {translate("tools")}
+            </Button>
+          )}
+
+          <Button size="small" onClick={() => onEdit(item)}>
+            {translate("button.edit")}
+          </Button>
+
           <Popconfirm
             title={translate("agent.deleteMcpServer")}
             onConfirm={() => onDelete(item.id!)}
             okText={translate("yes")}
             cancelText={translate("no")}
           >
-            <div className="btn-delete">
-              <TrashIcon className="trash" />
-            </div>
+            <Button size="small" danger onClick={(e) => e.stopPropagation()}>
+              {translate("button.delete")}
+            </Button>
           </Popconfirm>
-
-          <Switch
-            size="small"
-            checked={item.isEnabled}
-            disabled={item?.id == null}
-            onChange={() => item?.id != null && onToggle(item)}
-          />
         </div>
       </div>
     </Wrapper>

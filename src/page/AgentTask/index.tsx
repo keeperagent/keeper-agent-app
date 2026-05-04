@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo, Fragment } from "react";
 import AnimatedNumbers from "react-animated-numbers";
 import type { CSSProperties } from "react";
 import { connect } from "react-redux";
-import { Alert, Button, Select } from "antd";
+import { Alert, Button, Select, Switch, Tooltip, message } from "antd";
 import {
   DndContext,
   DragEndEvent,
@@ -33,6 +33,7 @@ import {
   useAgentTaskRealtime,
 } from "@/hook/agentTask";
 import { useGetListAgentProfile } from "@/hook/agentProfile";
+import { useUpdatePreference } from "@/hook";
 import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { SearchInput } from "@/component";
@@ -51,27 +52,27 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   {
     dropStatus: AgentTaskStatus.INIT,
     displayStatuses: [AgentTaskStatus.INIT],
-    labelKey: "agentTask.column.init",
+    labelKey: "agentTaskColumnInit",
   },
   {
     dropStatus: AgentTaskStatus.IN_PROGRESS,
     displayStatuses: [AgentTaskStatus.IN_PROGRESS],
-    labelKey: "agentTask.column.inProgress",
+    labelKey: "agentTaskColumnInProgress",
   },
   {
     dropStatus: AgentTaskStatus.DONE,
     displayStatuses: [AgentTaskStatus.DONE],
-    labelKey: "agentTask.column.done",
+    labelKey: "agentTaskColumnDone",
   },
   {
     dropStatus: AgentTaskStatus.FAILED,
     displayStatuses: [AgentTaskStatus.FAILED],
-    labelKey: "agentTask.column.failed",
+    labelKey: "agentTaskColumnFailed",
   },
   {
     dropStatus: AgentTaskStatus.CANCELLED,
     displayStatuses: [AgentTaskStatus.CANCELLED, AgentTaskStatus.EXPIRED],
-    labelKey: "agentTask.column.cancelled",
+    labelKey: "agentTaskColumnCancelled",
   },
 ];
 
@@ -107,9 +108,11 @@ interface DroppableColumnProps {
   totalCount: number;
   isFiltered: boolean;
   activeDragId: string | null;
+  isInvalidTarget: boolean;
   onEdit: (task: IAgentTask) => void;
   onDelete: (id: number) => void;
   onPin: (id: number, isPinned: boolean) => void;
+  onRetry: (id: number) => void;
 }
 
 const DroppableColumn = ({
@@ -119,16 +122,19 @@ const DroppableColumn = ({
   totalCount,
   isFiltered,
   activeDragId,
+  isInvalidTarget,
   onEdit,
   onDelete,
   onPin,
+  onRetry,
 }: DroppableColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id: dropStatus });
   const { translate } = useTranslation();
 
   return (
     <KanbanColumn
-      isDragOver={isOver}
+      isDragOver={isOver && !isInvalidTarget}
+      isInvalidTarget={isInvalidTarget}
       style={{ "--status-color": getStatusColor(dropStatus) } as CSSProperties}
     >
       <div className="column-header">
@@ -152,8 +158,8 @@ const DroppableColumn = ({
         {tasks.length === 0 && (
           <div className="column-empty">
             {isFiltered
-              ? translate("agentTask.column.emptyFiltered")
-              : translate("agentTask.column.empty")}
+              ? translate("agentTaskColumnEmptyFiltered")
+              : translate("agentTaskColumnEmpty")}
           </div>
         )}
 
@@ -164,6 +170,7 @@ const DroppableColumn = ({
             onEdit={onEdit}
             onDelete={onDelete}
             onPin={onPin}
+            onRetry={onRetry}
             isDragging={activeDragId === String(task.id)}
           />
         ))}
@@ -217,6 +224,7 @@ const AgentTaskPage = (props: any) => {
   const { getListAgentProfile } = useGetListAgentProfile();
   const { updateAgentTask } = useUpdateAgentTask();
   const { deleteAgentTask } = useDeleteAgentTask();
+  const { updatePreference } = useUpdatePreference();
 
   const mainAgentProvider = useMemo((): LLMProvider | null => {
     const mainProfile = (listAgentProfile || []).find(
@@ -228,6 +236,8 @@ const AgentTaskPage = (props: any) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<IAgentTask | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [activeDragStatus, setActiveDragStatus] =
+    useState<AgentTaskStatus | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number>(Date.now());
   const [lastUpdatedText, setLastUpdatedText] = useState("just now");
   const [filterKeyword, setFilterKeyword] = useState("");
@@ -269,11 +279,25 @@ const AgentTaskPage = (props: any) => {
 
   const hasActiveFilter =
     Boolean(filterKeyword) || filterPriority !== null || filterAgentId !== null;
+  const isAgentTaskPaused = Boolean(preference?.isStopAllAgentTask);
 
   const onClearFilters = () => {
     setFilterKeyword("");
     setFilterPriority(null);
     setFilterAgentId(null);
+  };
+
+  const onToggleAgentTask = async (checked: boolean) => {
+    await updatePreference({
+      id: preference?.id,
+      isStopAllAgentTask: !checked,
+    });
+
+    if (checked) {
+      message.info(translate("agentTaskResumedMessage"));
+    } else {
+      message.warning(translate("agentTaskPausedMessage"));
+    }
   };
 
   const applyFilters = (tasks: IAgentTask[]): IAgentTask[] => {
@@ -317,6 +341,10 @@ const AgentTaskPage = (props: any) => {
     updateAgentTask(id, { isPinned });
   };
 
+  const onRetryAgentTask = (id: number) => {
+    updateAgentTask(id, { status: AgentTaskStatus.INIT });
+  };
+
   const getTotalByStatuses = (statuses: AgentTaskStatus[]): number =>
     (listAgentTask || []).filter((task: IAgentTask) =>
       statuses.includes(task.status!),
@@ -338,11 +366,27 @@ const AgentTaskPage = (props: any) => {
   };
 
   const onDragStart = (event: DragStartEvent) => {
-    setActiveDragId(String(event.active.id));
+    const draggedId = String(event.active.id);
+    setActiveDragId(draggedId);
+    const draggedTask = (listAgentTask || []).find(
+      (task: IAgentTask) => String(task.id) === draggedId,
+    );
+    setActiveDragStatus(draggedTask?.status || null);
+  };
+
+  const isValidDropTarget = (dropStatus: AgentTaskStatus): boolean => {
+    if (!activeDragStatus) {
+      return true;
+    }
+    if (activeDragStatus === AgentTaskStatus.CANCELLED) {
+      return dropStatus === AgentTaskStatus.INIT;
+    }
+    return true;
   };
 
   const onDragEnd = (event: DragEndEvent) => {
     setActiveDragId(null);
+    setActiveDragStatus(null);
     const { active, over } = event;
     if (!over) {
       return;
@@ -356,6 +400,13 @@ const AgentTaskPage = (props: any) => {
     );
 
     if (draggedTask?.status === newStatus) {
+      return;
+    }
+
+    if (
+      draggedTask?.status === AgentTaskStatus.CANCELLED &&
+      newStatus !== AgentTaskStatus.INIT
+    ) {
       return;
     }
 
@@ -380,6 +431,8 @@ const AgentTaskPage = (props: any) => {
       label: agent.name,
       value: agent.id,
       activeCount,
+      description: agent.description || "",
+      llmProvider: agent.llmProvider || "",
     };
   });
 
@@ -388,7 +441,7 @@ const AgentTaskPage = (props: any) => {
       <div className="header">
         <div className="header-filters">
           <SearchInput
-            placeholder={translate("agentTask.filter.placeholder.search")}
+            placeholder={translate("agentTaskFilterSearchPlaceholder")}
             value={filterKeyword}
             onChange={setFilterKeyword}
             style={{ width: "30rem" }}
@@ -396,7 +449,7 @@ const AgentTaskPage = (props: any) => {
 
           <Select
             className="filter-select custom-select"
-            placeholder={translate("agentTask.filter.placeholder.priority")}
+            placeholder={translate("agentTaskFilterPriorityPlaceholder")}
             options={PRIORITY_FILTER_OPTIONS}
             value={filterPriority}
             onChange={(value) => setFilterPriority(value)}
@@ -406,7 +459,7 @@ const AgentTaskPage = (props: any) => {
 
           <Select
             className="filter-select custom-select"
-            placeholder={translate("agentTask.filter.placeholder.agent")}
+            placeholder={translate("agentTaskFilterAgentPlaceholder")}
             options={agentOptions}
             value={filterAgentId}
             onChange={(value) => setFilterAgentId(value)}
@@ -418,7 +471,7 @@ const AgentTaskPage = (props: any) => {
                 <div className="description">
                   {option.data.activeCount > 0
                     ? `${option.data.activeCount} active task${option.data.activeCount > 1 ? "s" : ""}`
-                    : translate("agentTask.label.noActiveTasks")}
+                    : translate("agentTaskNoActiveTasksLabel")}
                 </div>
               </OptionWrapper>
             )}
@@ -426,16 +479,31 @@ const AgentTaskPage = (props: any) => {
 
           {hasActiveFilter && (
             <Button onClick={onClearFilters}>
-              {translate("agentTask.filter.clearAll")}
+              {translate("agentTaskFilterClearAll")}
             </Button>
           )}
+
+          <Tooltip
+            title={
+              isAgentTaskPaused
+                ? translate("agentTaskSwitchPaused")
+                : translate("agentTaskSwitchActive")
+            }
+          >
+            <Switch
+              checkedChildren={translate("schedule.switchOn")}
+              unCheckedChildren={translate("schedule.switchOff")}
+              onChange={onToggleAgentTask}
+              checked={!isAgentTaskPaused}
+            />
+          </Tooltip>
         </div>
 
         <div className="header-right">
           <RealtimeIndicator text={`Last updated: ${lastUpdatedText}`} />
 
           <Button type="primary" onClick={onOpenCreate}>
-            {translate("agentTask.button.newTask")}
+            {translate("agentTaskNewTaskButton")}
           </Button>
         </div>
       </div>
@@ -443,7 +511,7 @@ const AgentTaskPage = (props: any) => {
       {!isLLMConfigured(preference, mainAgentProvider) && (
         <Alert
           type="warning"
-          title={translate("agentTask.warning.llmNotConfigured")}
+          title={translate("agentTaskLlmNotConfiguredWarning")}
           showIcon
         />
       )}
@@ -464,9 +532,14 @@ const AgentTaskPage = (props: any) => {
               totalCount={getTotalByStatuses(column.displayStatuses)}
               isFiltered={hasActiveFilter}
               activeDragId={activeDragId}
+              isInvalidTarget={
+                Boolean(activeDragStatus) &&
+                !isValidDropTarget(column.dropStatus)
+              }
               onEdit={onOpenEdit}
               onDelete={deleteAgentTask}
               onPin={onPinAgentTask}
+              onRetry={onRetryAgentTask}
             />
           ))}
         </div>

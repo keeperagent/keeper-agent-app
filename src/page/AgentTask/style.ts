@@ -86,7 +86,10 @@ export const OptionWrapper = styled.div`
   }
 `;
 
-export const KanbanColumn = styled.div<{ isDragOver?: boolean }>`
+export const KanbanColumn = styled.div<{
+  isDragOver?: boolean;
+  isInvalidTarget?: boolean;
+}>`
   min-width: 0;
   min-height: 12rem;
   display: flex;
@@ -99,9 +102,11 @@ export const KanbanColumn = styled.div<{ isDragOver?: boolean }>`
       props.isDragOver ? props.theme.colorPrimary : props.theme.colorBorder};
   box-shadow: ${(props) =>
     props.isDragOver ? `0 0 0 3px ${props.theme.colorPrimary}25` : "none"};
+  opacity: ${(props) => (props.isInvalidTarget ? 0.4 : 1)};
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 
   .column-header {
     display: flex;
