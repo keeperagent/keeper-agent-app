@@ -136,16 +136,19 @@ export const createAgentFromProfile = async (
   const allowedTaskTypes = ["general-purpose", ...subagentNames];
 
   const systemPrompt =
-    profile.systemPrompt || buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
+    profile.systemPrompt ||
+    buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH, toolContext.autoApprove);
 
   const agent = createDeepAgent({
     model: llm,
     systemPrompt,
     backend,
-    tools: [
-      requestApprovalTool(toolContext),
-      confirmApprovalTool(toolContext),
-    ] as any,
+    tools: (toolContext.autoApprove
+      ? []
+      : [
+          requestApprovalTool(toolContext),
+          confirmApprovalTool(toolContext),
+        ]) as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

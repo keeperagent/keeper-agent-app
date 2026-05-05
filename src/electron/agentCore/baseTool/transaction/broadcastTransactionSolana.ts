@@ -50,7 +50,10 @@ Use this for custom on-chain operations that are not covered by other tools (e.g
       console.log(
         `[broadcast_transaction_solana] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
       );
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot broadcast transaction in planning mode. Call confirm_approval with your execution plan first to get user approval.",
