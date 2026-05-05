@@ -19,17 +19,9 @@ import HighlighterLib, { HighlighterProps } from "react-highlight-words";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { connect } from "react-redux";
-import {
-  AppLogType,
-  AgentTaskStatus,
-  AgentScheduleStatus,
-  IAppLog,
-} from "@/electron/type";
+import { AppLogType, IAppLog } from "@/electron/type";
 import { formatTimeToDate } from "@/service/util";
-import {
-  collapseResultToOneLine,
-  normalizeAgentMessageContent,
-} from "@/service/agentMessageContent";
+import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import { DeleteButton } from "@/component/Button";
 import { SearchInput, TotalData } from "@/component";
 import { SettingIcon } from "@/component/Icon";
@@ -73,17 +65,13 @@ const formatDuration = (startedAt?: number, finishedAt?: number): string => {
   return `${minutes}m ${remainSeconds}s`;
 };
 
-const LOG_TYPE_TAG_COLOR: Record<AppLogType, string> = {
+const LOG_TYPE_TAG_COLOR: Partial<Record<AppLogType, string>> = {
   [AppLogType.WORKFLOW]: "purple",
-  [AppLogType.SCHEDULE]: "blue",
-  [AppLogType.TASK]: "cyan",
   [AppLogType.MCP]: "orange",
 };
 
-const LOG_TYPE_TAG_LABEL: Record<AppLogType, string> = {
+const LOG_TYPE_TAG_LABEL: Partial<Record<AppLogType, string>> = {
   [AppLogType.WORKFLOW]: "Workflow",
-  [AppLogType.SCHEDULE]: "Schedule",
-  [AppLogType.TASK]: "Task",
   [AppLogType.MCP]: "MCP",
 };
 
@@ -93,26 +81,16 @@ const STATUS_LABEL_MAP: Record<string, string> = {
   error: "Error",
   skipped: "Skipped",
   retrying: "Retrying",
-  DONE: "Done",
-  FAILED: "Failed",
-  CANCELLED: "Cancelled",
-  IN_PROGRESS: "In Progress",
-  INIT: "Pending",
   approved: "Approved",
   denied: "Denied",
 };
 
 const STATUS_TAG_COLOR: Record<string, string> = {
-  [AgentScheduleStatus.RUNNING]: "blue",
-  [AgentScheduleStatus.SUCCESS]: "green",
-  [AgentScheduleStatus.ERROR]: "red",
-  [AgentScheduleStatus.SKIPPED]: "default",
-  [AgentScheduleStatus.RETRYING]: "gold",
-  [AgentTaskStatus.DONE]: "green",
-  [AgentTaskStatus.FAILED]: "red",
-  [AgentTaskStatus.CANCELLED]: "default",
-  [AgentTaskStatus.IN_PROGRESS]: "blue",
-  [AgentTaskStatus.INIT]: "blue",
+  running: "blue",
+  success: "green",
+  error: "red",
+  skipped: "default",
+  retrying: "gold",
   approved: "green",
   denied: "red",
 };
@@ -162,23 +140,6 @@ const renderDetails = (log: IAppLog, searchText: string) => {
       .filter(Boolean)
       .join(" › ");
     fullContent = normalizeAgentMessageContent(log.message || "");
-  } else if (log.logType === AppLogType.SCHEDULE) {
-    const campaignWorkflow = [log.campaign?.name, log.workflow?.name]
-      .filter(Boolean)
-      .join(" › ");
-    const resultText = log.result
-      ? normalizeAgentMessageContent(log.result)
-      : null;
-    fullContent = resultText || log.errorMessage || "";
-    primary = fullContent
-      ? collapseResultToOneLine(fullContent)
-      : campaignWorkflow || EMPTY_STRING;
-    secondary =
-      fullContent && campaignWorkflow ? campaignWorkflow : EMPTY_STRING;
-  } else if (log.logType === AppLogType.TASK) {
-    primary = log.action || "task_event";
-    secondary = log.message || EMPTY_STRING;
-    fullContent = log.message || "";
   } else if (log.logType === AppLogType.MCP) {
     primary = log.action || "tool_call";
     secondary = log.message || EMPTY_STRING;
@@ -236,9 +197,6 @@ const resolveActorName = (log: IAppLog): string => {
   if (log.actorName || log.actorType) {
     return log.actorName || log.actorType || EMPTY_STRING;
   }
-  if (log.logType === AppLogType.SCHEDULE) {
-    return log.schedule?.name || `Schedule #${log.scheduleId}`;
-  }
   if (log.logType === AppLogType.WORKFLOW) {
     return log.campaign?.name || log.workflow?.name || EMPTY_STRING;
   }
@@ -279,8 +237,6 @@ const renderTimeCell = (log: IAppLog) => {
 const LOG_TYPE_OPTIONS = [
   { label: "All types", value: "" },
   { label: "Workflow", value: AppLogType.WORKFLOW },
-  { label: "Schedule", value: AppLogType.SCHEDULE },
-  { label: "Task", value: AppLogType.TASK },
   { label: "MCP", value: AppLogType.MCP },
 ];
 

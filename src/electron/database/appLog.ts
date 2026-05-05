@@ -42,6 +42,10 @@ class AppLogDB {
 
       if (logType) {
         conditions.push({ logType });
+      } else {
+        conditions.push({
+          logType: { [Op.in]: [AppLogType.WORKFLOW, AppLogType.MCP] },
+        });
       }
       if (scheduleId) {
         conditions.push({ scheduleId });
