@@ -103,9 +103,7 @@ export const TaskHistory = ({ task }: TaskHistoryProps) => {
 
   return (
     <Wrapper>
-      <div className="history-title">
-        {translate("agentTask.label.history")}
-      </div>
+      <div className="history-title">{translate("agentTaskHistoryLabel")}</div>
 
       {historyEntries.map((entry, index) => (
         <div className="history-entry" key={index}>

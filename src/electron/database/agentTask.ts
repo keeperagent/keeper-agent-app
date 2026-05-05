@@ -33,13 +33,11 @@ class AgentTaskDB {
           {
             model: AgentProfileModel,
             as: "assignedAgent",
-            attributes: ["id", "name"],
             required: false,
           },
           {
             model: AgentProfileModel,
             as: "creatorAgent",
-            attributes: ["id", "name"],
             required: false,
           },
         ],
@@ -61,13 +59,11 @@ class AgentTaskDB {
           {
             model: AgentProfileModel,
             as: "assignedAgent",
-            attributes: ["id", "name"],
             required: false,
           },
           {
             model: AgentProfileModel,
             as: "creatorAgent",
-            attributes: ["id", "name"],
             required: false,
           },
         ],
@@ -251,14 +247,18 @@ class AgentTaskDB {
             AgentTaskStatus.DONE,
             AgentTaskStatus.FAILED,
             AgentTaskStatus.EXPIRED,
-            AgentTaskStatus.CANCELLED,
           ],
         };
       }
+      const resetFields =
+        data.status === AgentTaskStatus.INIT
+          ? { assignedAgentId: null, claimedAt: null, startedAt: null }
+          : {};
       await AgentTaskModel.update(
         _.omit(
           {
             ...data,
+            ...resetFields,
             metadata:
               data.metadata !== undefined
                 ? JSON.stringify(data.metadata)

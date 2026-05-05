@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { markdownStyles } from "@/style/markdown";
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -130,29 +131,7 @@ const ResultTooltip = styled.div`
   overflow-y: auto;
   color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
 
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 0.6rem 0;
-  }
-  th,
-  td {
-    border: 1px solid var(--color-border);
-    padding: 0.4rem 0.8rem;
-    text-align: left;
-  }
-  p {
-    margin: 0.4rem 0;
-  }
-  p:first-child {
-    margin-top: 0;
-  }
-  p:last-child {
-    margin-bottom: 0;
-  }
-  a {
-    color: var(--color-primary-light);
-  }
+  ${markdownStyles}
 `;
 
 export {

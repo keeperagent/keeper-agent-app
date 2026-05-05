@@ -1,8 +1,5 @@
 import {
   AgentTaskStatus,
-  AppLogType,
-  AppLogTaskAction,
-  AppLogActorType,
   IAgentTask,
   IAgentProfile,
   IAgentSkill,
@@ -12,7 +9,6 @@ import {
 } from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentProfileDB } from "@/electron/database/agentProfile";
-import { appLogDB } from "@/electron/database/appLog";
 import { agentSkillDB } from "@/electron/database/agentSkill";
 import { mcpServerDB } from "@/electron/database/mcpServer";
 import { preferenceService } from "@/electron/service/preference";
@@ -90,6 +86,12 @@ class TaskDispatcher {
   };
 
   private runDispatch = async (): Promise<void> => {
+    const [preference, preferenceErr] =
+      await preferenceService.getOnePreference();
+    if (preferenceErr || preference?.isStopAllAgentTask) {
+      return;
+    }
+
     const [tasks, tasksErr] = await agentTaskDB.getTasksByStatus(
       AgentTaskStatus.INIT,
     );
@@ -131,16 +133,6 @@ class TaskDispatcher {
           agentTaskExecutor.execute(task.id, task.assignedAgentId, () =>
             this.dispatch(),
           );
-          appLogDB.createAppLog({
-            logType: AppLogType.TASK,
-            taskId: task.id,
-            actorType: AppLogActorType.AGENT,
-            actorId: task.assignedAgentId,
-            action: AppLogTaskAction.TASK_CLAIMED,
-            status: AgentTaskStatus.IN_PROGRESS,
-            message: task.title,
-            startedAt: Date.now(),
-          });
           sendToRenderer(MESSAGE.AGENT_TASK_ASSIGNED, {
             taskId: task.id,
             agentId: task.assignedAgentId,
@@ -237,17 +229,6 @@ class TaskDispatcher {
       agentTaskExecutor.execute(task.id!, chosenAgent.id, () =>
         this.dispatch(),
       );
-      appLogDB.createAppLog({
-        logType: AppLogType.TASK,
-        taskId: task.id,
-        actorType: AppLogActorType.AGENT,
-        actorId: chosenAgent.id,
-        actorName: chosenAgent.name,
-        action: AppLogTaskAction.TASK_CLAIMED,
-        status: AgentTaskStatus.IN_PROGRESS,
-        message: task.title,
-        startedAt: Date.now(),
-      });
       sendToRenderer(MESSAGE.AGENT_TASK_ASSIGNED, {
         taskId: task.id,
         agentId: chosenAgent.id,
@@ -357,7 +338,14 @@ Use agentId 0 if no agent is suitable. Return only the JSON object, no other tex
         timeoutPromise,
       ]);
       clearTimeout(timeoutId!);
-      const responseContent = String(result.content).trim();
+      const rawContent = result.content;
+      const responseContent = (
+        typeof rawContent === "string"
+          ? rawContent
+          : Array.isArray(rawContent)
+            ? rawContent.find((block: any) => block.type === "text")?.text || ""
+            : String(rawContent)
+      ).trim();
 
       const parsed = JSON.parse(responseContent);
       const agentId = parsed?.agentId;

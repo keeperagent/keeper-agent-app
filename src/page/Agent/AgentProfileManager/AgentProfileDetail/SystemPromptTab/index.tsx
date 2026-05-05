@@ -109,7 +109,6 @@ const SystemPromptTab = ({ profile }: Props) => {
           theme="dark"
           fontSize={13}
           readOnly={isMainAgent}
-          lineWrapping
         />
       </div>
     </SystemPromptWrapper>

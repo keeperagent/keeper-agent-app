@@ -40,12 +40,29 @@ const TopBarWrapper = styled.div`
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 1rem;
+      min-width: 0;
+
+      .inline-alert {
+        margin: 0;
+        max-width: min(72rem, 48vw);
+        min-width: 0;
+        font-size: 1.2rem;
+
+        .ant-alert-content {
+          min-width: 0;
+        }
+
+        .ant-alert-message {
+          overflow-wrap: anywhere;
+          line-height: 1.4;
+        }
+      }
 
       .icon {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-left: 1rem;
         cursor: pointer;
 
         svg {

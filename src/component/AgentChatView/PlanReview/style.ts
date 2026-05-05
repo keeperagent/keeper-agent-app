@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { markdownStyles } from "@/style/markdown";
 
 const Wrapper = styled.div`
   margin-top: 1.5rem;
@@ -61,63 +62,7 @@ const Wrapper = styled.div`
       padding: 0.8rem 1rem;
     }
 
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      margin: 0.8rem 0 0.4rem 0;
-      font-weight: 600;
-      font-size: 1.35rem;
-    }
-    h1:first-child,
-    h2:first-child,
-    h3:first-child {
-      margin-top: 0;
-    }
-    p {
-      margin: 0.4rem 0;
-    }
-    p:first-child {
-      margin-top: 0;
-    }
-    p:last-child {
-      margin-bottom: 0;
-    }
-    ul,
-    ol {
-      margin: 0.4rem 0;
-      padding-left: 1.4rem;
-    }
-    li {
-      margin: 0.3rem 0;
-    }
-    strong {
-      font-weight: 600;
-    }
-    code {
-      background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
-      padding: 0.15rem 0.4rem;
-      border-radius: 3px;
-      font-size: 1.15rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1.2rem;
-      margin: 0.5rem 0;
-    }
-    th,
-    td {
-      border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
-      padding: 0.3rem 0.6rem;
-      text-align: left;
-    }
-    th {
-      font-weight: 600;
-      background: ${({ theme }: { theme: ITheme }) => theme?.colorBgTag};
-    }
+    ${markdownStyles}
   }
 
   .plan-review-actions {

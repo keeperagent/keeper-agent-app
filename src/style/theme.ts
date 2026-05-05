@@ -33,6 +33,11 @@ export interface ITheme {
   clearBtnColorHover: string;
   colorBgInputDisable: string;
   colorBgUserMessage: string;
+  colorBgCard: string;
+  colorBorderHover: string;
+  colorBgPage: string;
+
+  colorBgHistoryBody: string;
 }
 
 const lightTheme: ITheme = {
@@ -70,6 +75,10 @@ const lightTheme: ITheme = {
   clearBtnColorHover: "#ece0ed",
   colorBgInputDisable: "#f2f2f2",
   colorBgUserMessage: "rgb(242, 242, 242)",
+  colorBgCard: "rgb(255, 255, 255)",
+  colorBorderHover: "#c0c2c4",
+  colorBgPage: "#f4f5f7",
+  colorBgHistoryBody: "#ffffff",
 };
 
 const darkTheme: ITheme = {
@@ -107,6 +116,10 @@ const darkTheme: ITheme = {
   clearBtnColorHover: "rgb(62 55 68)",
   colorBgInputDisable: "rgba(0, 0, 0, 0.2)",
   colorBgUserMessage: "rgb(45, 45, 45)",
+  colorBgCard: "rgb(45, 45, 45)",
+  colorBorderHover: "rgba(140, 140, 140, 0.8)",
+  colorBgPage: "hsl(220 20% 4%)",
+  colorBgHistoryBody: "rgba(255, 255, 255, 0.04)",
 };
 
 export { lightTheme, darkTheme };

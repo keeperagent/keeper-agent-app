@@ -8,8 +8,7 @@ import { lightTheme, darkTheme } from "@/style/theme";
 import { OverideAntdStyle } from "@/style/overideAntd";
 import { RootState } from "@/redux/store";
 import { actSetIsFullscreen } from "@/redux/workflowRunner";
-import { useCreateAppLog, useTranslation } from "@/hook";
-import { AppLogType } from "@/electron/type";
+import { useTranslation } from "@/hook";
 import { formatTimeToDate } from "@/service/util";
 import RequireAuth from "./RequireAuth";
 import { routesConfig } from "./config";
@@ -39,7 +38,6 @@ const AppRoute = (props: any) => {
   const { notification } = AntApp.useApp();
   const { isLightMode } = props;
   const { translate, locale } = useTranslation();
-  const { createAppLog } = useCreateAppLog();
 
   useEffect(() => {
     props?.actSetIsFullscreen(false);
@@ -63,10 +61,6 @@ const AppRoute = (props: any) => {
       description: message,
       duration: 5 * 60, // 5 minutes
     });
-    createAppLog({
-      logType: AppLogType.WORKFLOW,
-      message,
-    });
   };
 
   const notifyOnline = () => {
@@ -76,10 +70,6 @@ const AppRoute = (props: any) => {
       title: translate("notification"),
       description: message,
       duration: 5 * 60, // 5 minutes
-    });
-    createAppLog({
-      logType: AppLogType.WORKFLOW,
-      message,
     });
   };
 

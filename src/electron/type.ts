@@ -2507,6 +2507,7 @@ export type IPreference = {
   deviceId?: string;
   isChromeDownloaded?: boolean;
   isStopAllSchedule?: boolean;
+  isStopAllAgentTask?: boolean;
   dayResetJobStatus?: number;
   maxLogAge?: number;
   maxHistoryLogAge?: number;
@@ -2706,6 +2707,7 @@ export type IAppLog = {
   schedule?: ISchedule;
   jobId?: number;
   taskId?: number;
+  task?: IAgentTask;
   actorType?: string;
   actorId?: number;
   actorName?: string;
@@ -2811,6 +2813,7 @@ export type IGeneralSetting = {
   hideMinimap?: boolean;
   deviceId?: string;
   isStopAllSchedule?: boolean;
+  isStopAllAgentTask?: boolean;
   dayResetJobStatus?: number;
   maxLogAge?: number;
   maxHistoryLogAge?: number;
@@ -3006,6 +3009,7 @@ export type IAgentProfile = {
   isAllWallet?: boolean;
   encryptKey?: string; // input only: plaintext value sent to backend, never returned from backend
   hasEncryptKey?: boolean; // output only: indicates whether an encryptKey is stored in DB
+  taskCount?: number;
   createAt?: number;
   updateAt?: number;
 };

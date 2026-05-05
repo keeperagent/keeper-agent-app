@@ -10,13 +10,11 @@ export const Wrapper = styled.div`
   cursor: pointer;
   border-radius: var(--border-radius);
   overflow: hidden;
+  background: ${({ theme }: { theme: ITheme }) => theme.colorBgCard};
+  transition: border-color 0.15s ease;
 
   &:hover {
-    border: 1px dashed var(--color-primary);
-
-    .item-top-bar .item-name {
-      color: var(--color-text-hover);
-    }
+    border-color: ${({ theme }: { theme: ITheme }) => theme.colorBorderHover};
 
     .item-actions .item-icon-group,
     .item-actions .item-actions-separator {
@@ -35,7 +33,6 @@ export const Wrapper = styled.div`
     display: flex;
     align-items: center;
     padding: 1rem 1.2rem;
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
   }
 
   .item-dots {
@@ -71,7 +68,6 @@ export const Wrapper = styled.div`
     padding: 0rem 1.2rem 1rem 1.2rem;
     border-bottom: 1px solid
       ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
 
     .item-chain-logo {
       width: 1.7rem;
@@ -117,14 +113,16 @@ export const Wrapper = styled.div`
 
   .item-label {
     display: block;
-    font-size: 1.1rem;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 400;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    opacity: 0.7;
     margin-bottom: 0.2rem;
   }
 
   .item-value {
     font-size: 1.2rem;
+    font-weight: 500;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
     line-height: 1.4;
   }
@@ -156,14 +154,14 @@ export const Wrapper = styled.div`
   }
 
   .item-bottom-bar {
+    margin: 0 1.2rem;
+    border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+    padding: 0.8rem 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 0.8rem 1.2rem;
     min-height: 2.8rem;
-    border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
   }
 
   .item-updated {
@@ -209,16 +207,28 @@ export const Wrapper = styled.div`
     .btn-chat {
       font-size: 1.1rem;
       font-weight: 500;
-      color: var(--color-primary);
+      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
       cursor: pointer;
       padding: 0.3rem 1rem;
       border-radius: 2rem;
-      border: 1px solid var(--color-primary);
-      transition: background-color 0.15s;
+      border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+      transition: all 0.15s ease;
+      text-transform: lowercase;
 
       &:hover {
-        background-color: var(--color-primary);
         color: #fff;
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+      }
+
+      &.btn-chat-primary {
+        color: #fff;
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+
+        &:hover {
+          opacity: 0.85;
+        }
       }
     }
 

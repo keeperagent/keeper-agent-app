@@ -3,8 +3,9 @@ import { Pagination, Spin, Empty } from "antd";
 import { IAppLog } from "@/electron/type";
 import { useGetListAgentProfileLog } from "@/hook/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
-import { HistoryWrapper } from "./style";
+import { TotalData } from "@/component";
 import HistoryItem from "./HistoryItem";
+import { HistoryWrapper } from "./style";
 
 const PAGE_SIZE = 10;
 
@@ -44,11 +45,28 @@ const HistoryTab = ({ agentProfileId }: Props) => {
     );
   }
 
-  const logs = data?.data || [];
+  const logs: IAppLog[] = data?.data || [];
   const totalData = data?.totalData || 0;
 
   return (
     <HistoryWrapper>
+      {totalData > PAGE_SIZE && (
+        <div className="history-pagination">
+          <TotalData
+            text={`${translate("total")} ${totalData} ${translate("data")}`}
+          />
+
+          <Pagination
+            size="small"
+            current={page}
+            pageSize={PAGE_SIZE}
+            total={totalData}
+            onChange={setPage}
+            showSizeChanger={false}
+          />
+        </div>
+      )}
+
       <div className="history-list">
         {loading && (
           <div
@@ -77,19 +95,6 @@ const HistoryTab = ({ agentProfileId }: Props) => {
           />
         ))}
       </div>
-
-      {totalData > PAGE_SIZE && (
-        <div className="history-pagination">
-          <Pagination
-            size="small"
-            current={page}
-            pageSize={PAGE_SIZE}
-            total={totalData}
-            onChange={setPage}
-            showSizeChanger={false}
-          />
-        </div>
-      )}
     </HistoryWrapper>
   );
 };

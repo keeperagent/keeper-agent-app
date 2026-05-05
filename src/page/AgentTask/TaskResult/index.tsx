@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { useState, useEffect, Fragment } from "react";
+import { Fragment } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
@@ -46,13 +46,6 @@ interface TaskResultProps {
 
 export const TaskResult = ({ task }: TaskResultProps) => {
   const { translate } = useTranslation();
-  const [isResultOpen, setIsResultOpen] = useState(true);
-  const [isErrorOpen, setIsErrorOpen] = useState(true);
-
-  useEffect(() => {
-    setIsResultOpen(true);
-    setIsErrorOpen(true);
-  }, [task.id]);
 
   const isDone = task.status === AgentTaskStatus.DONE;
   const isFailed = task.status === AgentTaskStatus.FAILED;
@@ -67,47 +60,27 @@ export const TaskResult = ({ task }: TaskResultProps) => {
     <Fragment>
       {hasResult && (
         <Wrapper style={{ "--dot-color": "#22c55e" } as CSSProperties}>
-          <div
-            className="result-header"
-            onClick={() => setIsResultOpen((prev) => !prev)}
-          >
+          <div className="result-header">
             <span className="result-dot" />
             <span className="result-label">
-              {translate("agentTask.label.result")}
+              {translate("agentTaskResultLabel")}
             </span>
-            <span
-              className={`result-chevron${isResultOpen ? " result-chevron--open" : ""}`}
-            />
           </div>
-
-          {isResultOpen && (
-            <div className="result-body">
-              {renderResultContent(task.result)}
-            </div>
-          )}
+          <div className="result-body">{renderResultContent(task.result)}</div>
         </Wrapper>
       )}
 
       {hasError && (
         <Wrapper style={{ "--dot-color": "#f97316" } as CSSProperties}>
-          <div
-            className="result-header"
-            onClick={() => setIsErrorOpen((prev) => !prev)}
-          >
+          <div className="result-header">
             <span className="result-dot" />
             <span className="result-label">
-              {translate("agentTask.label.errorMessage")}
+              {translate("agentTaskErrorMessageLabel")}
             </span>
-            <span
-              className={`result-chevron${isErrorOpen ? " result-chevron--open" : ""}`}
-            />
           </div>
-
-          {isErrorOpen && (
-            <div className="result-body">
-              <pre>{task.errorMessage}</pre>
-            </div>
-          )}
+          <div className="result-body">
+            <pre>{task.errorMessage}</pre>
+          </div>
         </Wrapper>
       )}
     </Fragment>

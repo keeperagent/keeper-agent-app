@@ -4,7 +4,6 @@ import { BackIcon } from "@/component/Icon";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { IAgentProfile, ICampaign } from "@/electron/type";
-import { agentProfileSelector } from "@/redux/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { listChainConfig } from "@/page/Agent/config";
@@ -197,6 +196,6 @@ const AgentProfileDetail = (props: Props) => {
 };
 
 export default connect((state: RootState) => ({
-  selectedAgentProfile: agentProfileSelector(state).selectedAgentProfile,
+  selectedAgentProfile: state?.AgentProfile?.selectedAgentProfile,
   listCampaign: state?.Campaign?.listCampaign || [],
 }))(AgentProfileDetail);

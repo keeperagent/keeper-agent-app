@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { ITheme } from "@/style/theme";
 
 export const HistoryWrapper = styled.div`
   display: flex;
@@ -19,10 +18,9 @@ export const HistoryWrapper = styled.div`
 
   .history-pagination {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
+    align-items: center;
     padding: 1.2rem 1.6rem;
-    border-top: 1px solid
-      ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
     flex-shrink: 0;
   }
 

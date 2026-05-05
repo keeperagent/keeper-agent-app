@@ -366,6 +366,7 @@ const formatSetting = (raw: any): ISetting => {
         hideMinimap: parsed.hideMinimap,
         deviceId: parsed.deviceId,
         isStopAllSchedule: parsed.isStopAllSchedule,
+        isStopAllAgentTask: parsed.isStopAllAgentTask,
         dayResetJobStatus: parsed.dayResetJobStatus,
         maxLogAge: parsed.maxLogAge,
         maxHistoryLogAge: parsed.maxHistoryLogAge,

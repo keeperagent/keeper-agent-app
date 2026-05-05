@@ -5,25 +5,21 @@ export const Wrapper = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 0;
   border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-  cursor: pointer;
   border-radius: var(--border-radius);
   overflow: hidden;
+  background: ${({ theme }: { theme: ITheme }) => theme.colorBgCard};
+  transition: border-color 0.15s ease;
 
   &:hover {
-    border: 1px dashed var(--color-primary);
-
-    .item-top-bar .item-name {
-      color: var(--color-text-hover);
-    }
+    border-color: ${({ theme }: { theme: ITheme }) => theme.colorBorderHover};
   }
 
-  .item-dots-row {
+  .item-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 1rem 1.2rem;
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
   }
 
   .item-dots {
@@ -42,145 +38,104 @@ export const Wrapper = styled.div`
   .item-dot-red {
     background: #ff5f57;
   }
-
   .item-dot-yellow {
     background: #febc2e;
   }
-
   .item-dot-green {
     background: #28c840;
   }
 
-  .item-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 0rem 1.2rem 1rem 1.2rem;
-    border-bottom: 1px solid
-      ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
-
-    .item-name {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-      transition: all 0.2s ease-in-out;
-    }
-  }
-
-  .item-center {
+  .item-body {
     flex: 1;
-    padding: 1rem 1.2rem;
-    min-height: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0 1.2rem 1.2rem 1.2rem;
+    cursor: pointer;
   }
 
-  .item-center-row {
-    margin-bottom: 1.5rem;
+  .item-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+    line-height: 1.4;
+    transition: color 0.15s ease;
+  }
 
-    &:last-child {
-      margin-bottom: 0;
-    }
+  .item-command-or-url-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0.6rem;
   }
 
   .item-label {
-    display: block;
     font-size: 1.1rem;
     font-weight: 500;
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
-    margin-bottom: 0.2rem;
-  }
-
-  .item-tools-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .view-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 0.5rem;
-
-    svg {
-      width: 1.4rem;
-      height: 1.4rem;
-      min-width: 1.4rem;
-      min-height: 1.4rem;
-      fill: var(--color-text-hover);
-    }
-  }
-
-  .item-tools-eye:hover {
-    opacity: 0.8;
-  }
-
-  .item-value {
-    font-size: 1.2rem;
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
-    line-height: 1.4;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
   }
 
   .item-command-or-url {
     font-family:
       ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
+    background: ${({ theme }: { theme: ITheme }) => theme.colorBgNested};
+    border-radius: 0.4rem;
+    padding: 0.35rem 0.7rem;
   }
 
   .item-description {
+    font-size: 1.2rem;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+    line-height: 1.55;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
   }
 
-  .item-bottom-bar {
+  .item-status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 0.4rem;
+  }
+
+  .item-tool-count {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+  }
+
+  .item-footer {
+    margin: 0 1.2rem;
+    border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+    padding: 0.8rem 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 0.8rem 1.2rem;
-    min-height: 2.8rem;
-    border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgInputDisable};
+    gap: 1rem;
   }
 
   .item-updated {
     font-size: 1.1rem;
-    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+    opacity: 0.7;
+    flex-shrink: 0;
   }
 
   .item-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 0.6rem;
 
-    .btn-delete {
-      display: flex;
-
-      svg {
-        width: 1.4rem;
-        height: 1.4rem;
-        min-width: 1.4rem;
-        min-height: 1.4rem;
-        cursor: pointer;
-      }
-
-      .trash {
-        &:hover {
-          fill: var(--color-error);
-        }
-      }
+    .ant-btn {
+      text-transform: lowercase;
+      font-size: 1.1rem !important;
     }
   }
 `;

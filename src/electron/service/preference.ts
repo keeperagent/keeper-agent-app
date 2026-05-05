@@ -129,6 +129,7 @@ class PreferenceService {
         "hideMinimap",
         "deviceId",
         "isStopAllSchedule",
+        "isStopAllAgentTask",
         "dayResetJobStatus",
         "maxLogAge",
         "maxHistoryLogAge",

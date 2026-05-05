@@ -119,8 +119,8 @@ const ModalAgentProfile = (props: Props) => {
     const provider = profile?.llmProvider || LLMProvider.CLAUDE;
     const llmModel =
       profile?.llmModel || getDefaultModelForProvider(provider, preference);
-    setLlmProvider(provider);
 
+    setLlmProvider(provider);
     setEncryptKeyValue("");
     form.setFieldsValue({
       name: profile?.name,
@@ -138,7 +138,7 @@ const ModalAgentProfile = (props: Props) => {
       isAllWallet: Boolean(profile?.isAllWallet),
       maxConcurrentTasks: profile?.maxConcurrentTasks || 3,
     });
-  }, [profile]);
+  }, [profile, open]);
 
   useEffect(() => {
     if (watchedCampaignId) {

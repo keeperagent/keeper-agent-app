@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import AnimatedNumbers from "react-animated-numbers";
 import { Popconfirm } from "antd";
 import { IAgentProfile } from "@/electron/type";
 import { TrashIcon } from "@/component/Icon";
@@ -40,6 +41,7 @@ const AgentProfileCard = (props: Props) => {
 
   const allowedToolCount = profile.allowedBaseTools?.length || 0;
   const allowedSkillCount = profile.allowedSkillIds?.length || 0;
+  const taskCount = profile.taskCount || 0;
 
   return (
     <Wrapper className={deleteConfirmOpen ? "icons-pinned" : ""}>
@@ -88,7 +90,7 @@ const AgentProfileCard = (props: Props) => {
         tabIndex={0}
         onClick={() => onEdit(profile)}
       >
-        {chainConfig && (
+        {providerLabel && (
           <div className="item-center-row">
             <ProviderBadge>
               {providerIcon && <img src={providerIcon} alt={providerLabel} />}
@@ -99,7 +101,6 @@ const AgentProfileCard = (props: Props) => {
         )}
 
         <div className="item-center-row">
-          <span className="item-label">{translate("description")}</span>
           <span className="item-description">
             {profile.description || EMPTY_STRING}
           </span>
@@ -110,18 +111,22 @@ const AgentProfileCard = (props: Props) => {
             <div className="item-stat">
               <span className="item-label">{translate("agent.tool")}</span>
               <span className="item-value">
-                {allowedToolCount > 0
-                  ? allowedToolCount
-                  : translate("agent.allTools")}
+                {allowedToolCount > 0 ? (
+                  <AnimatedNumbers animateToNumber={allowedToolCount} />
+                ) : (
+                  translate("agent.allTools")
+                )}
               </span>
             </div>
 
             <div className="item-stat">
               <span className="item-label">{translate("agent.skill")}</span>
               <span className="item-value">
-                {allowedSkillCount > 0
-                  ? allowedSkillCount
-                  : translate("agent.allSkills")}
+                {allowedSkillCount > 0 ? (
+                  <AnimatedNumbers animateToNumber={allowedSkillCount} />
+                ) : (
+                  translate("agent.allSkills")
+                )}
               </span>
             </div>
 
@@ -133,6 +138,17 @@ const AgentProfileCard = (props: Props) => {
                 {profile.campaign?.name || EMPTY_STRING}
               </span>
             </div>
+
+            {taskCount > 0 && (
+              <div className="item-stat">
+                <span className="item-label">
+                  {translate("agentTask.tasks")}
+                </span>
+                <span className="item-value">
+                  <AnimatedNumbers animateToNumber={taskCount} />
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -182,7 +198,7 @@ const AgentProfileCard = (props: Props) => {
 
           {onChat && (
             <div
-              className="btn-chat"
+              className="btn-chat btn-chat-primary"
               onClick={(e) => {
                 e.stopPropagation();
                 onChat(profile);

@@ -6,13 +6,13 @@ export const Wrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 1.6rem;
-  padding: 1.2rem 1.6rem;
+  padding: 1rem 1.6rem;
   border: 1px solid ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
   border-radius: var(--border-radius);
-  background: ${({ theme }: { theme: ITheme }) => theme?.colorBgPrimary};
+  background: ${({ theme }: { theme: ITheme }) => theme?.colorBgCard};
 
   &:hover {
-    border: 1px dashed var(--color-primary);
+    border-color: ${({ theme }: { theme: ITheme }) => theme.colorBorderHover};
 
     .tool-name {
       color: var(--color-text-hover);
@@ -32,7 +32,7 @@ export const Wrapper = styled.div`
     font-size: 1.3rem;
     font-weight: 600;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
   }
 
   .tool-description {

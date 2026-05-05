@@ -414,7 +414,7 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     key: BASE_TOOL_KEYS.CALCULATE,
     name: "Calculator",
     description:
-      "Evaluate math expressions reliably — use for USD→native conversion, token value, percentage amounts, and any other arithmetic",
+      "Evaluates math expressions: USD→native, token values, percentages, and any arithmetic",
     group: BaseToolGroup.TRANSACTION,
     locked: true,
   },
