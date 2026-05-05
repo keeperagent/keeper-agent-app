@@ -399,6 +399,7 @@ class AgentTaskScheduler {
       : `AGENT_SCHEDULED_${schedule.id}.md`;
 
     const toolContext = new ToolContext();
+    toolContext.update({ autoApprove: true });
 
     if (job.hasEncryptKey) {
       try {

@@ -16,6 +16,10 @@ export const Wrapper = styled.div`
   &:hover {
     border-color: ${({ theme }: { theme: ITheme }) => theme.colorBorderHover};
 
+    .item-top-bar .item-name {
+      color: var(--color-text-hover);
+    }
+
     .item-actions .item-icon-group,
     .item-actions .item-actions-separator {
       visibility: visible;

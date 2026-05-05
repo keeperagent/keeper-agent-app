@@ -90,6 +90,7 @@ class AgentTaskExecutor {
     });
 
     const toolContext = new ToolContext();
+    toolContext.update({ autoApprove: true });
     const agentCreator = await createAgentFromProfile({
       profile,
       toolContext,
