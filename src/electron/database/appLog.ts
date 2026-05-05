@@ -4,6 +4,7 @@ import {
   IAppLog,
   IGetListResponse,
   AppLogType,
+  AppLogActorType,
   AgentScheduleStatus,
   JobType,
 } from "@/electron/type";
@@ -11,6 +12,7 @@ import { SCHEDULE_LOG_ACTION } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import {
   AppLogModel,
+  AgentTaskModel,
   CampaignModel,
   WorkflowModel,
   ScheduleModel,
@@ -193,14 +195,19 @@ class AppLogDB {
         raw: true,
       });
       const jobIds = jobs.map((job) => job.id);
-      if (!jobIds.length) {
-        return [{ data: [], totalData: 0, page, pageSize, totalPage: 0 }, null];
-      }
 
-      const where: any = {
-        logType: AppLogType.SCHEDULE,
-        jobId: { [Op.in]: jobIds },
+      const scheduleCondition = jobIds.length
+        ? { logType: AppLogType.SCHEDULE, jobId: { [Op.in]: jobIds } }
+        : null;
+      const taskCondition = {
+        logType: AppLogType.TASK,
+        actorType: AppLogActorType.AGENT,
+        actorId: agentProfileId,
       };
+      const where: any = scheduleCondition
+        ? { [Op.or]: [scheduleCondition, taskCondition] }
+        : taskCondition;
+
       const [totalData, listData]: any = await Promise.all([
         AppLogModel.count({ where }),
         AppLogModel.findAll({
@@ -208,7 +215,10 @@ class AppLogDB {
           order: [["createAt", "DESC"]],
           limit: pageSize,
           offset: (page - 1) * pageSize,
-          include: [{ model: ScheduleModel, as: "schedule", required: false }],
+          include: [
+            { model: ScheduleModel, as: "schedule", required: false },
+            { model: AgentTaskModel, as: "task", required: false },
+          ],
           raw: false,
         }),
       ]);

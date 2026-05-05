@@ -2,6 +2,7 @@ import type React from "react";
 import type { CSSProperties } from "react";
 import { Popconfirm, Tooltip } from "antd";
 import { useDraggable } from "@dnd-kit/core";
+import { useNavigate } from "react-router-dom";
 import {
   IAgentTask,
   AgentTaskPriority,
@@ -9,6 +10,7 @@ import {
   AgentTaskStatus,
 } from "@/electron/type";
 import { AgentIcon, DeleteIcon, PinIcon, ReloadIcon } from "@/component/Icon";
+import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { formatTime, formatDuration, trimText } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { EMPTY_STRING } from "@/config/constant";
@@ -119,12 +121,25 @@ const TaskCardInner = ({
   dragAttributes,
 }: TaskCardInnerProps) => {
   const { translate } = useTranslation();
+  const navigate = useNavigate();
   const priority = task.priority || AgentTaskPriority.MEDIUM;
   const priorityColor = getPriorityColor(priority);
   const priorityLabel = priority.charAt(0) + priority.slice(1).toLowerCase();
   const sourceBadge = getSourceBadge(task.creatorType);
   const taskAge = getTaskAge(task);
   const isRunning = task.status === AgentTaskStatus.IN_PROGRESS;
+  const assignedAgentProvider = task.assignedAgent?.llmProvider
+    ? LLM_PROVIDERS.find(
+        (llmProvider) => llmProvider.key === task.assignedAgent?.llmProvider,
+      )
+    : null;
+
+  const onClickAgentLink = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate(
+      `/dashboard/ask-agent?tab=AGENTS&agentProfileId=${task.assignedAgentId}`,
+    );
+  };
 
   return (
     <Wrapper
@@ -152,8 +167,19 @@ const TaskCardInner = ({
       <div className="task-meta">
         <div className="task-meta-left">
           {task.assignedAgent && (
-            <div className="task-meta-line">
-              <AgentIcon className="task-meta-line-icon" />
+            <div
+              className="task-meta-line task-agent-link"
+              onClick={onClickAgentLink}
+            >
+              {assignedAgentProvider?.icon ? (
+                <img
+                  src={assignedAgentProvider.icon}
+                  alt={assignedAgentProvider.label}
+                  className="task-meta-line-icon"
+                />
+              ) : (
+                <AgentIcon className="task-meta-line-icon" />
+              )}
               <span className="task-agent">{task.assignedAgent.name}</span>
             </div>
           )}

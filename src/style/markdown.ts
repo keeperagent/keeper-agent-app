@@ -99,4 +99,11 @@ export const markdownStyles = css`
     background: ${({ theme }: { theme: ITheme }) =>
       theme?.colorBgTag || "rgba(0,0,0,0.04)"};
   }
+
+  hr {
+    border: none;
+    border-top: 1px solid
+      ${({ theme }: { theme: ITheme }) => theme?.colorBorder || "#eee"};
+    margin: 1rem 0;
+  }
 `;

@@ -373,6 +373,11 @@ AppLogModel.belongsTo(ScheduleModel, {
   as: "schedule",
   constraints: false,
 });
+AppLogModel.belongsTo(AgentTaskModel, {
+  foreignKey: { name: "taskId", allowNull: true },
+  as: "task",
+  constraints: false,
+});
 
 /** Resolves when the database is ready (authenticate, sync, migrations done). Use to gate UI or main process until DB is loaded. */
 export const dbReady: Promise<void> = (async () => {

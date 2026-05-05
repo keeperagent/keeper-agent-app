@@ -41,6 +41,7 @@ const AgentProfileCard = (props: Props) => {
 
   const allowedToolCount = profile.allowedBaseTools?.length || 0;
   const allowedSkillCount = profile.allowedSkillIds?.length || 0;
+  const taskCount = profile.taskCount || 0;
 
   return (
     <Wrapper className={deleteConfirmOpen ? "icons-pinned" : ""}>
@@ -137,6 +138,17 @@ const AgentProfileCard = (props: Props) => {
                 {profile.campaign?.name || EMPTY_STRING}
               </span>
             </div>
+
+            {taskCount > 0 && (
+              <div className="item-stat">
+                <span className="item-label">
+                  {translate("agentTask.tasks")}
+                </span>
+                <span className="item-value">
+                  <AnimatedNumbers animateToNumber={taskCount} />
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

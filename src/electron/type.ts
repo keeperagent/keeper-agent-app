@@ -2707,6 +2707,7 @@ export type IAppLog = {
   schedule?: ISchedule;
   jobId?: number;
   taskId?: number;
+  task?: IAgentTask;
   actorType?: string;
   actorId?: number;
   actorName?: string;
@@ -3008,6 +3009,7 @@ export type IAgentProfile = {
   isAllWallet?: boolean;
   encryptKey?: string; // input only: plaintext value sent to backend, never returned from backend
   hasEncryptKey?: boolean; // output only: indicates whether an encryptKey is stored in DB
+  taskCount?: number;
   createAt?: number;
   updateAt?: number;
 };

@@ -33,13 +33,11 @@ class AgentTaskDB {
           {
             model: AgentProfileModel,
             as: "assignedAgent",
-            attributes: ["id", "name"],
             required: false,
           },
           {
             model: AgentProfileModel,
             as: "creatorAgent",
-            attributes: ["id", "name"],
             required: false,
           },
         ],
@@ -61,13 +59,11 @@ class AgentTaskDB {
           {
             model: AgentProfileModel,
             as: "assignedAgent",
-            attributes: ["id", "name"],
             required: false,
           },
           {
             model: AgentProfileModel,
             as: "creatorAgent",
-            attributes: ["id", "name"],
             required: false,
           },
         ],

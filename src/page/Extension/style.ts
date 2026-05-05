@@ -21,10 +21,10 @@ const PageWrapper = styled.div`
     display: flex;
     width: 100%;
     flex-wrap: wrap;
+    gap: 2rem;
 
     .item {
       flex-basis: 33.33%;
-      padding: 1rem 1rem;
     }
   }
 

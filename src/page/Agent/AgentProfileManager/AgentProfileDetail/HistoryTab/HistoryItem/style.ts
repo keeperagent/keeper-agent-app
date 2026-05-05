@@ -22,16 +22,58 @@ export const HistoryItemWrapper = styled.div`
     }
   }
 
+  .history-item-tag {
+    text-transform: lowercase;
+    flex-shrink: 0;
+  }
+
+  .history-item-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .history-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+  }
+
+  .history-item-duration {
+    font-size: 1rem;
+    font-weight: 600;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    opacity: 0.8;
+    letter-spacing: 0.02em;
+  }
+
+  .history-item-separator {
+    font-size: 1.3rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+    opacity: 0.4;
+  }
+
   .history-item-time {
     font-size: 1.1rem;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
-    flex: 1;
+  }
+
+  .history-item-chevron {
+    font-size: 1.1rem;
+    color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
   }
 
   .history-item-body {
     padding: 0.8rem 1.2rem 0;
     border-top: 1px solid
       ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgHistoryBody};
     font-size: 1.2rem;
     line-height: 1.6;
     color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
@@ -41,10 +83,21 @@ export const HistoryItemWrapper = styled.div`
 
     &.is-expanded {
       max-height: 30rem;
+      overflow-y: auto;
+    }
+
+    .task-description {
+      font-size: 1.1rem;
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
+      line-height: 1.5;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid
+        ${({ theme }: { theme: ITheme }) => theme?.colorBorder};
+      margin-bottom: 0.8rem;
     }
 
     .preview-text {
-      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextPrimary};
+      color: ${({ theme }: { theme: ITheme }) => theme?.colorTextSecondary};
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, Fragment } from "react";
+import { useSearchParams } from "react-router-dom";
 import { connect } from "react-redux";
 import { Button, Pagination, Spin } from "antd";
 import { SearchInput } from "@/component/Input";
 import {
   useGetListAgentProfile,
+  useGetOneAgentProfile,
   useDeleteAgentProfile,
 } from "@/hook/agentProfile";
 import { actSaveSelectedAgentProfile } from "@/redux/agentProfile";
@@ -35,9 +37,14 @@ const AgentProfileManager = (props: Props) => {
     onOpenChat,
     actSaveSelectedAgentProfile,
   } = props;
+  const [searchParams] = useSearchParams();
+  const agentProfileId: number | null =
+    Number(searchParams.get("agentProfileId")) || null;
   const { translate } = useTranslation();
 
   const { loading, getListAgentProfile } = useGetListAgentProfile();
+  const { getOneAgentProfile, data: fetchedAgentProfile } =
+    useGetOneAgentProfile();
   const { deleteAgentProfile } = useDeleteAgentProfile();
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,6 +55,21 @@ const AgentProfileManager = (props: Props) => {
   useEffect(() => {
     getListAgentProfile({ page: 1, pageSize: PAGE_SIZE });
   }, []);
+
+  useEffect(() => {
+    if (!agentProfileId) {
+      return;
+    }
+    getOneAgentProfile(agentProfileId);
+  }, [agentProfileId]);
+
+  useEffect(() => {
+    if (!fetchedAgentProfile) {
+      return;
+    }
+    actSaveSelectedAgentProfile(fetchedAgentProfile);
+    onOpenDetail(fetchedAgentProfile);
+  }, [fetchedAgentProfile]);
 
   const onSearch = (value: string) => {
     setSearchText(value);

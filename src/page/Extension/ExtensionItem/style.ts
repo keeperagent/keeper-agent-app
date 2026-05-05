@@ -6,12 +6,13 @@ const ItemWrapper = styled.div`
   display: flex;
   border-radius: 5px;
   border: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
-  background-color: ${({ theme }: { theme: ITheme }) => theme.colorBgPrimary};
+  background-color: ${({ theme }: { theme: ITheme }) => theme.colorBgCard};
   padding: 2rem 1.5rem;
   height: 14rem;
 
   &:hover {
-    border: 1px dashed var(--color-primary);
+    border: 1px solid
+      ${({ theme }: { theme: ITheme }) => theme.colorBorderHover};
   }
 
   .logo {

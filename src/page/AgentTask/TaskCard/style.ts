@@ -123,7 +123,11 @@ export const Wrapper = styled.div<{
     .task-meta-line-icon {
       width: 1.2rem;
       height: 1.2rem;
-      opacity: 0.6;
+      min-width: 1.2rem;
+      border-radius: 50%;
+      object-fit: cover;
+      opacity: 0.8;
+      flex-shrink: 0;
     }
   }
 
@@ -133,6 +137,22 @@ export const Wrapper = styled.div<{
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .task-agent-link {
+    cursor: pointer;
+    border-radius: 0.4rem;
+    padding: 0.1rem 0.3rem;
+    margin: -0.1rem -0.3rem;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: ${({ theme }: { theme: ITheme }) => theme.colorBgTag};
+
+      .task-agent {
+        color: var(--color-primary);
+      }
+    }
   }
 
   .task-age {

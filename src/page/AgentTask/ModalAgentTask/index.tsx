@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { connect } from "react-redux";
 import dayjs from "dayjs";
 import {
   Form,
@@ -12,12 +13,15 @@ import {
 } from "antd";
 import {
   IAgentTask,
+  IAgentProfile,
   AgentTaskPriority,
   AgentTaskStatus,
 } from "@/electron/type";
 import { useCreateAgentTask, useUpdateAgentTask } from "@/hook/agentTask";
+import { useGetListAgentProfile } from "@/hook/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
+import { RootState } from "@/redux/store";
 import { TaskHistory } from "../TaskHistory";
 import { TaskResult } from "../TaskResult";
 import { RightPanel, OptionWrapper, AgentSelectWrapper } from "./style";
@@ -29,28 +33,19 @@ const PRIORITY_OPTIONS = [
   { label: "Urgent", value: AgentTaskPriority.URGENT },
 ];
 const DEFAULT_TASK_TIMEOUT_MINUTES = 30;
-type AgentOption = {
-  label: string;
-  value: number;
-  activeCount?: number;
-  description?: string;
-  llmProvider?: string;
-};
 
 interface ModalAgentTaskProps {
   open: boolean;
   editingTask: IAgentTask | null;
-  agentOptions: AgentOption[];
   onClose: () => void;
+  listAgentProfile?: IAgentProfile[];
 }
 
-export const ModalAgentTask = ({
-  open,
-  editingTask,
-  agentOptions,
-  onClose,
-}: ModalAgentTaskProps) => {
+const ModalAgentTaskBase = (props: ModalAgentTaskProps) => {
+  const { open, editingTask, onClose, listAgentProfile = [] } = props;
   const { translate } = useTranslation();
+  const { getListAgentProfile } = useGetListAgentProfile();
+
   const [form] = Form.useForm();
   const {
     createAgentTask,
@@ -62,6 +57,30 @@ export const ModalAgentTask = ({
     loading: updateLoading,
     isSuccess: updateSuccess,
   } = useUpdateAgentTask();
+
+  useEffect(() => {
+    if (open) {
+      getListAgentProfile({ page: 1, pageSize: 100, searchText: "" });
+    }
+  }, [open]);
+
+  const agentOptions = useMemo(() => {
+    const profiles = [...listAgentProfile];
+
+    if (
+      editingTask?.assignedAgent != null &&
+      !profiles.some((profile) => profile.id === editingTask.assignedAgentId)
+    ) {
+      profiles.push(editingTask.assignedAgent);
+    }
+
+    return profiles.map((agent) => ({
+      label: agent.name || "",
+      value: agent.id!,
+      description: agent.description || "",
+      llmProvider: agent.llmProvider || "",
+    }));
+  }, [listAgentProfile, editingTask]);
 
   const canEditDueDate =
     !editingTask || editingTask.status === AgentTaskStatus.INIT;
@@ -160,11 +179,11 @@ export const ModalAgentTask = ({
               />
             </Form.Item>
 
-            <Form.Item
-              name="assignedAgentId"
-              label={`${translate("agentTaskAssignedAgentLabel")}:`}
-            >
-              <AgentSelectWrapper>
+            <AgentSelectWrapper>
+              <Form.Item
+                name="assignedAgentId"
+                label={`${translate("agentTaskAssignedAgentLabel")}:`}
+              >
                 <Select
                   options={agentOptions}
                   allowClear
@@ -196,8 +215,6 @@ export const ModalAgentTask = ({
                     const provider = LLM_PROVIDERS.find(
                       (provider) => provider.key === option.data.llmProvider,
                     );
-                    const activeCount = option.data.activeCount || 0;
-
                     return (
                       <OptionWrapper>
                         <div className="provider-col">
@@ -209,7 +226,6 @@ export const ModalAgentTask = ({
                             />
                           )}
                         </div>
-
                         <div className="info-col">
                           <div className="name">{option.data.label}</div>
                           {option.data.description && (
@@ -217,20 +233,13 @@ export const ModalAgentTask = ({
                               {option.data.description}
                             </div>
                           )}
-
-                          {activeCount > 0 && (
-                            <div className="active-count">
-                              {activeCount} active task
-                              {activeCount > 1 ? "s" : ""}
-                            </div>
-                          )}
                         </div>
                       </OptionWrapper>
                     );
                   }}
                 />
-              </AgentSelectWrapper>
-            </Form.Item>
+              </Form.Item>
+            </AgentSelectWrapper>
 
             <Row gutter={16}>
               <Col span={12}>
@@ -292,3 +301,7 @@ export const ModalAgentTask = ({
     </Modal>
   );
 };
+
+export const ModalAgentTask = connect((state: RootState) => ({
+  listAgentProfile: state?.AgentProfile?.listAgentProfile,
+}))(ModalAgentTaskBase);

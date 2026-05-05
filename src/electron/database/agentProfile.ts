@@ -6,7 +6,12 @@ import {
   formatAgentProfile,
 } from "@/electron/service/formatData";
 import { encryptionService } from "@/electron/service/encrypt";
-import { AgentProfileModel, CampaignModel, JobModel } from "./index";
+import {
+  AgentProfileModel,
+  AgentTaskModel,
+  CampaignModel,
+  JobModel,
+} from "./index";
 
 class AgentProfileDB {
   private _mainAgentReadyPromise: Promise<void> | null = null;
@@ -47,11 +52,29 @@ class AgentProfileDB {
         listDataAwait,
       ]);
 
+      const profileIds: number[] = listData?.map((item: any) => item.id) || [];
+      const taskCountRows: any[] = profileIds.length
+        ? await AgentTaskModel.count({
+            where: {
+              assignedAgentId: { [Op.in]: profileIds },
+            },
+            group: ["assignedAgentId"],
+          })
+        : [];
+
+      const taskCountMap: Record<number, number> = {};
+      for (const row of taskCountRows) {
+        taskCountMap[row.assignedAgentId] = Number(row.count);
+      }
       const totalPage = Math.ceil(totalData / Number(pageSize));
 
       return [
         {
-          data: listData?.map((item: any) => formatAgentProfile(item)) || [],
+          data:
+            listData?.map((item: any) => ({
+              ...formatAgentProfile(item),
+              taskCount: taskCountMap[item.id] || 0,
+            })) || [],
           totalData,
           page,
           pageSize,

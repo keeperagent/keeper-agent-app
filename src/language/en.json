@@ -188,6 +188,7 @@
   "agentTaskDescriptionPlaceholder": "Task description",
   "agentTaskAssignedAgentPlaceholder": "Select agent",
   "agentTaskNoActiveTasksLabel": "No active tasks",
+  "agentTask.tasks": "Task",
   "agentTask.retryTooltip": "Retry task",
   "agentTask.pinTooltip": "Pin task",
   "agentTask.unpinTooltip": "Unpin task",

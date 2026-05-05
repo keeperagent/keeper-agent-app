@@ -14,9 +14,6 @@ import {
 } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
 import { actSetPageName } from "@/redux/layout";
-import { agentTaskSelector } from "@/redux/agentTask";
-import { agentProfileSelector } from "@/redux/agentProfile";
-import { preferenceSelector } from "@/redux/preference";
 import { RootState } from "@/redux/store";
 import {
   IAgentTask,
@@ -554,7 +551,6 @@ const AgentTaskPage = (props: any) => {
       <ModalAgentTask
         open={modalOpen}
         editingTask={editingTask}
-        agentOptions={agentOptions}
         onClose={onCloseModal}
       />
     </Wrapper>
@@ -563,9 +559,9 @@ const AgentTaskPage = (props: any) => {
 
 export default connect(
   (state: RootState) => ({
-    listAgentTask: agentTaskSelector(state).listAgentTask,
-    listAgentProfile: agentProfileSelector(state).listAgentProfile,
-    preference: preferenceSelector(state).preference,
+    listAgentTask: state?.AgentTask?.listAgentTask,
+    listAgentProfile: state?.AgentProfile?.listAgentProfile,
+    preference: state?.Preference?.preference,
   }),
   { actSetPageName },
 )(AgentTaskPage);

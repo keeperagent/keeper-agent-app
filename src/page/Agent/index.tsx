@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useMemo, Fragment } from "react";
+import { useSearchParams } from "react-router-dom";
 import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
@@ -56,7 +57,10 @@ const AgentPage = (props: any) => {
   const currentProvider =
     (selectedAgentProfile?.llmProvider as LLMProvider) || LLMProvider.CLAUDE;
 
-  const [activeTab, setActiveTab] = useState(TAB.AGENT);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || TAB.AGENT,
+  );
   const [encryptKey, setEncryptKey] = useState("");
   const [contentReady, setContentReady] = useState(false);
   const [modelByProvider, setModelByProvider] = useState<
