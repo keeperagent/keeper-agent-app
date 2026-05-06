@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import { IAgentProfile, IAppLog, IGetListResponse } from "@/electron/type";
 import {
@@ -65,6 +66,9 @@ const useCreateAgentProfile = () => {
             dispatch(actSaveCreateAgentProfile(payload.data));
           }
         },
+        onError: (errorMessage) => {
+          message.error(errorMessage);
+        },
       },
     );
 
@@ -88,6 +92,9 @@ const useUpdateAgentProfile = () => {
             }
           }
         },
+        onError: (errorMessage) => {
+          message.error(errorMessage);
+        },
       },
     );
 
@@ -109,6 +116,9 @@ const useDeleteAgentProfile = () => {
           invalidatePersistedSession(pendingIdRef.current);
           pendingIdRef.current = null;
         }
+      },
+      onError: (errorMessage) => {
+        message.error(errorMessage);
       },
     },
   );

@@ -69,6 +69,17 @@ export const agentSlice = createSlice({
     ) => {
       state.selectedAgentProfile = action.payload;
       state.agentStats = null;
+      const profile = action.payload;
+      if (profile?.id && !state.agentContextMap[profile.id]) {
+        state.agentContextMap[profile.id] = {
+          chainKey: profile.chainKey || "",
+          nodeEndpointGroupId: profile.nodeEndpointGroupId || null,
+          tokenAddress: "",
+          campaignId: profile.campaignId || null,
+          listProfileId: profile.profileIds || [],
+          isAllWallet: profile.isAllWallet || false,
+        };
+      }
     },
     actSaveChainKey: (state: IAgentState, action: PayloadAction<string>) => {
       const context = ensureContext(state);
