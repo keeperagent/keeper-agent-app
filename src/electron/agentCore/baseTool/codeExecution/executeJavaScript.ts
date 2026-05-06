@@ -119,7 +119,10 @@ export const executeJavaScriptTool = (toolContext?: ToolContext) =>
         });
       }
       const code = pendingCode;
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot execute code in planning mode. Call confirm_approval with your execution plan first to get user approval.",

@@ -73,7 +73,10 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
       console.log(
         `[transfer_solana_token] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
       );
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot execute transfer in planning mode. Call confirm_approval with your execution plan first to get user approval.",

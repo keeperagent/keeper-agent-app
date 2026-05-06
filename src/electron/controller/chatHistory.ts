@@ -13,8 +13,15 @@ export const chatHistoryController = () => {
     MESSAGE.CHAT_HISTORY_SAVE_MESSAGE,
     MESSAGE.CHAT_HISTORY_SAVE_MESSAGE_RES,
     async (event, payload) => {
-      const { role, content, timestamp, sessionId, runId, agentProfileId } =
-        payload || {};
+      const {
+        role,
+        content,
+        timestamp,
+        sessionId,
+        runId,
+        agentProfileId,
+        toolCallSequence,
+      } = payload || {};
       const [data, err] = await chatHistoryDB.saveMessage({
         role: (role as ChatRole) || ChatRole.HUMAN,
         content: content || "",
@@ -23,6 +30,7 @@ export const chatHistoryController = () => {
         platformChatId: ChatPlatform.KEEPER,
         sessionId: sessionId || null,
         runId: runId || null,
+        toolCallSequence: toolCallSequence || null,
         agentProfileId,
       });
       event.reply(MESSAGE.CHAT_HISTORY_SAVE_MESSAGE_RES, {

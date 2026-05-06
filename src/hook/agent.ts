@@ -64,6 +64,19 @@ const isErrorResult = (result: unknown): boolean => {
   }
 };
 
+const parseToolCallSequence = (
+  raw: string | null | undefined,
+): ToolCallState[] | undefined => {
+  if (!raw) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+};
+
 const normalizeSteps = (steps: any[]): AgentToolStep[] => {
   if (!Array.isArray(steps)) {
     return [];
@@ -167,6 +180,7 @@ const useDashboardAgent = (profileId: number | null = null) => {
       content: msg.content,
       timestamp: msg.timestamp || Date.now(),
       agentProfileId: profileIdRef.current,
+      toolCallSequence: msg.toolCalls ? JSON.stringify(msg.toolCalls) : null,
     });
 
     // Detect when the agent asks the user for their encryptKey so the next
@@ -196,7 +210,13 @@ const useDashboardAgent = (profileId: number | null = null) => {
     const handleLoad = (_event: any, payload: any) => {
       const { data } = payload || {};
       if (Array.isArray(data) && data.length > 0) {
-        setConversation(data as AgentMessage[]);
+        const messages: AgentMessage[] = data.map((row: any) => ({
+          role: row.role,
+          content: row.content,
+          timestamp: row.timestamp,
+          toolCalls: parseToolCallSequence(row.toolCallSequence),
+        }));
+        setConversation(messages);
       }
       unsubscribe?.();
     };

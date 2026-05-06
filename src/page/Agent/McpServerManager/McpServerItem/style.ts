@@ -13,6 +13,10 @@ export const Wrapper = styled.div`
 
   &:hover {
     border-color: ${({ theme }: { theme: ITheme }) => theme.colorBorderHover};
+
+    .item-name {
+      color: var(--color-text-hover);
+    }
   }
 
   .item-header {

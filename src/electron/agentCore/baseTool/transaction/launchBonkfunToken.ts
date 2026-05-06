@@ -81,7 +81,10 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
       console.log(
         `[launch_bonkfun_token] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
       );
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot launch token in planning mode. Call confirm_approval with your execution plan first to get user approval.",

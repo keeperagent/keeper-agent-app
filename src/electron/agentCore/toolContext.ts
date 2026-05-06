@@ -42,6 +42,8 @@ interface IToolContextData {
   onAllDone?: (todos: any[]) => void;
   // Experience hint injected once into the first model call of a run
   experienceHint?: string | null;
+  // When true the session runs autonomously — approval gate is bypassed for all execution tools
+  autoApprove?: boolean;
 }
 
 /**
@@ -126,6 +128,9 @@ export class ToolContext {
     }
     if ("experienceHint" in data) {
       this.data.experienceHint = data.experienceHint;
+    }
+    if (data.autoApprove !== undefined) {
+      this.data.autoApprove = data.autoApprove;
     }
   }
 
@@ -214,5 +219,9 @@ export class ToolContext {
 
   get experienceHint(): string | null | undefined {
     return this.data.experienceHint;
+  }
+
+  get autoApprove(): boolean {
+    return this.data.autoApprove === true;
   }
 }

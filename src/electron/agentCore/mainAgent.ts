@@ -170,10 +170,9 @@ export const createMainAgent = async (
       delegateTaskTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
-  const planningTools = [
-    requestApprovalTool(toolContext),
-    confirmApprovalTool(toolContext),
-  ];
+  const planningTools = toolContext.autoApprove
+    ? []
+    : [requestApprovalTool(toolContext), confirmApprovalTool(toolContext)];
 
   const codeWriteTools = [
     isToolEnabled(BASE_TOOL_KEYS.WRITE_JAVASCRIPT) &&
@@ -182,7 +181,7 @@ export const createMainAgent = async (
 
   const systemPrompt =
     mainProfile?.systemPrompt ||
-    buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH);
+    buildSystemPrompt(subagents, MEMORY_VIRTUAL_PATH, toolContext.autoApprove);
   const agent = createDeepAgent({
     model: llm,
     systemPrompt,

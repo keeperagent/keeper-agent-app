@@ -197,7 +197,10 @@ export const swapOnJupiterTool = (
       console.log(
         `[${TOOL_KEYS.SWAP_ON_JUPITER}] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
       );
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot execute swap in planning mode. Call confirm_approval with your execution plan first to get user approval.",

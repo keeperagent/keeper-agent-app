@@ -13,6 +13,9 @@ export const createConfirmApprovalGuardMiddleware = (
       if (request?.toolCall?.name !== "confirm_approval") {
         return handler(request);
       }
+      if (toolContext.autoApprove) {
+        return handler(request);
+      }
       if (toolContext.planState !== PlanState.DRAFTED) {
         logEveryWhere({
           message: `[ConfirmApprovalGuard] Blocked confirm_approval — planState="${toolContext.planState}"`,
@@ -24,6 +27,7 @@ export const createConfirmApprovalGuardMiddleware = (
           status: "error",
         });
       }
+
       return handler(request);
     },
   });
@@ -34,6 +38,9 @@ export const createExecuteGuardMiddleware = (toolContext: ToolContext) =>
     name: "ExecuteGuard",
     wrapToolCall: async (request: any, handler: any) => {
       if (request?.toolCall?.name !== "execute") {
+        return handler(request);
+      }
+      if (toolContext.autoApprove) {
         return handler(request);
       }
       if (toolContext.planState !== PlanState.APPROVED) {

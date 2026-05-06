@@ -140,6 +140,7 @@ const SOLSCAN_LAUNCH_FORMAT =
 export const buildSystemPrompt = (
   subagents: SubAgent[],
   memoryVirtualPath: string,
+  autoApprove = false,
 ) => {
   const workspacePath = getWorkspaceDir();
   const subagentNames = subagents.map((s) => s.name);
@@ -163,8 +164,12 @@ NEVER write to memory:
 
 Stop if you notice these thoughts forming:
 
-- "skip write_todos" → WRONG: \`write_todos\` is always the first tool call — ONE exception: if a skill applies, read its SKILL.md first (pre-planning prep), then call \`write_todos\`
-- "skip approval, it's obvious" → WRONG: always \`request_approval\` → \`confirm_approval\` before execution
+- "skip write_todos" → WRONG: \`write_todos\` is always the first tool call — ONE exception: if a skill applies, read its SKILL.md first (pre-planning prep), then call \`write_todos\`${
+    !autoApprove
+      ? `
+- "skip approval, it's obvious" → WRONG: always \`request_approval\` → \`confirm_approval\` before execution`
+      : ""
+  }
 - "user rejected, I'll adjust and retry" → STOP: rejection means stop entirely — tell the user and wait
 - "use chartjs/D3, it's faster" → WRONG: all charts go through \`visualization_agent\`, no exceptions
 - "skill exists but I know better" → 1% rule: read its SKILL.md first, before write_todos or anything else
@@ -201,9 +206,13 @@ Only ask when a required parameter is completely absent from both the user's mes
 
 If all parameters are present: \`write_todos\` is your very first output — zero text, no questions.
 
-**Note:** "proceed without clarifying" does NOT skip the approval gate. The approval gate (\`request_approval\` → \`confirm_approval\`) is always required before swaps, transfers, code, or workflows — these are two separate things.
+${
+  !autoApprove
+    ? `**Note:** "proceed without clarifying" does NOT skip the approval gate. The approval gate (\`request_approval\` → \`confirm_approval\`) is always required before swaps, transfers, code, or workflows — these are two separate things.
 
-## Todo-driven execution
+`
+    : ""
+}## Todo-driven execution
 - \`write_todos\` = progress tracker. Each item = one high-level step (research, transaction, code, etc.).
 - \`request_approval\`/\`confirm_approval\` = approval gate called **during** a \`transaction\`, \`code\`, or \`workflow\` step — NOT separate todo items. Two valid patterns:
   - **Single step**: one transaction step covers request_approval + confirm_approval + task(trade_agent) end-to-end.
@@ -268,7 +277,9 @@ Workspace: \`${workspacePath}\`. Use relative paths for read_file/write_file (e.
 - \`write_file\` / \`edit_file\`: only for data files, configs, notes, and output — NEVER for JavaScript code. All code must go through \`write_javascript\` (approval required).
 - \`execute\`: requires approval gate — treat it exactly like \`execute_javascript\`.
 
-## Approval gate
+${
+  !autoApprove
+    ? `## Approval gate
 You MUST call \`request_approval\` then \`confirm_approval\` before executing any of these tools:
 - On-chain: \`swap_on_jupiter\`, \`swap_on_kyberswap\`, \`transfer_solana_token\`, \`broadcast_transaction_evm\`, \`broadcast_transaction_solana\`, \`launch_pumpfun_token\`, \`launch_bonkfun_token\`
 - Code execution: \`execute_javascript\`, \`execute\` (exception: NEVER use code execution to render charts — use \`visualization_agent\` instead)
@@ -292,7 +303,9 @@ Steps — no shortcuts:
 All tools listed above are BLOCKED during approval mode — they return an error until \`confirm_approval\` is approved.
 All other tools (balance checks, price lookups, web search, read-only queries) work normally without approval gate.
 
-## Swap strategy rules
+`
+    : ""
+}## Swap strategy rules
 Priority order — apply the FIRST matching rule. These rules are self-contained: never ask the user to clarify strategy or wallet selection when strategy keywords are present.
 1. "total" keyword present (e.g. "buy total X", "buy total $X", "buy total X randomly") → TOTAL_SPLIT_RANDOM across ALL wallets in listCampaignProfileId. "randomly" is ignored when "total" is also present.
 2. "randomly" / "random" keyword present (without "total") → RANDOM_PER_WALLET across ALL wallets in listCampaignProfileId

@@ -627,6 +627,7 @@ export type IpcChatHistorySaveMessagePayload = {
   sessionId?: string | null;
   runId?: string | null;
   agentProfileId?: number | null;
+  toolCallSequence?: string | null;
 };
 
 export type IpcChatHistoryLoadPayload = {

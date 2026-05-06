@@ -227,7 +227,10 @@ export const swapOnKyberswapTool = (
       console.log(
         `[swap_on_kyberswap] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
       );
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot execute swap in planning mode. Call confirm_approval with your execution plan first to get user approval.",

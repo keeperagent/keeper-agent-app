@@ -44,7 +44,10 @@ export const runWorkflowTool = (toolContext: ToolContext) =>
       encryptKey?: string;
       variables?: Record<string, string>;
     }) => {
-      if (toolContext?.planState !== PlanState.APPROVED) {
+      if (
+        !toolContext?.autoApprove &&
+        toolContext?.planState !== PlanState.APPROVED
+      ) {
         return safeStringify({
           error:
             "Cannot run workflow in planning mode. Call confirm_approval with your execution plan first to get user approval.",
