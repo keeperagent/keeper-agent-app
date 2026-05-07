@@ -690,26 +690,35 @@ class AgentChatBridge {
         },
       );
 
+      const toolRunIdMap = new Map<string, string>();
+
       await consumeAgentStream(eventStream, abortController.signal, {
         onText: (text, evtRunId) => {
           textBuffers.set(evtRunId, (textBuffers.get(evtRunId) || "") + text);
         },
         onToolStart: (toolName, evtRunId, input, subagentType) => {
+          const runIdForReply = evtRunId || `${toolName}_${Date.now()}`;
+          toolRunIdMap.set(evtRunId || toolName, runIdForReply);
           options?.onToolStart?.(toolName, subagentType);
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_START, {
             sessionId,
             toolName,
             subagentType,
-            runId: evtRunId || `${toolName}_${Date.now()}`,
+            runId: runIdForReply,
             input,
           });
         },
         onToolEnd: (toolName, evtRunId, result, input) => {
+          const runIdForReply =
+            toolRunIdMap.get(evtRunId || toolName) ||
+            evtRunId ||
+            `${toolName}_end`;
+          toolRunIdMap.delete(evtRunId || toolName);
           options?.onToolComplete?.(toolName);
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE, {
             sessionId,
             toolName,
-            runId: evtRunId || "",
+            runId: runIdForReply,
             result: truncateToolResultForIpc(result),
           });
           steps.push({
@@ -763,6 +772,13 @@ class AgentChatBridge {
 
       const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
 
+      for (const buffered of textBuffers.values()) {
+        if (buffered) {
+          finalOutput += buffered;
+        }
+      }
+      textBuffers.clear();
+
       if (abortController.signal.aborted) {
         return {
           output: finalOutput,
@@ -779,6 +795,13 @@ class AgentChatBridge {
       return { output: finalOutput, steps, runId, todoTemplate, turnUsage };
     } catch (err: any) {
       const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
+
+      for (const buffered of textBuffers.values()) {
+        if (buffered) {
+          finalOutput += buffered;
+        }
+      }
+      textBuffers.clear();
 
       if (abortController.signal.aborted) {
         return {
