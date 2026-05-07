@@ -17,6 +17,7 @@ import { mainWindow } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import type { IAgentProfile } from "@/electron/type";
 import { LLMProvider } from "@/electron/type";
+import { consumeAgentStream } from "@/electron/agentCore/utils";
 import { extractMemoryFromConversation } from "./memoryExtraction";
 import { ChatRole } from "./types";
 
@@ -188,72 +189,28 @@ class AgentProfileBridge {
         },
       );
 
-      for await (const evt of eventStream) {
-        if (abortController.signal.aborted) {
-          break;
-        }
-
-        if (
-          evt.event === "on_chat_model_stream" &&
-          evt.data?.chunk?.content &&
-          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
-        ) {
-          const content = evt.data.chunk.content;
-          let text = "";
-          if (typeof content === "string") {
-            text = content;
-          } else if (Array.isArray(content)) {
-            text = content
-              .filter(
-                (chunk: any) =>
-                  chunk?.type === "text" || typeof chunk === "string",
-              )
-              .map((chunk: any) =>
-                typeof chunk === "string" ? chunk : chunk.text || "",
-              )
-              .join("");
-          }
-          if (text) {
-            finalOutput += text;
-            ipcEvent.reply(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, {
-              sessionId,
-              chunk: text,
-            });
-          }
-        }
-
-        if (evt.event === "on_tool_start") {
-          const toolName = evt.name || "unknown";
-          let subagentType: string | undefined;
-          if (toolName === "task") {
-            const raw = evt.data?.input?.input || evt.data?.input;
-            const parsed =
-              typeof raw === "string"
-                ? (() => {
-                    try {
-                      return JSON.parse(raw);
-                    } catch {
-                      return {};
-                    }
-                  })()
-                : raw;
-            subagentType = parsed?.subagent_type as string | undefined;
-          }
+      await consumeAgentStream(eventStream, abortController.signal, {
+        onText: (text) => {
+          finalOutput += text;
+          ipcEvent.reply(MESSAGE.AGENT_PROFILE_STREAM_CHUNK, {
+            sessionId,
+            chunk: text,
+          });
+        },
+        onToolStart: (toolName, runId, input, subagentType) => {
           ipcEvent.reply(MESSAGE.AGENT_PROFILE_TOOL_START, {
             sessionId,
             toolName,
             subagentType,
           });
-        }
-
-        if (evt.event === "on_tool_end") {
-          const toolName = evt.name || "unknown";
+        },
+        onToolEnd: (toolName) => {
           ipcEvent.reply(MESSAGE.AGENT_PROFILE_TOOL_COMPLETE, {
             sessionId,
             toolName,
           });
-        }
-      }
+        },
+      });
 
       if (abortController.signal.aborted) {
         return { output: finalOutput, stopped: true };

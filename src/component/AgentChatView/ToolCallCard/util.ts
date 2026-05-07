@@ -1,6 +1,6 @@
 import { getToolDisplayName, TOOL_KEYS } from "@/electron/constant";
 import { TodoItemStatus } from "@/electron/type";
-import { type ToolCallState, ToolCallStateStatus } from "../util";
+import { type ToolCallState, ToolCallStateStatus, stripContext } from "../util";
 
 export { TodoItemStatus };
 
@@ -234,6 +234,9 @@ const formatFieldValue = (field: string, value: unknown): string => {
         return label.replace(/^www\./, "");
       } catch {}
     }
+  }
+  if (typeof value === "string") {
+    return truncateValue(stripContext(value), 1000);
   }
   return truncateValue(value, 1000);
 };

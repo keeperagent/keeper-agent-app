@@ -22,9 +22,14 @@ import { useGetListAgentProfile } from "@/hook/agentProfile";
 import { useTranslation } from "@/hook/useTranslation";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { RootState } from "@/redux/store";
-import { TaskHistory } from "../TaskHistory";
-import { TaskResult } from "../TaskResult";
-import { RightPanel, OptionWrapper, AgentSelectWrapper } from "./style";
+import { TaskResult } from "./TaskResult";
+import { TaskExecutionLog } from "./TaskExecutionLog";
+import { TaskHistory } from "./TaskHistory";
+import {
+  TaskExecutionWrapper,
+  OptionWrapper,
+  AgentSelectWrapper,
+} from "./style";
 
 const PRIORITY_OPTIONS = [
   { label: "Low", value: AgentTaskPriority.LOW },
@@ -83,7 +88,9 @@ const ModalAgentTaskBase = (props: ModalAgentTaskProps) => {
   }, [listAgentProfile, editingTask]);
 
   const canEditDueDate =
-    !editingTask || editingTask.status === AgentTaskStatus.INIT;
+    !editingTask ||
+    editingTask.status === AgentTaskStatus.INIT ||
+    editingTask.status === AgentTaskStatus.PAUSED;
 
   const hasOutput =
     Boolean(editingTask) &&
@@ -91,6 +98,9 @@ const ModalAgentTaskBase = (props: ModalAgentTaskProps) => {
       editingTask?.result != null) ||
       (editingTask?.status === AgentTaskStatus.FAILED &&
         Boolean(editingTask?.errorMessage)));
+
+  const showRightPanel =
+    Boolean(editingTask) && (hasOutput || Boolean(editingTask?.startedAt));
 
   useEffect(() => {
     form.setFieldsValue({
@@ -139,7 +149,7 @@ const ModalAgentTaskBase = (props: ModalAgentTaskProps) => {
       onOk={onSubmit}
       confirmLoading={createLoading || updateLoading}
       destroyOnHidden
-      width={hasOutput ? 1200 : 520}
+      width={showRightPanel ? 1200 : 520}
       style={{ top: "5rem" }}
     >
       <Row gutter={24} align="top" wrap={false}>
@@ -289,12 +299,13 @@ const ModalAgentTaskBase = (props: ModalAgentTaskProps) => {
           </Form>
         </Col>
 
-        {hasOutput && editingTask && (
+        {showRightPanel && editingTask && (
           <Col span={13}>
-            <RightPanel>
+            <TaskExecutionWrapper>
               <TaskResult task={editingTask} />
+              <TaskExecutionLog task={editingTask} />
               <TaskHistory task={editingTask} />
-            </RightPanel>
+            </TaskExecutionWrapper>
           </Col>
         )}
       </Row>

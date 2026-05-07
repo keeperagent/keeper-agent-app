@@ -11,6 +11,7 @@ import {
 import type {
   IpcGetListAgentProfilePayload,
   IpcGetOneAgentProfilePayload,
+  IpcGetAgentProfileEncryptKeyPayload,
   IpcCreateAgentProfilePayload,
   IpcUpdateAgentProfilePayload,
   IpcDeletePayload,
@@ -199,6 +200,25 @@ const useGetMainAgentSystemPrompt = () => {
   return { systemPrompt, loading, fetchSystemPrompt };
 };
 
+const useGetAgentProfileEncryptKey = () => {
+  const [encryptKey, setEncryptKey] = useState<string>("");
+
+  const { execute, loading } = useIpcAction<IpcGetAgentProfileEncryptKeyPayload>(
+    MESSAGE.GET_AGENT_PROFILE_ENCRYPT_KEY,
+    MESSAGE.GET_AGENT_PROFILE_ENCRYPT_KEY_RES,
+    {
+      onSuccess: (payload) => setEncryptKey(payload?.encryptKey || ""),
+    },
+  );
+
+  const getAgentProfileEncryptKey = (id: number) => {
+    setEncryptKey("");
+    execute({ id });
+  };
+
+  return { loading, encryptKey, getAgentProfileEncryptKey };
+};
+
 export {
   useGetListAgentProfile,
   useGetOneAgentProfile,
@@ -209,4 +229,5 @@ export {
   useSaveAgentProfileMemory,
   useGetListAgentProfileLog,
   useGetMainAgentSystemPrompt,
+  useGetAgentProfileEncryptKey,
 };

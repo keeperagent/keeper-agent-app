@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pagination, Spin, Empty } from "antd";
 import { IAppLog } from "@/electron/type";
 import { useGetListAgentProfileLog } from "@/hook/agentProfile";
@@ -18,10 +18,25 @@ const HistoryTab = ({ agentProfileId }: Props) => {
   const [page, setPage] = useState(1);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const { data, loading, getListAgentProfileLog } = useGetListAgentProfileLog();
+  const autoExpandKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     getListAgentProfileLog(agentProfileId, page, PAGE_SIZE);
   }, [agentProfileId, page]);
+
+  useEffect(() => {
+    const firstLog = data?.data?.[0];
+    if (!firstLog?.id) {
+      return;
+    }
+
+    const key = `${agentProfileId}-${page}`;
+    if (autoExpandKeyRef.current === key) {
+      return;
+    }
+    autoExpandKeyRef.current = key;
+    setExpandedIds(new Set([firstLog.id]));
+  }, [data, agentProfileId, page]);
 
   const toggleExpand = (logId: number) => {
     setExpandedIds((prev) => {

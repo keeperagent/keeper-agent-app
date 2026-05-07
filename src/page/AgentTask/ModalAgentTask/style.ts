@@ -1,27 +1,13 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
 
-export const RightPanel = styled.div`
+export const TaskExecutionWrapper = styled.div`
   border-left: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
   padding-left: 2.4rem;
-  max-height: 60rem;
-  overflow-y: auto;
+  padding-right: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-
-  &::-webkit-scrollbar {
-    width: 0.4rem;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }: { theme: ITheme }) => theme.scrollBarThumbColor};
-    border-radius: 10rem;
-  }
 `;
 
 export const AgentSelectWrapper = styled.div`

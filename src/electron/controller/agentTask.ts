@@ -16,7 +16,11 @@ import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
   IpcDeletePayload,
+  IpcPauseAgentTaskPayload,
+  IpcRerunAgentTaskPayload,
   IpcGetAgentAnalyticsPayload,
+  IpcGetAgentTaskLogPayload,
+  IpcGetLiveToolCallsPayload,
 } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
 
@@ -75,7 +79,7 @@ export const agentTaskController = () => {
         });
       }
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
-      agentTaskDispatcher.dispatch();
+      setTimeout(() => agentTaskDispatcher.dispatch(), 3000);
     },
   );
 
@@ -117,6 +121,61 @@ export const agentTaskController = () => {
     },
   );
 
+  onIpc<IpcPauseAgentTaskPayload>(
+    MESSAGE.PAUSE_AGENT_TASK,
+    MESSAGE.PAUSE_AGENT_TASK_RES,
+    async (event, payload) => {
+      const { id } = payload;
+      agentTaskExecutor.pauseTask(id);
+      event.reply(MESSAGE.PAUSE_AGENT_TASK_RES, { data: true });
+    },
+  );
+
+  onIpc<IpcRerunAgentTaskPayload>(
+    MESSAGE.RERUN_AGENT_TASK,
+    MESSAGE.RERUN_AGENT_TASK_RES,
+    async (event, payload) => {
+      const { id } = payload;
+      const [task, err] = await agentTaskDB.getOneAgentTask(id);
+      if (err || !task) {
+        event.reply(MESSAGE.RERUN_AGENT_TASK_RES, { error: "Task not found" });
+        return;
+      }
+      const [result, createErr] = await agentTaskDB.createAgentTask({
+        title: task.title,
+        description: task.description,
+        assignedAgentId: task.assignedAgentId,
+        priority: task.priority,
+        dueAt: task.dueAt,
+        timeout: task.timeout,
+        maxRetries: task.maxRetries,
+        metadata: task.metadata,
+        creatorType: task.creatorType,
+        status: AgentTaskStatus.PAUSED,
+        retryCount: 0,
+      });
+      if (createErr || !result) {
+        event.reply(MESSAGE.RERUN_AGENT_TASK_RES, {
+          error: createErr?.message,
+        });
+        return;
+      }
+      if (result.id) {
+        appLogDB.createAppLog({
+          logType: AppLogType.TASK,
+          taskId: result.id,
+          actorType: AppLogActorType.USER,
+          action: AppLogTaskAction.TASK_CREATED,
+          status: AgentTaskStatus.PAUSED,
+          message: result.title,
+          startedAt: Date.now(),
+        });
+      }
+      event.reply(MESSAGE.RERUN_AGENT_TASK_RES, { data: result });
+      sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
+    },
+  );
+
   onIpc<IpcGetAgentAnalyticsPayload>(
     MESSAGE.GET_AGENT_ANALYTICS,
     MESSAGE.GET_AGENT_ANALYTICS_RES,
@@ -124,6 +183,32 @@ export const agentTaskController = () => {
       const { fromTimestamp } = payload;
       const [result] = await agentTaskDB.getAgentAnalytics(fromTimestamp);
       event.reply(MESSAGE.GET_AGENT_ANALYTICS_RES, { data: result });
+    },
+  );
+
+  onIpc<IpcGetLiveToolCallsPayload>(
+    MESSAGE.GET_LIVE_TOOL_CALLS,
+    MESSAGE.GET_LIVE_TOOL_CALLS_RES,
+    async (event, payload) => {
+      const { taskId } = payload || {};
+      const toolCalls = agentTaskExecutor.getLiveToolCalls(taskId);
+      event.reply(MESSAGE.GET_LIVE_TOOL_CALLS_RES, { data: toolCalls });
+    },
+  );
+
+  onIpc<IpcGetAgentTaskLogPayload>(
+    MESSAGE.GET_AGENT_TASK_LOG,
+    MESSAGE.GET_AGENT_TASK_LOG_RES,
+    async (event, payload) => {
+      const { taskId } = payload || {};
+      const [result] = await appLogDB.getListAppLog({
+        page: 1,
+        pageSize: 100,
+        logType: AppLogType.TASK,
+        taskId,
+      });
+      const logs = result?.data || [];
+      event.reply(MESSAGE.GET_AGENT_TASK_LOG_RES, { data: logs });
     },
   );
 };

@@ -27,7 +27,12 @@ import {
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
-import { looksLikeEncryptKey, isErrorResult } from "@/electron/agentCore/utils";
+import {
+  looksLikeEncryptKey,
+  isErrorResult,
+  extractUsageFromMeta,
+  consumeAgentStream,
+} from "@/electron/agentCore/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { experienceRetriever } from "@/electron/agentCore/experienceEngine/experienceRetriever";
@@ -40,22 +45,6 @@ import type { IChatAdapter, IPlatformMessage } from "./types";
 
 const COMPACTION_THRESHOLD = 40_000;
 const MIN_MESSAGES_FOR_COMPACTION = 10;
-
-/**
- * Extracts the raw string content from a tool's output.
- * LangChain wraps tool outputs in a ToolMessage object ({ lc, type, kwargs: { content } }).
- * We need to unwrap it to get the actual string the tool returned.
- */
-const extractToolOutput = (rawOutput: any): string => {
-  if (typeof rawOutput === "string") {
-    return rawOutput;
-  }
-  const content = rawOutput?.kwargs?.content ?? rawOutput?.content;
-  if (typeof content === "string") {
-    return content;
-  }
-  return JSON.stringify(rawOutput || "");
-};
 
 const truncateToolResultForIpc = (
   result: string,
@@ -591,6 +580,7 @@ class AgentChatBridge {
       outputTokens: 0,
       cacheRead: 0,
       cacheCreation: 0,
+      cacheHitPercent: 0,
     };
 
     if (this.activeRuns.has(sessionId)) {
@@ -700,79 +690,47 @@ class AgentChatBridge {
         },
       );
 
-      for await (const evt of eventStream) {
-        if (abortController.signal.aborted) {
-          break;
-        }
+      const toolRunIdMap = new Map<string, string>();
 
-        // Streaming text chunks — buffer per run_id, flush only if no tool calls
-        if (
-          evt.event === "on_chat_model_stream" &&
-          evt.data?.chunk?.content &&
-          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
-        ) {
-          const content = evt.data.chunk.content;
-          let text = "";
-          if (typeof content === "string") {
-            text = content;
-          } else if (Array.isArray(content)) {
-            text = content
-              .filter(
-                (chunk: any) =>
-                  chunk?.type === "text" || typeof chunk === "string",
-              )
-              .map((chunk: any) =>
-                typeof chunk === "string" ? chunk : chunk.text || "",
-              )
-              .join("");
-          }
-          if (text) {
-            const runId = evt.run_id || "default";
-            textBuffers.set(runId, (textBuffers.get(runId) || "") + text);
-          }
-        }
-
-        // Tool start
-        if (evt.event === "on_tool_start") {
-          const toolName = evt.name || "unknown";
-          let subagentType: string | undefined;
-          if (toolName === "task") {
-            const raw = evt.data?.input?.input || evt.data?.input;
-            const parsed =
-              typeof raw === "string"
-                ? (() => {
-                    try {
-                      return JSON.parse(raw);
-                    } catch {
-                      return {};
-                    }
-                  })()
-                : raw;
-            subagentType = parsed?.subagent_type as string | undefined;
-          }
+      await consumeAgentStream(eventStream, abortController.signal, {
+        onText: (text, evtRunId) => {
+          textBuffers.set(evtRunId, (textBuffers.get(evtRunId) || "") + text);
+        },
+        onToolStart: (toolName, evtRunId, input, subagentType) => {
+          const runIdForReply = evtRunId || `${toolName}_${Date.now()}`;
+          toolRunIdMap.set(evtRunId || toolName, runIdForReply);
           options?.onToolStart?.(toolName, subagentType);
-          const toolInput = evt.data?.input || {};
           options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_START, {
             sessionId,
             toolName,
             subagentType,
-            runId: evt?.run_id || `${toolName}_${Date.now()}`,
-            input: toolInput,
+            runId: runIdForReply,
+            input,
           });
-        }
-
-        // Model end — flush buffered text if no tool calls, discard if preamble.
-        // No namespace filter here — the buffer only contains text from top-level
-        // stream events that passed the "|" filter, so subagent end events will
-        // simply find an empty buffer and do nothing.
-        if (evt.event === "on_chat_model_end") {
-          const runId = evt.run_id || "default";
-          const bufferedText = textBuffers.get(runId) || "";
-          textBuffers.delete(runId);
-
-          const output = evt.data?.output;
-          const hasToolCalls =
-            Array.isArray(output?.tool_calls) && output.tool_calls.length > 0;
+        },
+        onToolEnd: (toolName, evtRunId, result, input) => {
+          const runIdForReply =
+            toolRunIdMap.get(evtRunId || toolName) ||
+            evtRunId ||
+            `${toolName}_end`;
+          toolRunIdMap.delete(evtRunId || toolName);
+          options?.onToolComplete?.(toolName);
+          options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE, {
+            sessionId,
+            toolName,
+            runId: runIdForReply,
+            result: truncateToolResultForIpc(result),
+          });
+          steps.push({
+            toolName,
+            args: input,
+            result,
+            success: !isErrorResult(result),
+          });
+        },
+        onModelEnd: (evtRunId, hasToolCalls, usageMeta, isTopLevel) => {
+          const bufferedText = textBuffers.get(evtRunId) || "";
+          textBuffers.delete(evtRunId);
 
           if (bufferedText && !hasToolCalls) {
             finalOutput += bufferedText;
@@ -781,56 +739,45 @@ class AgentChatBridge {
               sessionId,
               chunk: bufferedText,
             });
-          } else if (bufferedText && hasToolCalls) {
           }
 
-          const usageMeta = output?.usage_metadata;
-          if (usageMeta) {
-            turnUsage.inputTokens += usageMeta.input_tokens || 0;
-            turnUsage.outputTokens += usageMeta.output_tokens || 0;
-            turnUsage.cacheRead +=
-              usageMeta.input_token_details?.cache_read || 0;
-            turnUsage.cacheCreation +=
-              usageMeta.input_token_details?.cache_creation || 0;
+          const extracted = extractUsageFromMeta(usageMeta);
+          if (extracted) {
+            turnUsage.inputTokens += extracted.inputTokens;
+            turnUsage.outputTokens += extracted.outputTokens;
+            turnUsage.cacheRead += extracted.cacheRead;
+            turnUsage.cacheCreation += extracted.cacheCreation;
+            turnUsage.cacheHitPercent =
+              turnUsage.inputTokens > 0
+                ? Math.round(
+                    (turnUsage.cacheRead / turnUsage.inputTokens) * 100,
+                  )
+                : 0;
             options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_LLM_USAGE, {
               sessionId,
               turnUsage: { ...turnUsage },
             });
           }
 
-          // Only track context tokens for top-level model calls
-          if (
-            !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
-          ) {
-            const inputTokens = output?.usage_metadata?.input_tokens || 0;
+          if (isTopLevel) {
+            const inputTokens = extracted
+              ? extracted.inputTokens
+              : usageMeta?.input_tokens || 0;
             if (inputTokens > 0) {
               session.contextTokens = inputTokens;
             }
           }
-        }
-
-        // Tool end
-        if (evt.event === "on_tool_end") {
-          const toolName = evt.name || "unknown";
-          options?.onToolComplete?.(toolName);
-          const toolResult = extractToolOutput(evt.data?.output);
-          options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_TOOL_COMPLETE, {
-            sessionId,
-            toolName,
-            runId: evt?.run_id || "",
-            result: truncateToolResultForIpc(toolResult),
-          });
-
-          steps.push({
-            toolName,
-            args: evt.data?.input || {},
-            result: toolResult,
-            success: !isErrorResult(toolResult),
-          });
-        }
-      }
+        },
+      });
 
       const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
+
+      for (const buffered of textBuffers.values()) {
+        if (buffered) {
+          finalOutput += buffered;
+        }
+      }
+      textBuffers.clear();
 
       if (abortController.signal.aborted) {
         return {
@@ -848,6 +795,13 @@ class AgentChatBridge {
       return { output: finalOutput, steps, runId, todoTemplate, turnUsage };
     } catch (err: any) {
       const todoTemplate = finalTodos ? JSON.stringify(finalTodos) : null;
+
+      for (const buffered of textBuffers.values()) {
+        if (buffered) {
+          finalOutput += buffered;
+        }
+      }
+      textBuffers.clear();
 
       if (abortController.signal.aborted) {
         return {

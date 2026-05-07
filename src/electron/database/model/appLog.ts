@@ -62,6 +62,10 @@ export default (db: Sequelize) =>
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      toolCallSequence: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       errorMessage: {
         type: DataTypes.TEXT,
         allowNull: true,

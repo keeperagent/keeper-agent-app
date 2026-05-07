@@ -5,10 +5,12 @@ import { RootState } from "./store";
 
 interface IAgentTaskState {
   listAgentTask: IAgentTask[];
+  selectedTask: IAgentTask | null;
 }
 
 const initialState: IAgentTaskState = {
   listAgentTask: [],
+  selectedTask: null,
 };
 
 export const agentTaskSlice = createSlice({
@@ -20,6 +22,12 @@ export const agentTaskSlice = createSlice({
       action: PayloadAction<IAgentTask[]>,
     ) => {
       state.listAgentTask = action.payload || [];
+      if (state.selectedTask) {
+        const updated = (action.payload || []).find(
+          (task) => task.id === state.selectedTask!.id,
+        );
+        state.selectedTask = updated || null;
+      }
     },
     actSaveCreateAgentTask: (
       state: IAgentTaskState,
@@ -39,6 +47,9 @@ export const agentTaskSlice = createSlice({
         state.listAgentTask,
         payload,
       );
+      if (state.selectedTask?.id === payload.id) {
+        state.selectedTask = payload;
+      }
     },
     actSaveDeleteAgentTask: (
       state: IAgentTaskState,
@@ -46,6 +57,15 @@ export const agentTaskSlice = createSlice({
     ) => {
       const id = action.payload;
       state.listAgentTask = updateOrDelete(id, state.listAgentTask);
+      if (state.selectedTask?.id === id) {
+        state.selectedTask = null;
+      }
+    },
+    actSetSelectedTask: (
+      state: IAgentTaskState,
+      action: PayloadAction<IAgentTask | null>,
+    ) => {
+      state.selectedTask = action.payload;
     },
   },
 });
@@ -55,6 +75,7 @@ export const {
   actSaveCreateAgentTask,
   actSaveUpdateAgentTask,
   actSaveDeleteAgentTask,
+  actSetSelectedTask,
 } = agentTaskSlice.actions;
 export const agentTaskSelector = (state: RootState) => state.AgentTask;
 export default agentTaskSlice.reducer;

@@ -1,6 +1,6 @@
 import { walletGroupDB } from "@/electron/database/walletGroup";
 import { walletDB } from "@/electron/database/wallet";
-import type { IWalletGroup } from "@/electron/type";
+import type { IWalletGroup, TurnUsage } from "@/electron/type";
 import { ILlmSetting } from "@/electron/type";
 import { preferenceService } from "@/electron/service/preference";
 import { SupportedChainType } from "./types";
@@ -175,6 +175,186 @@ export const isErrorResult = (result: unknown): boolean => {
     );
   } catch {
     return false;
+  }
+};
+
+export const extractUsageFromMeta = (usageMeta: any): TurnUsage => {
+  if (!usageMeta) {
+    return null;
+  }
+  const inputTokens = usageMeta.input_tokens || 0;
+  const cacheRead = usageMeta.input_token_details?.cache_read || 0;
+
+  return {
+    inputTokens,
+    outputTokens: usageMeta.output_tokens || 0,
+    cacheRead,
+    cacheCreation: usageMeta.input_token_details?.cache_creation || 0,
+    cacheHitPercent:
+      inputTokens > 0 ? Math.round((cacheRead / inputTokens) * 100) : 0,
+  };
+};
+
+export const mergeTurnUsage = (
+  existing: TurnUsage,
+  incoming: TurnUsage,
+): TurnUsage => {
+  if (!existing) {
+    return incoming;
+  }
+  if (!incoming) {
+    return existing;
+  }
+
+  const inputTokens = existing.inputTokens + incoming.inputTokens;
+  const cacheRead = existing.cacheRead + incoming.cacheRead;
+
+  return {
+    inputTokens,
+    outputTokens: existing.outputTokens + incoming.outputTokens,
+    cacheRead,
+    cacheCreation: existing.cacheCreation + incoming.cacheCreation,
+    cacheHitPercent:
+      inputTokens > 0 ? Math.round((cacheRead / inputTokens) * 100) : 0,
+  };
+};
+
+export const extractUsageFromMessages = (messages: any[]): TurnUsage => {
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let cacheRead = 0;
+  let cacheCreation = 0;
+
+  for (const message of messages || []) {
+    const extracted = extractUsageFromMeta(message?.usage_metadata);
+    if (extracted) {
+      inputTokens += extracted.inputTokens;
+      outputTokens += extracted.outputTokens;
+      cacheRead += extracted.cacheRead;
+      cacheCreation += extracted.cacheCreation;
+    }
+  }
+
+  if (inputTokens === 0) {
+    return null;
+  }
+
+  return {
+    inputTokens,
+    outputTokens,
+    cacheRead,
+    cacheCreation,
+    cacheHitPercent: Math.round((cacheRead / inputTokens) * 100),
+  };
+};
+
+const tryParseJson = (raw: string): Record<string, unknown> => {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
+export const extractToolOutput = (rawOutput: any): string => {
+  if (typeof rawOutput === "string") {
+    return rawOutput;
+  }
+  const content = rawOutput?.kwargs?.content || rawOutput?.content;
+  if (typeof content === "string") {
+    return content;
+  }
+  return JSON.stringify(rawOutput || "");
+};
+
+export type AgentStreamCallbacks = {
+  onText?: (text: string, runId: string) => void;
+  onToolStart?: (
+    toolName: string,
+    runId: string,
+    input: Record<string, unknown>,
+    subagentType?: string,
+  ) => void;
+  onToolEnd?: (
+    toolName: string,
+    runId: string,
+    result: string,
+    input: Record<string, unknown>,
+  ) => void;
+  onModelEnd?: (
+    runId: string,
+    hasToolCalls: boolean,
+    usageMeta: any,
+    isTopLevel: boolean,
+  ) => void;
+};
+
+export const consumeAgentStream = async (
+  eventStream: AsyncIterable<any>,
+  signal: AbortSignal,
+  callbacks: AgentStreamCallbacks,
+): Promise<void> => {
+  for await (const evt of eventStream) {
+    if (signal.aborted) {
+      const abortErr = new Error("Task execution was aborted");
+      abortErr.name = "AbortError";
+      throw abortErr;
+    }
+
+    const isTopLevel = !String(
+      evt.metadata?.langgraph_checkpoint_ns || "",
+    ).includes("|");
+
+    if (evt.event === "on_chat_model_stream" && isTopLevel) {
+      const content = evt.data?.chunk?.content;
+      let text = "";
+      if (typeof content === "string") {
+        text = content;
+      } else if (Array.isArray(content)) {
+        text = content
+          .filter(
+            (chunk: any) => chunk?.type === "text" || typeof chunk === "string",
+          )
+          .map((chunk: any) =>
+            typeof chunk === "string" ? chunk : chunk.text || "",
+          )
+          .join("");
+      }
+      if (text) {
+        callbacks.onText?.(text, evt.run_id || "default");
+      }
+    }
+
+    if (evt.event === "on_tool_start") {
+      const toolName = evt.name || "unknown";
+      const input = (evt.data?.input || {}) as Record<string, unknown>;
+      let subagentType: string | undefined;
+      if (toolName === "task") {
+        const raw = (input as any)?.input || input;
+        const parsedInput = typeof raw === "string" ? tryParseJson(raw) : raw;
+        subagentType = (parsedInput as any)?.subagent_type;
+      }
+      callbacks.onToolStart?.(toolName, evt.run_id || "", input, subagentType);
+    }
+
+    if (evt.event === "on_tool_end") {
+      const toolName = evt.name || "unknown";
+      const result = extractToolOutput(evt.data?.output);
+      const input = (evt.data?.input || {}) as Record<string, unknown>;
+      callbacks.onToolEnd?.(toolName, evt.run_id || "", result, input);
+    }
+
+    if (evt.event === "on_chat_model_end") {
+      const hasToolCalls =
+        Array.isArray(evt.data?.output?.tool_calls) &&
+        evt.data.output.tool_calls.length > 0;
+      callbacks.onModelEnd?.(
+        evt.run_id || "default",
+        hasToolCalls,
+        evt.data?.output?.usage_metadata,
+        isTopLevel,
+      );
+    }
   }
 };
 

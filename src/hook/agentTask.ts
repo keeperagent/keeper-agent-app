@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
-import { IAgentTask } from "@/electron/type";
+import { IAgentTask, IAppLog } from "@/electron/type";
 import {
   actSaveGetListAgentTask,
   actSaveCreateAgentTask,
@@ -11,7 +11,11 @@ import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
   IpcDeletePayload,
+  IpcPauseAgentTaskPayload,
+  IpcRerunAgentTaskPayload,
   IpcGetAgentAnalyticsPayload,
+  IpcGetAgentTaskLogPayload,
+  IpcGetLiveToolCallsPayload,
 } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
 
@@ -79,8 +83,31 @@ const useDeleteAgentTask = () => {
   );
 
   const deleteAgentTask = (id: number) => execute({ data: [id] });
+  const bulkDeleteAgentTask = (ids: number[]) => execute({ data: ids });
 
-  return { loading, isSuccess, deleteAgentTask };
+  return { loading, isSuccess, deleteAgentTask, bulkDeleteAgentTask };
+};
+
+const usePauseAgentTask = () => {
+  const { execute, loading, isSuccess } =
+    useIpcAction<IpcPauseAgentTaskPayload>(
+      MESSAGE.PAUSE_AGENT_TASK,
+      MESSAGE.PAUSE_AGENT_TASK_RES,
+    );
+
+  const pauseAgentTask = (id: number) => execute({ id });
+  return { loading, isSuccess, pauseAgentTask };
+};
+
+const useRerunAgentTask = () => {
+  const { execute, loading, isSuccess } =
+    useIpcAction<IpcRerunAgentTaskPayload>(
+      MESSAGE.RERUN_AGENT_TASK,
+      MESSAGE.RERUN_AGENT_TASK_RES,
+    );
+
+  const rerunAgentTask = (id: number) => execute({ id });
+  return { loading, isSuccess, rerunAgentTask };
 };
 
 const useAgentTaskRealtime = (onChanged: () => void) => {
@@ -114,11 +141,43 @@ const useGetAgentAnalytics = () => {
   return { loading, analytics, getAgentAnalytics };
 };
 
+const useGetAgentTaskLog = () => {
+  const [logs, setLogs] = useState<IAppLog[]>([]);
+
+  const { execute, loading } = useIpcAction<IpcGetAgentTaskLogPayload>(
+    MESSAGE.GET_AGENT_TASK_LOG,
+    MESSAGE.GET_AGENT_TASK_LOG_RES,
+    {
+      onSuccess: (payload: any) => setLogs(payload?.data || []),
+    },
+  );
+
+  const getAgentTaskLog = (taskId: number) => execute({ taskId });
+  return { loading, logs, getAgentTaskLog };
+};
+
+const useGetLiveToolCalls = (onSuccess: (data: any[]) => void) => {
+  const { execute } = useIpcAction<IpcGetLiveToolCallsPayload>(
+    MESSAGE.GET_LIVE_TOOL_CALLS,
+    MESSAGE.GET_LIVE_TOOL_CALLS_RES,
+    {
+      onSuccess: (payload: any) => onSuccess(payload?.data || []),
+    },
+  );
+
+  const getLiveToolCalls = (taskId: number) => execute({ taskId });
+  return { getLiveToolCalls };
+};
+
 export {
   useGetListAgentTask,
   useCreateAgentTask,
   useUpdateAgentTask,
   useDeleteAgentTask,
+  usePauseAgentTask,
+  useRerunAgentTask,
   useAgentTaskRealtime,
   useGetAgentAnalytics,
+  useGetAgentTaskLog,
+  useGetLiveToolCalls,
 };

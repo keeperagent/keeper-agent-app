@@ -6,6 +6,7 @@ import {
   AgentTaskCreatorType,
 } from "@/electron/type";
 import { useTranslation } from "@/hook/useTranslation";
+import { formatDurationBetween } from "@/service/util";
 import { Wrapper } from "./style";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -38,6 +39,31 @@ const getCreatorLabel = (creatorType?: AgentTaskCreatorType): string => {
     default:
       return "You";
   }
+};
+
+const getTaskDuration = (task: IAgentTask): string | null => {
+  if (!task.startedAt) {
+    return null;
+  }
+
+  const terminalStatuses = [
+    AgentTaskStatus.DONE,
+    AgentTaskStatus.FAILED,
+    AgentTaskStatus.EXPIRED,
+    AgentTaskStatus.CANCELLED,
+  ];
+
+  if (!terminalStatuses.includes(task.status as AgentTaskStatus)) {
+    return null;
+  }
+
+  const endTime = task.completedAt || task.updateAt;
+
+  if (!endTime) {
+    return null;
+  }
+
+  return formatDurationBetween(task.startedAt, endTime);
 };
 
 const buildTaskHistory = (task: IAgentTask): ITaskHistoryEntry[] => {
@@ -100,10 +126,14 @@ interface TaskHistoryProps {
 export const TaskHistory = ({ task }: TaskHistoryProps) => {
   const { translate } = useTranslation();
   const historyEntries = buildTaskHistory(task);
+  const duration = getTaskDuration(task);
 
   return (
     <Wrapper>
-      <div className="history-title">{translate("agentTaskHistoryLabel")}</div>
+      <div className="history-title">
+        {translate("agentTaskHistoryLabel")}
+        {duration && <span className="history-duration">{duration}</span>}
+      </div>
 
       {historyEntries.map((entry, index) => (
         <div className="history-entry" key={index}>

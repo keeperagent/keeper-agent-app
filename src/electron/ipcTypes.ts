@@ -479,6 +479,9 @@ export type IpcGetListAgentProfilePayload = IpcPagePayload & {
 export type IpcGetOneAgentProfilePayload = {
   id: number;
 };
+export type IpcGetAgentProfileEncryptKeyPayload = {
+  id: number;
+};
 export type IpcCreateAgentProfilePayload = {
   data: Partial<IAgentProfile>;
 };
@@ -512,6 +515,8 @@ export type IpcAgentProfileResetSessionPayload = {
 
 // AgentTask
 export type IpcGetListAgentTaskPayload = Record<string, never>;
+export type IpcGetAgentTaskLogPayload = { taskId: number };
+export type IpcGetLiveToolCallsPayload = { taskId: number };
 export type IpcGetOneAgentTaskPayload = {
   id: number;
 };
@@ -521,6 +526,12 @@ export type IpcCreateAgentTaskPayload = {
 export type IpcUpdateAgentTaskPayload = {
   id: number;
   data: Partial<IAgentTask>;
+};
+export type IpcPauseAgentTaskPayload = {
+  id: number;
+};
+export type IpcRerunAgentTaskPayload = {
+  id: number;
 };
 export type IpcGetAgentAnalyticsPayload = {
   fromTimestamp: number;

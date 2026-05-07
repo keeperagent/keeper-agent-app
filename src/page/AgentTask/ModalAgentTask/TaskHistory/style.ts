@@ -5,12 +5,24 @@ export const Wrapper = styled.div`
   margin-top: 1.6rem;
 
   .history-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-size: 1.2rem;
     font-weight: 600;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 1rem;
+  }
+
+  .history-duration {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
+    opacity: 0.6;
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   .history-entry {

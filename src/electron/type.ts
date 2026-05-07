@@ -2689,6 +2689,7 @@ export enum AppLogTaskAction {
   TASK_CLAIMED = "task_claimed",
   TASK_UPDATED = "task_updated",
   TASK_COMPLETED = "task_completed",
+  TASK_PAUSED = "task_paused",
   TASK_CANCELLED = "task_cancelled",
   TASK_FAILED = "task_failed",
 }
@@ -2712,6 +2713,7 @@ export type IAppLog = {
   actorId?: number;
   actorName?: string;
   result?: string;
+  toolCallSequence?: string;
   errorMessage?: string;
   retryCount?: number;
   nextRetryAt?: number;
@@ -2922,6 +2924,7 @@ export type IAgentMailbox = {
 export enum AgentTaskStatus {
   INIT = "INIT",
   IN_PROGRESS = "IN_PROGRESS",
+  PAUSED = "PAUSED",
   DONE = "DONE",
   FAILED = "FAILED",
   EXPIRED = "EXPIRED",
@@ -3019,4 +3022,5 @@ export type TurnUsage = {
   outputTokens: number;
   cacheRead: number;
   cacheCreation: number;
+  cacheHitPercent: number;
 } | null;

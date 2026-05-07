@@ -9,7 +9,15 @@ import {
   AgentTaskCreatorType,
   AgentTaskStatus,
 } from "@/electron/type";
-import { AgentIcon, DeleteIcon, PinIcon, ReloadIcon } from "@/component/Icon";
+import {
+  AgentIcon,
+  DeleteIcon,
+  PinIcon,
+  PlayIcon,
+  UndoIcon,
+  ReloadIcon,
+  StopCircle,
+} from "@/component/Icon";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import { formatTime, formatDuration, trimText } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
@@ -44,6 +52,7 @@ const getSourceBadge = (
 
 const getTaskAge = (
   task: IAgentTask,
+  translate: (key: string) => string,
 ): { label: string; text: string; color?: string } | null => {
   const now = Date.now();
   const hour = 3_600_000;
@@ -53,14 +62,26 @@ const getTaskAge = (
     const elapsed = now - task.createAt;
     const color =
       elapsed > day ? "#f97316" : elapsed > 6 * hour ? "#f59e0b" : undefined;
-    return { label: "Waiting", text: formatDuration(elapsed), color };
+    return {
+      label: translate("waiting"),
+      text: formatDuration(elapsed),
+      color,
+    };
   }
 
   if (task.status === AgentTaskStatus.IN_PROGRESS && task.startedAt) {
     const elapsed = now - task.startedAt;
     const color =
       elapsed > day ? "#f97316" : elapsed > hour ? "#f59e0b" : undefined;
-    return { label: "Running", text: formatDuration(elapsed), color };
+    return {
+      label: translate("running"),
+      text: formatDuration(elapsed),
+      color,
+    };
+  }
+
+  if (task.status === AgentTaskStatus.PAUSED) {
+    return { label: translate("paused"), text: "", color: "#f59e0b" };
   }
 
   return null;
@@ -87,6 +108,9 @@ export interface TaskCardProps {
   onDelete: (id: number) => void;
   onPin: (id: number, isPinned: boolean) => void;
   onRetry: (id: number) => void;
+  onRerun?: (id: number) => void;
+  onPause?: (task: IAgentTask) => void;
+  onResume?: (id: number) => void;
   isDragging?: boolean;
 }
 
@@ -99,6 +123,9 @@ type TaskCardInnerProps = {
   onDelete?: (id: number) => void;
   onPin?: (id: number, isPinned: boolean) => void;
   onRetry?: (id: number) => void;
+  onRerun?: (id: number) => void;
+  onPause?: (task: IAgentTask) => void;
+  onResume?: (id: number) => void;
   wrapperRef?: (node: HTMLElement | null) => void;
   style?: CSSProperties;
   // Drag handle props from useDraggable; omit for drag overlay / static preview
@@ -115,6 +142,9 @@ const TaskCardInner = ({
   onDelete,
   onPin,
   onRetry,
+  onRerun,
+  onPause,
+  onResume,
   wrapperRef,
   style,
   dragListeners,
@@ -126,13 +156,39 @@ const TaskCardInner = ({
   const priorityColor = getPriorityColor(priority);
   const priorityLabel = priority.charAt(0) + priority.slice(1).toLowerCase();
   const sourceBadge = getSourceBadge(task.creatorType);
-  const taskAge = getTaskAge(task);
+  const taskAge = getTaskAge(task, translate);
   const isRunning = task.status === AgentTaskStatus.IN_PROGRESS;
   const assignedAgentProvider = task.assignedAgent?.llmProvider
     ? LLM_PROVIDERS.find(
         (llmProvider) => llmProvider.key === task.assignedAgent?.llmProvider,
       )
     : null;
+
+  const renderTimeMeta = () => {
+    if (taskAge) {
+      return (
+        <div className="task-age" style={{ color: taskAge.color }}>
+          {taskAge.label}
+          {taskAge.text ? ` · ${taskAge.text}` : ""}
+        </div>
+      );
+    }
+    if (task.status === AgentTaskStatus.DONE && task.completedAt) {
+      return (
+        <div className="task-meta-line">
+          <span className="task-due">{formatTime(task.completedAt)}</span>
+        </div>
+      );
+    }
+    if (task.startedAt && !task.dueAt) {
+      return (
+        <div className="task-meta-line">
+          <span className="task-due">{formatTime(task.startedAt)}</span>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const onClickAgentLink = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -195,15 +251,7 @@ const TaskCardInner = ({
             </div>
           ) : null}
 
-          {taskAge ? (
-            <div className="task-age" style={{ color: taskAge.color }}>
-              {taskAge.label} · {taskAge.text}
-            </div>
-          ) : task.startedAt && !task.dueAt ? (
-            <div className="task-meta-line">
-              <span className="task-due">{formatTime(task.startedAt)}</span>
-            </div>
-          ) : null}
+          {renderTimeMeta()}
         </div>
 
         <div className="task-meta-right">
@@ -257,6 +305,34 @@ const TaskCardInner = ({
             </Popconfirm>
           )}
 
+          {onPause && task.status === AgentTaskStatus.IN_PROGRESS && (
+            <Tooltip title={translate("agentTask.pauseTooltip")}>
+              <span
+                className="task-action-btn"
+                onClick={(event) => {
+                  event?.stopPropagation();
+                  onPause(task);
+                }}
+              >
+                <StopCircle color="currentColor" />
+              </span>
+            </Tooltip>
+          )}
+
+          {onResume && task.status === AgentTaskStatus.PAUSED && (
+            <Tooltip title={translate("agentTask.resumeTooltip")}>
+              <span
+                className="task-action-btn"
+                onClick={(event) => {
+                  event?.stopPropagation();
+                  onResume(task.id!);
+                }}
+              >
+                <PlayIcon color="currentColor" />
+              </span>
+            </Tooltip>
+          )}
+
           {onRetry && task.status === AgentTaskStatus.FAILED && (
             <Tooltip title={translate("agentTask.retryTooltip")}>
               <span
@@ -270,6 +346,23 @@ const TaskCardInner = ({
               </span>
             </Tooltip>
           )}
+
+          {onRerun &&
+            (task.status === AgentTaskStatus.DONE ||
+              task.status === AgentTaskStatus.FAILED ||
+              task.status === AgentTaskStatus.CANCELLED) && (
+              <Tooltip title={translate("agentTask.rerunTooltip")}>
+                <span
+                  className="task-action-btn"
+                  onClick={(event) => {
+                    event?.stopPropagation();
+                    onRerun(task.id!);
+                  }}
+                >
+                  <UndoIcon color="currentColor" />
+                </span>
+              </Tooltip>
+            )}
 
           {onPin && (
             <Tooltip
@@ -316,6 +409,9 @@ export const TaskCard = ({
   onDelete,
   onPin,
   onRetry,
+  onRerun,
+  onPause,
+  onResume,
   isDragging,
 }: TaskCardProps) => {
   const isFinished = FINISHED_STATUSES.includes(task.status!);
@@ -341,6 +437,9 @@ export const TaskCard = ({
       onDelete={onDelete}
       onPin={onPin}
       onRetry={onRetry}
+      onRerun={onRerun}
+      onResume={onResume}
+      onPause={onPause}
       wrapperRef={setNodeRef}
       style={dragStyle}
       dragListeners={isFinished ? undefined : listeners}

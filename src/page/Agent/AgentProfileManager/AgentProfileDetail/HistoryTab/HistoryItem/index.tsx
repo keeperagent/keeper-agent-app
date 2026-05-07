@@ -15,6 +15,8 @@ import {
   normalizeAgentMessageContent,
 } from "@/service/agentMessageContent";
 import { EMPTY_STRING } from "@/config/constant";
+import ToolCallGroup from "@/component/AgentChatView/ToolCallCard";
+import { parseToolCallSequence } from "@/hook/agent";
 import { HistoryItemWrapper } from "./style";
 
 const scheduleStatusColorMap: Record<string, string> = {
@@ -42,7 +44,9 @@ type Props = {
 const HistoryItem = (props: Props) => {
   const { log, isExpanded, onToggle } = props;
   const { translate } = useTranslation();
-  const hasContent = Boolean(log.result || log.errorMessage);
+  const hasContent = Boolean(
+    log.result || log.errorMessage || log.toolCallSequence,
+  );
 
   if (log.logType === AppLogType.TASK) {
     const statusColor = taskStatusColorMap[log.status || ""] || "default";
@@ -84,7 +88,7 @@ const HistoryItem = (props: Props) => {
           </div>
         </div>
 
-        {(hasContent || log.task?.description) && (
+        {(hasContent || log.task?.description || log.toolCallSequence) && (
           <div
             className={`history-item-body${isExpanded ? " is-expanded" : ""}`}
           >
@@ -93,6 +97,14 @@ const HistoryItem = (props: Props) => {
                 {log.task?.description && (
                   <div className="task-description">{log.task.description}</div>
                 )}
+
+                {log.toolCallSequence && (
+                  <ToolCallGroup
+                    toolCalls={parseToolCallSequence(log.toolCallSequence)}
+                    isActive={false}
+                  />
+                )}
+
                 {log.result && (
                   <div className="markdown-result">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -100,6 +112,7 @@ const HistoryItem = (props: Props) => {
                     </ReactMarkdown>
                   </div>
                 )}
+
                 {!log.result && log.errorMessage && (
                   <div className="error-text">{log.errorMessage}</div>
                 )}

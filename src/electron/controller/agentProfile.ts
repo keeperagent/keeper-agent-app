@@ -15,6 +15,7 @@ import { agentChatBridge } from "@/electron/chatGateway/bridge";
 import type {
   IpcGetListAgentProfilePayload,
   IpcGetOneAgentProfilePayload,
+  IpcGetAgentProfileEncryptKeyPayload,
   IpcCreateAgentProfilePayload,
   IpcUpdateAgentProfilePayload,
   IpcDeletePayload,
@@ -54,6 +55,20 @@ export const agentProfileController = () => {
       const { id } = payload || {};
       const [res] = await agentProfileDB.getOneAgentProfile(id);
       event.reply(MESSAGE.GET_ONE_AGENT_PROFILE_RES, { data: res });
+    },
+  );
+
+  onIpc<IpcGetAgentProfileEncryptKeyPayload>(
+    MESSAGE.GET_AGENT_PROFILE_ENCRYPT_KEY,
+    MESSAGE.GET_AGENT_PROFILE_ENCRYPT_KEY_RES,
+    async (event, payload) => {
+      const { id } = payload || {};
+      const [encryptKey, err] = await agentProfileDB.getEncryptKey(id);
+      if (err) {
+        event.reply(MESSAGE.GET_AGENT_PROFILE_ENCRYPT_KEY_RES, { encryptKey: "" });
+        return;
+      }
+      event.reply(MESSAGE.GET_AGENT_PROFILE_ENCRYPT_KEY_RES, { encryptKey: encryptKey || "" });
     },
   );
 
