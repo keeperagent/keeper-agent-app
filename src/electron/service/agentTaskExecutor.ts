@@ -4,6 +4,7 @@ import {
   AppLogType,
   AppLogTaskAction,
   AppLogActorType,
+  TurnUsage,
 } from "@/electron/type";
 import { agentTaskDB } from "@/electron/database/agentTask";
 import { agentProfileDB } from "@/electron/database/agentProfile";
@@ -14,6 +15,7 @@ import { MESSAGE } from "@/electron/constant";
 import { createAgentFromProfile, ToolContext } from "@/electron/agentCore";
 import {
   extractUsageFromMeta,
+  mergeTurnUsage,
   isErrorResult,
   consumeAgentStream,
 } from "@/electron/agentCore/utils";
@@ -164,7 +166,7 @@ class AgentTaskExecutor {
     const completedToolCalls: ToolCallEntry[] = [];
     let resultText = "";
     let textBuffer = "";
-    let tokenUsage = null;
+    let tokenUsage: TurnUsage = null;
 
     try {
       const basePrompt = task.description
@@ -244,7 +246,7 @@ class AgentTaskExecutor {
           textBuffer = "";
           const extracted = extractUsageFromMeta(usageMeta);
           if (extracted) {
-            tokenUsage = extracted;
+            tokenUsage = mergeTurnUsage(tokenUsage, extracted);
           }
         },
       });

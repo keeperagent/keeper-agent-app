@@ -751,7 +751,9 @@ class AgentChatBridge {
           }
 
           if (isTopLevel) {
-            const inputTokens = usageMeta?.input_tokens || 0;
+            const inputTokens = extracted
+              ? extracted.inputTokens
+              : usageMeta?.input_tokens || 0;
             if (inputTokens > 0) {
               session.contextTokens = inputTokens;
             }

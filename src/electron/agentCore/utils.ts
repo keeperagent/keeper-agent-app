@@ -195,6 +195,30 @@ export const extractUsageFromMeta = (usageMeta: any): TurnUsage => {
   };
 };
 
+export const mergeTurnUsage = (
+  existing: TurnUsage,
+  incoming: TurnUsage,
+): TurnUsage => {
+  if (!existing) {
+    return incoming;
+  }
+  if (!incoming) {
+    return existing;
+  }
+
+  const inputTokens = existing.inputTokens + incoming.inputTokens;
+  const cacheRead = existing.cacheRead + incoming.cacheRead;
+
+  return {
+    inputTokens,
+    outputTokens: existing.outputTokens + incoming.outputTokens,
+    cacheRead,
+    cacheCreation: existing.cacheCreation + incoming.cacheCreation,
+    cacheHitPercent:
+      inputTokens > 0 ? Math.round((cacheRead / inputTokens) * 100) : 0,
+  };
+};
+
 export const extractUsageFromMessages = (messages: any[]): TurnUsage => {
   let inputTokens = 0;
   let outputTokens = 0;

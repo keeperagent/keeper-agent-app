@@ -161,14 +161,11 @@ const ModalAgentProfile = (props: Props) => {
   }, [profile, open]);
 
   useEffect(() => {
-    if (!watchedCampaignId) {
-      return;
-    }
-    if (watchedCampaignId !== profile?.campaignId) {
+    if (!watchedCampaignId || watchedCampaignId !== profile?.campaignId) {
       form.setFieldValue("profileIds", []);
     }
     setEncryptKeyValue("");
-    if (profile?.hasEncryptKey && profile?.id) {
+    if (watchedCampaignId && profile?.hasEncryptKey && profile?.id) {
       getAgentProfileEncryptKey(profile.id);
     }
   }, [watchedCampaignId, profile?.id]);

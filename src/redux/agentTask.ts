@@ -26,9 +26,7 @@ export const agentTaskSlice = createSlice({
         const updated = (action.payload || []).find(
           (task) => task.id === state.selectedTask!.id,
         );
-        if (updated) {
-          state.selectedTask = updated;
-        }
+        state.selectedTask = updated || null;
       }
     },
     actSaveCreateAgentTask: (
@@ -59,6 +57,9 @@ export const agentTaskSlice = createSlice({
     ) => {
       const id = action.payload;
       state.listAgentTask = updateOrDelete(id, state.listAgentTask);
+      if (state.selectedTask?.id === id) {
+        state.selectedTask = null;
+      }
     },
     actSetSelectedTask: (
       state: IAgentTaskState,
