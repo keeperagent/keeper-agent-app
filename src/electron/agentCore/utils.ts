@@ -224,6 +224,116 @@ export const extractUsageFromMessages = (messages: any[]): TurnUsage => {
   };
 };
 
+const tryParseJson = (raw: string): Record<string, unknown> => {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
+export const extractToolOutput = (rawOutput: any): string => {
+  if (typeof rawOutput === "string") {
+    return rawOutput;
+  }
+  const content = rawOutput?.kwargs?.content || rawOutput?.content;
+  if (typeof content === "string") {
+    return content;
+  }
+  return JSON.stringify(rawOutput || "");
+};
+
+export type AgentStreamCallbacks = {
+  onText?: (text: string, runId: string) => void;
+  onToolStart?: (
+    toolName: string,
+    runId: string,
+    input: Record<string, unknown>,
+    subagentType?: string,
+  ) => void;
+  onToolEnd?: (
+    toolName: string,
+    runId: string,
+    result: string,
+    input: Record<string, unknown>,
+  ) => void;
+  onModelEnd?: (
+    runId: string,
+    hasToolCalls: boolean,
+    usageMeta: any,
+    isTopLevel: boolean,
+  ) => void;
+};
+
+export const consumeAgentStream = async (
+  eventStream: AsyncIterable<any>,
+  signal: AbortSignal,
+  callbacks: AgentStreamCallbacks,
+): Promise<void> => {
+  for await (const evt of eventStream) {
+    if (signal.aborted) {
+      const abortErr = new Error("Task execution was aborted");
+      abortErr.name = "AbortError";
+      throw abortErr;
+    }
+
+    const isTopLevel = !String(
+      evt.metadata?.langgraph_checkpoint_ns || "",
+    ).includes("|");
+
+    if (evt.event === "on_chat_model_stream" && isTopLevel) {
+      const content = evt.data?.chunk?.content;
+      let text = "";
+      if (typeof content === "string") {
+        text = content;
+      } else if (Array.isArray(content)) {
+        text = content
+          .filter(
+            (chunk: any) => chunk?.type === "text" || typeof chunk === "string",
+          )
+          .map((chunk: any) =>
+            typeof chunk === "string" ? chunk : chunk.text || "",
+          )
+          .join("");
+      }
+      if (text) {
+        callbacks.onText?.(text, evt.run_id || "default");
+      }
+    }
+
+    if (evt.event === "on_tool_start") {
+      const toolName = evt.name || "unknown";
+      const input = (evt.data?.input || {}) as Record<string, unknown>;
+      let subagentType: string | undefined;
+      if (toolName === "task") {
+        const raw = (input as any)?.input || input;
+        const parsedInput = typeof raw === "string" ? tryParseJson(raw) : raw;
+        subagentType = (parsedInput as any)?.subagent_type;
+      }
+      callbacks.onToolStart?.(toolName, evt.run_id || "", input, subagentType);
+    }
+
+    if (evt.event === "on_tool_end") {
+      const toolName = evt.name || "unknown";
+      const result = extractToolOutput(evt.data?.output);
+      const input = (evt.data?.input || {}) as Record<string, unknown>;
+      callbacks.onToolEnd?.(toolName, evt.run_id || "", result, input);
+    }
+
+    if (evt.event === "on_chat_model_end") {
+      const hasToolCalls =
+        Array.isArray(evt.data?.output?.tool_calls) &&
+        evt.data.output.tool_calls.length > 0;
+      callbacks.onModelEnd?.(
+        evt.run_id || "default",
+        hasToolCalls,
+        evt.data?.output?.usage_metadata,
+        isTopLevel,
+      );
+    }
+  }
+};
+
 export const looksLikeEncryptKey = (text: string): boolean => {
   if (text.length > 128) {
     return false;

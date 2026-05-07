@@ -252,7 +252,7 @@ class AgentTaskDB {
       }
       const resetFields =
         data.status === AgentTaskStatus.INIT
-          ? { assignedAgentId: null, claimedAt: null, startedAt: null }
+          ? { claimedAt: null, startedAt: null }
           : {};
       await AgentTaskModel.update(
         _.omit(

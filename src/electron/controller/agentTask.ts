@@ -151,7 +151,7 @@ export const agentTaskController = () => {
         maxRetries: task.maxRetries,
         metadata: task.metadata,
         creatorType: task.creatorType,
-        status: AgentTaskStatus.INIT,
+        status: AgentTaskStatus.PAUSED,
         retryCount: 0,
       });
       if (createErr || !result) {
@@ -166,14 +166,13 @@ export const agentTaskController = () => {
           taskId: result.id,
           actorType: AppLogActorType.USER,
           action: AppLogTaskAction.TASK_CREATED,
-          status: AgentTaskStatus.INIT,
+          status: AgentTaskStatus.PAUSED,
           message: result.title,
           startedAt: Date.now(),
         });
       }
       event.reply(MESSAGE.RERUN_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
-      setTimeout(() => agentTaskDispatcher.dispatch(), 3000);
     },
   );
 

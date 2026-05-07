@@ -2689,6 +2689,7 @@ export enum AppLogTaskAction {
   TASK_CLAIMED = "task_claimed",
   TASK_UPDATED = "task_updated",
   TASK_COMPLETED = "task_completed",
+  TASK_PAUSED = "task_paused",
   TASK_CANCELLED = "task_cancelled",
   TASK_FAILED = "task_failed",
 }

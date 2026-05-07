@@ -36,6 +36,7 @@ export const Wrapper = styled.div`
   .result-body {
     max-height: 40rem;
     overflow-y: auto;
+    font-size: 1.3rem;
     padding: 1rem;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
     ${markdownStyles}

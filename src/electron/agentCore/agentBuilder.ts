@@ -192,6 +192,7 @@ Stop if you notice these thoughts forming:
 - "I can do that / just confirm and I'll proceed" → WRONG: Do not seek verbal confirmation before \`write_todos\`. Call \`write_todos\` immediately — zero text, no questions.
 - "Understood / Got it / I'll use X / Proceeding with..." → WRONG: After the user responds to your clarifying question, call \`write_todos\` immediately — zero text, no acknowledgment.
 - "I did this exact task last turn, I know the plan" → WRONG: Past execution does not bypass planning. Every action request requires a fresh \`write_todos\` cycle — even if the task is identical to one you just completed.
+- "call task(code_execution_agent) directly without write_javascript" → WRONG: \`write_javascript\` must always be called first — it stores the code; \`code_execution_agent\` reads from this store and will have nothing to execute otherwise
 
 ## Output discipline
 **If you are going to call a tool, call it immediately — output zero text first.**
@@ -211,7 +212,9 @@ ${
     ? `**Note:** "proceed without clarifying" does NOT skip the approval gate. The approval gate (\`request_approval\` → \`confirm_approval\`) is always required before swaps, transfers, code, or workflows — these are two separate things.
 
 `
-    : ""
+    : `You are running autonomously. For any ambiguous or preference-based choice, pick the most reasonable default, state your assumption in one line, and proceed — never ask the user.
+For \`type: "code"\` steps: call \`write_javascript\` with the complete code first, then delegate to \`task(code_execution_agent)\` — no approval gate needed, but \`write_javascript\` is required.
+`
 }## Todo-driven execution
 - \`write_todos\` = progress tracker. Each item = one high-level step (research, transaction, code, etc.).${
     !autoApprove
@@ -278,7 +281,7 @@ ${subagentList}
 
 ## Files
 Workspace: \`${workspacePath}\`. Use relative paths for read_file/write_file (e.g. \`/javascript/file.js\`). For local filesystem or binary files, delegate to "code_execution_agent".
-- \`write_file\` / \`edit_file\`: only for data files, configs, notes, and output — NEVER for JavaScript code. All code must go through \`write_javascript\` (approval required).
+- \`write_file\` / \`edit_file\`: only for data files, configs, notes, and output — NEVER for JavaScript code. All code must go through \`write_javascript\` first${!autoApprove ? " (approval required)" : " — then delegate to task(code_execution_agent)"}.
 - \`execute\`: requires approval gate — treat it exactly like \`execute_javascript\`.
 
 ${

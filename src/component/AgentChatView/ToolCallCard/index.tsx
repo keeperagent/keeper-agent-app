@@ -20,6 +20,7 @@ type ToolCallGroupProps = {
   isActive?: boolean;
   extractWebStateMap?: Map<string, ToolCallStateStatus>;
   alwaysExpanded?: boolean;
+  staticTodos?: boolean;
 };
 
 const ToolCallGroup = ({
@@ -27,6 +28,7 @@ const ToolCallGroup = ({
   isActive,
   extractWebStateMap: globalExtractWebStateMap,
   alwaysExpanded,
+  staticTodos,
 }: ToolCallGroupProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -129,6 +131,7 @@ const ToolCallGroup = ({
                 toolCall={toolCall}
                 extractWebStateMap={extractWebStateMap}
                 isGroupActive={isActive || anyRunning}
+                staticTodos={staticTodos}
               />
             ))}
           </div>

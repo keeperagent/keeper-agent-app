@@ -50,12 +50,14 @@ type ToolCallRowProps = {
   toolCall: ToolCallState;
   extractWebStateMap?: Map<string, ToolCallStateStatus>;
   isGroupActive?: boolean;
+  staticTodos?: boolean;
 };
 
 const ToolCallRow = ({
   toolCall,
   extractWebStateMap,
   isGroupActive,
+  staticTodos,
 }: ToolCallRowProps) => {
   const chartData = useMemo(
     () =>
@@ -86,14 +88,8 @@ const ToolCallRow = ({
       : null;
 
   const todos =
-    rawTodos && !isGroupActive
-      ? rawTodos.map((todo) => ({
-          ...todo,
-          status:
-            todo.status === TodoItemStatus.IN_PROGRESS
-              ? TodoItemStatus.PENDING
-              : todo.status,
-        }))
+    rawTodos && staticTodos
+      ? rawTodos.map((todo) => ({ ...todo, status: TodoItemStatus.PENDING }))
       : rawTodos;
 
   const isRejected =

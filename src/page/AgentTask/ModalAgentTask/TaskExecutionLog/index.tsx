@@ -40,10 +40,14 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLiveToolCalls([]);
+  }, [task.id]);
 
   useEffect(() => {
     if (!isLive || !task.id) {
-      setLiveToolCalls([]);
       return;
     }
 
@@ -66,12 +70,35 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
     }
   }, [task.id, isLive]);
 
+  useEffect(() => {
+    if (isLive && liveToolCalls.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [liveToolCalls]);
+
   const logsWithTools = logs.filter((log) => Boolean(log.toolCallSequence));
-  if (!isLive && !loading && logsWithTools.length === 0) {
+
+  if (
+    !isLive &&
+    !loading &&
+    logsWithTools.length === 0 &&
+    liveToolCalls.length === 0
+  ) {
     return null;
   }
 
   const renderContent = () => {
+    if (!isLive && logsWithTools.length === 0 && liveToolCalls.length > 0) {
+      return (
+        <ToolCallGroup
+          toolCalls={liveToolCalls}
+          isActive={false}
+          alwaysExpanded={true}
+          staticTodos={true}
+        />
+      );
+    }
+
     if (isLive) {
       if (liveToolCalls.length === 0) {
         return (
@@ -87,6 +114,7 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
           toolCalls={liveToolCalls}
           isActive={true}
           alwaysExpanded={true}
+          staticTodos={false}
         />
       );
     }
@@ -111,6 +139,7 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
           toolCalls={parseToolCallSequence(logsWithTools[0].toolCallSequence)}
           isActive={false}
           alwaysExpanded={true}
+          staticTodos={true}
         />
       );
     }
@@ -123,6 +152,7 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
           toolCalls={parseToolCallSequence(log.toolCallSequence)}
           isActive={false}
           alwaysExpanded={true}
+          staticTodos={true}
         />
       ),
     }));
@@ -148,7 +178,12 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
           </span>
         </div>
       ),
-      children: <div className="exec-body">{renderContent()}</div>,
+      children: (
+        <div className="exec-body">
+          {renderContent()}
+          <div ref={bottomRef} />
+        </div>
+      ),
     },
   ];
 
@@ -157,7 +192,7 @@ export const TaskExecutionLog = ({ task }: TaskExecutionLogProps) => {
       <Collapse
         defaultActiveKey={defaultOpen ? ["execution-log"] : []}
         size="small"
-        expandIconPosition="end"
+        expandIconPlacement="end"
         items={collapseItems}
       />
     </Wrapper>

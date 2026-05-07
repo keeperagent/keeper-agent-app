@@ -15,6 +15,7 @@ import { createAgentFromProfile, ToolContext } from "@/electron/agentCore";
 import {
   extractUsageFromMeta,
   isErrorResult,
+  consumeAgentStream,
 } from "@/electron/agentCore/utils";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 
@@ -28,16 +29,28 @@ type ToolCallEntry = {
   state: "running" | "done" | "error";
 };
 
-const extractToolOutput = (rawOutput: any): string => {
-  if (typeof rawOutput === "string") {
-    return rawOutput;
-  }
-  const content = rawOutput?.kwargs?.content ?? rawOutput?.content;
-  if (typeof content === "string") {
-    return content;
-  }
-  return JSON.stringify(rawOutput || "");
-};
+const buildAppLog = (
+  taskId: number,
+  agentId: number,
+  profileName: string,
+  task: { title: string; startedAt?: number | null },
+  completedToolCalls: ToolCallEntry[],
+  extra: Record<string, unknown>,
+) => ({
+  logType: AppLogType.TASK,
+  taskId,
+  actorType: AppLogActorType.AGENT,
+  actorId: agentId,
+  actorName: profileName,
+  message: task.title,
+  toolCallSequence:
+    completedToolCalls.length > 0
+      ? JSON.stringify(completedToolCalls)
+      : undefined,
+  startedAt: task.startedAt || undefined,
+  finishedAt: Date.now(),
+  ...extra,
+});
 
 class AgentTaskExecutor {
   private runningTasks = new Map<number, AbortController>();
@@ -192,16 +205,13 @@ class AgentTaskExecutor {
         },
       );
 
-      for await (const evt of eventStream) {
-        if (abortController.signal.aborted) {
-          break;
-        }
-
-        if (evt.event === "on_tool_start") {
-          const toolName = evt.name || "unknown";
-          const input = evt.data?.input || {};
-          runToolCallMap.set(evt.run_id, {
-            runId: evt.run_id,
+      await consumeAgentStream(eventStream, abortController.signal, {
+        onText: (text) => {
+          textBuffer += text;
+        },
+        onToolStart: (toolName, runId, input) => {
+          runToolCallMap.set(runId, {
+            runId,
             toolName,
             input,
             state: "running",
@@ -210,71 +220,38 @@ class AgentTaskExecutor {
             ...completedToolCalls,
             ...Array.from(runToolCallMap.values()),
           ]);
-        }
-
-        if (evt.event === "on_tool_end") {
-          const result = extractToolOutput(evt.data?.output);
-          const existing = runToolCallMap.get(evt.run_id);
+        },
+        onToolEnd: (toolName, runId, result) => {
+          const existing = runToolCallMap.get(runId);
           if (existing) {
             existing.result = result;
             existing.state = isErrorResult(result) ? "error" : "done";
             completedToolCalls.push({ ...existing });
-            runToolCallMap.delete(evt.run_id);
+            runToolCallMap.delete(runId);
           }
           this.liveToolCalls.set(taskId, [
             ...completedToolCalls,
             ...Array.from(runToolCallMap.values()),
           ]);
-        }
-
-        if (
-          evt.event === "on_chat_model_stream" &&
-          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
-        ) {
-          const content = evt.data?.chunk?.content;
-          if (typeof content === "string") {
-            textBuffer += content;
-          } else if (Array.isArray(content)) {
-            textBuffer += content
-              .filter(
-                (chunk: any) =>
-                  chunk?.type === "text" || typeof chunk === "string",
-              )
-              .map((chunk: any) =>
-                typeof chunk === "string" ? chunk : chunk.text || "",
-              )
-              .join("");
+        },
+        onModelEnd: (runId, hasToolCalls, usageMeta, isTopLevel) => {
+          if (!isTopLevel) {
+            return;
           }
-        }
-
-        if (
-          evt.event === "on_chat_model_end" &&
-          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
-        ) {
-          const hasToolCalls =
-            Array.isArray(evt.data?.output?.tool_calls) &&
-            evt.data.output.tool_calls.length > 0;
           if (textBuffer && !hasToolCalls) {
             resultText += textBuffer;
           }
           textBuffer = "";
-          const extracted = extractUsageFromMeta(
-            evt.data?.output?.usage_metadata,
-          );
+          const extracted = extractUsageFromMeta(usageMeta);
           if (extracted) {
             tokenUsage = extracted;
           }
-        }
-      }
+        },
+      });
 
       clearTimeout(timeoutId);
 
       if (!isTimedOut) {
-        const toolCallSequence =
-          completedToolCalls.length > 0
-            ? JSON.stringify(completedToolCalls)
-            : null;
-
         await agentTaskDB.updateAgentTask(taskId, {
           status: AgentTaskStatus.DONE,
           result: {
@@ -283,20 +260,13 @@ class AgentTaskExecutor {
           },
           completedAt: Date.now(),
         });
-        await appLogDB.createAppLog({
-          logType: AppLogType.TASK,
-          taskId,
-          actorType: AppLogActorType.AGENT,
-          actorId: agentId,
-          actorName: profile.name,
-          action: AppLogTaskAction.TASK_COMPLETED,
-          status: AgentTaskStatus.DONE,
-          message: task.title,
-          result: normalizeAgentMessageContent(resultText),
-          toolCallSequence: toolCallSequence || undefined,
-          startedAt: task.startedAt,
-          finishedAt: Date.now(),
-        });
+        await appLogDB.createAppLog(
+          buildAppLog(taskId, agentId, profile.name, task, completedToolCalls, {
+            action: AppLogTaskAction.TASK_COMPLETED,
+            status: AgentTaskStatus.DONE,
+            result: normalizeAgentMessageContent(resultText),
+          }),
+        );
       }
     } catch (err: any) {
       clearTimeout(timeoutId!);
@@ -306,28 +276,32 @@ class AgentTaskExecutor {
           claimedAt: null as any,
           startedAt: null as any,
         });
+        if (completedToolCalls.length > 0) {
+          await appLogDB.createAppLog(
+            buildAppLog(
+              taskId,
+              agentId,
+              profile.name,
+              task,
+              completedToolCalls,
+              {
+                action: AppLogTaskAction.TASK_PAUSED,
+                status: AgentTaskStatus.PAUSED,
+              },
+            ),
+          );
+        }
       } else if (this.cancelledTasks.has(taskId)) {
         await agentTaskDB.updateAgentTask(taskId, {
           status: AgentTaskStatus.CANCELLED,
           cancelledAt: Date.now(),
         });
-        const toolCallSequence =
-          completedToolCalls.length > 0
-            ? JSON.stringify(completedToolCalls)
-            : null;
-        await appLogDB.createAppLog({
-          logType: AppLogType.TASK,
-          taskId,
-          actorType: AppLogActorType.AGENT,
-          actorId: agentId,
-          actorName: profile.name,
-          action: AppLogTaskAction.TASK_CANCELLED,
-          status: AgentTaskStatus.CANCELLED,
-          message: task.title,
-          toolCallSequence: toolCallSequence || undefined,
-          startedAt: task.startedAt,
-          finishedAt: Date.now(),
-        });
+        await appLogDB.createAppLog(
+          buildAppLog(taskId, agentId, profile.name, task, completedToolCalls, {
+            action: AppLogTaskAction.TASK_CANCELLED,
+            status: AgentTaskStatus.CANCELLED,
+          }),
+        );
       } else {
         const retryCount = task.retryCount || 0;
         const maxRetries = task.maxRetries || 0;
@@ -344,24 +318,20 @@ class AgentTaskExecutor {
             ? `Task execution timed out after ${timeoutMinutes} minutes`
             : err?.message;
           await this.failTask(taskId, errorMessage);
-          const toolCallSequence =
-            completedToolCalls.length > 0
-              ? JSON.stringify(completedToolCalls)
-              : null;
-          await appLogDB.createAppLog({
-            logType: AppLogType.TASK,
-            taskId,
-            actorType: AppLogActorType.AGENT,
-            actorId: agentId,
-            actorName: profile.name,
-            action: AppLogTaskAction.TASK_FAILED,
-            status: AgentTaskStatus.FAILED,
-            message: task.title,
-            errorMessage,
-            toolCallSequence: toolCallSequence || undefined,
-            startedAt: task.startedAt,
-            finishedAt: Date.now(),
-          });
+          await appLogDB.createAppLog(
+            buildAppLog(
+              taskId,
+              agentId,
+              profile.name,
+              task,
+              completedToolCalls,
+              {
+                action: AppLogTaskAction.TASK_FAILED,
+                status: AgentTaskStatus.FAILED,
+                errorMessage,
+              },
+            ),
+          );
         }
       }
     } finally {

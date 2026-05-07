@@ -11,6 +11,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { actSetPageName } from "@/redux/layout";
+import { actSetSelectedTask } from "@/redux/agentTask";
 import { RootState } from "@/redux/store";
 import {
   IAgentTask,
@@ -119,7 +120,14 @@ const isLLMConfigured = (
 };
 
 const AgentTaskPage = (props: any) => {
-  const { listAgentTask, listAgentProfile, preference, actSetPageName } = props;
+  const {
+    listAgentTask,
+    listAgentProfile,
+    preference,
+    selectedTask,
+    actSetPageName,
+    actSetSelectedTask,
+  } = props;
   const { translate } = useTranslation();
 
   const { getListAgentTask } = useGetListAgentTask();
@@ -138,7 +146,6 @@ const AgentTaskPage = (props: any) => {
   }, [listAgentProfile]);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<IAgentTask | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [activeDragStatus, setActiveDragStatus] =
     useState<AgentTaskStatus | null>(null);
@@ -278,18 +285,18 @@ const AgentTaskPage = (props: any) => {
     ).length;
 
   const onOpenCreate = () => {
-    setEditingTask(null);
+    actSetSelectedTask(null);
     setModalOpen(true);
   };
 
   const onOpenEdit = (task: IAgentTask) => {
-    setEditingTask(task);
+    actSetSelectedTask(task);
     setModalOpen(true);
   };
 
   const onCloseModal = () => {
     setModalOpen(false);
-    setTimeout(() => setEditingTask(null), 300);
+    setTimeout(() => actSetSelectedTask(null), 300);
   };
 
   const onDragStart = (event: DragStartEvent) => {
@@ -479,7 +486,7 @@ const AgentTaskPage = (props: any) => {
 
       <ModalAgentTask
         open={modalOpen}
-        editingTask={editingTask}
+        editingTask={selectedTask}
         onClose={onCloseModal}
       />
     </Wrapper>
@@ -491,6 +498,7 @@ export default connect(
     listAgentTask: state?.AgentTask?.listAgentTask,
     listAgentProfile: state?.AgentProfile?.listAgentProfile,
     preference: state?.Preference?.preference,
+    selectedTask: state?.AgentTask?.selectedTask,
   }),
-  { actSetPageName },
+  { actSetPageName, actSetSelectedTask },
 )(AgentTaskPage);
