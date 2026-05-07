@@ -81,8 +81,9 @@ const useDeleteAgentTask = () => {
   );
 
   const deleteAgentTask = (id: number) => execute({ data: [id] });
+  const bulkDeleteAgentTask = (ids: number[]) => execute({ data: ids });
 
-  return { loading, isSuccess, deleteAgentTask };
+  return { loading, isSuccess, deleteAgentTask, bulkDeleteAgentTask };
 };
 
 const usePauseAgentTask = () => {

@@ -1,6 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, Fragment } from "react";
-import AnimatedNumbers from "react-animated-numbers";
-import type { CSSProperties } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { connect } from "react-redux";
 import { Alert, Button, Select, Switch, Tooltip, message } from "antd";
 import {
@@ -12,7 +10,6 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useDroppable } from "@dnd-kit/core";
 import { actSetPageName } from "@/redux/layout";
 import { RootState } from "@/redux/store";
 import {
@@ -31,6 +28,7 @@ import {
   useRerunAgentTask,
   useAgentTaskRealtime,
 } from "@/hook/agentTask";
+
 import { useGetListAgentProfile } from "@/hook/agentProfile";
 import { useUpdatePreference } from "@/hook";
 import { formatTime } from "@/service/util";
@@ -38,16 +36,17 @@ import { useTranslation } from "@/hook/useTranslation";
 import { SearchInput } from "@/component";
 import RealtimeIndicator from "@/component/RealtimeIndicator";
 import { ModalAgentTask } from "./ModalAgentTask";
-import { TaskCard, TaskCardDragOverlay } from "./TaskCard";
-import { Wrapper, KanbanColumn, OptionWrapper } from "./style";
+import { TaskCardDragOverlay } from "./TaskCard";
+import { Wrapper, OptionWrapper } from "./style";
+import DroppableColumn from "./DroppableColumn";
 
-interface KanbanColumnDef {
+interface ColumnDef {
   dropStatus: AgentTaskStatus;
   displayStatuses: AgentTaskStatus[];
   labelKey: string;
 }
 
-const KANBAN_COLUMNS: KanbanColumnDef[] = [
+const COLUMNS: ColumnDef[] = [
   {
     dropStatus: AgentTaskStatus.INIT,
     displayStatuses: [AgentTaskStatus.INIT, AgentTaskStatus.PAUSED],
@@ -75,117 +74,12 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   },
 ];
 
-const getStatusColor = (status: AgentTaskStatus): string => {
-  switch (status) {
-    case AgentTaskStatus.INIT:
-      return "#94a3b8";
-    case AgentTaskStatus.IN_PROGRESS:
-      return "#3b82f6";
-    case AgentTaskStatus.DONE:
-      return "#22c55e";
-    case AgentTaskStatus.FAILED:
-      return "#ef4444";
-    case AgentTaskStatus.CANCELLED:
-      return "#94a3b8";
-    default:
-      return "#94a3b8";
-  }
-};
-
 const PRIORITY_FILTER_OPTIONS = [
   { label: "Urgent", value: AgentTaskPriority.URGENT },
   { label: "High", value: AgentTaskPriority.HIGH },
   { label: "Medium", value: AgentTaskPriority.MEDIUM },
   { label: "Low", value: AgentTaskPriority.LOW },
 ];
-
-interface DroppableColumnProps {
-  dropStatus: AgentTaskStatus;
-  displayStatuses: AgentTaskStatus[];
-  label: string;
-  tasks: IAgentTask[];
-  totalCount: number;
-  isFiltered: boolean;
-  activeDragId: string | null;
-  isInvalidTarget: boolean;
-  onEdit: (task: IAgentTask) => void;
-  onDelete: (id: number) => void;
-  onPin: (id: number, isPinned: boolean) => void;
-  onRetry: (id: number) => void;
-  onRerun: (id: number) => void;
-  onPause?: (task: IAgentTask) => void;
-  onResume?: (id: number) => void;
-}
-
-const DroppableColumn = ({
-  dropStatus,
-  label,
-  tasks,
-  totalCount,
-  isFiltered,
-  activeDragId,
-  isInvalidTarget,
-  onEdit,
-  onDelete,
-  onPin,
-  onRetry,
-  onRerun,
-  onPause,
-  onResume,
-}: DroppableColumnProps) => {
-  const { setNodeRef, isOver } = useDroppable({ id: dropStatus });
-  const { translate } = useTranslation();
-
-  return (
-    <KanbanColumn
-      isDragOver={isOver && !isInvalidTarget}
-      isInvalidTarget={isInvalidTarget}
-      style={{ "--status-color": getStatusColor(dropStatus) } as CSSProperties}
-    >
-      <div className="column-header">
-        <div className="column-title-group">
-          <span className="column-status-dot" />
-          <span className="column-title">{label}</span>
-        </div>
-
-        <span className="column-count">
-          <AnimatedNumbers animateToNumber={tasks.length} />
-          {isFiltered && (
-            <Fragment>
-              {" / "}
-              <AnimatedNumbers animateToNumber={totalCount} />
-            </Fragment>
-          )}
-        </span>
-      </div>
-
-      <div ref={setNodeRef} className="column-body">
-        {tasks.length === 0 && (
-          <div className="column-empty">
-            {isFiltered
-              ? translate("agentTaskColumnEmptyFiltered")
-              : translate("agentTaskColumnEmpty")}
-          </div>
-        )}
-
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onPin={onPin}
-            onRetry={onRetry}
-            onRerun={onRerun}
-            onPause={onPause}
-            onResume={onResume}
-            isDragging={activeDragId === String(task.id)}
-          />
-        ))}
-      </div>
-    </KanbanColumn>
-  );
-};
 
 const isLLMConfigured = (
   preference: IPreference | null,
@@ -231,7 +125,7 @@ const AgentTaskPage = (props: any) => {
   const { getListAgentTask } = useGetListAgentTask();
   const { getListAgentProfile } = useGetListAgentProfile();
   const { updateAgentTask } = useUpdateAgentTask();
-  const { deleteAgentTask } = useDeleteAgentTask();
+  const { deleteAgentTask, bulkDeleteAgentTask } = useDeleteAgentTask();
   const { pauseAgentTask } = usePauseAgentTask();
   const { rerunAgentTask } = useRerunAgentTask();
   const { updatePreference } = useUpdatePreference();
@@ -362,6 +256,20 @@ const AgentTaskPage = (props: any) => {
 
   const onRerunAgentTask = (id: number) => {
     rerunAgentTask(id);
+  };
+
+  const onBulkDeleteAgentTasks = (ids: number[]) => {
+    bulkDeleteAgentTask(ids);
+  };
+
+  const onBulkRetryAllFailed = () => {
+    (listAgentTask || [])
+      .filter((task: IAgentTask) => task.status === AgentTaskStatus.FAILED)
+      .forEach((task: IAgentTask) => {
+        if (task.id) {
+          onRetryAgentTask(task.id);
+        }
+      });
   };
 
   const getTotalByStatuses = (statuses: AgentTaskStatus[]): number =>
@@ -535,7 +443,7 @@ const AgentTaskPage = (props: any) => {
         onDragEnd={onDragEnd}
       >
         <div className="board">
-          {KANBAN_COLUMNS.map((column) => (
+          {COLUMNS.map((column) => (
             <DroppableColumn
               key={column.dropStatus}
               dropStatus={column.dropStatus}
@@ -556,6 +464,8 @@ const AgentTaskPage = (props: any) => {
               onRerun={onRerunAgentTask}
               onPause={onPauseAgentTask}
               onResume={onResumeAgentTask}
+              onBulkDelete={onBulkDeleteAgentTasks}
+              onBulkRetryAll={onBulkRetryAllFailed}
             />
           ))}
         </div>
