@@ -195,6 +195,8 @@
   "agentTask.resumeTooltip": "Resume",
   "agentTask.pinTooltip": "Pin task",
   "agentTask.unpinTooltip": "Unpin task",
+  "agentTask.executionLogLabel": "Execution log",
+  "agentTask.executionLogWaiting": "Waiting for agent to start...",
   "agentTask.deleteAll": "Delete all",
   "agentTask.retryAllFailed": "Retry all",
   "agentTask.bulkDeleteDescription": "This action cannot be undone.",

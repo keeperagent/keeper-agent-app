@@ -19,6 +19,8 @@ import type {
   IpcPauseAgentTaskPayload,
   IpcRerunAgentTaskPayload,
   IpcGetAgentAnalyticsPayload,
+  IpcGetAgentTaskLogPayload,
+  IpcGetLiveToolCallsPayload,
 } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
 
@@ -182,6 +184,32 @@ export const agentTaskController = () => {
       const { fromTimestamp } = payload;
       const [result] = await agentTaskDB.getAgentAnalytics(fromTimestamp);
       event.reply(MESSAGE.GET_AGENT_ANALYTICS_RES, { data: result });
+    },
+  );
+
+  onIpc<IpcGetLiveToolCallsPayload>(
+    MESSAGE.GET_LIVE_TOOL_CALLS,
+    MESSAGE.GET_LIVE_TOOL_CALLS_RES,
+    async (event, payload) => {
+      const { taskId } = payload || {};
+      const toolCalls = agentTaskExecutor.getLiveToolCalls(taskId);
+      event.reply(MESSAGE.GET_LIVE_TOOL_CALLS_RES, { data: toolCalls });
+    },
+  );
+
+  onIpc<IpcGetAgentTaskLogPayload>(
+    MESSAGE.GET_AGENT_TASK_LOG,
+    MESSAGE.GET_AGENT_TASK_LOG_RES,
+    async (event, payload) => {
+      const { taskId } = payload || {};
+      const [result] = await appLogDB.getListAppLog({
+        page: 1,
+        pageSize: 100,
+        logType: AppLogType.TASK,
+        taskId,
+      });
+      const logs = result?.data || [];
+      event.reply(MESSAGE.GET_AGENT_TASK_LOG_RES, { data: logs });
     },
   );
 };

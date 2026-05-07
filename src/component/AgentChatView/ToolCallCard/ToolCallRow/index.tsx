@@ -49,9 +49,14 @@ const formatTaskToolPrimaryLabel = (label: string) => {
 type ToolCallRowProps = {
   toolCall: ToolCallState;
   extractWebStateMap?: Map<string, ToolCallStateStatus>;
+  isGroupActive?: boolean;
 };
 
-const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
+const ToolCallRow = ({
+  toolCall,
+  extractWebStateMap,
+  isGroupActive,
+}: ToolCallRowProps) => {
   const chartData = useMemo(
     () =>
       toolCall.toolName === TOOL_KEYS.RENDER_CHART &&
@@ -75,10 +80,21 @@ const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
     toolCall.result,
   );
 
-  const todos =
+  const rawTodos =
     toolCall.toolName === TOOL_KEYS.WRITE_TODOS
       ? parseTodos(toolCall.input)
       : null;
+
+  const todos =
+    rawTodos && !isGroupActive
+      ? rawTodos.map((todo) => ({
+          ...todo,
+          status:
+            todo.status === TodoItemStatus.IN_PROGRESS
+              ? TodoItemStatus.PENDING
+              : todo.status,
+        }))
+      : rawTodos;
 
   const isRejected =
     toolCall.toolName === TOOL_KEYS.CONFIRM_APPROVAL &&
@@ -132,7 +148,7 @@ const ToolCallRow = ({ toolCall, extractWebStateMap }: ToolCallRowProps) => {
                 </span>
               )}
 
-            {todos && todos.length > 0 && (
+            {todos && todos.length > 0 && isGroupActive && (
               <span className="todo-counter">
                 {
                   todos.filter(

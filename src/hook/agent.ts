@@ -66,14 +66,18 @@ const isErrorResult = (result: unknown): boolean => {
 
 const parseToolCallSequence = (
   raw: string | null | undefined,
-): ToolCallState[] | undefined => {
+): ToolCallState[] => {
   if (!raw) {
-    return undefined;
+    return [];
   }
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed;
   } catch {
-    return undefined;
+    return [];
   }
 };
 
@@ -210,12 +214,15 @@ const useDashboardAgent = (profileId: number | null = null) => {
     const handleLoad = (_event: any, payload: any) => {
       const { data } = payload || {};
       if (Array.isArray(data) && data.length > 0) {
-        const messages: AgentMessage[] = data.map((row: any) => ({
-          role: row.role,
-          content: row.content,
-          timestamp: row.timestamp,
-          toolCalls: parseToolCallSequence(row.toolCallSequence),
-        }));
+        const messages: AgentMessage[] = data.map((row: any) => {
+          const toolCalls = parseToolCallSequence(row.toolCallSequence);
+          return {
+            role: row.role,
+            content: row.content,
+            timestamp: row.timestamp,
+            toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+          };
+        });
         setConversation(messages);
       }
       unsubscribe?.();
@@ -977,4 +984,9 @@ const invalidatePersistedSession = (profileId: number) => {
   persistedSessions.delete(getSessionKey(profileId));
 };
 
-export { useDashboardAgent, useAgentReadyStats, invalidatePersistedSession };
+export {
+  useDashboardAgent,
+  useAgentReadyStats,
+  invalidatePersistedSession,
+  parseToolCallSequence,
+};

@@ -19,12 +19,14 @@ type ToolCallGroupProps = {
   toolCalls: ToolCallState[];
   isActive?: boolean;
   extractWebStateMap?: Map<string, ToolCallStateStatus>;
+  alwaysExpanded?: boolean;
 };
 
 const ToolCallGroup = ({
   toolCalls,
   isActive,
   extractWebStateMap: globalExtractWebStateMap,
+  alwaysExpanded,
 }: ToolCallGroupProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -41,6 +43,9 @@ const ToolCallGroup = ({
   );
 
   useEffect(() => {
+    if (alwaysExpanded) {
+      return;
+    }
     if (!anyRunning && !isActive && !hasChart) {
       const timer = setTimeout(() => setExpanded(false), 5000);
       return () => clearTimeout(timer);
@@ -49,7 +54,7 @@ const ToolCallGroup = ({
     if (anyRunning || isActive) {
       setExpanded(true);
     }
-  }, [anyRunning, isActive, hasChart]);
+  }, [anyRunning, isActive, hasChart, alwaysExpanded]);
 
   const summaryText = getGroupSummary(toolCalls);
 
@@ -95,6 +100,9 @@ const ToolCallGroup = ({
   );
 
   const handleToggle = () => {
+    if (alwaysExpanded) {
+      return;
+    }
     setExpanded((prev) => !prev);
   };
 
@@ -104,9 +112,11 @@ const ToolCallGroup = ({
         <div className="group-summary">
           <span className="summary-text">{summaryText}</span>
 
-          <div className="icon-wrapper">
-            {expanded ? <DownArrowIcon /> : <ArrowRightIcon />}
-          </div>
+          {!alwaysExpanded && (
+            <div className="icon-wrapper">
+              {expanded ? <DownArrowIcon /> : <ArrowRightIcon />}
+            </div>
+          )}
         </div>
       </div>
 
@@ -118,6 +128,7 @@ const ToolCallGroup = ({
                 key={toolCall.runId}
                 toolCall={toolCall}
                 extractWebStateMap={extractWebStateMap}
+                isGroupActive={isActive || anyRunning}
               />
             ))}
           </div>

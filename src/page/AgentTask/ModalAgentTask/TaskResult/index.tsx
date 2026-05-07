@@ -1,5 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Fragment } from "react";
+import { Collapse } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
@@ -60,31 +61,59 @@ export const TaskResult = ({ task }: TaskResultProps) => {
   return (
     <Fragment>
       {hasResult && (
-        <Wrapper style={{ "--dot-color": "#22c55e" } as CSSProperties}>
-          <div className="result-header">
-            <span className="result-dot" />
-            <span className="result-label">
-              {translate("agentTaskResultLabel")}
-            </span>
-            {task.result?.tokenUsage && (
-              <TokenUsageBadge turnUsage={task.result.tokenUsage} />
-            )}
-          </div>
-          <div className="result-body">{renderResultContent(task.result)}</div>
+        <Wrapper>
+          <Collapse
+            defaultActiveKey={["result"]}
+            size="small"
+            expandIconPosition="end"
+            items={[
+              {
+                key: "result",
+                label: (
+                  <div className="result-header">
+                    <span className="result-label">
+                      {translate("agentTaskResultLabel")}
+                    </span>
+                    {task.result?.tokenUsage && (
+                      <TokenUsageBadge turnUsage={task.result.tokenUsage} />
+                    )}
+                  </div>
+                ),
+                children: (
+                  <div className="result-body">
+                    {renderResultContent(task.result)}
+                  </div>
+                ),
+              },
+            ]}
+          />
         </Wrapper>
       )}
 
       {hasError && (
-        <Wrapper style={{ "--dot-color": "#f97316" } as CSSProperties}>
-          <div className="result-header">
-            <span className="result-dot" />
-            <span className="result-label">
-              {translate("agentTaskErrorMessageLabel")}
-            </span>
-          </div>
-          <div className="result-body">
-            <pre>{task.errorMessage}</pre>
-          </div>
+        <Wrapper>
+          <Collapse
+            defaultActiveKey={["error"]}
+            size="small"
+            expandIconPosition="end"
+            items={[
+              {
+                key: "error",
+                label: (
+                  <div className="result-header">
+                    <span className="result-label">
+                      {translate("agentTaskErrorMessageLabel")}
+                    </span>
+                  </div>
+                ),
+                children: (
+                  <div className="result-body">
+                    <pre>{task.errorMessage}</pre>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </Wrapper>
       )}
     </Fragment>

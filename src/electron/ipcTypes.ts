@@ -515,6 +515,8 @@ export type IpcAgentProfileResetSessionPayload = {
 
 // AgentTask
 export type IpcGetListAgentTaskPayload = Record<string, never>;
+export type IpcGetAgentTaskLogPayload = { taskId: number };
+export type IpcGetLiveToolCallsPayload = { taskId: number };
 export type IpcGetOneAgentTaskPayload = {
   id: number;
 };

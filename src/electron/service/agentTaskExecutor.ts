@@ -12,15 +12,42 @@ import { logEveryWhere } from "@/electron/service/util";
 import { sendToRenderer } from "@/electron/main";
 import { MESSAGE } from "@/electron/constant";
 import { createAgentFromProfile, ToolContext } from "@/electron/agentCore";
-import { extractUsageFromMessages } from "@/electron/agentCore/utils";
+import {
+  extractUsageFromMeta,
+  isErrorResult,
+} from "@/electron/agentCore/utils";
 import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 
 const DEFAULT_TASK_TIMEOUT_MINUTES = 30;
+
+type ToolCallEntry = {
+  runId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  result?: string;
+  state: "running" | "done" | "error";
+};
+
+const extractToolOutput = (rawOutput: any): string => {
+  if (typeof rawOutput === "string") {
+    return rawOutput;
+  }
+  const content = rawOutput?.kwargs?.content ?? rawOutput?.content;
+  if (typeof content === "string") {
+    return content;
+  }
+  return JSON.stringify(rawOutput || "");
+};
 
 class AgentTaskExecutor {
   private runningTasks = new Map<number, AbortController>();
   private cancelledTasks = new Set<number>();
   private pausedTasks = new Set<number>();
+  private liveToolCalls = new Map<number, ToolCallEntry[]>();
+
+  getLiveToolCalls = (taskId: number): ToolCallEntry[] => {
+    return this.liveToolCalls.get(taskId) || [];
+  };
 
   execute = (
     taskId: number,
@@ -89,15 +116,10 @@ class AgentTaskExecutor {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let isTimedOut = false;
 
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        isTimedOut = true;
-        abortController.abort();
-        reject(
-          new Error(`Task execution timed out after ${timeoutMinutes} minutes`),
-        );
-      }, timeoutMs);
-    });
+    timeoutId = setTimeout(() => {
+      isTimedOut = true;
+      abortController.abort();
+    }, timeoutMs);
 
     const toolContext = new ToolContext();
     toolContext.update({
@@ -123,6 +145,13 @@ class AgentTaskExecutor {
       toolContext,
     });
     const { agent, cleanup } = agentCreator;
+
+    const runToolCallMap = new Map<string, ToolCallEntry>();
+    this.liveToolCalls.set(taskId, []);
+    const completedToolCalls: ToolCallEntry[] = [];
+    let resultText = "";
+    let textBuffer = "";
+    let tokenUsage = null;
 
     try {
       const basePrompt = task.description
@@ -153,27 +182,105 @@ class AgentTaskExecutor {
         "CURRENT CONTEXT (use these values — ignore any older context from previous messages. For agent use only — keep raw IDs private and do not surface campaignId, nodeEndpointGroupId, or profile IDs in user-facing replies):";
       const prompt = `${basePrompt}\n\n${contextHeader}\n${JSON.stringify(currentContext)}`;
 
-      const response = await Promise.race([
-        (agent as any).invoke(
-          { messages: [new HumanMessage(prompt)] },
-          {
-            configurable: { thread_id: `agent_task_${taskId}` },
-            signal: abortController.signal,
-          },
-        ),
-        timeoutPromise,
-      ]);
+      const eventStream = (agent as any).streamEvents(
+        { messages: [new HumanMessage(prompt)] },
+        {
+          configurable: { thread_id: `agent_task_${taskId}` },
+          version: "v2",
+          signal: abortController.signal,
+          recursionLimit: 100,
+        },
+      );
 
-      clearTimeout(timeoutId!);
+      for await (const evt of eventStream) {
+        if (abortController.signal.aborted) {
+          break;
+        }
+
+        if (evt.event === "on_tool_start") {
+          const toolName = evt.name || "unknown";
+          const input = evt.data?.input || {};
+          runToolCallMap.set(evt.run_id, {
+            runId: evt.run_id,
+            toolName,
+            input,
+            state: "running",
+          });
+          this.liveToolCalls.set(taskId, [
+            ...completedToolCalls,
+            ...Array.from(runToolCallMap.values()),
+          ]);
+        }
+
+        if (evt.event === "on_tool_end") {
+          const result = extractToolOutput(evt.data?.output);
+          const existing = runToolCallMap.get(evt.run_id);
+          if (existing) {
+            existing.result = result;
+            existing.state = isErrorResult(result) ? "error" : "done";
+            completedToolCalls.push({ ...existing });
+            runToolCallMap.delete(evt.run_id);
+          }
+          this.liveToolCalls.set(taskId, [
+            ...completedToolCalls,
+            ...Array.from(runToolCallMap.values()),
+          ]);
+        }
+
+        if (
+          evt.event === "on_chat_model_stream" &&
+          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
+        ) {
+          const content = evt.data?.chunk?.content;
+          if (typeof content === "string") {
+            textBuffer += content;
+          } else if (Array.isArray(content)) {
+            textBuffer += content
+              .filter(
+                (chunk: any) =>
+                  chunk?.type === "text" || typeof chunk === "string",
+              )
+              .map((chunk: any) =>
+                typeof chunk === "string" ? chunk : chunk.text || "",
+              )
+              .join("");
+          }
+        }
+
+        if (
+          evt.event === "on_chat_model_end" &&
+          !String(evt.metadata?.langgraph_checkpoint_ns || "").includes("|")
+        ) {
+          const hasToolCalls =
+            Array.isArray(evt.data?.output?.tool_calls) &&
+            evt.data.output.tool_calls.length > 0;
+          if (textBuffer && !hasToolCalls) {
+            resultText += textBuffer;
+          }
+          textBuffer = "";
+          const extracted = extractUsageFromMeta(
+            evt.data?.output?.usage_metadata,
+          );
+          if (extracted) {
+            tokenUsage = extracted;
+          }
+        }
+      }
+
+      clearTimeout(timeoutId);
 
       if (!isTimedOut) {
-        const lastMessage = response?.messages?.[response.messages.length - 1];
-        const resultText = normalizeAgentMessageContent(lastMessage?.content);
-        const tokenUsage = extractUsageFromMessages(response?.messages || []);
+        const toolCallSequence =
+          completedToolCalls.length > 0
+            ? JSON.stringify(completedToolCalls)
+            : null;
 
         await agentTaskDB.updateAgentTask(taskId, {
           status: AgentTaskStatus.DONE,
-          result: { value: resultText, tokenUsage },
+          result: {
+            value: normalizeAgentMessageContent(resultText),
+            tokenUsage,
+          },
           completedAt: Date.now(),
         });
         await appLogDB.createAppLog({
@@ -185,7 +292,8 @@ class AgentTaskExecutor {
           action: AppLogTaskAction.TASK_COMPLETED,
           status: AgentTaskStatus.DONE,
           message: task.title,
-          result: resultText,
+          result: normalizeAgentMessageContent(resultText),
+          toolCallSequence: toolCallSequence || undefined,
           startedAt: task.startedAt,
           finishedAt: Date.now(),
         });
@@ -203,6 +311,10 @@ class AgentTaskExecutor {
           status: AgentTaskStatus.CANCELLED,
           cancelledAt: Date.now(),
         });
+        const toolCallSequence =
+          completedToolCalls.length > 0
+            ? JSON.stringify(completedToolCalls)
+            : null;
         await appLogDB.createAppLog({
           logType: AppLogType.TASK,
           taskId,
@@ -212,6 +324,7 @@ class AgentTaskExecutor {
           action: AppLogTaskAction.TASK_CANCELLED,
           status: AgentTaskStatus.CANCELLED,
           message: task.title,
+          toolCallSequence: toolCallSequence || undefined,
           startedAt: task.startedAt,
           finishedAt: Date.now(),
         });
@@ -231,6 +344,10 @@ class AgentTaskExecutor {
             ? `Task execution timed out after ${timeoutMinutes} minutes`
             : err?.message;
           await this.failTask(taskId, errorMessage);
+          const toolCallSequence =
+            completedToolCalls.length > 0
+              ? JSON.stringify(completedToolCalls)
+              : null;
           await appLogDB.createAppLog({
             logType: AppLogType.TASK,
             taskId,
@@ -241,6 +358,7 @@ class AgentTaskExecutor {
             status: AgentTaskStatus.FAILED,
             message: task.title,
             errorMessage,
+            toolCallSequence: toolCallSequence || undefined,
             startedAt: task.startedAt,
             finishedAt: Date.now(),
           });
@@ -248,6 +366,7 @@ class AgentTaskExecutor {
       }
     } finally {
       await cleanup();
+      this.liveToolCalls.delete(taskId);
       this.runningTasks.delete(taskId);
       this.cancelledTasks.delete(taskId);
       this.pausedTasks.delete(taskId);

@@ -29,8 +29,6 @@ export const ToolCallRowWrapper = styled.div`
     font-size: 1.4rem;
     line-height: 1;
     padding: 0.2rem 0;
-    background: ${({ theme }: { theme: ITheme }) => theme?.colorBgSecondary};
-    border-radius: 4px;
     z-index: 1;
 
     &.tool-icon--error {

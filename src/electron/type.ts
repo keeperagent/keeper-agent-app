@@ -2712,6 +2712,7 @@ export type IAppLog = {
   actorId?: number;
   actorName?: string;
   result?: string;
+  toolCallSequence?: string;
   errorMessage?: string;
   retryCount?: number;
   nextRetryAt?: number;

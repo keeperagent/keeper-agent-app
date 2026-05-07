@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
-import { IAgentTask } from "@/electron/type";
+import { IAgentTask, IAppLog } from "@/electron/type";
 import {
   actSaveGetListAgentTask,
   actSaveCreateAgentTask,
@@ -14,6 +14,8 @@ import type {
   IpcPauseAgentTaskPayload,
   IpcRerunAgentTaskPayload,
   IpcGetAgentAnalyticsPayload,
+  IpcGetAgentTaskLogPayload,
+  IpcGetLiveToolCallsPayload,
 } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
 
@@ -139,6 +141,34 @@ const useGetAgentAnalytics = () => {
   return { loading, analytics, getAgentAnalytics };
 };
 
+const useGetAgentTaskLog = () => {
+  const [logs, setLogs] = useState<IAppLog[]>([]);
+
+  const { execute, loading } = useIpcAction<IpcGetAgentTaskLogPayload>(
+    MESSAGE.GET_AGENT_TASK_LOG,
+    MESSAGE.GET_AGENT_TASK_LOG_RES,
+    {
+      onSuccess: (payload: any) => setLogs(payload?.data || []),
+    },
+  );
+
+  const getAgentTaskLog = (taskId: number) => execute({ taskId });
+  return { loading, logs, getAgentTaskLog };
+};
+
+const useGetLiveToolCalls = (onSuccess: (data: any[]) => void) => {
+  const { execute } = useIpcAction<IpcGetLiveToolCallsPayload>(
+    MESSAGE.GET_LIVE_TOOL_CALLS,
+    MESSAGE.GET_LIVE_TOOL_CALLS_RES,
+    {
+      onSuccess: (payload: any) => onSuccess(payload?.data || []),
+    },
+  );
+
+  const getLiveToolCalls = (taskId: number) => execute({ taskId });
+  return { getLiveToolCalls };
+};
+
 export {
   useGetListAgentTask,
   useCreateAgentTask,
@@ -148,4 +178,6 @@ export {
   useRerunAgentTask,
   useAgentTaskRealtime,
   useGetAgentAnalytics,
+  useGetAgentTaskLog,
+  useGetLiveToolCalls,
 };
