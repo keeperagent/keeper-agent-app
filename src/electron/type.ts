@@ -2922,6 +2922,7 @@ export type IAgentMailbox = {
 export enum AgentTaskStatus {
   INIT = "INIT",
   IN_PROGRESS = "IN_PROGRESS",
+  PAUSED = "PAUSED",
   DONE = "DONE",
   FAILED = "FAILED",
   EXPIRED = "EXPIRED",
@@ -3019,4 +3020,5 @@ export type TurnUsage = {
   outputTokens: number;
   cacheRead: number;
   cacheCreation: number;
+  cacheHitPercent: number;
 } | null;

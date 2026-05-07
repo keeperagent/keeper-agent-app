@@ -27,7 +27,11 @@ import {
 import { agentProfileDB } from "@/electron/database/agentProfile";
 import { checkModelCapability } from "@/electron/service/modelCapability";
 import { extractMemoryFromConversation } from "./memoryExtraction";
-import { looksLikeEncryptKey, isErrorResult } from "@/electron/agentCore/utils";
+import {
+  looksLikeEncryptKey,
+  isErrorResult,
+  extractUsageFromMeta,
+} from "@/electron/agentCore/utils";
 import { logEveryWhere } from "@/electron/service/util";
 import { chatHistoryDB } from "@/electron/database/chatHistory";
 import { experienceRetriever } from "@/electron/agentCore/experienceEngine/experienceRetriever";
@@ -591,6 +595,7 @@ class AgentChatBridge {
       outputTokens: 0,
       cacheRead: 0,
       cacheCreation: 0,
+      cacheHitPercent: 0,
     };
 
     if (this.activeRuns.has(sessionId)) {
@@ -784,14 +789,18 @@ class AgentChatBridge {
           } else if (bufferedText && hasToolCalls) {
           }
 
-          const usageMeta = output?.usage_metadata;
-          if (usageMeta) {
-            turnUsage.inputTokens += usageMeta.input_tokens || 0;
-            turnUsage.outputTokens += usageMeta.output_tokens || 0;
-            turnUsage.cacheRead +=
-              usageMeta.input_token_details?.cache_read || 0;
-            turnUsage.cacheCreation +=
-              usageMeta.input_token_details?.cache_creation || 0;
+          const extracted = extractUsageFromMeta(output?.usage_metadata);
+          if (extracted) {
+            turnUsage.inputTokens += extracted.inputTokens;
+            turnUsage.outputTokens += extracted.outputTokens;
+            turnUsage.cacheRead += extracted.cacheRead;
+            turnUsage.cacheCreation += extracted.cacheCreation;
+            turnUsage.cacheHitPercent =
+              turnUsage.inputTokens > 0
+                ? Math.round(
+                    (turnUsage.cacheRead / turnUsage.inputTokens) * 100,
+                  )
+                : 0;
             options?.ipcEvent?.reply(MESSAGE.DASHBOARD_AGENT_LLM_USAGE, {
               sessionId,
               turnUsage: { ...turnUsage },

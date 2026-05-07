@@ -87,6 +87,8 @@ export const Wrapper = styled.div<{
     font-size: 1.1rem;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
     line-height: 1.5;
+    overflow: hidden;
+    word-break: break-word;
   }
 
   .task-meta {

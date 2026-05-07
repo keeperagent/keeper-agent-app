@@ -36,13 +36,8 @@ const AgentProfileDetail = (props: Props) => {
   } = props;
   const { translate } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState(
-    selectedAgentProfile?.isMainAgent ? TAB.MEMORY : TAB.HISTORY,
-  );
-  const effectiveTab =
-    selectedAgentProfile?.isMainAgent && activeTab === TAB.HISTORY
-      ? TAB.MEMORY
-      : activeTab;
+  const [activeTab, setActiveTab] = useState(TAB.HISTORY);
+  const effectiveTab = activeTab;
 
   const provider = LLM_PROVIDERS.find(
     (item) => item.key === selectedAgentProfile?.llmProvider,
@@ -165,9 +160,7 @@ const AgentProfileDetail = (props: Props) => {
           activeKey={effectiveTab}
           onChange={setActiveTab}
           items={[
-            ...(!selectedAgentProfile?.isMainAgent
-              ? [{ key: TAB.HISTORY, label: translate("agent.history") }]
-              : []),
+            { key: TAB.HISTORY, label: translate("agent.history") },
             { key: TAB.MEMORY, label: translate("agent.memory") },
             {
               key: TAB.SYSTEM_PROMPT,

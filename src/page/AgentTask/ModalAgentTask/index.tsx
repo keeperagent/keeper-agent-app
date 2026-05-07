@@ -83,7 +83,9 @@ const ModalAgentTaskBase = (props: ModalAgentTaskProps) => {
   }, [listAgentProfile, editingTask]);
 
   const canEditDueDate =
-    !editingTask || editingTask.status === AgentTaskStatus.INIT;
+    !editingTask ||
+    editingTask.status === AgentTaskStatus.INIT ||
+    editingTask.status === AgentTaskStatus.PAUSED;
 
   const hasOutput =
     Boolean(editingTask) &&

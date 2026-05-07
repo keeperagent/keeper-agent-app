@@ -1,6 +1,6 @@
 import { walletGroupDB } from "@/electron/database/walletGroup";
 import { walletDB } from "@/electron/database/wallet";
-import type { IWalletGroup } from "@/electron/type";
+import type { IWalletGroup, TurnUsage } from "@/electron/type";
 import { ILlmSetting } from "@/electron/type";
 import { preferenceService } from "@/electron/service/preference";
 import { SupportedChainType } from "./types";
@@ -176,6 +176,52 @@ export const isErrorResult = (result: unknown): boolean => {
   } catch {
     return false;
   }
+};
+
+export const extractUsageFromMeta = (usageMeta: any): TurnUsage => {
+  if (!usageMeta) {
+    return null;
+  }
+  const inputTokens = usageMeta.input_tokens || 0;
+  const cacheRead = usageMeta.input_token_details?.cache_read || 0;
+
+  return {
+    inputTokens,
+    outputTokens: usageMeta.output_tokens || 0,
+    cacheRead,
+    cacheCreation: usageMeta.input_token_details?.cache_creation || 0,
+    cacheHitPercent:
+      inputTokens > 0 ? Math.round((cacheRead / inputTokens) * 100) : 0,
+  };
+};
+
+export const extractUsageFromMessages = (messages: any[]): TurnUsage => {
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let cacheRead = 0;
+  let cacheCreation = 0;
+
+  for (const message of messages || []) {
+    const extracted = extractUsageFromMeta(message?.usage_metadata);
+    if (extracted) {
+      inputTokens += extracted.inputTokens;
+      outputTokens += extracted.outputTokens;
+      cacheRead += extracted.cacheRead;
+      cacheCreation += extracted.cacheCreation;
+    }
+  }
+
+  if (inputTokens === 0) {
+    return null;
+  }
+
+  return {
+    inputTokens,
+    outputTokens,
+    cacheRead,
+    cacheCreation,
+    cacheHitPercent: Math.round((cacheRead / inputTokens) * 100),
+  };
 };
 
 export const looksLikeEncryptKey = (text: string): boolean => {

@@ -29,13 +29,14 @@ export const Wrapper = styled.div`
     font-size: 1.2rem;
     font-weight: 600;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+    margin-right: var(--margin-right);
   }
 
   .result-body {
-    max-height: 25rem;
+    max-height: 40rem;
     overflow-y: auto;
     padding: 1.2rem;
-    background: ${({ theme }: { theme: ITheme }) => theme.colorBgUserMessage};
+    background: ${({ theme }: { theme: ITheme }) => theme.colorBgCard};
     font-size: 1.35rem;
     line-height: 1.7rem;
     color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};

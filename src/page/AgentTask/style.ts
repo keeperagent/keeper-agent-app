@@ -160,6 +160,7 @@ export const KanbanColumn = styled.div<{
     padding: 0.2rem 0.8rem;
     font-size: 1.1rem;
     font-weight: 700;
+    display: flex;
   }
 
   .column-empty {

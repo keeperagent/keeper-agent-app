@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { IAgentTask, AgentTaskStatus } from "@/electron/type";
 import { useTranslation, sendOpenExternalLink } from "@/hook";
+import TokenUsageBadge from "@/component/AgentChatView/TokenUsageBadge";
 import { Wrapper } from "./style";
 
 const markdownComponents = {
@@ -65,6 +66,9 @@ export const TaskResult = ({ task }: TaskResultProps) => {
             <span className="result-label">
               {translate("agentTaskResultLabel")}
             </span>
+            {task.result?.tokenUsage && (
+              <TokenUsageBadge turnUsage={task.result.tokenUsage} />
+            )}
           </div>
           <div className="result-body">{renderResultContent(task.result)}</div>
         </Wrapper>

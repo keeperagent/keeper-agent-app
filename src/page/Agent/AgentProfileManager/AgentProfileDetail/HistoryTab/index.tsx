@@ -23,6 +23,13 @@ const HistoryTab = ({ agentProfileId }: Props) => {
     getListAgentProfileLog(agentProfileId, page, PAGE_SIZE);
   }, [agentProfileId, page]);
 
+  useEffect(() => {
+    const firstLog = data?.data?.[0];
+    if (firstLog?.id) {
+      setExpandedIds(new Set([firstLog.id]));
+    }
+  }, [data]);
+
   const toggleExpand = (logId: number) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);

@@ -27,6 +27,8 @@ import {
   useGetListAgentTask,
   useUpdateAgentTask,
   useDeleteAgentTask,
+  usePauseAgentTask,
+  useRerunAgentTask,
   useAgentTaskRealtime,
 } from "@/hook/agentTask";
 import { useGetListAgentProfile } from "@/hook/agentProfile";
@@ -48,7 +50,7 @@ interface KanbanColumnDef {
 const KANBAN_COLUMNS: KanbanColumnDef[] = [
   {
     dropStatus: AgentTaskStatus.INIT,
-    displayStatuses: [AgentTaskStatus.INIT],
+    displayStatuses: [AgentTaskStatus.INIT, AgentTaskStatus.PAUSED],
     labelKey: "agentTaskColumnInit",
   },
   {
@@ -110,6 +112,9 @@ interface DroppableColumnProps {
   onDelete: (id: number) => void;
   onPin: (id: number, isPinned: boolean) => void;
   onRetry: (id: number) => void;
+  onRerun: (id: number) => void;
+  onPause?: (task: IAgentTask) => void;
+  onResume?: (id: number) => void;
 }
 
 const DroppableColumn = ({
@@ -124,6 +129,9 @@ const DroppableColumn = ({
   onDelete,
   onPin,
   onRetry,
+  onRerun,
+  onPause,
+  onResume,
 }: DroppableColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id: dropStatus });
   const { translate } = useTranslation();
@@ -168,6 +176,9 @@ const DroppableColumn = ({
             onDelete={onDelete}
             onPin={onPin}
             onRetry={onRetry}
+            onRerun={onRerun}
+            onPause={onPause}
+            onResume={onResume}
             isDragging={activeDragId === String(task.id)}
           />
         ))}
@@ -221,6 +232,8 @@ const AgentTaskPage = (props: any) => {
   const { getListAgentProfile } = useGetListAgentProfile();
   const { updateAgentTask } = useUpdateAgentTask();
   const { deleteAgentTask } = useDeleteAgentTask();
+  const { pauseAgentTask } = usePauseAgentTask();
+  const { rerunAgentTask } = useRerunAgentTask();
   const { updatePreference } = useUpdatePreference();
 
   const mainAgentProvider = useMemo((): LLMProvider | null => {
@@ -261,6 +274,7 @@ const AgentTaskPage = (props: any) => {
   }, [listAgentTask]);
 
   useEffect(() => {
+    setLastUpdatedText(formatTime(lastUpdatedAt));
     const interval = setInterval(() => {
       setLastUpdatedText(formatTime(lastUpdatedAt));
     }, 10_000);
@@ -277,12 +291,6 @@ const AgentTaskPage = (props: any) => {
   const hasActiveFilter =
     Boolean(filterKeyword) || filterPriority !== null || filterAgentId !== null;
   const isAgentTaskPaused = Boolean(preference?.isStopAllAgentTask);
-
-  const onClearFilters = () => {
-    setFilterKeyword("");
-    setFilterPriority(null);
-    setFilterAgentId(null);
-  };
 
   const onToggleAgentTask = async (checked: boolean) => {
     await updatePreference({
@@ -340,6 +348,20 @@ const AgentTaskPage = (props: any) => {
 
   const onRetryAgentTask = (id: number) => {
     updateAgentTask(id, { status: AgentTaskStatus.INIT });
+  };
+
+  const onResumeAgentTask = (id: number) => {
+    updateAgentTask(id, { status: AgentTaskStatus.INIT });
+  };
+
+  const onPauseAgentTask = (task: IAgentTask) => {
+    if (task.id) {
+      pauseAgentTask(task.id);
+    }
+  };
+
+  const onRerunAgentTask = (id: number) => {
+    rerunAgentTask(id);
   };
 
   const getTotalByStatuses = (statuses: AgentTaskStatus[]): number =>
@@ -449,7 +471,7 @@ const AgentTaskPage = (props: any) => {
             placeholder={translate("agentTaskFilterPriorityPlaceholder")}
             options={PRIORITY_FILTER_OPTIONS}
             value={filterPriority}
-            onChange={(value) => setFilterPriority(value)}
+            onChange={(value) => setFilterPriority(value || null)}
             allowClear
             size="large"
           />
@@ -459,7 +481,7 @@ const AgentTaskPage = (props: any) => {
             placeholder={translate("agentTaskFilterAgentPlaceholder")}
             options={agentOptions}
             value={filterAgentId}
-            onChange={(value) => setFilterAgentId(value)}
+            onChange={(value) => setFilterAgentId(value || null)}
             allowClear
             size="large"
             optionRender={(option) => (
@@ -473,12 +495,6 @@ const AgentTaskPage = (props: any) => {
               </OptionWrapper>
             )}
           />
-
-          {hasActiveFilter && (
-            <Button onClick={onClearFilters}>
-              {translate("agentTaskFilterClearAll")}
-            </Button>
-          )}
 
           <Tooltip
             title={
@@ -537,6 +553,9 @@ const AgentTaskPage = (props: any) => {
               onDelete={deleteAgentTask}
               onPin={onPinAgentTask}
               onRetry={onRetryAgentTask}
+              onRerun={onRerunAgentTask}
+              onPause={onPauseAgentTask}
+              onResume={onResumeAgentTask}
             />
           ))}
         </div>

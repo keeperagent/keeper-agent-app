@@ -14,11 +14,11 @@ import { IAgentProfile } from "@/electron/type";
 import { Wrapper, StatBadgeWrapper, CliTag } from "./style";
 import ChatView from "./ChatView";
 
+const AgentAnalytic = lazy(() => import("@/component/AgentAnalytic"));
 const AgentProfileManager = lazy(() => import("./AgentProfileManager"));
 const McpServerManager = lazy(() => import("./McpServerManager"));
 const SkillsManager = lazy(() => import("./SkillsManager"));
 const ToolsManager = lazy(() => import("./ToolsManager"));
-const AgentAnalytic = lazy(() => import("@/component/AgentAnalytic"));
 
 const AgentStatBadge = ({ count, label }: { count: number; label: string }) => (
   <StatBadgeWrapper title={label}>

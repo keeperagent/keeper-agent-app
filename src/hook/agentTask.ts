@@ -11,6 +11,8 @@ import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
   IpcDeletePayload,
+  IpcPauseAgentTaskPayload,
+  IpcRerunAgentTaskPayload,
   IpcGetAgentAnalyticsPayload,
 } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
@@ -83,6 +85,28 @@ const useDeleteAgentTask = () => {
   return { loading, isSuccess, deleteAgentTask };
 };
 
+const usePauseAgentTask = () => {
+  const { execute, loading, isSuccess } =
+    useIpcAction<IpcPauseAgentTaskPayload>(
+      MESSAGE.PAUSE_AGENT_TASK,
+      MESSAGE.PAUSE_AGENT_TASK_RES,
+    );
+
+  const pauseAgentTask = (id: number) => execute({ id });
+  return { loading, isSuccess, pauseAgentTask };
+};
+
+const useRerunAgentTask = () => {
+  const { execute, loading, isSuccess } =
+    useIpcAction<IpcRerunAgentTaskPayload>(
+      MESSAGE.RERUN_AGENT_TASK,
+      MESSAGE.RERUN_AGENT_TASK_RES,
+    );
+
+  const rerunAgentTask = (id: number) => execute({ id });
+  return { loading, isSuccess, rerunAgentTask };
+};
+
 const useAgentTaskRealtime = (onChanged: () => void) => {
   useEffect(() => {
     const unsubscribe = window?.electron?.on(
@@ -119,6 +143,8 @@ export {
   useCreateAgentTask,
   useUpdateAgentTask,
   useDeleteAgentTask,
+  usePauseAgentTask,
+  useRerunAgentTask,
   useAgentTaskRealtime,
   useGetAgentAnalytics,
 };

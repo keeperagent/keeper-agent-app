@@ -213,10 +213,14 @@ ${
 `
     : ""
 }## Todo-driven execution
-- \`write_todos\` = progress tracker. Each item = one high-level step (research, transaction, code, etc.).
+- \`write_todos\` = progress tracker. Each item = one high-level step (research, transaction, code, etc.).${
+    !autoApprove
+      ? `
 - \`request_approval\`/\`confirm_approval\` = approval gate called **during** a \`transaction\`, \`code\`, or \`workflow\` step — NOT separate todo items. Two valid patterns:
   - **Single step**: one transaction step covers request_approval + confirm_approval + task(trade_agent) end-to-end.
-  - **Two steps**: one step for approval (request_approval + confirm_approval + write_todos to advance), one step for execution (task(trade_agent)). The approval state carries over automatically — do NOT call task in the approval step.
+  - **Two steps**: one step for approval (request_approval + confirm_approval + write_todos to advance), one step for execution (task(trade_agent)). The approval state carries over automatically — do NOT call task in the approval step.`
+      : ""
+  }
 - CRITICAL: \`write_todos\` is always the very first tool call. Plan ALL steps upfront — the framework locks the plan once any step goes \`in_progress\`.
 - After planning: the framework auto-marks a step "completed" when its \`task\` call succeeds — you do NOT call \`write_todos\` to mark a step done. Only call \`write_todos\` to mark the NEXT step as "in_progress".
 - CRITICAL: Every \`write_todos\` call must include ALL items — completed, in_progress, and pending. Each call replaces the entire list. Never pass only the current or next item.
@@ -322,11 +326,16 @@ When the user wants to BUY tokens with a USD amount (e.g. "buy $0.1 of TOKEN_X")
    - AUTO mode (no funding token specified, Solana or EVM): do NOT look up any price and do NOT convert USD to a token amount. Pass the USD amount directly to trade_agent — the tool handles per-wallet funding token resolution and conversion internally. Skip query_agent entirely.
    - If funding token is a stablecoin (USDC, USDT, USD1, DAI, USDB): funding-token amount = USD amount directly (1:1 peg, no price lookup needed). Skip query_agent for this step.
    - If funding token is SOL, ETH, BNB, or any explicit non-stablecoin: MUST delegate to query_agent to get the price and calculate the exact token amount. Do NOT skip this step. query_agent calls get_token_price then calculate('usdAmount / fundingTokenPrice') and returns the exact amount.
-3. Read the calculated funding-token amount from completedStepResults. Do NOT recompute it yourself — use the exact value query_agent returned from the calculate tool.
+3. Read the calculated funding-token amount from completedStepResults. Do NOT recompute it yourself — use the exact value query_agent returned from the calculate tool.${
+    !autoApprove
+      ? `
 4. Confirm: call confirm_approval showing the funding-token amount, NOT the USD amount.
    - If AUTO mode, say it explicitly, for example: "0.1 USD via per-wallet auto funding (SOL → USDC → USDT → USD1 fallback)" for Solana or "0.1 USD via per-wallet auto funding (native → USDC → USDT → DAI → USDB fallback)" for EVM.
    - If the user explicitly chose a funding token, show that token directly, for example: "0.5 USDC" or "0.001160 SOL".
-5. Delegate the swap to trade_agent. For AUTO mode (Solana or EVM), pass the USD amount directly — this is the one exception where USD is correct. For all other cases, NEVER pass USD amounts or $ values to trade_agent.
+5. Delegate the swap to trade_agent. For AUTO mode (Solana or EVM), pass the USD amount directly — this is the one exception where USD is correct. For all other cases, NEVER pass USD amounts or $ values to trade_agent.`
+      : `
+4. Delegate the swap to trade_agent. For AUTO mode (Solana or EVM), pass the USD amount directly — this is the one exception where USD is correct. For all other cases, NEVER pass USD amounts or $ values to trade_agent.`
+  }
 
 When the user wants to SELL X% of tokens (e.g. "sell 50% of TOKEN_X", "sell 30%"):
 - Delegate to query_agent: call get_solana_token_balance (or get_evm_token_balance) for each wallet.

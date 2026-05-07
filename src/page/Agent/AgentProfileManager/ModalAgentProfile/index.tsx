@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Modal,
   Form,
@@ -10,7 +10,10 @@ import {
   Switch,
   Divider,
   Radio,
+  Tooltip,
+  message,
 } from "antd";
+import copy from "copy-to-clipboard";
 import _ from "lodash";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -27,6 +30,7 @@ import { DEFAULT_LLM_MODELS, CHAIN_TYPE } from "@/electron/constant";
 import {
   useCreateAgentProfile,
   useUpdateAgentProfile,
+  useGetAgentProfileEncryptKey,
 } from "@/hook/agentProfile";
 import { useGetListAgentSkill } from "@/hook/agentSkill";
 import {
@@ -34,12 +38,20 @@ import {
   useGetListCampaignProfile,
   useTranslation,
   useCheckModelCapability,
+  useOpenExternalLink,
 } from "@/hook";
 import { BASE_TOOL_REGISTRY } from "@/electron/agentCore/baseTool/registry";
 import { LlmProviderPicker, PasswordInput } from "@/component";
 import { listChainConfig } from "@/page/Agent/config";
-import { getChainConfig, IChainConfig } from "@/service/util";
-import { OptionWrapper, ChainWrapper } from "./style";
+import {
+  getChainConfig,
+  getPortfolioAppImg,
+  getPortfolioAppUrl,
+  IChainConfig,
+} from "@/service/util";
+import { EMPTY_STRING } from "@/config/constant";
+import { CopyIcon, CheckIcon } from "@/component/Icon";
+import { OptionWrapper, ChainWrapper, PortfolioAppWrapper } from "./style";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -87,9 +99,11 @@ const ModalAgentProfile = (props: Props) => {
 
   const [llmProvider, setLlmProvider] = useState<string>(LLMProvider.CLAUDE);
   const [encryptKeyValue, setEncryptKeyValue] = useState<string>("");
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   const { translate, locale } = useTranslation();
   const { checkModelCapability } = useCheckModelCapability();
+  const { openExternalLink } = useOpenExternalLink();
   const [form] = Form.useForm();
   const { createAgentProfile, loading: createLoading } =
     useCreateAgentProfile();
@@ -98,6 +112,11 @@ const ModalAgentProfile = (props: Props) => {
   const { getListAgentSkill } = useGetListAgentSkill();
   const { getListNodeEndpointGroup } = useGetListNodeEndpointGroup();
   const { getListCampaignProfile } = useGetListCampaignProfile();
+  const {
+    getAgentProfileEncryptKey,
+    encryptKey: fetchedEncryptKey,
+    loading: isFetchingEncryptKey,
+  } = useGetAgentProfileEncryptKey();
 
   const watchedCampaignId = Form.useWatch("campaignId", form);
   const watchedIsAllWallet = Form.useWatch("isAllWallet", form);
@@ -137,21 +156,40 @@ const ModalAgentProfile = (props: Props) => {
       profileIds: profile?.profileIds || [],
       isAllWallet: Boolean(profile?.isAllWallet),
       maxConcurrentTasks: profile?.maxConcurrentTasks || 3,
+      encryptKey: undefined,
     });
   }, [profile, open]);
 
   useEffect(() => {
+    if (!watchedCampaignId) {
+      return;
+    }
+    if (watchedCampaignId !== profile?.campaignId) {
+      form.setFieldValue("profileIds", []);
+    }
+    setEncryptKeyValue("");
+    if (profile?.hasEncryptKey && profile?.id) {
+      getAgentProfileEncryptKey(profile.id);
+    }
+  }, [watchedCampaignId, profile?.id]);
+
+  useEffect(() => {
+    if (isFetchingEncryptKey || !fetchedEncryptKey) {
+      return;
+    }
+    setEncryptKeyValue(fetchedEncryptKey);
+  }, [isFetchingEncryptKey, fetchedEncryptKey]);
+
+  useEffect(() => {
     if (watchedCampaignId) {
-      if (watchedCampaignId !== profile?.campaignId) {
-        form.setFieldValue("profileIds", []);
-      }
       getListCampaignProfile({
         page: 1,
         pageSize: 100,
         campaignId: watchedCampaignId,
+        encryptKey: encryptKeyValue || undefined,
       });
     }
-  }, [watchedCampaignId]);
+  }, [watchedCampaignId, encryptKeyValue]);
 
   const onChangeProvider = (newProvider: string) => {
     setLlmProvider(newProvider);
@@ -163,6 +201,24 @@ const ModalAgentProfile = (props: Props) => {
 
   const onChangeChain = () => {
     form.setFieldValue("nodeEndpointGroupId", null);
+  };
+
+  const onCopyAddress = (address: string) => {
+    copy(address);
+    message.success(translate("copied"));
+    setCopiedAddress(address);
+    setTimeout(() => {
+      setCopiedAddress(null);
+    }, 1500);
+  };
+
+  const onViewPortfolio = (walletAddress: string, portfolioApp: string) => {
+    const url = getPortfolioAppUrl(walletAddress, portfolioApp);
+    openExternalLink(url);
+  };
+
+  const onChangeEncryptKey = (value: string) => {
+    setEncryptKeyValue(value);
   };
 
   const filteredNodeProviders = useMemo(() => {
@@ -418,10 +474,14 @@ const ModalAgentProfile = (props: Props) => {
                     label={campaign.name}
                   >
                     <OptionWrapper>
-                      <div className="name">{campaign.name}</div>
-                      {campaign.note && (
-                        <div className="description">{campaign.note}</div>
-                      )}
+                      <div className="content">
+                        <div className="name">
+                          {campaign.name || EMPTY_STRING}
+                        </div>
+                        <div className="description">
+                          {campaign.note || EMPTY_STRING}
+                        </div>
+                      </div>
                     </OptionWrapper>
                   </Option>
                 ))}
@@ -449,20 +509,79 @@ const ModalAgentProfile = (props: Props) => {
                   disabled={watchedIsAllWallet !== false}
                 >
                   {(listCampaignProfile || []).map(
-                    (profile: ICampaignProfile) => (
-                      <Option
-                        key={profile.id}
-                        value={profile.id}
-                        label={profile.name}
-                      >
-                        <OptionWrapper>
-                          <div className="name">{profile.name}</div>
-                          {profile.note && (
-                            <div className="description">{profile.note}</div>
-                          )}
-                        </OptionWrapper>
-                      </Option>
-                    ),
+                    (campaignProfile: ICampaignProfile) => {
+                      const isWalletDecrypted =
+                        campaignProfile?.wallet &&
+                        !campaignProfile?.wallet?.isEncrypted;
+                      const walletAddress = isWalletDecrypted
+                        ? campaignProfile?.wallet?.address || ""
+                        : "";
+                      const portfolioApp =
+                        campaignProfile?.walletGroup?.portfolioApp || "";
+
+                      return (
+                        <Option
+                          key={campaignProfile.id}
+                          value={campaignProfile.id}
+                          label={campaignProfile.name}
+                        >
+                          <OptionWrapper>
+                            <div className="content">
+                              <div className="name">{campaignProfile.name}</div>
+
+                              {isWalletDecrypted ? (
+                                <div className="description">
+                                  <span>{walletAddress}</span>
+                                  <Tooltip
+                                    title={translate("copy")}
+                                    placement="top"
+                                  >
+                                    {copiedAddress === walletAddress ? (
+                                      <div className="copy-icon copied">
+                                        <CheckIcon />
+                                      </div>
+                                    ) : (
+                                      <div
+                                        className="copy-icon"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onCopyAddress(walletAddress);
+                                        }}
+                                      >
+                                        <CopyIcon />
+                                      </div>
+                                    )}
+                                  </Tooltip>
+
+                                  {portfolioApp && walletAddress && (
+                                    <PortfolioAppWrapper
+                                      onClick={(e: React.MouseEvent) => {
+                                        e.stopPropagation();
+                                        onViewPortfolio(
+                                          walletAddress,
+                                          portfolioApp,
+                                        );
+                                      }}
+                                    >
+                                      <div className="icon">
+                                        <img
+                                          src={getPortfolioAppImg(portfolioApp)}
+                                          alt=""
+                                        />
+                                      </div>
+                                    </PortfolioAppWrapper>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="description">
+                                  {campaignProfile.note || EMPTY_STRING}
+                                </div>
+                              )}
+                            </div>
+                          </OptionWrapper>
+                        </Option>
+                      );
+                    },
                   )}
                 </Select>
               </Form.Item>
@@ -480,7 +599,7 @@ const ModalAgentProfile = (props: Props) => {
                     : translate("agent.encryptKeyPlaceholder")
                 }
                 extendClass="agentEncryptKey"
-                onChange={setEncryptKeyValue}
+                onChange={onChangeEncryptKey}
                 initialValue={profile?.hasEncryptKey ? "•" : ""}
                 shouldHideValue={true}
               />

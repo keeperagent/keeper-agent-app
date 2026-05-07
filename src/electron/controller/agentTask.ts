@@ -16,6 +16,8 @@ import type {
   IpcCreateAgentTaskPayload,
   IpcUpdateAgentTaskPayload,
   IpcDeletePayload,
+  IpcPauseAgentTaskPayload,
+  IpcRerunAgentTaskPayload,
   IpcGetAgentAnalyticsPayload,
 } from "@/electron/ipcTypes";
 import { onIpc } from "./helpers";
@@ -75,7 +77,7 @@ export const agentTaskController = () => {
         });
       }
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
-      agentTaskDispatcher.dispatch();
+      setTimeout(() => agentTaskDispatcher.dispatch(), 3000);
     },
   );
 
@@ -114,6 +116,62 @@ export const agentTaskController = () => {
       event.reply(MESSAGE.DELETE_AGENT_TASK_RES, { data: result });
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
       agentTaskDispatcher.dispatch();
+    },
+  );
+
+  onIpc<IpcPauseAgentTaskPayload>(
+    MESSAGE.PAUSE_AGENT_TASK,
+    MESSAGE.PAUSE_AGENT_TASK_RES,
+    async (event, payload) => {
+      const { id } = payload;
+      agentTaskExecutor.pauseTask(id);
+      event.reply(MESSAGE.PAUSE_AGENT_TASK_RES, { data: true });
+    },
+  );
+
+  onIpc<IpcRerunAgentTaskPayload>(
+    MESSAGE.RERUN_AGENT_TASK,
+    MESSAGE.RERUN_AGENT_TASK_RES,
+    async (event, payload) => {
+      const { id } = payload;
+      const [task, err] = await agentTaskDB.getOneAgentTask(id);
+      if (err || !task) {
+        event.reply(MESSAGE.RERUN_AGENT_TASK_RES, { error: "Task not found" });
+        return;
+      }
+      const [result, createErr] = await agentTaskDB.createAgentTask({
+        title: task.title,
+        description: task.description,
+        assignedAgentId: task.assignedAgentId,
+        priority: task.priority,
+        dueAt: task.dueAt,
+        timeout: task.timeout,
+        maxRetries: task.maxRetries,
+        metadata: task.metadata,
+        creatorType: task.creatorType,
+        status: AgentTaskStatus.INIT,
+        retryCount: 0,
+      });
+      if (createErr || !result) {
+        event.reply(MESSAGE.RERUN_AGENT_TASK_RES, {
+          error: createErr?.message,
+        });
+        return;
+      }
+      if (result.id) {
+        appLogDB.createAppLog({
+          logType: AppLogType.TASK,
+          taskId: result.id,
+          actorType: AppLogActorType.USER,
+          action: AppLogTaskAction.TASK_CREATED,
+          status: AgentTaskStatus.INIT,
+          message: result.title,
+          startedAt: Date.now(),
+        });
+      }
+      event.reply(MESSAGE.RERUN_AGENT_TASK_RES, { data: result });
+      sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
+      setTimeout(() => agentTaskDispatcher.dispatch(), 3000);
     },
   );
 
