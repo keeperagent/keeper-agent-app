@@ -2,13 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Form, Row, Col } from "antd";
 import { connect } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { ThemeProvider } from "styled-components";
 import { RootState } from "@/redux/store";
 import { actSetMasterKeyUnlocked } from "@/redux/session";
-import { actToggleLightMode } from "@/redux/layout";
-import {
-  DASHBOARD_LIGHT_MODE_KEY,
-  LAST_ROUTE_BEFORE_LOCK_KEY,
-} from "@/config/constant";
+import { LAST_ROUTE_BEFORE_LOCK_KEY } from "@/config/constant";
 import {
   useTranslation,
   useCheckMasterPasswordExists,
@@ -16,6 +13,7 @@ import {
   useVerifyMasterPassword,
   useResetMasterPassword,
 } from "@/hook";
+import { darkTheme } from "@/style/theme";
 import ShooptingStarBg from "@/component/ShootingStarBg";
 import backgroundImg from "@/asset/dot-bg-1.png";
 import { MasterPasswordPageWrapper, MasterPasswordFormWrapper } from "./style";
@@ -30,7 +28,7 @@ enum UnlockView {
 }
 
 const MasterPasswordPage = (props: any) => {
-  const { token, user, isMasterKeyUnlocked, isLightMode } = props;
+  const { token, user, isMasterKeyUnlocked } = props;
   const email = user?.email;
   const [createForm] = Form.useForm();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -73,27 +71,6 @@ const MasterPasswordPage = (props: any) => {
     sessionStorage.removeItem(LAST_ROUTE_BEFORE_LOCK_KEY);
     navigate(lastRoute || "/dashboard/home");
   };
-
-  const restoreDashboardLightMode = () => {
-    const saved = sessionStorage?.getItem(DASHBOARD_LIGHT_MODE_KEY);
-    if (saved !== null) {
-      props?.actToggleLightMode(saved === "true");
-      sessionStorage?.removeItem(DASHBOARD_LIGHT_MODE_KEY);
-    }
-  };
-
-  // MasterPassword page always dark while visible; restore previous theme when leaving.
-  useEffect(() => {
-    sessionStorage?.setItem(
-      DASHBOARD_LIGHT_MODE_KEY,
-      String(Boolean(isLightMode)),
-    );
-    props?.actToggleLightMode(false);
-
-    return () => {
-      restoreDashboardLightMode();
-    };
-  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -197,75 +174,77 @@ const MasterPasswordPage = (props: any) => {
     resetMasterPassword(newPwd, email);
   };
 
-  if (isChecking) {
-    return <LoadingFallback />;
-  }
-
   const showUnlockForm = !isSetupMode && unlockView === UnlockView.Unlock;
   const showChangeForm = !isSetupMode && unlockView === UnlockView.Change;
 
   return (
-    <MasterPasswordPageWrapper>
-      <ShooptingStarBg shouldAnimate={false} />
+    <ThemeProvider theme={darkTheme}>
+      {isChecking ? (
+        <LoadingFallback />
+      ) : (
+        <MasterPasswordPageWrapper>
+          <ShooptingStarBg shouldAnimate={false} />
 
-      <div className="main">
-        {showUnlockForm && (
-          <UnlockForm
-            form={createForm}
-            onSubmit={onSubmitCreateForm}
-            loading={isBtnLoading}
-            errorMessage={errorMessage}
-            onResetClick={() => setUnlockView(UnlockView.Change)}
-          />
-        )}
+          <div className="main">
+            {showUnlockForm && (
+              <UnlockForm
+                form={createForm}
+                onSubmit={onSubmitCreateForm}
+                loading={isBtnLoading}
+                errorMessage={errorMessage}
+                onResetClick={() => setUnlockView(UnlockView.Change)}
+              />
+            )}
 
-        {!showUnlockForm && (
-          <MasterPasswordFormWrapper>
-            <div className="heading">
-              <span>
-                {isSetupMode
-                  ? translate("masterPassword.setupHeading")
-                  : showChangeForm
-                    ? translate("masterPassword.changeHeading")
-                    : translate("masterPassword.unlockHeading")}
-              </span>
-            </div>
+            {!showUnlockForm && (
+              <MasterPasswordFormWrapper>
+                <div className="heading">
+                  <span>
+                    {isSetupMode
+                      ? translate("masterPassword.setupHeading")
+                      : showChangeForm
+                        ? translate("masterPassword.changeHeading")
+                        : translate("masterPassword.unlockHeading")}
+                  </span>
+                </div>
 
-            <div className="form">
-              <Row justify="center">
-                <Col span={24}>
-                  {isSetupMode && (
-                    <CreateForm
-                      form={createForm}
-                      onSubmit={onSubmitCreateForm}
-                      loading={isBtnLoading}
-                      errorMessage={errorMessage}
-                    />
-                  )}
+                <div className="form">
+                  <Row justify="center">
+                    <Col span={24}>
+                      {isSetupMode && (
+                        <CreateForm
+                          form={createForm}
+                          onSubmit={onSubmitCreateForm}
+                          loading={isBtnLoading}
+                          errorMessage={errorMessage}
+                        />
+                      )}
 
-                  {showChangeForm && (
-                    <ResetForm
-                      onSubmit={onSubmitChangeForm}
-                      loading={isBtnLoading}
-                      errorMessage={errorMessage}
-                      onBack={() => {
-                        setErrorMessage(null);
-                        setUnlockView(UnlockView.Unlock);
-                      }}
-                    />
-                  )}
-                </Col>
-              </Row>
-            </div>
-          </MasterPasswordFormWrapper>
-        )}
+                      {showChangeForm && (
+                        <ResetForm
+                          onSubmit={onSubmitChangeForm}
+                          loading={isBtnLoading}
+                          errorMessage={errorMessage}
+                          onBack={() => {
+                            setErrorMessage(null);
+                            setUnlockView(UnlockView.Unlock);
+                          }}
+                        />
+                      )}
+                    </Col>
+                  </Row>
+                </div>
+              </MasterPasswordFormWrapper>
+            )}
 
-        <div className="background-1" />
-        <div className="background-2" />
-      </div>
+            <div className="background-1" />
+            <div className="background-2" />
+          </div>
 
-      <img className="background-3" src={backgroundImg} alt="" />
-    </MasterPasswordPageWrapper>
+          <img className="background-3" src={backgroundImg} alt="" />
+        </MasterPasswordPageWrapper>
+      )}
+    </ThemeProvider>
   );
 };
 
@@ -274,10 +253,8 @@ export default connect(
     token: state?.Auth?.token,
     user: state?.Auth?.user,
     isMasterKeyUnlocked: state?.Session?.isMasterKeyUnlocked,
-    isLightMode: state?.Layout?.isLightMode,
   }),
   {
     actSetMasterKeyUnlocked,
-    actToggleLightMode,
   },
 )(MasterPasswordPage);

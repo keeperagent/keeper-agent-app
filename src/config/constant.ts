@@ -199,6 +199,5 @@ export const CAMPAIGN_VIEW_MODE = {
 export const SQL_FOREIGNKEY_ERROR =
   "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed";
 
-export const DASHBOARD_LIGHT_MODE_KEY = "dashboard_light_mode_preference";
 export const LAST_ROUTE_BEFORE_LOCK_KEY = "last_route_before_lock";
 export const TABLE_PAGE_OPTION = [50, 100, 500];

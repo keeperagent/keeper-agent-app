@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { ITheme } from "@/style/theme";
 
 export const UnlockFormWrapper = styled.div`
   position: relative;
@@ -7,6 +8,18 @@ export const UnlockFormWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  .password-field {
+    --c-text: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+    --c-text-light: ${({ theme }: { theme: ITheme }) =>
+      theme.colorTextSecondary};
+
+    input,
+    .ant-input {
+      color: ${({ theme }: { theme: ITheme }) =>
+        theme.colorTextPrimary} !important;
+    }
+  }
 `;
 
 export const AvatarSection = styled.div`
@@ -25,12 +38,12 @@ export const AvatarSection = styled.div`
 export const UserName = styled.span`
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--color-text-white);
+  color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
 `;
 
 export const HintText = styled.p`
   font-size: 1rem;
-  color: var(--color-text-secondary);
+  color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
   text-align: center;
   margin-top: 0.5rem;
 `;
@@ -43,7 +56,7 @@ export const ResetLink = styled.div`
   font-size: 1rem;
   cursor: pointer;
   text-decoration: underline;
-  color: var(--color-text-primary);
+  color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
   text-align: center;
 
   &:hover {

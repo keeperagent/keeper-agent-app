@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { ITheme } from "@/style/theme";
 
 const MasterPasswordPageWrapper = styled.div`
   min-height: 100vh;
@@ -85,20 +86,32 @@ const MasterPasswordFormWrapper = styled.div`
     margin-bottom: 2rem;
     text-align: center;
     font-size: 1.3rem;
-    color: var(--color-text-secondary);
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
     line-height: 1.6;
   }
 
   .ant-input {
-    color: var(--color-white);
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
 
     &::placeholder {
-      color: var(--color-text-secondary);
+      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
     }
   }
 
   .form {
     width: 100%;
+  }
+
+  .password-field {
+    --c-text: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+    --c-text-light: ${({ theme }: { theme: ITheme }) =>
+      theme.colorTextSecondary};
+
+    input,
+    .ant-input {
+      color: ${({ theme }: { theme: ITheme }) =>
+        theme.colorTextPrimary} !important;
+    }
   }
 
   .ant-form-item-label {

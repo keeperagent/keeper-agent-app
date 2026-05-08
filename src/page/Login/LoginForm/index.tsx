@@ -3,6 +3,7 @@ import { Form, Input, Row, Col, Alert } from "antd";
 import { connect } from "react-redux";
 import { useLazyQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
+import { ThemeProvider } from "styled-components";
 import { RootState } from "@/redux/store";
 import { QuerySignIn, QueryLoginAppWithGoogle } from "@/api/auth";
 import {
@@ -11,7 +12,7 @@ import {
   useAuthStorage,
   useOpenExternalLink,
 } from "@/hook";
-import { DASHBOARD_LIGHT_MODE_KEY, RESPONSE_CODE } from "@/config/constant";
+import { RESPONSE_CODE } from "@/config/constant";
 import { actSetIsFullscreen } from "@/redux/workflowRunner";
 import {
   actUserSignIn,
@@ -19,7 +20,7 @@ import {
   actSetErrorTime,
   actSetErrorCount,
 } from "@/redux/auth";
-import { actToggleLightMode } from "@/redux/layout";
+import { darkTheme } from "@/style/theme";
 import { PrimaryButton, GoogleAuthButton } from "@/component/Button";
 import { PasswordInput } from "@/component/Input";
 import { MESSAGE } from "@/electron/constant";
@@ -28,7 +29,7 @@ import { LoginFormWrapper } from "./style";
 const LANDING_PAGE_URL = "https://keeperagent.com";
 
 const LoginForm = (props: any) => {
-  const { preference, isLightMode, token } = props;
+  const { preference, token } = props;
   const [form] = Form.useForm();
   const [isBtnLoading, setBtnLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,27 +47,6 @@ const LoginForm = (props: any) => {
 
   useEffect(() => {
     getPreference();
-  }, []);
-
-  const restoreDashboardLightMode = () => {
-    const saved = sessionStorage?.getItem(DASHBOARD_LIGHT_MODE_KEY);
-    if (saved !== null) {
-      props?.actToggleLightMode(saved === "true");
-      sessionStorage?.removeItem(DASHBOARD_LIGHT_MODE_KEY);
-    }
-  };
-
-  // Login page always dark while visible; restore previous theme when leaving (unmount or after login).
-  useEffect(() => {
-    sessionStorage?.setItem(
-      DASHBOARD_LIGHT_MODE_KEY,
-      String(Boolean(isLightMode)),
-    );
-    props?.actToggleLightMode(false);
-
-    return () => {
-      restoreDashboardLightMode();
-    };
   }, []);
 
   const [actSignIn, signInResponse] = useLazyQuery(QuerySignIn, {
@@ -124,7 +104,6 @@ const LoginForm = (props: any) => {
       if (userInfo && token) {
         errorMessage && setErrorMessage(null);
 
-        restoreDashboardLightMode();
         props.actUserSignIn({
           user: userInfo,
           token,
@@ -165,7 +144,6 @@ const LoginForm = (props: any) => {
       if (userInfo && token) {
         errorMessage && setErrorMessage(null);
 
-        restoreDashboardLightMode();
         props.actUserSignIn({
           user: userInfo,
           token,
@@ -213,116 +191,117 @@ const LoginForm = (props: any) => {
   };
 
   return (
-    <LoginFormWrapper>
-      <div className="heading">
-        <span>{translate("login.heading")}</span>
-      </div>
+    <ThemeProvider theme={darkTheme}>
+      <LoginFormWrapper>
+        <div className="heading">
+          <span>{translate("login.heading")}</span>
+        </div>
 
-      <div className="form">
-        <Row justify="center">
-          <Col span={24}>
-            <Form layout="vertical" form={form}>
-              <Row justify="center" style={{ marginBottom: "1rem" }}>
-                <Col span={24}>
-                  <Form.Item
-                    label="Email"
-                    rules={[
-                      {
-                        required: true,
-                        message: translate("login.emailEmptyError"),
-                      },
-                      {
-                        type: "email",
-                        message: translate("login.emailInvalidError"),
-                      },
-                    ]}
-                    normalize={(value: string) => value?.toLocaleLowerCase()}
-                    name="email"
-                  >
-                    <Input
-                      placeholder="your@gmail.com"
-                      className="custom-input"
-                      size="large"
-                      allowClear
-                      onPressEnter={onSubmitForm}
+        <div className="form">
+          <Row justify="center">
+            <Col span={24}>
+              <Form layout="vertical" form={form}>
+                <Row justify="center" style={{ marginBottom: "1rem" }}>
+                  <Col span={24}>
+                    <Form.Item
+                      label="Email"
+                      rules={[
+                        {
+                          required: true,
+                          message: translate("login.emailEmptyError"),
+                        },
+                        {
+                          type: "email",
+                          message: translate("login.emailInvalidError"),
+                        },
+                      ]}
+                      normalize={(value: string) => value?.toLocaleLowerCase()}
+                      name="email"
+                    >
+                      <Input
+                        placeholder="your@gmail.com"
+                        className="custom-input"
+                        size="large"
+                        allowClear
+                        onPressEnter={onSubmitForm}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row
+                  justify="center"
+                  style={{ marginBottom: "var(--margin-bottom)" }}
+                >
+                  <Col span={24}>
+                    <Form.Item
+                      label={translate("password")}
+                      rules={[
+                        {
+                          required: true,
+                          message: translate("login.passwordEmptyError"),
+                        },
+                      ]}
+                      colon={true}
+                      className="password"
+                    >
+                      <PasswordInput name="password" extendClass="password" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row justify="center">
+                  <Col span={24}>
+                    <PrimaryButton
+                      text={translate("login")}
+                      onClick={onSubmitForm}
+                      loading={isBtnLoading}
                     />
-                  </Form.Item>
-                </Col>
-              </Row>
+                  </Col>
+                </Row>
 
-              <Row
-                justify="center"
-                style={{ marginBottom: "var(--margin-bottom)" }}
-              >
-                <Col span={24}>
-                  <Form.Item
-                    label={translate("password")}
-                    rules={[
-                      {
-                        required: true,
-                        message: translate("login.passwordEmptyError"),
-                      },
-                    ]}
-                    colon={true}
-                    className="password"
-                  >
-                    <PasswordInput name="password" extendClass="password" />
-                  </Form.Item>
-                </Col>
-              </Row>
+                <div className="oauth-signin">
+                  <div className="label">
+                    <span>{translate("or")}</span>
+                  </div>
 
-              <Row justify="center">
-                <Col span={24}>
-                  <PrimaryButton
-                    text={translate("login")}
-                    onClick={onSubmitForm}
-                    loading={isBtnLoading}
+                  <GoogleAuthButton
+                    onClick={onOpenLoginWithGoogleLink}
+                    text="Sign in with Google"
                   />
-                </Col>
-              </Row>
-
-              <div className="oauth-signin">
-                <div className="label">
-                  <span>{translate("or")}</span>
                 </div>
 
-                <GoogleAuthButton
-                  onClick={onOpenLoginWithGoogleLink}
-                  text="Sign in with Google"
-                />
-              </div>
-
-              {!isBtnLoading && errorMessage && (
-                <Row style={{ marginTop: "2rem", width: "100%" }}>
-                  <Alert
-                    title={errorMessage}
-                    type="error"
-                    showIcon
-                    style={{ width: "100%", borderColor: "transparent" }}
-                  />
-                </Row>
-              )}
-            </Form>
-          </Col>
-        </Row>
-      </div>
-
-      <div className="footer">
-        <div className="sign-up" onClick={onOpenSignupPage}>
-          {translate("login.needAnAccount")}
+                {!isBtnLoading && errorMessage && (
+                  <Row style={{ marginTop: "2rem", width: "100%" }}>
+                    <Alert
+                      title={errorMessage}
+                      type="error"
+                      showIcon
+                      style={{ width: "100%", borderColor: "transparent" }}
+                    />
+                  </Row>
+                )}
+              </Form>
+            </Col>
+          </Row>
         </div>
-        <div className="forget-password" onClick={onOpenForgotPasswordPage}>
-          {translate("login.forgotPassword")}
+
+        <div className="footer">
+          <div className="sign-up" onClick={onOpenSignupPage}>
+            {translate("login.needAnAccount")}
+          </div>
+          <div className="forget-password" onClick={onOpenForgotPasswordPage}>
+            {translate("login.forgotPassword")}
+          </div>
         </div>
-      </div>
-    </LoginFormWrapper>
+      </LoginFormWrapper>
+    </ThemeProvider>
   );
 };
 
 export default connect(
   (state: RootState) => ({
     preference: state?.Preference?.preference,
-    isLightMode: state?.Layout?.isLightMode,
     token: state?.Auth?.token,
   }),
   {
@@ -331,6 +310,5 @@ export default connect(
     actSetLastVerifyTime,
     actSetErrorTime,
     actSetErrorCount,
-    actToggleLightMode,
   },
 )(LoginForm);

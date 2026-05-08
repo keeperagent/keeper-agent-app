@@ -3,7 +3,6 @@ import { ToggleDarkModeWrapper } from "./style";
 import { RootState } from "@/redux/store";
 import { connect } from "react-redux";
 import { actToggleLightMode } from "@/redux/layout";
-import { DASHBOARD_LIGHT_MODE_KEY } from "@/config/constant";
 
 const ThemeSwitch = (props: any) => {
   const { isLightMode } = props;
@@ -16,7 +15,6 @@ const ThemeSwitch = (props: any) => {
 
   const switchDarkLightMode = () => {
     props?.actToggleLightMode(!isLightMode);
-    sessionStorage?.setItem(DASHBOARD_LIGHT_MODE_KEY, String(!isLightMode));
     moonRefClass?.toggle("sun");
     buttonRefClass?.toggle("day");
   };
