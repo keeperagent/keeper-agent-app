@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { ITheme } from "@/style/theme";
 
 const LoginFormWrapper = styled.div`
   padding: var(--padding);
@@ -33,11 +34,23 @@ const LoginFormWrapper = styled.div`
     color: white;
   }
 
+  .password-field {
+    --c-text: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
+    --c-text-light: ${({ theme }: { theme: ITheme }) =>
+      theme.colorTextSecondary};
+
+    input,
+    .ant-input {
+      color: ${({ theme }: { theme: ITheme }) =>
+        theme.colorTextPrimary} !important;
+    }
+  }
+
   .ant-input {
-    color: var(--color-white);
+    color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
 
     &::placeholder {
-      color: var(--color-text-secondary);
+      color: ${({ theme }: { theme: ITheme }) => theme.colorTextSecondary};
     }
   }
 
@@ -62,7 +75,8 @@ const LoginFormWrapper = styled.div`
           height: 1px;
           width: 100%;
           top: 50%;
-          background-color: var(--color-gray);
+          background-color: ${({ theme }: { theme: ITheme }) =>
+            theme.colorTextSecondary};
         }
 
         &::after {
@@ -101,7 +115,7 @@ const LoginFormWrapper = styled.div`
     .sign-up {
       cursor: pointer;
       transition: all 0.2s ease-in-out;
-      color: var(--color-text-white);
+      color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
       text-decoration: none;
       font-size: 1.2rem;
       font-weight: 500;
@@ -109,8 +123,7 @@ const LoginFormWrapper = styled.div`
 
     .forget-password:hover,
     .sign-up:hover {
-      color: white;
-      color: var(--color-primary-light);
+      color: ${({ theme }: { theme: ITheme }) => theme.colorPrimaryLight};
     }
   }
 
