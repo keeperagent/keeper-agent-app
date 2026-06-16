@@ -31,6 +31,7 @@ import {
   TotalData,
   ModalCampaign,
   ColorPicker,
+  AnimatedNumber,
 } from "@/component";
 import { RootState } from "@/redux/store";
 import {
@@ -148,6 +149,7 @@ const renderColumns = (
     title: translate("campaign.numberOfProfile"),
     dataIndex: "totalProfile",
     width: 200,
+    render: (value: number) => <AnimatedNumber value={value || 0} />,
   },
   {
     title: translate("updatedAt"),

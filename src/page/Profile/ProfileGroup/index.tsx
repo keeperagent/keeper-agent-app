@@ -24,7 +24,7 @@ import {
   DownArrowIcon,
   UpArrowIcon,
 } from "@/component/Icon";
-import { TotalData } from "@/component";
+import { TotalData, AnimatedNumber } from "@/component";
 import { RootState } from "@/redux/store";
 import {
   useGetListProfileGroup,
@@ -101,7 +101,7 @@ const renderColumns = (
     title: translate("profileGroup.totalProfile"),
     dataIndex: "totalProfile",
     width: "15%",
-    render: (value: number) => value || 0,
+    render: (value: number) => <AnimatedNumber value={value || 0} />,
   },
   {
     title: translate("usedBy"),
@@ -112,7 +112,7 @@ const renderColumns = (
       const element = (
         <span>
           <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>
-            {listCampaign?.length}
+            <AnimatedNumber value={listCampaign?.length || 0} />
           </span>{" "}
           <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>
             {translate("campaign")}

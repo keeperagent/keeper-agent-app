@@ -19,7 +19,13 @@ import { actSetPageName } from "@/redux/layout";
 import { ICampaign, IWorkflow, ISorter } from "@/electron/type";
 import { formatTime, trimText } from "@/service/util";
 import { DeleteButton, UploadButton } from "@/component/Button";
-import { SearchInput, TotalData, Workflow, ColorPicker } from "@/component";
+import {
+  SearchInput,
+  TotalData,
+  Workflow,
+  ColorPicker,
+  AnimatedNumber,
+} from "@/component";
 import { RootState } from "@/redux/store";
 import {
   actSaveSelectedWorkflow,
@@ -118,7 +124,7 @@ const renderColumns = (
       const element = (
         <span>
           <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>
-            {listCampaign?.length}
+            <AnimatedNumber value={listCampaign?.length || 0} />
           </span>{" "}
           <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>
             {translate("campaign")}

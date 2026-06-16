@@ -1,6 +1,7 @@
 import { Button, Popconfirm, Switch, Tooltip } from "antd";
 import { IMcpServer, MCPServerStatus } from "@/electron/type";
 import Status from "@/component/Status";
+import { AnimatedNumber } from "@/component";
 import { formatTime } from "@/service/util";
 import { useTranslation } from "@/hook/useTranslation";
 import { Wrapper } from "./style";
@@ -78,7 +79,8 @@ const McpServerItem = (props: IMcpServerItemProps) => {
 
           {showToolCount && (
             <span className="item-tool-count">
-              {item.toolsCount} {translate("tools")}
+              <AnimatedNumber value={item.toolsCount || 0} />{" "}
+              {translate("tools")}
             </span>
           )}
         </div>

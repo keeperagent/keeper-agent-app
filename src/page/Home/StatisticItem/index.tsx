@@ -1,4 +1,4 @@
-import AnimatedNumbers from "react-animated-numbers";
+import { AnimatedNumber } from "@/component";
 import { Wrapper } from "./style";
 
 type IProps = {
@@ -11,7 +11,7 @@ const StatisticItem = ({ label, value, style }: IProps) => {
   return (
     <Wrapper style={style}>
       <div className="value">
-        <AnimatedNumbers animateToNumber={value} />
+        <AnimatedNumber value={value} />
       </div>
       <div className="label">{label}</div>
     </Wrapper>

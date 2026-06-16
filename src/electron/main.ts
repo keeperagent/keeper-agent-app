@@ -18,6 +18,7 @@ import { applyScreenCaptureProtection } from "./controller/preference";
 import { parseWindowsPath, parseUnixPath } from "./util";
 
 let mainWindow: BrowserWindow | null = null;
+app.commandLine.appendSwitch("disable-renderer-backgrounding");
 app.setName("Keeper Agent");
 protocol.registerSchemesAsPrivileged([
   {
@@ -68,6 +69,39 @@ const createWindow = async () => {
   });
 
   mainWindow.maximize();
+
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error(
+      `[RENDERER DIED] reason=${details.reason} exitCode=${details.exitCode}`,
+    );
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+    setTimeout(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        return;
+      }
+      const isDev = !app.isPackaged;
+      if (isDev) {
+        mainWindow.loadURL("http://localhost:4000");
+      } else {
+        const indexPath = path.join(app.getAppPath(), "build", "index.html");
+        mainWindow.loadFile(indexPath);
+      }
+    }, 2000);
+  });
+
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription) => {
+      console.error(`[RENDERER LOAD FAILED] ${errorCode} ${errorDescription}`);
+    },
+  );
+
+  mainWindow.on("unresponsive", () => {
+    console.error("[RENDERER UNRESPONSIVE]");
+  });
+
   runMainProcess();
 
   const isDev = !app.isPackaged;

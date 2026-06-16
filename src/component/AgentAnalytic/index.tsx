@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
-import AnimatedNumbers from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Segmented } from "antd";
 import ReactECharts from "echarts-for-react";
 import { RootState } from "@/redux/store";
+import { AnimatedNumber } from "@/component";
 import { useGetAgentAnalytics } from "@/hook/agentTask";
 import { useTranslation } from "@/hook";
 import RealtimeIndicator from "@/component/RealtimeIndicator";
@@ -415,7 +415,7 @@ const AgentAnalytic = ({
           <StatStrip>
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#52c41a" }}>
-                <AnimatedNumbers animateToNumber={stats.totalDone} />
+                <AnimatedNumber value={stats.totalDone} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.done")}
@@ -424,7 +424,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#ff4d4f" }}>
-                <AnimatedNumbers animateToNumber={stats.totalFailed} />
+                <AnimatedNumber value={stats.totalFailed} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.failed")}
@@ -436,7 +436,7 @@ const AgentAnalytic = ({
                 className="stat-value"
                 style={{ color: "var(--color-primary)" }}
               >
-                <AnimatedNumbers animateToNumber={successRate} />%
+                <AnimatedNumber value={successRate} />%
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.successRate")}
@@ -454,7 +454,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#faad14" }}>
-                <AnimatedNumbers animateToNumber={stats.pendingNow} />
+                <AnimatedNumber value={stats.pendingNow} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.pending")}
@@ -463,7 +463,7 @@ const AgentAnalytic = ({
 
             <div className="stat-item">
               <div className="stat-value" style={{ color: "#13c2c2" }}>
-                <AnimatedNumbers animateToNumber={stats.inProgressNow} />
+                <AnimatedNumber value={stats.inProgressNow} />
               </div>
               <div className="stat-label">
                 {translate("agentAnalytic.stat.inProgress")}

@@ -1,16 +1,11 @@
-import AnimatedNumber from "react-animated-numbers";
 import { Tooltip } from "antd";
 import { useTranslation } from "@/hook";
 import { type TurnUsage } from "@/electron/type";
+import { AnimatedNumber } from "@/component";
 import { TokenUsageBadgeWrapper } from "./style";
 
 type Props = {
   turnUsage: TurnUsage;
-};
-
-const NUMBER_FONT_STYLE: React.CSSProperties = {
-  fontSize: 11,
-  fontVariantNumeric: "tabular-nums",
 };
 
 const TokenUsageBadge = ({ turnUsage }: Props) => {
@@ -38,11 +33,7 @@ const TokenUsageBadge = ({ turnUsage }: Props) => {
       <Tooltip title={translate("agent.usage.inputTokens")}>
         <span className="usage-item">
           In
-          <AnimatedNumber
-            animateToNumber={billedInputTokens}
-            includeComma
-            fontStyle={NUMBER_FONT_STYLE}
-          />
+          <AnimatedNumber value={billedInputTokens} />
         </span>
       </Tooltip>
 
@@ -51,11 +42,7 @@ const TokenUsageBadge = ({ turnUsage }: Props) => {
       <Tooltip title={translate("agent.usage.outputTokens")}>
         <span className="usage-item">
           Out
-          <AnimatedNumber
-            animateToNumber={turnUsage.outputTokens}
-            includeComma
-            fontStyle={NUMBER_FONT_STYLE}
-          />
+          <AnimatedNumber value={turnUsage.outputTokens} />
         </span>
       </Tooltip>
 
@@ -64,11 +51,7 @@ const TokenUsageBadge = ({ turnUsage }: Props) => {
       <Tooltip title={translate("agent.usage.cacheHitRate")}>
         <span className="usage-item">
           Cache
-          <AnimatedNumber
-            animateToNumber={cacheHitRate}
-            fontStyle={NUMBER_FONT_STYLE}
-          />
-          %
+          <AnimatedNumber value={cacheHitRate} />%
         </span>
       </Tooltip>
     </TokenUsageBadgeWrapper>

@@ -39,9 +39,11 @@ class ConnectionTracker {
 
     for (const win of windows) {
       if (!win.isDestroyed()) {
-        win.webContents.send(MESSAGE.MCP_CONNECTIONS_UPDATED, {
-          data: this.getAll(),
-        });
+        try {
+          win.webContents.send(MESSAGE.MCP_CONNECTIONS_UPDATED, {
+            data: this.getAll(),
+          });
+        } catch {}
       }
     }
   };

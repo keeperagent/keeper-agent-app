@@ -429,6 +429,8 @@
   "campaign.exportConfig": "Export Campaign configuration",
   "campaign.importConfig": "Import Campaign configuration",
   "campaign.showColumnStatistic": "Calculate the sum of each column for all Profiles if the column contains numeric values",
+  "campaign.showStatistics": "Show statistics",
+  "campaign.hideStatistics": "Hide statistics",
   "workflow.name": "Workflow name",
   "workflow.viewWorkflow": "View workflow",
   "workflow.importWorkflow": "Import workflow",

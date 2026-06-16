@@ -1,9 +1,9 @@
 import { lazy, Suspense, useState, useEffect, useMemo, Fragment } from "react";
 import { useSearchParams } from "react-router-dom";
-import AnimatedNumber from "react-animated-numbers";
 import { connect } from "react-redux";
 import { Spin, Tabs, Tooltip } from "antd";
 import { RootState } from "@/redux/store";
+import { AnimatedNumber } from "@/component";
 import { actSaveSelectedAgentProfile, LLMProvider } from "@/redux/agent";
 import { DEFAULT_LLM_MODELS } from "@/electron/constant";
 import { useTranslation } from "@/hook";
@@ -23,7 +23,7 @@ const ToolsManager = lazy(() => import("./ToolsManager"));
 const AgentStatBadge = ({ count, label }: { count: number; label: string }) => (
   <StatBadgeWrapper title={label}>
     <span className="value">
-      <AnimatedNumber animateToNumber={count} />
+      <AnimatedNumber value={count} />
     </span>
     <span className="label">{label}</span>
   </StatBadgeWrapper>

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { connect } from "react-redux";
 import _ from "lodash";
 import ReactECharts from "echarts-for-react";
-import AnimatedNumbers from "react-animated-numbers";
+import { AnimatedNumber } from "@/component";
 import { RootState } from "@/redux/store";
 import { COLORS } from "@/config/constant";
 import { useTranslation } from "@/hook";
@@ -122,7 +122,7 @@ const FolderSizeStatistic = (props: IProps) => {
         <span className="label">{translate("totalSize")}: </span>
 
         <div className="value">
-          <AnimatedNumbers animateToNumber={Number(totalSize?.[0])} />
+          <AnimatedNumber value={Number(totalSize?.[0])} />
           <span className="unit">{totalSize?.[1]}</span>
         </div>
       </div>

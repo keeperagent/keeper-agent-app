@@ -14,7 +14,7 @@ import {
 import { DeleteButton } from "@/component/Button";
 import { SearchInput } from "@/component/Input";
 import { EditIcon, EyeOpenIcon } from "@/component/Icon";
-import { TotalData } from "@/component";
+import { TotalData, AnimatedNumber } from "@/component";
 import {
   useGetListNodeEndpointGroup,
   useDeleteNodeEndpointGroup,
@@ -103,7 +103,7 @@ const renderColumns = (
     title: translate("nodeProvider.totalNode"),
     dataIndex: "totalNodeEndpoint",
     width: "13%",
-    render: (value: number) => value || 0,
+    render: (value: number) => <AnimatedNumber value={value || 0} />,
   },
   {
     title: translate("updatedAt"),

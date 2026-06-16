@@ -59,7 +59,7 @@ const getCampaignProfileAdditionalColumn = (
     width: PROFILE_COLUMN_WIDTH,
     render: (value: any, record: any) => {
       let text = record?.[config?.dataIndex as any];
-      if (isNaN(Number(text)) || !/^\d+$/.test(text)) {
+      if (!text || isNaN(Number(text))) {
         return text ? <TrimText text={text} maxLength={37} /> : EMPTY_STRING;
       }
 

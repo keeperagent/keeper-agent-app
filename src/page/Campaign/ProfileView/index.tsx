@@ -58,6 +58,7 @@ import {
   SecretText,
   Status,
   ColorPicker,
+  AnimatedNumber,
 } from "@/component";
 import {
   ICampaign,
@@ -1057,7 +1058,9 @@ const ManageCampaignProfile = (props: IProps) => {
                 title={translate("campaign.showColumnStatistic")}
               >
                 <span>
-                  {!showProfileStatistic ? "Show statistic" : "Hide statistic"}
+                  {!showProfileStatistic
+                    ? translate("campaign.showStatistics")
+                    : translate("campaign.hideStatistics")}
                 </span>
               </Tooltip>
             </div>
@@ -1072,7 +1075,7 @@ const ManageCampaignProfile = (props: IProps) => {
                           {trimText(column?.label || EMPTY_STRING, 20)}
                         </div>
                         <div className="value">
-                          {trimText(column?.value || EMPTY_STRING, 11)}
+                          <AnimatedNumber value={Number(column?.value || 0)} />
                         </div>
                       </div>
                     ),
