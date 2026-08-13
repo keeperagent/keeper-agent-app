@@ -62,10 +62,6 @@ export default defineConfig(({ mode }) => ({
           entryFileNames: "index.js",
         },
       },
-      bytecode: {
-        protectedStrings,
-        transformArrowFunctions: false,
-      },
     },
     resolve: {
       alias: {

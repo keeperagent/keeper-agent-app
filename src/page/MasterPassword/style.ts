@@ -50,8 +50,6 @@ const MasterPasswordPageWrapper = styled.div`
     height: 100%;
     top: 2rem;
     left: 2rem;
-    background-image: url("../../asset/dot-bg-1.png");
-    background-size: contain;
   }
 `;
 

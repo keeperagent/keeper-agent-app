@@ -200,7 +200,7 @@ const ExecuteTransaction = (props: Props) => {
   };
 
   const listValidNodeEndpointGroup = useMemo(() => {
-    return listNodeEndpointGroup.filter(
+    return listNodeEndpointGroup?.filter(
       (item) => item?.chainType === chainType,
     );
   }, [listNodeEndpointGroup, chainType]);

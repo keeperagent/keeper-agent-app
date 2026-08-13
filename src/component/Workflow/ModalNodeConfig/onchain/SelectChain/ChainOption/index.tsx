@@ -93,7 +93,7 @@ const ChainOption = (props: IProps) => {
   };
 
   const listValidNodeEndpointGroup = useMemo(() => {
-    return listNodeEndpointGroup.filter(
+    return listNodeEndpointGroup?.filter(
       (item) => item?.chainType === chainOption?.chainType,
     );
   }, [listNodeEndpointGroup, chainOption?.chainType]);

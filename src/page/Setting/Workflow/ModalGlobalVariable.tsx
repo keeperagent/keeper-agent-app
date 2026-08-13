@@ -91,7 +91,7 @@ const ModalGlobalVariable = ({
                 if (!value) {
                   return Promise.resolve();
                 }
-                const isDuplicated = listSetting.some(
+                const isDuplicated = listSetting?.some(
                   (item) =>
                     item.name === value.trim().toUpperCase() &&
                     item.id !== selectedItem?.id,

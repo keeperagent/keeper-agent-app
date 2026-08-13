@@ -17,7 +17,7 @@ const buildTreeData = (
 ): BubbleDataNode => ({
   name: "root",
   nodeType: "root",
-  children: listProfileGroup.map((profileGroup: IProfileGroup) => {
+  children: listProfileGroup?.map((profileGroup: IProfileGroup) => {
     const children: BubbleDataNode[] = [];
 
     if (profileGroup.walletGroup) {
