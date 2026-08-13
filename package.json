@@ -22,6 +22,7 @@
     "@langchain/tavily": "^1.2.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@mysten/sui": "^1.45.2",
+    "@number-flow/react": "^0.6.0",
     "@pancakeswap/chains": "^0.7.0",
     "@pancakeswap/infinity-sdk": "^1.0.8",
     "@pancakeswap/permit2-sdk": "^1.0.10",
@@ -166,7 +167,6 @@
     "graphql": "^16.12.0",
     "gsap": "^3.14.2",
     "react": "^19.2.4",
-    "react-animated-numbers": "^0.16.0",
     "react-color": "^2.19.3",
     "react-dom": "^19.2.4",
     "react-highlight-words": "^0.21.0",
@@ -239,5 +239,6 @@
     "asarUnpack": [
       "node_modules/@vscode/sqlite3"
     ]
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

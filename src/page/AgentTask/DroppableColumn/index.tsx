@@ -1,10 +1,10 @@
 import { Fragment, useState } from "react";
 import type { CSSProperties } from "react";
-import AnimatedNumbers from "react-animated-numbers";
 import { Dropdown, Popconfirm } from "antd";
 import type { MenuProps } from "antd";
 import { useDroppable } from "@dnd-kit/core";
 import { AgentTaskStatus, IAgentTask } from "@/electron/type";
+import { AnimatedNumber } from "@/component";
 import { useTranslation } from "@/hook/useTranslation";
 import { TaskCard } from "../TaskCard";
 import { ColumnWrapper } from "./style";
@@ -144,11 +144,12 @@ const DroppableColumn = ({
 
         <div className="column-header-right">
           <span className="column-count">
-            <AnimatedNumbers animateToNumber={tasks.length} />
+            <AnimatedNumber value={tasks.length} />
+
             {isFiltered && (
               <Fragment>
                 {" / "}
-                <AnimatedNumbers animateToNumber={totalCount} />
+                <AnimatedNumber value={totalCount} />
               </Fragment>
             )}
           </span>

@@ -1,5 +1,4 @@
 import { Fragment, useState } from "react";
-import AnimatedNumbers from "react-animated-numbers";
 import { Popconfirm } from "antd";
 import { IAgentProfile } from "@/electron/type";
 import { TrashIcon } from "@/component/Icon";
@@ -9,6 +8,7 @@ import { EMPTY_STRING } from "@/config/constant";
 import { LLM_PROVIDERS } from "@/config/llmProviders";
 import Status from "@/component/Status";
 import { listChainConfig } from "@/page/Agent/config";
+import { AnimatedNumber } from "@/component";
 import { Wrapper, ProviderBadge } from "./style";
 
 type Props = {
@@ -112,7 +112,7 @@ const AgentProfileCard = (props: Props) => {
               <span className="item-label">{translate("agent.tool")}</span>
               <span className="item-value">
                 {allowedToolCount > 0 ? (
-                  <AnimatedNumbers animateToNumber={allowedToolCount} />
+                  <AnimatedNumber value={allowedToolCount} />
                 ) : (
                   translate("agent.allTools")
                 )}
@@ -123,7 +123,7 @@ const AgentProfileCard = (props: Props) => {
               <span className="item-label">{translate("agent.skill")}</span>
               <span className="item-value">
                 {allowedSkillCount > 0 ? (
-                  <AnimatedNumbers animateToNumber={allowedSkillCount} />
+                  <AnimatedNumber value={allowedSkillCount} />
                 ) : (
                   translate("agent.allSkills")
                 )}
@@ -145,7 +145,7 @@ const AgentProfileCard = (props: Props) => {
                   {translate("agentTask.tasks")}
                 </span>
                 <span className="item-value">
-                  <AnimatedNumbers animateToNumber={taskCount} />
+                  <AnimatedNumber value={taskCount} />
                 </span>
               </div>
             )}

@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { Spin, Badge } from "antd";
-import AnimatedNumbers from "react-animated-numbers";
 import { Empty } from "antd";
 import { DoubleRightArrowIcon } from "@/component/Icon";
 import { IFolder } from "@/electron/type";
 import { useTranslation } from "@/hook";
 import { formatByte } from "@/service/util";
+import { AnimatedNumber } from "@/component";
 import { Wrapper } from "./style";
 import FolderItem from "./FolderItem";
 import BrowserDownload from "./BrowserDownload";
@@ -53,10 +53,7 @@ const ListFolder = (props: IProps) => {
           <div className="folder-statistic">
             <Badge status="success" />
             <div className="value">
-              <AnimatedNumbers
-                animateToNumber={totalData}
-                fontStyle={{ fontSize: "1.2rem", letterSpacing: "0.1px" }}
-              />
+              <AnimatedNumber value={totalData} />
               <span className="unit">folder{totalData > 1 ? "s" : ""}</span>
             </div>
           </div>
@@ -66,10 +63,7 @@ const ListFolder = (props: IProps) => {
           <div className="folder-statistic">
             <Badge status="processing" />
             <div className="value">
-              <AnimatedNumbers
-                animateToNumber={Number(folderSize?.[0])}
-                fontStyle={{ fontSize: "1.2rem", letterSpacing: "0.1px" }}
-              />
+              <AnimatedNumber value={Number(folderSize?.[0])} />
               <span className="unit">{folderSize?.[1]}</span>
             </div>
           </div>

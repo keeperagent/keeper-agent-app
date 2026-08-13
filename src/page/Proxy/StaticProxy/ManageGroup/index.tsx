@@ -8,7 +8,7 @@ import { formatTime, trimText } from "@/service/util";
 import { DeleteButton } from "@/component/Button";
 import { SearchInput } from "@/component/Input";
 import { EditIcon, EyeOpenIcon } from "@/component/Icon";
-import { TotalData } from "@/component";
+import { TotalData, AnimatedNumber } from "@/component";
 import {
   useGetListStaticProxyGroup,
   useDeleteStaticProxyGroup,
@@ -64,7 +64,7 @@ const renderColumns = (
     title: translate("staticProxy.totalIp"),
     dataIndex: "totalProxyIp",
     width: "15%",
-    render: (value: number) => value || 0,
+    render: (value: number) => <AnimatedNumber value={value || 0} />,
   },
   {
     title: translate("updatedAt"),

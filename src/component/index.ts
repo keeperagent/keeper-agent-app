@@ -24,3 +24,4 @@ export { default as LlmProviderPicker } from "./LlmProviderPicker";
 export { default as CodeEditor } from "./CodeEditor";
 export { default as BubblePackChart } from "./BubblePackChart";
 export type { BubbleDataNode } from "./BubblePackChart";
+export { default as AnimatedNumber } from "./AnimatedNumber";
