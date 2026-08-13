@@ -28,7 +28,7 @@ const RequireAuth = (props: RequireAuthProps) => {
     }
 
     if (!token) {
-      navigate("/dashboard/home");
+      navigate("/");
     } else if (!isMasterKeyUnlocked) {
       const fullPath = location.pathname + location.search + location.hash;
       sessionStorage.setItem(LAST_ROUTE_BEFORE_LOCK_KEY, fullPath);
