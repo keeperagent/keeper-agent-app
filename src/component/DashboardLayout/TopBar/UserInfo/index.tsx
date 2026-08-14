@@ -6,6 +6,7 @@ import { RootState } from "@/redux/store";
 import { actSetMasterKeyUnlocked } from "@/redux/session";
 import { getTranslateContent } from "@/service/util";
 import { useTranslation } from "@/hook";
+import { MESSAGE } from "@/electron/constant";
 import { UserInfoWrapper } from "./style";
 
 const UserInfo = (props: any) => {
@@ -22,6 +23,7 @@ const UserInfo = (props: any) => {
   };
 
   const onLockScreen = () => {
+    window?.electron?.send(MESSAGE.LOCK_MASTER_PASSWORD);
     props.actSetMasterKeyUnlocked(false);
     navigate("/master-password");
   };

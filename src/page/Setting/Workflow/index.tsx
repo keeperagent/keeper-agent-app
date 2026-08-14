@@ -94,7 +94,7 @@ const WorkflowSetting = ({ listSetting, preference }: Props) => {
   };
 
   const onShowTotal = () => {
-    let text = `${translate("total")} ${listSetting.length} ${translate("data")}`;
+    let text = `${translate("total")} ${listSetting?.length || 0} ${translate("data")}`;
     if (selectedRowKeys.length > 0) {
       text += `. ${selectedRowKeys.length} ${translate("data")} ${translate("selected")}`;
     }
@@ -143,7 +143,7 @@ const WorkflowSetting = ({ listSetting, preference }: Props) => {
     },
   ];
 
-  const dataSource = listSetting.map((item, index) => ({
+  const dataSource = listSetting?.map((item, index) => ({
     ...item,
     index: index + 1,
   }));

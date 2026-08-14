@@ -154,7 +154,7 @@ const ConfigForm = (props: IFormProps) => {
             disabled={walletGroup === undefined}
             onClick={onAddWalletGroup}
           >
-            {listSelectedWalletGroup.length > 0
+            {listSelectedWalletGroup?.length > 0
               ? translate("edit")
               : translate("add")}
           </Button>
@@ -223,7 +223,9 @@ const ConfigForm = (props: IFormProps) => {
         )}
       </div>
 
-      {listSelectedResourceGroup.length + listSelectedWalletGroup.length > 0 ? (
+      {(listSelectedResourceGroup?.length || 0) +
+        (listSelectedWalletGroup?.length || 0) >
+      0 ? (
         <div className="chart">
           <ProfileConfigChart
             listResourceGroup={listSelectedResourceGroup}

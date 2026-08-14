@@ -17,7 +17,10 @@ import { NODE_STATUS } from "@/electron/constant";
 import { useTranslation, useGetListNodeEndpointGroup } from "@/hook";
 import { getChainConfig } from "@/service/util";
 import { Wrapper, OptionWrapper, ChainWrapper } from "./style";
-import { TAB, TAB_NAME_EN } from "@/component/Workflow/ModalNodeConfig/common/util";
+import {
+  TAB,
+  TAB_NAME_EN,
+} from "@/component/Workflow/ModalNodeConfig/common/util";
 import CommonSetting from "@/component/Workflow/ModalNodeConfig/common/CommonSetting";
 import SkipSetting from "@/component/Workflow/ModalNodeConfig/common/SkipSetting";
 import WorkflowVariable from "@/component/Workflow/WorkflowVariable";
@@ -180,7 +183,7 @@ const ApproveRevokeEVM = (props: Props) => {
   };
 
   const listValidNodeEndpointGroup = useMemo(() => {
-    return listNodeEndpointGroup.filter(
+    return listNodeEndpointGroup?.filter(
       (item) => item?.chainType === CHAIN_TYPE.EVM,
     );
   }, [listNodeEndpointGroup]);

@@ -64,7 +64,7 @@ const Node = (props: INodeProps) => {
       await updatePreference({
         ...preference,
         nodeBlackList: [
-          ...preference?.nodeBlackList!,
+          ...(preference?.nodeBlackList || []),
           node?.config?.workflowType!,
         ],
       });

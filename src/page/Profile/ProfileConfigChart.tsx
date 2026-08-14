@@ -14,7 +14,7 @@ const ProfileConfigChart = (props: IChartProps) => {
   const treeData = useMemo((): BubbleDataNode => {
     const children: BubbleDataNode[] = [];
 
-    listWalletGroup.forEach((walletGroup: IWalletGroup) => {
+    listWalletGroup?.forEach((walletGroup: IWalletGroup) => {
       const totalWallet = walletGroup?.totalWallet || 0;
       children.push({
         name: walletGroup?.name || "",
@@ -24,7 +24,7 @@ const ProfileConfigChart = (props: IChartProps) => {
       });
     });
 
-    listResourceGroup.forEach((resourceGroup: IResourceGroup) => {
+    listResourceGroup?.forEach((resourceGroup: IResourceGroup) => {
       const totalResource = resourceGroup?.totalResource || 0;
       children.push({
         name: resourceGroup?.name || "",

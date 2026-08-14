@@ -61,7 +61,7 @@ const errorLink = () =>
                       query ($refreshToken: String!) {
                         getNewAccessToken(refreshToken: $refreshToken) {
                           token
-                          exprired
+                          expriredAt
                           code
                           message
                         }
@@ -73,8 +73,8 @@ const errorLink = () =>
 
               const { data } = await response.json();
 
-              if (data?.getNewAccessToken) {
-                const newToken = data?.getNewAccessToken?.token;
+              const newToken = data?.getNewAccessToken?.token;
+              if (newToken) {
                 updateAccessToken(newToken);
                 // Keep safeStorage in sync with the refreshed access token
                 const { Auth } = store.getState();

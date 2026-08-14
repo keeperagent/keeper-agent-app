@@ -49,8 +49,6 @@ const LoginPageWrapper = styled.div`
     height: 100%;
     top: 0;
     left: 0;
-    background-image: url("../../asset/dot-bg-1.png");
-    background-size: contain;
   }
 `;
 

@@ -62,7 +62,7 @@ const createWindow = async () => {
       contextIsolation: true,
       preload: path.join(__dirname, "../preload/index.js"),
       nodeIntegration: false,
-      devTools: !app.isPackaged,
+      devTools: true,
       spellcheck: false,
       sandbox: true,
     },
@@ -97,6 +97,10 @@ const createWindow = async () => {
       console.error(`[RENDERER LOAD FAILED] ${errorCode} ${errorDescription}`);
     },
   );
+
+  mainWindow.webContents.on("preload-error", (_event, preloadPath, error) => {
+    console.error(`[PRELOAD ERROR] path=${preloadPath}`, error);
+  });
 
   mainWindow.on("unresponsive", () => {
     console.error("[RENDERER UNRESPONSIVE]");

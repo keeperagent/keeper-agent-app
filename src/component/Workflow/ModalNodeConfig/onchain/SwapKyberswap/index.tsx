@@ -270,7 +270,7 @@ const SwapKyberswap = (props: Props) => {
   };
 
   const listValidNodeEndpointGroup = useMemo(() => {
-    return listNodeEndpointGroup.filter(
+    return listNodeEndpointGroup?.filter(
       (item) => item?.chainType === CHAIN_TYPE.EVM,
     );
   }, [listNodeEndpointGroup]);
@@ -410,7 +410,7 @@ const SwapKyberswap = (props: Props) => {
                                 className="icon"
                                 onClick={() =>
                                   openExternalLink(
-                                    mapKyberswapContractUrl.get(chainKey),
+                                    mapKyberswapContractUrl.get(chainKey) || "",
                                   )
                                 }
                               >
