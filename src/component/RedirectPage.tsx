@@ -4,12 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { RootState } from "@/redux/store";
 
 const RedirectPage = (props: any) => {
-  const { children, token, user } = props;
+  const { children, token } = props;
   const navigate = useNavigate();
 
   useEffect(() => {
-    const isPaidUser = user?.tierStatus?._id;
-    if (token && isPaidUser) {
+    if (token) {
       navigate("/dashboard/home");
     }
   }, [token]);
@@ -20,7 +19,6 @@ const RedirectPage = (props: any) => {
 export default connect(
   (state: RootState) => ({
     token: state?.Auth?.token,
-    user: state?.Auth?.user,
   }),
-  {}
+  {},
 )(RedirectPage);

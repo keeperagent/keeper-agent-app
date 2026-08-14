@@ -16,6 +16,7 @@ export const authStorageController = () => {
     event.reply(MESSAGE.GET_AUTH_STATE_RES, {
       token: auth?.token || null,
       user: auth?.user || null,
+      isMasterKeyUnlocked: masterPasswordManager.isMasterPasswordSet(),
     });
   });
 

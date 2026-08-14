@@ -1,3 +1,4 @@
+import { ipcMain } from "electron";
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { preferenceService } from "@/electron/service/preference";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
@@ -165,4 +166,9 @@ export const masterPasswordController = () => {
       });
     },
   );
+
+  // User explicitly locked the screen - clear the cached master key so a reload can't silently unlock again
+  ipcMain.on(MESSAGE.LOCK_MASTER_PASSWORD, () => {
+    masterPasswordManager.clearMasterPassword();
+  });
 };

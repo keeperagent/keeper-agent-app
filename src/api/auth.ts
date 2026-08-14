@@ -8,6 +8,7 @@ export const UserFragment = gql`
     _id
     email
     username
+    refreshToken
     tierStatus {
       ...TierStatusField
     }

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { MESSAGE } from "@/electron/constant";
 import { store } from "@/redux/store";
 import { actRestoreAuth } from "@/redux/auth";
+import { actSetMasterKeyUnlocked } from "@/redux/session";
 
 // Plain functions — safe to call from anywhere (hooks, Apollo links, plain modules)
 const saveAuthToken = (token: string, user: any) => {
@@ -29,6 +30,9 @@ const useRestoreAuth = () => {
           token: payload?.token || null,
           user: payload?.user || null,
         }),
+      );
+      store.dispatch(
+        actSetMasterKeyUnlocked(Boolean(payload?.isMasterKeyUnlocked)),
       );
     };
     const unsubscribe = window?.electron?.on(

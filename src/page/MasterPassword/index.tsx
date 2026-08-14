@@ -28,7 +28,7 @@ enum UnlockView {
 }
 
 const MasterPasswordPage = (props: any) => {
-  const { token, user, isMasterKeyUnlocked } = props;
+  const { token, user, isMasterKeyUnlocked, isAuthPending } = props;
   const email = user?.email;
   const [createForm] = Form.useForm();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -73,10 +73,14 @@ const MasterPasswordPage = (props: any) => {
   };
 
   useEffect(() => {
+    if (isAuthPending) {
+      return;
+    }
+
     if (!token) {
       navigate("/");
     }
-  }, [token, navigate]);
+  }, [token, isAuthPending, navigate]);
 
   useEffect(() => {
     if (isMasterKeyUnlocked) {
@@ -253,6 +257,7 @@ export default connect(
     token: state?.Auth?.token,
     user: state?.Auth?.user,
     isMasterKeyUnlocked: state?.Session?.isMasterKeyUnlocked,
+    isAuthPending: state?.Auth?.isAuthPending,
   }),
   {
     actSetMasterKeyUnlocked,
