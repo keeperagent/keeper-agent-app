@@ -87,7 +87,6 @@ import ExecuteTransaction from "./onchain/ExecuteTransaction";
 import SwapJupiter from "./onchain/SwapJupiter";
 import StopWorkflow from "./flow/StopWorkflow";
 import LaunchTokenPumpfun from "./onchain/LaunchTokenPumpfun";
-import LaunchTokenBonkfun from "./onchain/LaunchTokenBonkfun";
 import GenerateImage from "./browser/GenerateImage";
 import RunAgent from "./flow/RunAgent";
 import ClickExtension from "./browser/ClickExtension";
@@ -166,9 +165,6 @@ const ModalNodeConfig = (props: IModalProps) => {
     switch (selectedWorkflowType) {
       case WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN:
         return <LaunchTokenPumpfun {...propsNodeConfig} />;
-
-      case WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN:
-        return <LaunchTokenBonkfun {...propsNodeConfig} />;
 
       case WORKFLOW_TYPE.GENERATE_IMAGE:
         return <GenerateImage {...propsNodeConfig} />;

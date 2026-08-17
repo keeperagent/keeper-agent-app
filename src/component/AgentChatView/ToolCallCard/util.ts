@@ -79,10 +79,6 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
     icon: "🚀",
     summaryFields: ["name", "symbol"],
   },
-  [TOOL_KEYS.LAUNCH_BONKFUN_TOKEN]: {
-    icon: "🚀",
-    summaryFields: ["name", "symbol"],
-  },
   [TOOL_KEYS.BROADCAST_TRANSACTION_EVM]: {
     icon: "⚡",
     summaryFields: ["to", "value"],

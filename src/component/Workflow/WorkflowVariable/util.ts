@@ -21,7 +21,7 @@ import {
   IGetTokenPriceNodeConfig,
   IExecuteCodeNodeConfig,
   IGenerateVanityAddressNodeConfig,
-  ILaunchTokenBonkfunNodeConfig,
+  ILaunchTokenPumpfunNodeConfig,
   IGenerateProfileNodeConfig,
 } from "@/electron/type";
 import {
@@ -380,7 +380,7 @@ const getVariablesFromNodes = (
       }
 
       case WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN: {
-        const config = node?.data?.config as ILaunchTokenBonkfunNodeConfig;
+        const config = node?.data?.config as ILaunchTokenPumpfunNodeConfig;
         const addressVariable: IWorkflowVariable = {
           variable: config?.variableTokenAddress || "",
           sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]} Processor`,
@@ -393,28 +393,6 @@ const getVariablesFromNodes = (
         const txHashVariable: IWorkflowVariable = {
           variable: config?.variableTxHash || "",
           sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN]} Processor`,
-        };
-
-        if (txHashVariable?.variable) {
-          mapVariable[txHashVariable?.variable] = txHashVariable;
-        }
-        return;
-      }
-
-      case WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN: {
-        const config = node?.data?.config as ILaunchTokenBonkfunNodeConfig;
-        const addressVariable: IWorkflowVariable = {
-          variable: config?.variableTokenAddress || "",
-          sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]} Processor`,
-        };
-
-        if (addressVariable?.variable) {
-          mapVariable[addressVariable?.variable] = addressVariable;
-        }
-
-        const txHashVariable: IWorkflowVariable = {
-          variable: config?.variableTxHash || "",
-          sourceLabel: `${translate("from")} ${SCRIPT_NAME_EN[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]} Processor`,
         };
 
         if (txHashVariable?.variable) {

@@ -15,7 +15,6 @@ export {
   swapOnKyberswapTool,
   transferSolanaTokenTool,
   launchPumpfunTokenTool,
-  launchBonkfunTokenTool,
   broadcastTransactionEvmTool,
   broadcastTransactionSolanaTool,
 } from "./transaction";
