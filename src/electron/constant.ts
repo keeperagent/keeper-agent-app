@@ -575,7 +575,6 @@ export enum LOG_TYPE {
 export enum WORKFLOW_TYPE {
   // Launch token
   LAUNCH_TOKEN_PUMPFUN = "LAUNCH_TOKEN_PUMPFUN",
-  LAUNCH_TOKEN_BONKFUN = "LAUNCH_TOKEN_BONKFUN",
 
   // Agent
   GENERATE_IMAGE = "GENERATE_IMAGE",
@@ -1293,7 +1292,6 @@ export const TOOL_KEYS = {
   GET_EVM_TOKEN_BALANCE: "get_evm_token_balance",
   GET_TOKEN_PRICE: "get_token_price",
   LAUNCH_PUMPFUN_TOKEN: "launch_pumpfun_token",
-  LAUNCH_BONKFUN_TOKEN: "launch_bonkfun_token",
   BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
   BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
   // Wallet & data tools
@@ -1381,7 +1379,6 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.GET_EVM_TOKEN_BALANCE]: "Get EVM token balance",
   [TOOL_KEYS.GET_TOKEN_PRICE]: "Get token price",
   [TOOL_KEYS.LAUNCH_PUMPFUN_TOKEN]: "Launch Pump.fun token",
-  [TOOL_KEYS.LAUNCH_BONKFUN_TOKEN]: "Launch Bonk.fun token",
   [TOOL_KEYS.BROADCAST_TRANSACTION_EVM]: "Broadcast EVM transaction",
   [TOOL_KEYS.BROADCAST_TRANSACTION_SOLANA]: "Broadcast Solana transaction",
 

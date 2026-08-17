@@ -26,7 +26,6 @@ import {
   transferSolanaTokenTool,
   getTokenPriceTool,
   launchPumpfunTokenTool,
-  launchBonkfunTokenTool,
   broadcastTransactionEvmTool,
   broadcastTransactionSolanaTool,
   executeJavaScriptTool,
@@ -288,7 +287,7 @@ ${
   !autoApprove
     ? `## Approval gate
 You MUST call \`request_approval\` then \`confirm_approval\` before executing any of these tools:
-- On-chain: \`swap_on_jupiter\`, \`swap_on_kyberswap\`, \`transfer_solana_token\`, \`broadcast_transaction_evm\`, \`broadcast_transaction_solana\`, \`launch_pumpfun_token\`, \`launch_bonkfun_token\`
+- On-chain: \`swap_on_jupiter\`, \`swap_on_kyberswap\`, \`transfer_solana_token\`, \`broadcast_transaction_evm\`, \`broadcast_transaction_solana\`, \`launch_pumpfun_token\`
 - Code execution: \`execute_javascript\`, \`execute\` (exception: NEVER use code execution to render charts — use \`visualization_agent\` instead)
 - Workflows: \`run_workflow\`
 
@@ -556,8 +555,6 @@ export const buildBaseSubAgents = (
   const launchTools = [
     isEnabled(BASE_TOOL_KEYS.LAUNCH_PUMPFUN_TOKEN) &&
       launchPumpfunTokenTool(toolContext),
-    isEnabled(BASE_TOOL_KEYS.LAUNCH_BONKFUN_TOKEN) &&
-      launchBonkfunTokenTool(toolContext),
   ].filter((tool): any => Boolean(tool));
 
   const codeExecutionTools = [
@@ -697,12 +694,9 @@ export const buildBaseSubAgents = (
   if (launchTools.length > 0) {
     agents.push({
       name: "launch_agent",
-      description: "Launches tokens on Solana via Pump.fun or Bonk.fun.",
+      description: "Launches tokens on Solana via Pump.fun.",
       systemPrompt:
-        "You are a subagent for launching new tokens on Solana (Pump.fun and Bonk.fun). These tools are Solana-only.\n\n" +
-        "## Which platform to use\n" +
-        "- Task mentions Pump.fun or no preference → use launch_pumpfun_token\n" +
-        "- Task mentions Bonk.fun → use launch_bonkfun_token\n\n" +
+        "You are a subagent for launching new tokens on Solana via Pump.fun (launch_pumpfun_token). This tool is Solana-only.\n\n" +
         "## Execution\n" +
         "The user has already approved this action via approval gate — call the tool immediately, no confirmation needed.\n\n" +
         "## Image handling\n" +

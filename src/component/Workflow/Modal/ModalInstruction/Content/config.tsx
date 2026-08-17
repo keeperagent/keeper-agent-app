@@ -15,16 +15,6 @@ const getNodeContent = (workflowType: string, translate?: any) => {
       };
     }
 
-    case WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN: {
-      return {
-        description: (
-          <DescriptionWrapper>
-            <div>{translate("guide.launchTokenBonkfun.desc")}</div>
-          </DescriptionWrapper>
-        ),
-      };
-    }
-
     case WORKFLOW_TYPE.GENERATE_IMAGE: {
       return {
         description: (

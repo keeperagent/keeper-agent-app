@@ -17,7 +17,6 @@ import { MarketcapCheckingManager } from "./simulator/category/pricing/marketcap
 import { KyberswapManager } from "./simulator/category/onchain/kyberswap";
 import { SwapOnJupiterManager } from "./simulator/category/onchain/jupiter";
 import { Pumpfun } from "./simulator/category/onchain/pumpfun";
-import { Bonkfun } from "./simulator/category/onchain/bonkfun";
 import { SolanaVanityAddressManager } from "./simulator/category/onchain/vanityAddress/solanaVanityAddress";
 import { TelegramSniperManager } from "./simulator/category/social/telegramSniper";
 
@@ -137,7 +136,6 @@ const getNewExecutor = (): Executor => {
   const cetusManager = new SwapOnCetusManager();
   const threadManager = getNewThreadManager();
   const pumpfun = new Pumpfun();
-  const bonkfun = new Bonkfun();
 
   const executor = new Executor({
     threadManager,
@@ -155,7 +153,6 @@ const getNewExecutor = (): Executor => {
     evmContractSnipperManager: getContractSniperManager(),
     telegramSniperManager: getTelegramSniperManager(),
     pumpfun,
-    bonkfun,
   });
   return executor;
 };

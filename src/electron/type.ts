@@ -674,7 +674,6 @@ export type INodeConfig =
   | ICheckTokenPriceNodeConfig
   | IStopWorkflowNodeConfig
   | ILaunchTokenPumpfunNodeConfig
-  | ILaunchTokenBonkfunNodeConfig
   | IGenerateImageNodeConfig
   | IRunAgentNodeConfig
   | IDebateNodeConfig
@@ -2334,42 +2333,6 @@ export type ILaunchTokenPumpfunNodeConfig = {
   variableTxHash?: string; // variable name to store the transaction hash
   variableTokenAddress?: string; // variable name to store the token address
   vanityAddressPrivateKey?: string; // private key of vanity address
-};
-
-// LAUNCH_TOKEN_BONKFUN @workflowType
-export enum BONKFUN_LAUNCH_CURRENCY {
-  SOL = "SOL",
-  USD1 = "USD1",
-}
-export type ILaunchTokenBonkfunNodeConfig = {
-  workflowType?: WORKFLOW_TYPE; // workflow type to launch token pumpfun
-  status?: NODE_STATUS; // status of the node
-  name: string; // name of the node
-  onError?: NODE_ACTION; // action to perform when error occurs
-  onSuccess?: NODE_ACTION; // action to perform when success
-  sleep: number; // sleep time between each node
-  timeout?: number; // timeout for the node
-  retry?: number; // number of retries on failure
-  maxConcurrency?: number; // max concurrent threads for this node
-  skipSetting?: ISkipSetting; // skip setting for the node
-  alertTelegramWhenError?: boolean; // alert telegram when error occurs
-
-  tokenName?: string; // name of the token
-  symbol?: string; // symbol of the token
-  description?: string; // description of the token
-  imageUrl?: string; // url of image, local file or http url
-  twitter?: string; // twitter of the token
-  telegram?: string; // telegram of the token
-  website?: string; // website of the token
-  buyAmountSol?: string; // amount of SOL to buy the token
-  slippagePercentage?: number; // slippage percentage to buy the token
-  unitLimit?: string; // gas limit
-  unitPrice?: string; // gas price in microLamports
-  nodeEndpointGroupId?: number; // node endpoint group id in database to launch token pumpfun;
-  launchCurrency?: BONKFUN_LAUNCH_CURRENCY; // pool with SOL or USD1
-  privateKey?: string; // private key of wallet
-  variableTxHash?: string; // variable name to store the transaction hash
-  variableTokenAddress?: string; // variable name to store the token address
 };
 
 export enum RUN_AGENT_OUTPUT_FORMAT {

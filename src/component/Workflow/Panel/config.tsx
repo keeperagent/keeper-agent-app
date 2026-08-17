@@ -66,7 +66,6 @@ import cetusImg from "@/asset/cetus.webp";
 import kyberswapImg from "@/asset/kyberswap.webp";
 import jupiterImg from "@/asset/jupiter.webp";
 import pumpfunImg from "@/asset/pumpfun.png";
-import bonkfunImg from "@/asset/bonkfun.png";
 import {
   SCRIPT_NAME_EN,
   NODE_CATEGORY_LABEL_EN,
@@ -89,12 +88,6 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
       <img src={pumpfunImg} alt="" />
     </NodeIconWrapper>
   ),
-  [WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN]: (
-    <NodeIconWrapper>
-      <img src={bonkfunImg} alt="" />
-    </NodeIconWrapper>
-  ),
-
   [WORKFLOW_TYPE.RUN_AGENT]: <AgentIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.GENERATE_IMAGE]: <ImageIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.DEBATE]: <SpeakIcon color="var(--color-primary)" />,
@@ -378,18 +371,6 @@ export const getListNode = (): INodeGroup[] => {
             workflowType: WORKFLOW_TYPE.LAUNCH_TOKEN_PUMPFUN,
             status: NODE_STATUS.INVALID,
             timeout: DEFAULT_EXTENSION_TIMEOUT / 1000,
-          },
-          version: "v1.1",
-        },
-        {
-          type: NODE_TYPE.CUSTOM_NODE,
-          icon: mapNodeIcon[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN],
-          config: {
-            ...commonNodeConfig,
-            sleep: DEFAULT_SLEEP_TIME,
-            name: SCRIPT_NAME[WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN],
-            workflowType: WORKFLOW_TYPE.LAUNCH_TOKEN_BONKFUN,
-            status: NODE_STATUS.INVALID,
           },
           version: "v1.1",
         },

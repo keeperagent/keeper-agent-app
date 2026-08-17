@@ -28,7 +28,6 @@ export const BASE_TOOL_KEYS = {
   SWAP_ON_KYBERSWAP: "swap_on_kyberswap",
   TRANSFER_SOLANA_TOKEN: "transfer_solana_token",
   LAUNCH_PUMPFUN_TOKEN: "launch_pumpfun_token",
-  LAUNCH_BONKFUN_TOKEN: "launch_bonkfun_token",
   BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
   BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
   WRITE_JAVASCRIPT: "write_javascript",
@@ -113,13 +112,6 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     name: "Launch Pump.fun token",
     description:
       "Deploy and launch a new token on Pump.fun directly from the agent",
-    group: BaseToolGroup.TRANSACTION,
-  },
-  {
-    key: BASE_TOOL_KEYS.LAUNCH_BONKFUN_TOKEN,
-    name: "Launch Bonk.fun token",
-    description:
-      "Deploy and launch a new token on Bonk.fun directly from the agent",
     group: BaseToolGroup.TRANSACTION,
   },
   {

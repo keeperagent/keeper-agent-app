@@ -10,7 +10,6 @@ import { SwapOnCetusManager } from "@/electron/simulator/category/onchain/cetus"
 import { KyberswapManager } from "@/electron/simulator/category/onchain/kyberswap";
 import { SwapOnJupiterManager } from "@/electron/simulator/category/onchain/jupiter";
 import { Pumpfun } from "@/electron/simulator/category/onchain/pumpfun";
-import { Bonkfun } from "@/electron/simulator/category/onchain/bonkfun";
 import { TelegramSniperManager } from "@/electron/simulator/category/social/telegramSniper";
 import { IFlowProfile } from "@/electron/type";
 import { ThreadManager } from "./threadManager";
@@ -30,7 +29,6 @@ export type WorkflowRunnerArgs = {
   evmContractSnipperManager: EVMContractSnipperManager;
   telegramSniperManager: TelegramSniperManager;
   pumpfun: Pumpfun;
-  bonkfun: Bonkfun;
 };
 
 export type NodeHandler = (

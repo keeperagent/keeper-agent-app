@@ -15,7 +15,6 @@ import {
   swapOnKyberswapTool,
   transferSolanaTokenTool,
   launchPumpfunTokenTool,
-  launchBonkfunTokenTool,
   broadcastTransactionEvmTool,
   broadcastTransactionSolanaTool,
 } from "@/electron/agentCore/baseTool";
@@ -747,60 +746,6 @@ const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
       });
       return wrapText(
         (await launchPumpfunTokenTool(toolCtx).invoke(launchArgs)).toString(),
-      );
-    },
-  );
-
-  server.registerTool(
-    "launch_bonkfun_token",
-    {
-      description:
-        "Launch a new token on Bonk.fun from a campaign wallet on Solana",
-      inputSchema: {
-        ...walletContextSchema,
-        name: z.string().describe("Token name"),
-        symbol: z.string().describe("Token ticker symbol"),
-        description: z.string().optional().describe("Token description"),
-        imagePath: z
-          .string()
-          .optional()
-          .describe("Local path to the token image file"),
-        website: z.string().optional().describe("Project website URL"),
-        twitter: z.string().optional().describe("Twitter/X handle or URL"),
-        telegram: z.string().optional().describe("Telegram group URL"),
-        initialBuyAmount: z
-          .number()
-          .optional()
-          .describe("Initial SOL amount to buy after launch"),
-      },
-    },
-    async (args) => {
-      const {
-        campaignId,
-        nodeEndpointGroupId,
-        encryptKey,
-        isAllWallet,
-        listCampaignProfileId,
-        ...launchArgs
-      } = args;
-      const approval = await showApprovalDialog(
-        displayName,
-        "launch_bonkfun_token",
-        "Launch a new token on Bonk.fun",
-        formatArgs(args),
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      const toolCtx = buildToolContext({
-        campaignId,
-        nodeEndpointGroupId,
-        encryptKey,
-        isAllWallet,
-        listCampaignProfileId,
-      });
-      return wrapText(
-        (await launchBonkfunTokenTool(toolCtx).invoke(launchArgs)).toString(),
       );
     },
   );

@@ -7,7 +7,6 @@ const DANGEROUS_TOOL_NAMES = [
   "swap_on_kyberswap",
   "transfer_solana_token",
   "launch_pumpfun_token",
-  "launch_bonkfun_token",
 ];
 
 // Phrases that indicate an attempt to override the agent's instructions via memory.

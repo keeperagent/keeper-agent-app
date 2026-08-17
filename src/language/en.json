@@ -1147,7 +1147,6 @@
   "guide.checkResource.title": "Checks if a resource is saved in the database. Can search by any of the 10 columns of the resource.",
   "guide.httpRequest.title": "Calls an API using GET, POST, PUT, or DELETE methods. This processor supports custom JavaScript code to parse the API response.",
   "guide.launchTokenPumpfun.desc": "Launches a new token on the Pump.fun platform on the Solana blockchain. You only need to enter token name, symbol, image url, token will launch automatically within seconds",
-  "guide.launchTokenBonkfun.desc": "Launches a new token on the Bonk.fun platform on the Solana blockchain. You only need to enter token name, symbol, image url, token will launch automatically within seconds",
   "guide.askAgent.desc": "Asks the AI agent a question. The agent will answer the question in text format using OpenAI's model. OpenAI's API key is required to use this processor.",
   "guide.generateImage.desc": "Generates an image using OpenAI (DALL-E) or Google (Imagen / Nano Banana). Select your provider, enter the corresponding API key, and configure the size or aspect ratio. The file path of the saved image is stored in the output variable.",
   "guide.runAgent.desc": "Runs a saved agent profile as a workflow step. The agent has access to all its configured tools, memory, MCP servers, and skills. Use {{variable}} in the prompt template to pass values from previous nodes. The agent's response is stored in the output variable for use in downstream nodes.",
