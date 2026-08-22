@@ -821,6 +821,7 @@
   "workflow.variableToSaveAddressPlaceholder": "Enter variable to save address",
   "workflow.variableToSavePrivateKey": "Variable to save private key",
   "workflow.variableToSavePrivateKeyPlaceholder": "Enter variable to save private key",
+  "workflow.enableCashback": "Enable cashback",
   "workflow.tokenEndingWithPump": "Configure token with ‘pump’ suffix",
   "workflow.pumpVanityAddressHelper": "To create token address ending with 'pump', pre-generate a vanity address with that suffix and use its private key here.",
   "workflow.vanityAddressPrivateKey": "Private key of vanity address",

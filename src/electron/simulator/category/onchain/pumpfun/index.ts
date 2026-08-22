@@ -122,7 +122,7 @@ export class Pumpfun {
           amount,
           solAmount,
           mayhemMode: false,
-          cashback: false,
+          cashback: Boolean(config?.enableCashback),
         });
         instructions.forEach((instruction) => tx.add(instruction));
       } else {
@@ -134,7 +134,7 @@ export class Pumpfun {
           creator: sender.publicKey,
           user: sender.publicKey,
           mayhemMode: false,
-          cashback: false,
+          cashback: Boolean(config?.enableCashback),
         });
         tx.add(instruction);
       }

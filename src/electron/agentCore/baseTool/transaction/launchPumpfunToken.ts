@@ -17,7 +17,7 @@ export const launchPumpfunTokenTool = (toolContext?: ToolContext) =>
     description: `Launch a new token on Pump.fun (Solana only).
 ONLY use when chainKey from context is "solana". Uses the first wallet from selected campaign profiles.
 Required: tokenName, symbol. If imageUrl omitted, the first image in the user's attached files is used.
-Optional: imageUrl (URL or local file path), description, twitter, telegram, website, buyAmountSol, slippagePercentage, unitLimit, unitPrice.`,
+Optional: imageUrl (URL or local file path), description, twitter, telegram, website, buyAmountSol, slippagePercentage, unitLimit, unitPrice, enableCashback.`,
     schema: z.object({
       tokenName: z
         .string()
@@ -56,6 +56,12 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
       unitPrice: z
         .string()
         .describe("Gas price in microLamports (default: '100')."),
+      enableCashback: z
+        .boolean()
+        .optional()
+        .describe(
+          "Lets traders of this token earn volume-based cashback rewards from Pump.fun. Does not change the creator fee. Default false.",
+        ),
     }),
     func: async ({
       tokenName,
@@ -69,6 +75,7 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
       slippagePercentage,
       unitLimit,
       unitPrice,
+      enableCashback,
     }) => {
       console.log(
         `[launch_pumpfun_token] planState="${toolContext?.planState}" expected="${PlanState.APPROVED}"`,
@@ -225,6 +232,7 @@ Optional: imageUrl (URL or local file path), description, twitter, telegram, web
           slippagePercentage,
           unitLimit,
           unitPrice,
+          enableCashback,
         },
       );
 
