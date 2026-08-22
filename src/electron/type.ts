@@ -2333,6 +2333,7 @@ export type ILaunchTokenPumpfunNodeConfig = {
   variableTxHash?: string; // variable name to store the transaction hash
   variableTokenAddress?: string; // variable name to store the token address
   vanityAddressPrivateKey?: string; // private key of vanity address
+  enableCashback?: boolean; // enable Pump.fun trader cashback for this token
 };
 
 export enum RUN_AGENT_OUTPUT_FORMAT {

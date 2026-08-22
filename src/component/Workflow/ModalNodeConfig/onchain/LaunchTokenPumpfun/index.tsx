@@ -11,6 +11,7 @@ import {
   Collapse,
   Col,
   Alert,
+  Checkbox,
 } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -97,6 +98,7 @@ const LaunchTokenPumpfun = (props: Props) => {
       website: config?.website,
       buyAmountSol: config?.buyAmountSol || "0",
       slippagePercentage: config?.slippagePercentage || 5,
+      enableCashback: config?.enableCashback || false,
       unitLimit: config?.unitLimit || "300000",
       unitPrice: config?.unitPrice || "100",
       nodeEndpointGroupId: config?.nodeEndpointGroupId,
@@ -149,6 +151,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         unitLimit,
         unitPrice,
         vanityAddressPrivateKey,
+        enableCashback,
         retry,
         maxConcurrency,
       } = await form?.validateFields([
@@ -177,6 +180,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         "unitLimit",
         "unitPrice",
         "vanityAddressPrivateKey",
+        "enableCashback",
         "retry",
         "maxConcurrency",
       ]);
@@ -211,6 +215,7 @@ const LaunchTokenPumpfun = (props: Props) => {
         unitLimit,
         unitPrice,
         vanityAddressPrivateKey,
+        enableCashback,
         retry,
         maxConcurrency,
       });
@@ -573,6 +578,10 @@ const LaunchTokenPumpfun = (props: Props) => {
                 </Form.Item>
               </Col>
             </Row>
+
+            <Form.Item name="enableCashback" valuePropName="checked">
+              <Checkbox>{translate("workflow.enableCashback")}</Checkbox>
+            </Form.Item>
 
             <Collapse
               bordered={false}

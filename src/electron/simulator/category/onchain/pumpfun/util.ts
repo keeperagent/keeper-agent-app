@@ -15,13 +15,6 @@ import { logEveryWhere } from "@/electron/service/util";
 
 export const DEFAULT_COMMITMENT: Commitment = "finalized";
 
-export const calculateWithSlippageBuy = (
-  amount: bigint,
-  basisPoints: bigint,
-) => {
-  return amount + (amount * basisPoints) / 10000n;
-};
-
 export const sendTx = async (
   connection: Connection,
   tx: Transaction,
