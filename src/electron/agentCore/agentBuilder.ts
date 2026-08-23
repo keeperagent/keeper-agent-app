@@ -62,11 +62,6 @@ import {
   updateAgentTaskTool,
   deleteAgentTaskTool,
 } from "./baseTool/agentTask";
-import {
-  sendMessageTool,
-  readMessagesTool,
-  acknowledgeMessageTool,
-} from "./baseTool/agentMailbox";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import { ToolContext } from "./toolContext";
 
@@ -241,7 +236,7 @@ Each todo item MUST include a \`type\` field. The system enforces correct tool a
 | \`"code"\` | Writing and executing JavaScript | \`write_javascript\`, \`task(code_execution_agent)\` |
 | \`"transaction"\` | On-chain operations | \`task(query_agent)\`, \`task(trade_agent)\`, \`task(transfer_agent)\`, \`task(launch_agent)\` |
 | \`"workflow"\` | Running campaign workflows | \`task(workflow_agent)\` |
-| \`"manage"\` | Scheduling, data, tasks, mailbox | \`task(scheduler/data/task_management/team_mailbox_agent)\` |
+| \`"manage"\` | Scheduling, data, tasks | \`task(scheduler/data/task_management_agent)\` |
 | \`"communicate"\` | Reporting results to user | No tools — call \`write_todos\` to mark it in_progress, then respond. Framework auto-marks it completed. |
 
 ## Post-transaction communicate format
@@ -965,42 +960,6 @@ export const buildBaseSubAgents = (
       tools: agentTaskTools as any,
     });
   }
-
-  const mailboxTools = [
-    sendMessageTool(toolContext),
-    readMessagesTool(toolContext),
-    acknowledgeMessageTool(),
-  ];
-
-  agents.push({
-    name: "team_mailbox_agent",
-    description:
-      "Agent-to-agent messaging — send, read, and acknowledge messages.",
-    systemPrompt:
-      "You are a mailbox subagent for agent-to-agent communication.\n\n" +
-      "## Rules\n" +
-      "- To broadcast to all agents, set to='*' in send_message.\n" +
-      "- To read all messages (including processed), pass includeAcknowledged=true to read_messages.\n" +
-      "- Always acknowledge messages after processing them so they are excluded from future reads.\n" +
-      "- Keep message subjects short and descriptive.\n" +
-      "- Return results concisely.\n\n" +
-      "## Structured response — `result` field\n" +
-      "Put your complete output in the `result` field. No preamble.",
-    responseFormat: z.object({
-      result: z
-        .string()
-        .describe(
-          "Mailbox result: sent confirmation, message list, or acknowledgement. Concise.",
-        ),
-    }),
-    ...bgModel("team_mailbox_agent"),
-    middleware: [
-      createAllowlistToolsMiddleware(
-        new Set(mailboxTools.map((tool: any) => tool.name)),
-      ),
-    ],
-    tools: mailboxTools as any,
-  });
 
   if (isEnabled(BASE_TOOL_KEYS.RENDER_CHART)) {
     const visualizationTools = [renderChartTool()];

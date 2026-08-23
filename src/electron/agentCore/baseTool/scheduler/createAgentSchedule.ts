@@ -2,7 +2,7 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { scheduleDB } from "@/electron/database/schedule";
 import { campaignDB } from "@/electron/database/campaign";
-import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
+import { agentJobScheduler } from "@/electron/service/agentJobScheduler";
 import { safeStringify } from "@/electron/agentCore/utils";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 import {
@@ -247,7 +247,7 @@ export const createAgentScheduleTool = (toolContext: ToolContext) =>
         });
       }
 
-      agentTaskScheduler.register(schedule);
+      agentJobScheduler.register(schedule);
 
       return safeStringify({
         message: `Agent schedule "${name}" created successfully.`,

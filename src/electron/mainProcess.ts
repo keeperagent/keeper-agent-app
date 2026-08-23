@@ -31,7 +31,7 @@ import { runEncryptKeyController } from "./controller/encryptKeyCache";
 import { telegramBotService } from "./chatGateway/adapters/telegram";
 import { whatsappService } from "./chatGateway/adapters/whatsapp";
 import { scheduleManager } from "./schedule";
-import { agentTaskScheduler } from "./service/agentJobScheduler";
+import { agentJobScheduler } from "./service/agentJobScheduler";
 import { searchController } from "./controller/search";
 import { agentController } from "./controller/appAgent";
 import { mcpServerController } from "./controller/mcpServer";
@@ -99,7 +99,7 @@ const runMainProcess = () => {
   whatsappService.start();
   telegramBotService.start();
 
-  agentTaskScheduler.init();
+  agentJobScheduler.init();
   agentTaskDispatcher.startStaleWorker();
   agentTaskDispatcher.recoverOnStartup();
   agentTaskDispatcher.dispatch();

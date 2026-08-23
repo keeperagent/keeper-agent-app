@@ -13,11 +13,6 @@ import { createLLM, createBackgroundLLM } from "./llm";
 import { getLlmSetting } from "./utils";
 import { requestApprovalTool, confirmApprovalTool } from "./baseTool";
 import { writeJavaScriptTool } from "./baseTool/codeExecution";
-import {
-  createAgentTeamTool,
-  getTeamProgressTool,
-  delegateTaskTool,
-} from "./baseTool/agentTeam";
 import { BASE_TOOL_KEYS } from "./baseTool/registry";
 import {
   DEFAULT_MEMORY_FILE,
@@ -163,13 +158,6 @@ export const createMainAgent = async (
   const subagentNames = subagents.map((s) => s.name);
   const allowedTaskTypes = ["general-purpose", ...subagentNames];
 
-  const teamCoordinationTools = [
-    isToolEnabled(BASE_TOOL_KEYS.CREATE_AGENT_TEAM) && createAgentTeamTool(),
-    isToolEnabled(BASE_TOOL_KEYS.GET_TEAM_PROGRESS) && getTeamProgressTool(),
-    isToolEnabled(BASE_TOOL_KEYS.DELEGATE_TASK) &&
-      delegateTaskTool(toolContext),
-  ].filter((tool): any => Boolean(tool));
-
   const planningTools = toolContext.autoApprove
     ? []
     : [requestApprovalTool(toolContext), confirmApprovalTool(toolContext)];
@@ -186,11 +174,7 @@ export const createMainAgent = async (
     model: llm,
     systemPrompt,
     backend,
-    tools: [
-      ...planningTools,
-      ...codeWriteTools,
-      ...teamCoordinationTools,
-    ] as any,
+    tools: [...planningTools, ...codeWriteTools] as any,
     skills: ["/skills/"],
     memory: [MEMORY_VIRTUAL_PATH],
     subagents,

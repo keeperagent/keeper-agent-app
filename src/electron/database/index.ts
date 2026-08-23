@@ -29,7 +29,6 @@ import chatHistoryFactory from "./model/chatHistory";
 import nodeSecretFactory from "./model/nodeSecret";
 import agentProfileFactory from "./model/agentProfile";
 import agentTaskFactory from "./model/agentTask";
-import agentMailboxFactory from "./model/agentMailbox";
 import appLogFactory from "./model/appLog";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
@@ -66,7 +65,6 @@ export const ChatHistoryModel = chatHistoryFactory(db);
 export const NodeSecretModel = nodeSecretFactory(db);
 export const AgentProfileModel = agentProfileFactory(db);
 export const AgentTaskModel = agentTaskFactory(db);
-export const AgentMailboxModel = agentMailboxFactory(db);
 export const AppLogModel = appLogFactory(db);
 
 // @CampaignModel -> @ProfileGroupModel
@@ -326,20 +324,6 @@ JobModel.belongsTo(AgentProfileModel, {
 AgentProfileModel.belongsTo(CampaignModel, {
   foreignKey: { name: "campaignId", allowNull: true },
   as: "campaign",
-  constraints: false,
-});
-
-// @AgentMailboxModel -> @AgentProfileModel (fromAgent)
-AgentMailboxModel.belongsTo(AgentProfileModel, {
-  foreignKey: { name: "fromAgentId", allowNull: true },
-  as: "fromAgent",
-  constraints: false,
-});
-
-// @AgentMailboxModel -> @AgentProfileModel (toAgent)
-AgentMailboxModel.belongsTo(AgentProfileModel, {
-  foreignKey: { name: "toAgentId", allowNull: true },
-  as: "toAgent",
   constraints: false,
 });
 

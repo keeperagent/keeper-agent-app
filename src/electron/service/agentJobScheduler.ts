@@ -38,7 +38,7 @@ import {
 const MAX_CONCURRENT_RUNS = 2;
 const RETRY_POLL_INTERVAL_MS = 30_000;
 
-class AgentTaskScheduler {
+class AgentJobScheduler {
   private tasks = new Map<number, cron.ScheduledTask>();
   private runningScheduleIds = new Set<number>();
   private retryPollTimer: NodeJS.Timeout | null = null;
@@ -55,17 +55,17 @@ class AgentTaskScheduler {
           this.register(schedule);
         } catch (err: any) {
           logEveryWhere({
-            message: `AgentTaskScheduler.init(): failed to register schedule ${schedule.id}: ${err?.message}`,
+            message: `AgentJobScheduler.init(): failed to register schedule ${schedule.id}: ${err?.message}`,
           });
         }
       }
       this.startRetryPoller();
       logEveryWhere({
-        message: `AgentTaskScheduler: initialized ${schedules.length} schedule(s)`,
+        message: `AgentJobScheduler: initialized ${schedules.length} schedule(s)`,
       });
     } catch (err: any) {
       logEveryWhere({
-        message: `AgentTaskScheduler.init() error: ${err?.message}`,
+        message: `AgentJobScheduler.init() error: ${err?.message}`,
       });
     }
   };
@@ -79,7 +79,7 @@ class AgentTaskScheduler {
     }
     if (!cron.validate(schedule.cronExpr)) {
       logEveryWhere({
-        message: `AgentTaskScheduler: invalid cronExpr "${schedule.cronExpr}" for schedule ${schedule.id}`,
+        message: `AgentJobScheduler: invalid cronExpr "${schedule.cronExpr}" for schedule ${schedule.id}`,
       });
       return;
     }
@@ -87,7 +87,7 @@ class AgentTaskScheduler {
     const task = cron.schedule(schedule.cronExpr, () => {
       this.executeSchedule(schedule.id!).catch((err) => {
         logEveryWhere({
-          message: `AgentTaskScheduler: cron fire error for schedule ${schedule.id}: ${err?.message}`,
+          message: `AgentJobScheduler: cron fire error for schedule ${schedule.id}: ${err?.message}`,
         });
       });
     });
@@ -124,31 +124,31 @@ class AgentTaskScheduler {
   ): Promise<void> => {
     if (!masterPasswordManager.isMasterPasswordSet()) {
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — app is locked`,
+        message: `AgentJobScheduler: schedule ${scheduleId} skipped — app is locked`,
       });
       return;
     }
 
     logEveryWhere({
-      message: `AgentTaskScheduler: executeSchedule(${scheduleId}) started`,
+      message: `AgentJobScheduler: executeSchedule(${scheduleId}) started`,
     });
 
     const [schedule] = await scheduleDB.getOneSchedule(scheduleId);
     if (!schedule) {
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} not found`,
+        message: `AgentJobScheduler: schedule ${scheduleId} not found`,
       });
       return;
     }
     if (!schedule.isActive) {
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — isActive=${schedule.isActive}`,
+        message: `AgentJobScheduler: schedule ${scheduleId} skipped — isActive=${schedule.isActive}`,
       });
       return;
     }
     if (!bypassPause && schedule.isPaused) {
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — isPaused=${schedule.isPaused}`,
+        message: `AgentJobScheduler: schedule ${scheduleId} skipped — isPaused=${schedule.isPaused}`,
       });
       return;
     }
@@ -164,7 +164,7 @@ class AgentTaskScheduler {
         finishedAt: Date.now(),
       });
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} skipped — concurrency limit reached`,
+        message: `AgentJobScheduler: schedule ${scheduleId} skipped — concurrency limit reached`,
       });
       return;
     }
@@ -173,13 +173,13 @@ class AgentTaskScheduler {
 
     if (jobs.length === 0) {
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} has no jobs — nothing to execute`,
+        message: `AgentJobScheduler: schedule ${scheduleId} has no jobs — nothing to execute`,
       });
       return;
     }
 
     logEveryWhere({
-      message: `AgentTaskScheduler: schedule ${scheduleId} executing ${jobs.length} job(s)`,
+      message: `AgentJobScheduler: schedule ${scheduleId} executing ${jobs.length} job(s)`,
     });
 
     this.runningScheduleIds.add(scheduleId);
@@ -199,7 +199,7 @@ class AgentTaskScheduler {
         const sessionForThisJob = prevHandoffToNext ? session : undefined;
 
         logEveryWhere({
-          message: `AgentTaskScheduler: running job ${job.id} (type=${job.type}) for schedule ${scheduleId}`,
+          message: `AgentJobScheduler: running job ${job.id} (type=${job.type}) for schedule ${scheduleId}`,
         });
 
         if (job.type === JobType.WORKFLOW) {
@@ -232,7 +232,7 @@ class AgentTaskScheduler {
       await session.destroy();
       this.runningScheduleIds.delete(scheduleId);
       logEveryWhere({
-        message: `AgentTaskScheduler: schedule ${scheduleId} finished`,
+        message: `AgentJobScheduler: schedule ${scheduleId} finished`,
       });
     }
   };
@@ -276,7 +276,7 @@ class AgentTaskScheduler {
           }
         } catch {
           logEveryWhere({
-            message: `AgentTaskScheduler: failed to parse toolContextJson for workflow job ${job.id}`,
+            message: `AgentJobScheduler: failed to parse toolContextJson for workflow job ${job.id}`,
           });
         }
       }
@@ -408,14 +408,14 @@ class AgentTaskScheduler {
         );
         if (agentEncryptKeyErr) {
           logEveryWhere({
-            message: `AgentTaskScheduler failed to get encryptKey for job ${job.id}: ${agentEncryptKeyErr?.message}`,
+            message: `AgentJobScheduler failed to get encryptKey for job ${job.id}: ${agentEncryptKeyErr?.message}`,
           });
         } else if (agentEncryptKey) {
           toolContext.update({ encryptKey: agentEncryptKey });
         }
       } catch (err: any) {
         logEveryWhere({
-          message: `AgentTaskScheduler: failed to get encryptKey for job ${job.id}: ${err?.message}`,
+          message: `AgentJobScheduler: failed to get encryptKey for job ${job.id}: ${err?.message}`,
         });
       }
     }
@@ -428,7 +428,7 @@ class AgentTaskScheduler {
         }
       } catch {
         logEveryWhere({
-          message: `AgentTaskScheduler: failed to parse toolContextJson for job ${job.id}`,
+          message: `AgentJobScheduler: failed to parse toolContextJson for job ${job.id}`,
         });
       }
     }
@@ -548,7 +548,7 @@ class AgentTaskScheduler {
         await telegramBotService.sendMessage(botToken, cleanedResult, chatId);
       } catch (err: any) {
         logEveryWhere({
-          message: `AgentTaskScheduler.sendNotificationIfNeeded() error: ${err?.message}`,
+          message: `AgentJobScheduler.sendNotificationIfNeeded() error: ${err?.message}`,
         });
       }
     }
@@ -606,7 +606,7 @@ class AgentTaskScheduler {
       return !answer.startsWith("YES");
     } catch (err: any) {
       logEveryWhere({
-        message: `AgentTaskScheduler: LLM condition eval error: ${err?.message}`,
+        message: `AgentJobScheduler: LLM condition eval error: ${err?.message}`,
       });
       return false;
     }
@@ -634,7 +634,7 @@ class AgentTaskScheduler {
       await telegramBotService.sendMessage(botToken, msg, chatId);
     } catch (err: any) {
       logEveryWhere({
-        message: `AgentTaskScheduler.notifyFailure() error: ${err?.message}`,
+        message: `AgentJobScheduler.notifyFailure() error: ${err?.message}`,
       });
     }
   };
@@ -648,7 +648,7 @@ class AgentTaskScheduler {
         await this.processRetries();
       } catch (err: any) {
         logEveryWhere({
-          message: `AgentTaskScheduler retry poller error: ${err?.message}`,
+          message: `AgentJobScheduler retry poller error: ${err?.message}`,
         });
       }
     }, RETRY_POLL_INTERVAL_MS);
@@ -712,11 +712,11 @@ class AgentTaskScheduler {
       }
       this.startRetryPoller();
       logEveryWhere({
-        message: `AgentTaskScheduler.onUnlock(): re-registered ${schedules.length} schedule(s)`,
+        message: `AgentJobScheduler.onUnlock(): re-registered ${schedules.length} schedule(s)`,
       });
     } catch (err: any) {
       logEveryWhere({
-        message: `AgentTaskScheduler.onUnlock() error: ${err?.message}`,
+        message: `AgentJobScheduler.onUnlock() error: ${err?.message}`,
       });
     }
   };
@@ -745,5 +745,5 @@ class AgentTaskScheduler {
   };
 }
 
-const agentTaskScheduler = new AgentTaskScheduler();
-export { agentTaskScheduler };
+const agentJobScheduler = new AgentJobScheduler();
+export { agentJobScheduler };

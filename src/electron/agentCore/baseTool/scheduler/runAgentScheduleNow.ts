@@ -1,6 +1,6 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
+import { agentJobScheduler } from "@/electron/service/agentJobScheduler";
 import { safeStringify } from "@/electron/agentCore/utils";
 import {
   lookupSchedule,
@@ -23,7 +23,7 @@ export const runAgentScheduleNowTool = () =>
         return scheduleNotFoundResponse(err!);
       }
 
-      agentTaskScheduler.runNow(schedule.id!);
+      agentJobScheduler.runNow(schedule.id!);
       return safeStringify({
         message: `Schedule "${schedule.name}" triggered. It is now running in the background.`,
       });

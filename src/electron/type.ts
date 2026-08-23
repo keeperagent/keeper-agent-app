@@ -2868,23 +2868,6 @@ export enum SETTING_TYPE {
   MCP_TOKEN = "MCP_TOKEN",
 }
 
-export enum AgentMailboxStatus {
-  UNREAD = "UNREAD",
-  ACKNOWLEDGED = "ACKNOWLEDGED",
-}
-
-export type IAgentMailbox = {
-  id?: number;
-  fromAgentId?: number;
-  toAgentId?: number;
-  subject: string;
-  body: string;
-  status?: AgentMailboxStatus;
-  isBroadcast?: boolean;
-  createAt?: number;
-  fromAgent?: { id: number; name: string };
-};
-
 export enum AgentTaskStatus {
   INIT = "INIT",
   IN_PROGRESS = "IN_PROGRESS",

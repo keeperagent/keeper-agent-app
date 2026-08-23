@@ -553,7 +553,6 @@ export const MESSAGE = {
   RERUN_AGENT_TASK: "RERUN_AGENT_TASK",
   RERUN_AGENT_TASK_RES: "RERUN_AGENT_TASK_RES",
   AGENT_TASK_CHANGED: "AGENT_TASK_CHANGED",
-  AGENT_MAILBOX_CHANGED: "AGENT_MAILBOX_CHANGED",
   GET_LIVE_TOOL_CALLS: "GET_LIVE_TOOL_CALLS",
   GET_LIVE_TOOL_CALLS_RES: "GET_LIVE_TOOL_CALLS_RES",
   GET_AGENT_TASK_LOG: "GET_AGENT_TASK_LOG",
@@ -1272,7 +1271,6 @@ export const TOOL_KEYS = {
   RESEARCH_AGENT: "research_agent",
   SCHEDULER_AGENT: "scheduler_agent",
   TASK_MANAGEMENT_AGENT: "task_management_agent",
-  TEAM_MAILBOX_AGENT: "team_mailbox_agent",
   DATA_MANAGEMENT_AGENT: "data_management_agent",
   VISUALIZATION_AGENT: "visualization_agent",
   // Built-in tools
@@ -1330,17 +1328,9 @@ export const TOOL_KEYS = {
   CREATE_AGENT_TASK: "create_agent_task",
   UPDATE_AGENT_TASK: "update_agent_task",
   DELETE_AGENT_TASK: "delete_agent_task",
-  // Mailbox tools
-  SEND_MESSAGE: "send_message",
-  READ_MESSAGES: "read_messages",
-  ACKNOWLEDGE_MESSAGE: "acknowledge_message",
   // Planning tools
   REQUEST_APPROVAL: "request_approval",
   CONFIRM_APPROVAL: "confirm_approval",
-  // Team tools
-  CREATE_AGENT_TEAM: "create_agent_team",
-  GET_TEAM_PROGRESS: "get_team_progress",
-  DELEGATE_TASK: "delegate_task",
   // Visualization tools
   RENDER_CHART: "render_chart",
   // Calculator
@@ -1355,7 +1345,6 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.RESEARCH_AGENT]: "Research subagent",
   [TOOL_KEYS.SCHEDULER_AGENT]: "Scheduler subagent",
   [TOOL_KEYS.TASK_MANAGEMENT_AGENT]: "Task management subagent",
-  [TOOL_KEYS.TEAM_MAILBOX_AGENT]: "Mailbox subagent",
   [TOOL_KEYS.DATA_MANAGEMENT_AGENT]: "Data management subagent",
 
   // Deepagents built-in tools
@@ -1424,19 +1413,9 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.UPDATE_AGENT_TASK]: "Update task",
   [TOOL_KEYS.DELETE_AGENT_TASK]: "Delete task",
 
-  // Mailbox tools
-  [TOOL_KEYS.SEND_MESSAGE]: "Send message",
-  [TOOL_KEYS.READ_MESSAGES]: "Read messages",
-  [TOOL_KEYS.ACKNOWLEDGE_MESSAGE]: "Acknowledge message",
-
   // Planning tools
   [TOOL_KEYS.REQUEST_APPROVAL]: "Request approval",
   [TOOL_KEYS.CONFIRM_APPROVAL]: "Confirm approval",
-
-  // Team tools
-  [TOOL_KEYS.CREATE_AGENT_TEAM]: "Create agent team",
-  [TOOL_KEYS.GET_TEAM_PROGRESS]: "Get team progress",
-  [TOOL_KEYS.DELEGATE_TASK]: "Delegate task",
 
   // Visualization
   [TOOL_KEYS.VISUALIZATION_AGENT]: "Visualization subagent",
