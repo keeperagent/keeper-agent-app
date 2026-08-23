@@ -24,7 +24,6 @@ const STEP_ALLOWED_SUBAGENTS: Record<string, string[]> = {
     "scheduler_agent",
     "data_management_agent",
     "task_management_agent",
-    "team_mailbox_agent",
   ],
 };
 
@@ -279,7 +278,7 @@ const buildStallNudge = (
     research: "research_agent",
     visualize: "visualization_agent",
     manage:
-      "the appropriate management subagent (scheduler_agent, data_management_agent, task_management_agent, or team_mailbox_agent)",
+      "the appropriate management subagent (scheduler_agent, data_management_agent, or task_management_agent)",
   };
 
   const subagent = stepTypeToSubagent[stepType] || "the appropriate subagent";

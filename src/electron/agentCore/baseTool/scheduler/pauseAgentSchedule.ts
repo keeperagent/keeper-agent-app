@@ -1,6 +1,6 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
+import { agentJobScheduler } from "@/electron/service/agentJobScheduler";
 import { safeStringify } from "@/electron/agentCore/utils";
 import {
   lookupSchedule,
@@ -23,7 +23,7 @@ export const pauseAgentScheduleTool = () =>
         return scheduleNotFoundResponse(err!);
       }
 
-      await agentTaskScheduler.pause(schedule.id!);
+      await agentJobScheduler.pause(schedule.id!);
       return safeStringify({ message: `Schedule "${schedule.name}" paused.` });
     },
   });

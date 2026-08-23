@@ -5,7 +5,6 @@ import {
   ICampaignProfile,
   IMcpServer,
   IAgentProfile,
-  IAgentMailbox,
   IProfile,
   IProfileGroup,
   IResource,
@@ -327,16 +326,6 @@ const formatAgentTask = (raw: any): IAgentTask => {
   };
 };
 
-const formatAgentMailbox = (raw: any): IAgentMailbox => {
-  const formatedData = formatDBResponse(raw);
-  return {
-    ...formatedData,
-    fromAgent: formatedData?.fromAgent
-      ? formatAgentProfile(formatedData?.fromAgent)
-      : undefined,
-  };
-};
-
 const formatSetting = (raw: any): ISetting => {
   const formatedData = formatDBResponse(raw) as ISetting;
 
@@ -466,7 +455,6 @@ export {
   formatWorkflow,
   formatSchedule,
   formatJob,
-  formatAgentMailbox,
   formatAgentTask,
   formatSetting,
 };

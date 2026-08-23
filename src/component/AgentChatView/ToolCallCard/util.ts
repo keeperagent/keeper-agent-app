@@ -19,7 +19,6 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
   [TOOL_KEYS.DATA_MANAGEMENT_AGENT]: { icon: "🗄️", summaryFields: [] },
   [TOOL_KEYS.SCHEDULER_AGENT]: { icon: "⏱️", summaryFields: [] },
   [TOOL_KEYS.TASK_MANAGEMENT_AGENT]: { icon: "📌", summaryFields: [] },
-  [TOOL_KEYS.TEAM_MAILBOX_AGENT]: { icon: "💬", summaryFields: [] },
   [TOOL_KEYS.VISUALIZATION_AGENT]: { icon: "📊", summaryFields: [] },
 
   [TOOL_KEYS.WRITE_TODOS]: {
@@ -157,20 +156,9 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
   },
   [TOOL_KEYS.DELETE_AGENT_TASK]: { icon: "🗑️", summaryFields: ["taskId"] },
 
-  [TOOL_KEYS.SEND_MESSAGE]: { icon: "📤", summaryFields: ["to", "subject"] },
-  [TOOL_KEYS.READ_MESSAGES]: { icon: "📥", summaryFields: [] },
-  [TOOL_KEYS.ACKNOWLEDGE_MESSAGE]: { icon: "✅", summaryFields: ["messageId"] },
-
   [TOOL_KEYS.CALCULATE]: { icon: "🔢", summaryFields: ["expression"] },
   [TOOL_KEYS.REQUEST_APPROVAL]: { icon: "🔐", summaryFields: [] },
   [TOOL_KEYS.CONFIRM_APPROVAL]: { icon: "✅", summaryFields: ["plan"] },
-
-  [TOOL_KEYS.CREATE_AGENT_TEAM]: { icon: "👥", summaryFields: ["name"] },
-  [TOOL_KEYS.GET_TEAM_PROGRESS]: { icon: "📊", summaryFields: ["teamId"] },
-  [TOOL_KEYS.DELEGATE_TASK]: {
-    icon: "➡️",
-    summaryFields: ["taskId", "agentId"],
-  },
 
   [TOOL_KEYS.RENDER_CHART]: {
     icon: "📈",

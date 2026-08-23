@@ -3,7 +3,7 @@ import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import { preferenceService } from "@/electron/service/preference";
 import { masterPasswordManager } from "@/electron/service/masterPassword";
 import { telegramBotService } from "@/electron/chatGateway/adapters/telegram";
-import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
+import { agentJobScheduler } from "@/electron/service/agentJobScheduler";
 import {
   IpcSetupMasterPasswordPayload,
   IpcVerifyMasterPasswordPayload,
@@ -13,7 +13,7 @@ import { onIpc } from "./helpers";
 
 const onMasterPasswordUnlock = () => {
   telegramBotService.start();
-  agentTaskScheduler.onUnlock();
+  agentJobScheduler.onUnlock();
 };
 
 export const masterPasswordController = () => {

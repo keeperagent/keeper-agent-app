@@ -28,7 +28,7 @@ interface IToolContextData {
   planState?: PlanState;
   approvedPlan?: string;
   requestPlanApproval?: (plan: string) => Promise<boolean>;
-  // Set for registry agents so mailbox tools know the sender ID. Undefined for the main agent
+  // Set for registry/profile-driven agents (task pool, scheduled jobs). Undefined for the main agent
   agentProfileId?: number;
   // Code written by write_javascript, consumed by execute_javascript
   pendingCode?: IPendingCode;

@@ -3,7 +3,7 @@ import { MESSAGE } from "@/electron/constant";
 import { scheduleDB } from "@/electron/database/schedule";
 import { AppLogModel } from "@/electron/database";
 import { workflowManager } from "@/electron/simulator/workflow";
-import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
+import { agentJobScheduler } from "@/electron/service/agentJobScheduler";
 import { logEveryWhere } from "@/electron/service/util";
 import { ScheduleType } from "@/electron/type";
 import type {
@@ -58,7 +58,7 @@ export const runScheduleController = () => {
 
       const [res, err] = await scheduleDB.createSchedule(data);
       if (res?.type === ScheduleType.AGENT) {
-        agentTaskScheduler.register(res);
+        agentJobScheduler.register(res);
       }
 
       event.reply(MESSAGE.CREATE_SCHEDULE_RES, {
@@ -77,7 +77,7 @@ export const runScheduleController = () => {
       const [res, err] = await scheduleDB.updateSchedule(data);
 
       if (res?.type === "agent") {
-        agentTaskScheduler.reschedule(res);
+        agentJobScheduler.reschedule(res);
       }
 
       event.reply(MESSAGE.UPDATE_SCHEDULE_RES, {
@@ -100,7 +100,7 @@ export const runScheduleController = () => {
         }
 
         if (schedule.type === ScheduleType.AGENT) {
-          agentTaskScheduler.unregister(scheduleId);
+          agentJobScheduler.unregister(scheduleId);
         }
 
         const { listJob = [] } = schedule;
@@ -147,9 +147,9 @@ export const runScheduleController = () => {
         return;
       }
       event.reply(MESSAGE.RUN_SCHEDULE_NOW_RES, { error: null });
-      agentTaskScheduler.runNow(payload.scheduleId).catch((err) => {
+      agentJobScheduler.runNow(payload.scheduleId).catch((err) => {
         logEveryWhere({
-          message: `agentTaskScheduler.runNow(${payload.scheduleId}) error: ${err?.message}`,
+          message: `agentJobScheduler.runNow(${payload.scheduleId}) error: ${err?.message}`,
         });
       });
     },
@@ -160,7 +160,7 @@ export const runScheduleController = () => {
     MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES,
     async (event) => {
       event.reply(MESSAGE.GET_RUNNING_AGENT_SCHEDULE_RES, {
-        data: agentTaskScheduler.getRunningScheduleIds(),
+        data: agentJobScheduler.getRunningScheduleIds(),
       });
     },
   );

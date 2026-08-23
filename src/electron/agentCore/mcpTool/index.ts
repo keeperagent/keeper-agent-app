@@ -14,6 +14,7 @@ import { sendToRenderer } from "@/electron/main";
 
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
 const ONE_MINUTE_MS = 60 * 1000;
+const MCP_CONNECT_TIMEOUT_MS = 15 * 1000;
 
 type McpServerStatusInfo = {
   status: MCPServerStatus;
@@ -191,7 +192,7 @@ export class McpToolLoader {
           : `https://${config?.url}`;
         const urlObj = new URL(url);
         const transport = new StreamableHTTPClientTransport(urlObj);
-        await client.connect(transport);
+        await client.connect(transport, { timeout: MCP_CONNECT_TIMEOUT_MS });
       } else {
         if (!config?.command) {
           return { client: null, error: "Missing or invalid command" };
@@ -218,7 +219,7 @@ export class McpToolLoader {
           args: config?.args,
           env: mergedEnv,
         });
-        await client.connect(transport);
+        await client.connect(transport, { timeout: MCP_CONNECT_TIMEOUT_MS });
       }
 
       logEveryWhere({
@@ -400,41 +401,50 @@ export class McpToolLoader {
     }
 
     const validServers = res.data.filter((item) => item?.isEnabled);
-    const clients: Client[] = [];
-    const subAgents: McpSubAgentInfo[] = [];
 
-    for (const server of validServers) {
-      const serverId = server?.id!;
-      const { client } = await this.connectServerOrFail(server, serverId);
-      if (!client) {
-        continue;
-      }
+    const results = await Promise.all(
+      validServers.map(async (server) => {
+        const serverId = server?.id!;
+        const { client } = await this.connectServerOrFail(server, serverId);
+        if (!client) {
+          return { client: null, subAgent: null };
+        }
 
-      clients.push(client);
-      const tools = await this.getMcpToolsFromClient(
-        server.name,
-        client,
-        server.disabledTools || [],
-      );
+        const tools = await this.getMcpToolsFromClient(
+          server.name,
+          client,
+          server.disabledTools || [],
+        );
 
-      await this.updateServerStatus(
-        server,
-        serverId,
-        MCPServerStatus.CONNECTED,
-        "",
-        tools.length,
-      );
+        await this.updateServerStatus(
+          server,
+          serverId,
+          MCPServerStatus.CONNECTED,
+          "",
+          tools.length,
+        );
 
-      if (tools.length > 0) {
-        subAgents.push({
-          id: serverId,
-          name: server.name,
-          description:
-            server.description || `Tools from MCP server: ${server.name}`,
-          tools,
-        });
-      }
-    }
+        const subAgent: McpSubAgentInfo | null =
+          tools.length > 0
+            ? {
+                id: serverId,
+                name: server.name,
+                description:
+                  server.description || `Tools from MCP server: ${server.name}`,
+                tools,
+              }
+            : null;
+
+        return { client, subAgent };
+      }),
+    );
+
+    const clients = results
+      .map((result) => result.client)
+      .filter((client): client is Client => Boolean(client));
+    const subAgents = results
+      .map((result) => result.subAgent)
+      .filter((subAgent): subAgent is McpSubAgentInfo => Boolean(subAgent));
 
     const closeClients = async () => {
       for (const client of clients) {

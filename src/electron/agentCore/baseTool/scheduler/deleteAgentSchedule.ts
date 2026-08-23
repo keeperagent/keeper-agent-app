@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { scheduleDB } from "@/electron/database/schedule";
-import { agentTaskScheduler } from "@/electron/service/agentJobScheduler";
+import { agentJobScheduler } from "@/electron/service/agentJobScheduler";
 import { safeStringify } from "@/electron/agentCore/utils";
 import {
   lookupSchedule,
@@ -24,7 +24,7 @@ export const deleteAgentScheduleTool = () =>
         return scheduleNotFoundResponse(err!);
       }
 
-      agentTaskScheduler.unregister(schedule.id!);
+      agentJobScheduler.unregister(schedule.id!);
 
       const deleteErr = await scheduleDB.deleteSchedule([schedule.id!]);
       if (deleteErr) {

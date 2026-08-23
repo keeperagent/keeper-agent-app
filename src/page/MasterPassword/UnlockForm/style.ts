@@ -55,7 +55,6 @@ export const UnlockButtonWrapper = styled.div`
 export const ResetLink = styled.div`
   font-size: 1rem;
   cursor: pointer;
-  text-decoration: underline;
   color: ${({ theme }: { theme: ITheme }) => theme.colorTextPrimary};
   text-align: center;
 
