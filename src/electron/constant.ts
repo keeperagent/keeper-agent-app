@@ -1271,7 +1271,6 @@ export const TOOL_KEYS = {
   RESEARCH_AGENT: "research_agent",
   SCHEDULER_AGENT: "scheduler_agent",
   TASK_MANAGEMENT_AGENT: "task_management_agent",
-  DATA_MANAGEMENT_AGENT: "data_management_agent",
   VISUALIZATION_AGENT: "visualization_agent",
   // Built-in tools
   LS: "ls",
@@ -1292,14 +1291,6 @@ export const TOOL_KEYS = {
   LAUNCH_PUMPFUN_TOKEN: "launch_pumpfun_token",
   BROADCAST_TRANSACTION_EVM: "broadcast_transaction_evm",
   BROADCAST_TRANSACTION_SOLANA: "broadcast_transaction_solana",
-  // Wallet & data tools
-  CREATE_WALLET_GROUP: "create_wallet_group",
-  GENERATE_WALLETS_FOR_GROUP: "generate_wallets_for_group",
-  CREATE_RESOURCE_GROUP: "create_resource_group",
-  LIST_RESOURCE_GROUPS: "list_resource_groups",
-  BULK_ADD_RESOURCES: "bulk_add_resources",
-  BULK_UPDATE_RESOURCES: "bulk_update_resources",
-  QUERY_RESOURCES: "query_resources",
   // Code execution
   WRITE_JAVASCRIPT: "write_javascript",
   EXECUTE_JAVASCRIPT: "execute_javascript",
@@ -1345,7 +1336,6 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.RESEARCH_AGENT]: "Research subagent",
   [TOOL_KEYS.SCHEDULER_AGENT]: "Scheduler subagent",
   [TOOL_KEYS.TASK_MANAGEMENT_AGENT]: "Task management subagent",
-  [TOOL_KEYS.DATA_MANAGEMENT_AGENT]: "Data management subagent",
 
   // Deepagents built-in tools
   [TOOL_KEYS.LS]: "Browse files",
@@ -1370,15 +1360,6 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   [TOOL_KEYS.LAUNCH_PUMPFUN_TOKEN]: "Launch Pump.fun token",
   [TOOL_KEYS.BROADCAST_TRANSACTION_EVM]: "Broadcast EVM transaction",
   [TOOL_KEYS.BROADCAST_TRANSACTION_SOLANA]: "Broadcast Solana transaction",
-
-  // Wallet & data tools
-  [TOOL_KEYS.CREATE_WALLET_GROUP]: "Create wallet group",
-  [TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP]: "Generate wallets",
-  [TOOL_KEYS.CREATE_RESOURCE_GROUP]: "Create resource group",
-  [TOOL_KEYS.LIST_RESOURCE_GROUPS]: "List resource groups",
-  [TOOL_KEYS.BULK_ADD_RESOURCES]: "Add resources",
-  [TOOL_KEYS.BULK_UPDATE_RESOURCES]: "Update resources",
-  [TOOL_KEYS.QUERY_RESOURCES]: "Query resources",
 
   // Code execution
   [TOOL_KEYS.WRITE_JAVASCRIPT]: "Write JavaScript",

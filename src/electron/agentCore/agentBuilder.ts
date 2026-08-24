@@ -17,8 +17,6 @@ import { getWorkspaceDir, getMemoryDir } from "@/electron/service/agentSkill";
 import { LLMProvider, IAgentProfile } from "@/electron/type";
 import { EVM_CHAIN_ID, CHAIN_KEY_ALIASES } from "@/electron/constant";
 import {
-  createWalletGroupTool,
-  generateWalletsForGroupTool,
   getSolanaTokenBalanceTool,
   getEvmTokenBalanceTool,
   swapOnJupiterTool,
@@ -38,11 +36,6 @@ import {
   runWorkflowTool,
   stopWorkflowTool,
   checkWorkflowStatusTool,
-  createResourceGroupTool,
-  listResourceGroupsTool,
-  bulkAddResourcesTool,
-  bulkUpdateResourcesTool,
-  queryResourcesTool,
   renderChartTool,
   calculateTool,
 } from "./baseTool";
@@ -236,7 +229,7 @@ Each todo item MUST include a \`type\` field. The system enforces correct tool a
 | \`"code"\` | Writing and executing JavaScript | \`write_javascript\`, \`task(code_execution_agent)\` |
 | \`"transaction"\` | On-chain operations | \`task(query_agent)\`, \`task(trade_agent)\`, \`task(transfer_agent)\`, \`task(launch_agent)\` |
 | \`"workflow"\` | Running campaign workflows | \`task(workflow_agent)\` |
-| \`"manage"\` | Scheduling, data, tasks | \`task(scheduler/data/task_management_agent)\` |
+| \`"manage"\` | Scheduling, tasks | \`task(scheduler/task_management_agent)\` |
 | \`"communicate"\` | Reporting results to user | No tools — call \`write_todos\` to mark it in_progress, then respond. Framework auto-marks it completed. |
 
 ## Post-transaction communicate format
@@ -828,51 +821,6 @@ export const buildBaseSubAgents = (
         ),
       ],
       tools: workflowTools as any,
-    });
-  }
-
-  const dataManagementTools = [
-    isEnabled(BASE_TOOL_KEYS.CREATE_WALLET_GROUP) && createWalletGroupTool(),
-    isEnabled(BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP) &&
-      generateWalletsForGroupTool(),
-    isEnabled(BASE_TOOL_KEYS.CREATE_RESOURCE_GROUP) &&
-      createResourceGroupTool(),
-    isEnabled(BASE_TOOL_KEYS.LIST_RESOURCE_GROUPS) && listResourceGroupsTool(),
-    isEnabled(BASE_TOOL_KEYS.BULK_ADD_RESOURCES) && bulkAddResourcesTool(),
-    isEnabled(BASE_TOOL_KEYS.BULK_UPDATE_RESOURCES) &&
-      bulkUpdateResourcesTool(),
-    isEnabled(BASE_TOOL_KEYS.QUERY_RESOURCES) && queryResourcesTool(),
-  ].filter((tool): any => Boolean(tool));
-
-  if (dataManagementTools.length > 0) {
-    agents.push({
-      name: "data_management_agent",
-      description:
-        "Manages wallet groups and resource groups — generate wallets, store and query structured data.",
-      systemPrompt:
-        "You are a subagent for managing wallets and structured data.\n\n" +
-        "## Rules\n" +
-        "- Before creating a resource group: call list_resource_groups to check if one already exists.\n" +
-        "- bulk_update_resources requires row IDs — call query_resources first to get them.\n" +
-        "- bulk_add_resources only works on agent-created groups (source=agent).\n" +
-        "- Column names must be snake_case.\n" +
-        "- Keep responses concise.\n\n" +
-        "## Structured response — `result` field\n" +
-        "Put your complete output in the `result` field. No preamble.",
-      responseFormat: z.object({
-        result: z
-          .string()
-          .describe(
-            "Data management result: created IDs, query results, or error. Concise.",
-          ),
-      }),
-      ...bgModel("data_management_agent"),
-      middleware: [
-        createAllowlistToolsMiddleware(
-          new Set(dataManagementTools.map((tool: any) => tool.name)),
-        ),
-      ],
-      tools: dataManagementTools as any,
     });
   }
 

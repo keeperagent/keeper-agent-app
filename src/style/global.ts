@@ -101,7 +101,8 @@ const GlobalStyle = createGlobalStyle`
     --primary-light: #7699FF;
   }
 
-  .custom-input {
+  .custom-input,
+  .custom-input-number {
     background-color: ${({ theme }: { theme: ITheme }) =>
       theme?.colorBgTransparent} !important;
     border-radius: 0.4rem !important;

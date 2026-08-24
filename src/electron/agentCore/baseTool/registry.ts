@@ -19,8 +19,6 @@ export type BaseToolRegistryItem = {
 };
 
 export const BASE_TOOL_KEYS = {
-  CREATE_WALLET_GROUP: "create_wallet_group",
-  GENERATE_WALLETS_FOR_GROUP: "generate_wallets_for_group",
   GET_SOLANA_TOKEN_BALANCE: "get_solana_token_balance",
   GET_EVM_TOKEN_BALANCE: "get_evm_token_balance",
   GET_TOKEN_PRICE: "get_token_price",
@@ -55,11 +53,6 @@ export const BASE_TOOL_KEYS = {
   DELETE_AGENT_TASK: "delete_agent_task",
   REQUEST_APPROVAL: "request_approval",
   CONFIRM_APPROVAL: "confirm_approval",
-  CREATE_RESOURCE_GROUP: "create_resource_group",
-  LIST_RESOURCE_GROUPS: "list_resource_groups",
-  BULK_ADD_RESOURCES: "bulk_add_resources",
-  BULK_UPDATE_RESOURCES: "bulk_update_resources",
-  QUERY_RESOURCES: "query_resources",
   RENDER_CHART: "render_chart",
   CALCULATE: "calculate",
 };
@@ -298,49 +291,6 @@ export const BASE_TOOL_REGISTRY: BaseToolRegistryItem[] = [
     description:
       "Run JavaScript / Node.js code to call APIs or automate custom logic",
     group: BaseToolGroup.CODE_EXECUTION,
-  },
-  // Data Group Tools
-  {
-    key: BASE_TOOL_KEYS.CREATE_RESOURCE_GROUP,
-    name: "Create resource group",
-    description: "Create a resource group with a custom column schema",
-    group: BaseToolGroup.DATA_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.LIST_RESOURCE_GROUPS,
-    name: "List resource groups",
-    description: "List all resource groups with their schema and row counts",
-    group: BaseToolGroup.DATA_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.BULK_ADD_RESOURCES,
-    name: "Bulk add resources",
-    description: "Append rows into an agent-created resource group",
-    group: BaseToolGroup.DATA_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.BULK_UPDATE_RESOURCES,
-    name: "Bulk update resources",
-    description: "Partially update rows by id, preserving untouched columns",
-    group: BaseToolGroup.DATA_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.QUERY_RESOURCES,
-    name: "Query resources",
-    description: "Read rows from a resource group with pagination",
-    group: BaseToolGroup.DATA_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.CREATE_WALLET_GROUP,
-    name: "Create wallet group",
-    description: "Create a new wallet group",
-    group: BaseToolGroup.DATA_MANAGEMENT,
-  },
-  {
-    key: BASE_TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP,
-    name: "Generate wallets for group",
-    description: "Generate and assign wallets to an existing wallet group",
-    group: BaseToolGroup.DATA_MANAGEMENT,
   },
   // Visualization Tools
   {

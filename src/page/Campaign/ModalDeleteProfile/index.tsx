@@ -70,8 +70,17 @@ const ModalDeleteProfile = (props: IProps) => {
       return 2;
     }
 
-    return 3;
-  }, [deleteFolderProgress, deleteProfileProgress, deleteScheduleProgress]);
+    if (deleteCampaignProgress !== 100) {
+      return 3;
+    }
+
+    return 4;
+  }, [
+    deleteFolderProgress,
+    deleteProfileProgress,
+    deleteScheduleProgress,
+    deleteCampaignProgress,
+  ]);
 
   const percentage = useMemo(() => {
     if (deleteFolderProgress !== 100) {
@@ -96,7 +105,7 @@ const ModalDeleteProfile = (props: IProps) => {
 
   const allowClose = useMemo(() => {
     if (isDeleteCampaign) {
-      return step === 3 && deleteCampaignProgress === 100;
+      return step === 4 && deleteCampaignProgress === 100;
     }
 
     return step === 2 && deleteProfileProgress === 100;
