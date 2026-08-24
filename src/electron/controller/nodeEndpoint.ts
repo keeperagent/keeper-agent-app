@@ -51,19 +51,23 @@ export const nodeEndpointController = () => {
     MESSAGE.CREATE_NODE_ENDPOINT_RES,
     async (event, payload) => {
       const err = await nodeEndpointDB.createBulkNodeEndpoint(payload?.data);
+      if (err) {
+        event.reply(MESSAGE.CREATE_NODE_ENDPOINT_RES, {
+          error: err?.message || "Failed to create node endpoint",
+        });
+        return;
+      }
 
-      if (!err) {
-        const endpoints = payload?.data || [];
-        if (endpoints.length > 0) {
-          await refreshGroupChainId(
-            endpoints[0].groupId,
-            endpoints[0].endpoint || "",
-          );
-        }
+      const endpoints = payload?.data || [];
+      if (endpoints.length > 0) {
+        await refreshGroupChainId(
+          endpoints[0].groupId,
+          endpoints[0].endpoint || "",
+        );
       }
 
       event.reply(MESSAGE.CREATE_NODE_ENDPOINT_RES, {
-        error: err,
+        data: true,
       });
     },
   );
@@ -75,6 +79,7 @@ export const nodeEndpointController = () => {
       const [res, err] = await nodeEndpointDB.updateNodeEndpoint(payload?.data);
       if (err) {
         event.reply(MESSAGE.UPDATE_NODE_ENDPOINT_RES, {
+          error: err?.message || "Failed to update node endpoint",
           code: RESPONSE_CODE.DUPLICATE_ERROR,
         });
         return;

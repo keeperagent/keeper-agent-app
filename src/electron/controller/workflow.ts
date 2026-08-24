@@ -104,8 +104,12 @@ export const runWorkflowController = () => {
     MESSAGE.UPDATE_WORKFLOW_RES,
     async (event, payload) => {
       const { requestId, data } = payload;
-      const [updatedWorkflow] = await workflowDB.updateWorkflow(data);
-      if (!updatedWorkflow) {
+      const [updatedWorkflow, err] = await workflowDB.updateWorkflow(data);
+      if (err || !updatedWorkflow) {
+        event.reply(MESSAGE.UPDATE_WORKFLOW_RES, {
+          error: err?.message || "Failed to update workflow",
+          requestId,
+        });
         return;
       }
 

@@ -54,12 +54,9 @@ const useCreateMcpServer = () => {
     MESSAGE.CREATE_MCP_SERVER_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.error) {
-          message.error(payload.error);
-          return;
-        }
         dispatch(actSaveCreateMcpServer(payload?.data));
       },
+      onError: (error) => message.error(error),
     },
   );
   const createMcpServer = (data: IMcpServer) => execute({ data });
@@ -73,6 +70,7 @@ const useUpdateMcpServer = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateMcpServer(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateMcpServer = (data: IMcpServer) => execute({ data });
@@ -91,6 +89,7 @@ const useDeleteMcpServer = () => {
           pendingIdRef.current = null;
         }
       },
+      onError: (error) => message.error(error),
     },
   );
   const deleteMcpServer = (id: number) => {

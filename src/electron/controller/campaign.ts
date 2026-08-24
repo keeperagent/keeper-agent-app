@@ -149,7 +149,13 @@ export const campaignController = () => {
     MESSAGE.CREATE_CAMPAIGN_RES,
     async (event, payload) => {
       const campaign = payload?.data as ICampaign;
-      let [res] = await campaignDB.createCampaign(campaign);
+      let [res, err] = await campaignDB.createCampaign(campaign);
+      if (err || !res) {
+        event.reply(MESSAGE.CREATE_CAMPAIGN_RES, {
+          error: err?.message || "Failed to create campaign",
+        });
+        return;
+      }
       const { proxyGroupId, isUseProxy, profileGroupId } = campaign;
 
       let listStaticProxy: IStaticProxy[] = [];

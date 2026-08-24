@@ -27,7 +27,9 @@ const useGetListSetting = () => {
   return { loading, isSuccess, getListSetting };
 };
 
-const useCreateSetting = (options?: { onSuccess?: (setting: ISetting) => void }) => {
+const useCreateSetting = (options?: {
+  onSuccess?: (setting: ISetting) => void;
+}) => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.CREATE_AGENT_SETTING,
     MESSAGE.CREATE_AGENT_SETTING_RES,
@@ -37,10 +39,8 @@ const useCreateSetting = (options?: { onSuccess?: (setting: ISetting) => void })
           dispatch(actSaveCreateSetting(payload.data));
           options?.onSuccess?.(payload.data);
         }
-        if (payload?.error) {
-          message.error(payload.error);
-        }
       },
+      onError: (error) => message.error(error),
     },
   );
   const createSetting = (data: Partial<ISetting>) => execute({ data });
@@ -53,14 +53,12 @@ const useUpdateSetting = (options?: { onSuccess?: () => void }) => {
     MESSAGE.UPDATE_AGENT_SETTING_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.error) {
-          message.error(payload.error);
-        }
         if (payload?.data) {
           dispatch(actSaveUpdateSetting(payload.data));
           options?.onSuccess?.();
         }
       },
+      onError: (error) => message.error(error),
     },
   );
   const updateSetting = (data: ISetting) => execute({ data });
@@ -80,6 +78,7 @@ const useDeleteSetting = (options?: { onSuccess?: () => void }) => {
         pendingIdsRef.current = [];
         options?.onSuccess?.();
       },
+      onError: (error) => message.error(error),
     },
   );
   const deleteSetting = (ids: number | number[]) => {

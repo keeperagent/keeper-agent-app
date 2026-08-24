@@ -170,7 +170,14 @@ const renderColumns = (
       width: 200,
       render: (value: string, record: ICampaignProfile) => (
         <ProfileNameWrapper>
-          <div className="name">{trimText(value, 18) || EMPTY_STRING}</div>
+          {record?.note ? (
+            <Tooltip title={record?.note}>
+              <div className="name">{trimText(value, 18) || EMPTY_STRING}</div>
+            </Tooltip>
+          ) : (
+            <div className="name">{trimText(value, 18) || EMPTY_STRING}</div>
+          )}
+
           <div className="icon">
             <div
               className="edit"

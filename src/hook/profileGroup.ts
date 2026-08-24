@@ -1,5 +1,6 @@
 import { message } from "antd";
-import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
+import { useState } from "react";
+import { MESSAGE } from "@/electron/constant";
 import {
   actSaveGetListProfileGroup,
   actSaveSelectedProfileGroup,
@@ -10,7 +11,6 @@ import type { IpcGetListProfileGroupPayload } from "@/electron/ipcTypes";
 import { IProfileGroup } from "@/electron/type";
 import { useTranslation } from "./useTranslation";
 import { useIpcAction } from "./useIpcAction";
-import { useState } from "react";
 
 const useGetListProfileGroup = () => {
   const { execute: getListProfileGroup, loading } =
@@ -42,6 +42,9 @@ const useDeleteProfileGroup = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_PROFILE_GROUP,
     MESSAGE.DELETE_PROFILE_GROUP_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteProfileGroup = (listGroupId: number[]) =>
     execute({ data: listGroupId });
@@ -55,6 +58,7 @@ const useUpdateProfileGroup = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateProfileGroup(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateProfileGroup = (data: IProfileGroup) => execute({ data });
@@ -69,14 +73,10 @@ const useCreateProfileGroup = () => {
     MESSAGE.CREATE_PROFILE_GROUP_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR) {
-          message.error(translate("dataDuplicate"));
-          return;
-        }
-
         setCreatedData(payload?.data);
         dispatch(actSaveCreateProfileGroup(payload?.data));
       },
+      onError: (error) => message.error(error || translate("dataDuplicate")),
     },
   );
 

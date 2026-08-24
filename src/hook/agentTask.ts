@@ -45,6 +45,7 @@ const useCreateAgentTask = () => {
             dispatch(actSaveCreateAgentTask(payload.data));
           }
         },
+        onError: (error) => message.error(error),
       },
     );
 
@@ -80,6 +81,9 @@ const useDeleteAgentTask = () => {
   const { execute, loading, isSuccess } = useIpcAction<IpcDeletePayload>(
     MESSAGE.DELETE_AGENT_TASK,
     MESSAGE.DELETE_AGENT_TASK_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
 
   const deleteAgentTask = (id: number) => execute({ data: [id] });
@@ -104,6 +108,9 @@ const useRerunAgentTask = () => {
     useIpcAction<IpcRerunAgentTaskPayload>(
       MESSAGE.RERUN_AGENT_TASK,
       MESSAGE.RERUN_AGENT_TASK_RES,
+      {
+        onError: (error) => message.error(error),
+      },
     );
 
   const rerunAgentTask = (id: number) => execute({ id });

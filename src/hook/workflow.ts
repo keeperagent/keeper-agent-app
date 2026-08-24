@@ -47,9 +47,7 @@ const useDeleteWorkflow = () => {
     MESSAGE.DELETE_WORKFLOW,
     MESSAGE.DELETE_WORKFLOW_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) message?.error(error);
-      },
+      onError: (error) => message?.error(error),
     },
   );
 
@@ -76,12 +74,17 @@ const useUpdateWorkflow = () => {
     await new Promise<void>((resolve) => {
       let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
-        const { requestId, data } = payload;
+        const { requestId, data, error } = payload;
         if (requestId !== uniqueID) return;
         unsubscribe?.();
         setLoading(false);
-        setIsSuccess(true);
-        dispatch(actSaveUpdateWorkflow(data));
+        if (error) {
+          setIsSuccess(false);
+          message?.error(error);
+        } else {
+          setIsSuccess(true);
+          dispatch(actSaveUpdateWorkflow(data));
+        }
         resolve();
       };
       unsubscribe = window?.electron?.on(MESSAGE.UPDATE_WORKFLOW_RES, handler);
@@ -108,12 +111,17 @@ const useCreateWorkflow = () => {
     await new Promise<void>((resolve) => {
       let unsubscribe: (() => void) | undefined;
       const handler = (_event: any, payload: any) => {
-        const { requestId, data } = payload;
+        const { requestId, data, error } = payload;
         if (requestId !== uniqueID) return;
         unsubscribe?.();
         setLoading(false);
-        setIsSuccess(true);
-        dispatch(actSaveCreateWorkflow(data));
+        if (error) {
+          setIsSuccess(false);
+          message?.error(error);
+        } else {
+          setIsSuccess(true);
+          dispatch(actSaveCreateWorkflow(data));
+        }
         resolve();
       };
       unsubscribe = window?.electron?.on(MESSAGE.CREATE_WORKFLOW_RES, handler);
@@ -129,13 +137,8 @@ const useExportWorkflow = () => {
     MESSAGE.EXPORT_WORKFLOW,
     MESSAGE.EXPORT_WORKFLOW_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message?.error(error);
-        } else {
-          message.success(translate("hook.exportDataDone"));
-        }
-      },
+      onSuccess: () => message.success(translate("hook.exportDataDone")),
+      onError: (error) => message?.error(error),
     },
   );
 

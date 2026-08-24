@@ -48,15 +48,13 @@ const useDeleteWalletGroup = () => {
     MESSAGE.DELETE_WALLET_GROUP,
     MESSAGE.DELETE_WALLET_GROUP_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          if (error === SQL_FOREIGNKEY_ERROR) {
-            message.error(translate("wallet.canNotDeleteWallet"));
-            setHasDependencyError(true);
-          } else {
-            message.error(error);
-            setHasDependencyError(false);
-          }
+      onError: (error) => {
+        if (error === SQL_FOREIGNKEY_ERROR) {
+          message.error(translate("wallet.canNotDeleteWallet"));
+          setHasDependencyError(true);
+        } else {
+          message.error(error);
+          setHasDependencyError(false);
         }
       },
     },
@@ -79,6 +77,7 @@ const useUpdateWalletGroup = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateWalletGroup(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateWalletGroup = (data: IWalletGroup) => execute({ data });
@@ -92,6 +91,7 @@ const useCreateWalletGroup = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveCreateWalletGroup(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const createWalletGroup = (data: IWalletGroup, isQuickMapCampaign: boolean) =>

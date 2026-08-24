@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import type {
   IpcUpdateJobPayload,
@@ -10,6 +11,9 @@ const useUpdateJob = () => {
   const { execute, loading, isSuccess } = useIpcAction<IpcUpdateJobPayload>(
     MESSAGE.UPDATE_JOB,
     MESSAGE.UPDATE_JOB_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const updateJob = (payload: IpcUpdateJobPayload) => execute(payload);
   return { updateJob, loading, isSuccess };
@@ -19,6 +23,9 @@ const useDeleteJob = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_JOB,
     MESSAGE.DELETE_JOB_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteJob = (listId: number[]) => execute({ data: listId });
   return { deleteJob, loading, isSuccess };

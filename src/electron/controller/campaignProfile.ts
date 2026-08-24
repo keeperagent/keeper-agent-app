@@ -64,7 +64,14 @@ export const campaignProfileController = () => {
     MESSAGE.UPDATE_CAMPAIGN_PROFILE_RES,
     async (event, payload) => {
       const { requestId, data, encryptKey } = payload;
-      let [res] = await campaignProfileDB.updateCampaignProfile(data);
+      let [res, err] = await campaignProfileDB.updateCampaignProfile(data);
+      if (err || !res) {
+        event.reply(MESSAGE.UPDATE_CAMPAIGN_PROFILE_RES, {
+          error: err?.message || "Failed to update profile",
+          requestId,
+        });
+        return;
+      }
 
       if (encryptKey && res) {
         res = decryptCampaignProfile(res, encryptKey);
@@ -115,12 +122,14 @@ export const campaignProfileController = () => {
       );
       if (err) {
         event.reply(MESSAGE.UPDATE_LIST_CAMPAIGN_PROFILE_RES, {
+          error: err?.message || "Failed to update profiles",
           code: RESPONSE_CODE.ERROR,
         });
         return;
       }
 
       event.reply(MESSAGE.UPDATE_LIST_CAMPAIGN_PROFILE_RES, {
+        data: true,
         code: RESPONSE_CODE.SUCCESS,
       });
     },

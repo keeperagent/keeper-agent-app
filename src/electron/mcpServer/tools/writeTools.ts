@@ -6,8 +6,6 @@ import { showApprovalDialog, ApprovalResult } from "../approvalDialog";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 import { SwapDirection } from "@/electron/constant";
 import {
-  createWalletGroupTool,
-  generateWalletsForGroupTool,
   stopWorkflowTool,
   runWorkflowTool,
   executeJavaScriptTool,
@@ -101,50 +99,6 @@ const walletContextSchema = {
  */
 const registerWriteTools = (server: McpServer, mcpToken: IMcpToken) => {
   const displayName = mcpToken.name || "External agent";
-  const createWalletGroupInstance = createWalletGroupTool();
-  server.registerTool(
-    "create_wallet_group",
-    {
-      description: createWalletGroupInstance.description,
-      inputSchema: createWalletGroupInstance.schema.shape,
-    },
-    async (args: any) => {
-      const approval = await showApprovalDialog(
-        displayName,
-        "create_wallet_group",
-        createWalletGroupInstance.description,
-        formatArgs(args),
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      return wrapText(
-        (await createWalletGroupInstance.invoke(args)).toString(),
-      );
-    },
-  );
-
-  const generateWalletsInstance = generateWalletsForGroupTool();
-  server.registerTool(
-    "generate_wallets_for_group",
-    {
-      description: generateWalletsInstance.description,
-      inputSchema: generateWalletsInstance.schema._def.schema.shape,
-    },
-    async (args: any) => {
-      const approval = await showApprovalDialog(
-        displayName,
-        "generate_wallets_for_group",
-        generateWalletsInstance.description,
-        formatArgs(args),
-      );
-      if (approval === ApprovalResult.DENIED) {
-        return DENIED_RESPONSE;
-      }
-      return wrapText((await generateWalletsInstance.invoke(args)).toString());
-    },
-  );
-
   const stopWorkflowInstance = stopWorkflowTool();
   server.registerTool(
     "stop_workflow",

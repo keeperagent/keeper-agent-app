@@ -136,7 +136,7 @@ export const runWalletController = () => {
       const [res, err] = await walletDB.deleteWallet(payload?.data);
       event.reply(MESSAGE.DELETE_WALLET_RES, {
         data: res,
-        error: err,
+        error: err?.message,
       });
     },
   );

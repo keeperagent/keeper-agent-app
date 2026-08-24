@@ -24,6 +24,9 @@ const useDeleteProfile = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_PROFILE,
     MESSAGE.DELETE_PROFILE_RES,
+    {
+      onError: (error) => message?.error(error),
+    },
   );
   const deleteProfile = (listId: number[]) => execute({ data: listId });
   return { deleteProfile, loading, isSuccess };
@@ -46,6 +49,7 @@ const useUpdateProfile = () => {
           profileRef.current = null;
         }
       },
+      onError: (error) => message?.error(error),
     },
   );
   const updateProfile = (data: IProfile) => {
@@ -64,6 +68,12 @@ const useCreateProfile = () => {
 
   useEffect(() => {
     const handler = (_event: any, payload: any) => {
+      if (payload?.error) {
+        setLoading(false);
+        setIsSuccess(false);
+        message?.error(payload.error);
+        return;
+      }
       const { data = {} } = payload;
       if (data?.isDone) {
         setLoading(false);
@@ -112,13 +122,8 @@ const useExportProfile = () => {
     MESSAGE.EXPORT_PROFILE,
     MESSAGE.EXPORT_PROFILE_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message?.error(error);
-        } else {
-          message.success(translate("hook.exportDataDone"));
-        }
-      },
+      onSuccess: () => message.success(translate("hook.exportDataDone")),
+      onError: (error) => message?.error(error),
     },
   );
   const exportProfile = ({

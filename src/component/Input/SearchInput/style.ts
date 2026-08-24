@@ -37,10 +37,10 @@ const SearchInputWrapper = styled.div`
     background-color: ${({ theme }: { theme: ITheme }) =>
       theme?.colorBgTransparent} !important;
     transition: box-shadow 0.2s;
-    border: 1px solid
-      ${({ theme }: { theme: ITheme }) => theme?.colorBorderDarkMode};
+    border: 1px solid transparent;
   }
 
+  .input:hover,
   .input.clearing,
   .input:focus-within {
     --border-width: 1.5px;

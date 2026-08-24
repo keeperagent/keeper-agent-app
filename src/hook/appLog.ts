@@ -26,11 +26,7 @@ const useDeleteAppLog = () => {
     MESSAGE.DELETE_APP_LOG,
     MESSAGE.DELETE_APP_LOG_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message.error(error);
-        }
-      },
+      onError: (error) => message.error(error),
     },
   );
   const deleteAppLog = (listId: number[]) => execute({ data: listId });
@@ -41,6 +37,9 @@ const useCreateAppLog = () => {
   const { execute, loading } = useIpcAction(
     MESSAGE.CREATE_APP_LOG,
     MESSAGE.CREATE_APP_LOG_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
 
   const createAppLog = (data: Partial<IAppLog>) => execute({ data });

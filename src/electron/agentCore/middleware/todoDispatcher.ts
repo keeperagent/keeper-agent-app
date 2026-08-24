@@ -20,11 +20,7 @@ const STEP_ALLOWED_SUBAGENTS: Record<string, string[]> = {
   code: ["code_execution_agent"],
   transaction: ["query_agent", "trade_agent", "transfer_agent", "launch_agent"],
   workflow: ["workflow_agent"],
-  manage: [
-    "scheduler_agent",
-    "data_management_agent",
-    "task_management_agent",
-  ],
+  manage: ["scheduler_agent", "task_management_agent"],
 };
 
 // Subagents that always require user approval before execution
@@ -278,7 +274,7 @@ const buildStallNudge = (
     research: "research_agent",
     visualize: "visualization_agent",
     manage:
-      "the appropriate management subagent (scheduler_agent, data_management_agent, or task_management_agent)",
+      "the appropriate management subagent (scheduler_agent or task_management_agent)",
   };
 
   const subagent = stepTypeToSubagent[stepType] || "the appropriate subagent";

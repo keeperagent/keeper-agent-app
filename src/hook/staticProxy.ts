@@ -1,5 +1,5 @@
 import { message } from "antd";
-import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
+import { MESSAGE } from "@/electron/constant";
 import {
   actSaveGetListStaticProxy,
   actSaveUpdateStaticProxy,
@@ -26,6 +26,9 @@ const useDeleteStaticProxy = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_PROXY,
     MESSAGE.DELETE_PROXY_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteStaticProxy = (listId: number[]) => execute({ data: listId });
   return { deleteStaticProxy, loading, isSuccess };
@@ -38,12 +41,9 @@ const useUpdateStaticProxy = () => {
     MESSAGE.UPDATE_PROXY_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR) {
-          message.error(translate("dataDuplicate"));
-          return;
-        }
         dispatch(actSaveUpdateStaticProxy(payload.data));
       },
+      onError: (error) => message.error(error || translate("dataDuplicate")),
     },
   );
   const updateStaticProxy = (data: IStaticProxy) => execute({ data });
@@ -55,11 +55,7 @@ const useCreateStaticProxy = () => {
     MESSAGE.CREATE_PROXY,
     MESSAGE.CREATE_PROXY_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message.error(error?.message);
-        }
-      },
+      onError: (error) => message.error(error),
     },
   );
   const createStaticProxy = (data: IStaticProxy[]) => execute({ data });

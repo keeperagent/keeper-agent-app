@@ -18,6 +18,9 @@ const ModalDeleteProfile = (props: IProps) => {
   const [deleteProfileProgress, setDeleteProfileProgress] = useState(0);
   const [deleteScheduleProgress, setDeleteScheduleProgress] = useState(0);
   const [deleteCampaignProgress, setDeleteCampaignProgress] = useState(0);
+  const [deleteCampaignError, setDeleteCampaignError] = useState<string | null>(
+    null,
+  );
 
   const { translate } = useTranslation();
 
@@ -51,7 +54,10 @@ const ModalDeleteProfile = (props: IProps) => {
   useEffect(() => {
     window?.electron?.on(
       MESSAGE.DELETE_CAMPAIGN_RES,
-      (_event: any, _payload: any) => {
+      (_event: any, payload: any) => {
+        if (payload?.error) {
+          setDeleteCampaignError(payload.error);
+        }
         setDeleteCampaignProgress(100);
       },
     );
@@ -70,8 +76,17 @@ const ModalDeleteProfile = (props: IProps) => {
       return 2;
     }
 
-    return 3;
-  }, [deleteFolderProgress, deleteProfileProgress, deleteScheduleProgress]);
+    if (deleteCampaignProgress !== 100) {
+      return 3;
+    }
+
+    return 4;
+  }, [
+    deleteFolderProgress,
+    deleteProfileProgress,
+    deleteScheduleProgress,
+    deleteCampaignProgress,
+  ]);
 
   const percentage = useMemo(() => {
     if (deleteFolderProgress !== 100) {
@@ -96,7 +111,7 @@ const ModalDeleteProfile = (props: IProps) => {
 
   const allowClose = useMemo(() => {
     if (isDeleteCampaign) {
-      return step === 3 && deleteCampaignProgress === 100;
+      return step === 4 && deleteCampaignProgress === 100;
     }
 
     return step === 2 && deleteProfileProgress === 100;
@@ -108,10 +123,16 @@ const ModalDeleteProfile = (props: IProps) => {
     setTimeout(() => {
       setDeleteFolderProgress(0);
       setDeleteProfileProgress(0);
+      setDeleteScheduleProgress(0);
+      setDeleteCampaignProgress(0);
+      setDeleteCampaignError(null);
     }, 1000);
   };
 
   const getStepStatus = (index: number) => {
+    if (isDeleteCampaign && index === 3 && deleteCampaignError) {
+      return "error";
+    }
     if (step === index) {
       return "process";
     }
@@ -173,7 +194,9 @@ const ModalDeleteProfile = (props: IProps) => {
                     {translate("campaign.deleteCampaignInDatabase")}
                   </span>
                 ),
-                description: `${deleteCampaignProgress}%`,
+                description: deleteCampaignError
+                  ? deleteCampaignError
+                  : `${deleteCampaignProgress}%`,
                 status: getStepStatus(3),
               },
             ],

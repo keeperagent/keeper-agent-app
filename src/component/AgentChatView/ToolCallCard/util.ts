@@ -16,7 +16,6 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
   [TOOL_KEYS.CODE_EXECUTION_AGENT]: { icon: "💻", summaryFields: [] },
   [TOOL_KEYS.RESEARCH_AGENT]: { icon: "🧭", summaryFields: [] },
   [TOOL_KEYS.WORKFLOW_AGENT]: { icon: "⚙️", summaryFields: [] },
-  [TOOL_KEYS.DATA_MANAGEMENT_AGENT]: { icon: "🗄️", summaryFields: [] },
   [TOOL_KEYS.SCHEDULER_AGENT]: { icon: "⏱️", summaryFields: [] },
   [TOOL_KEYS.TASK_MANAGEMENT_AGENT]: { icon: "📌", summaryFields: [] },
   [TOOL_KEYS.VISUALIZATION_AGENT]: { icon: "📊", summaryFields: [] },
@@ -86,17 +85,6 @@ const toolRenderers: Record<string, ToolRendererConfig> = {
     icon: "⚡",
     summaryFields: ["to", "amount"],
   },
-
-  [TOOL_KEYS.CREATE_WALLET_GROUP]: { icon: "🏦", summaryFields: ["name"] },
-  [TOOL_KEYS.GENERATE_WALLETS_FOR_GROUP]: {
-    icon: "🔑",
-    summaryFields: ["groupId", "count"],
-  },
-  [TOOL_KEYS.CREATE_RESOURCE_GROUP]: { icon: "📦", summaryFields: ["name"] },
-  [TOOL_KEYS.LIST_RESOURCE_GROUPS]: { icon: "🗂️", summaryFields: [] },
-  [TOOL_KEYS.BULK_ADD_RESOURCES]: { icon: "📥", summaryFields: ["groupId"] },
-  [TOOL_KEYS.BULK_UPDATE_RESOURCES]: { icon: "🔃", summaryFields: ["groupId"] },
-  [TOOL_KEYS.QUERY_RESOURCES]: { icon: "🔍", summaryFields: ["query"] },
 
   [TOOL_KEYS.WRITE_JAVASCRIPT]: { icon: "📜", summaryFields: [] },
   [TOOL_KEYS.EXECUTE_JAVASCRIPT]: { icon: "▶️", summaryFields: [] },

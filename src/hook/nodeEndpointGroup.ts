@@ -1,5 +1,5 @@
 import { message } from "antd";
-import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
+import { MESSAGE } from "@/electron/constant";
 import {
   actSaveCreateNodeEndpointGroup,
   actSaveGetListNodeEndpointGroup,
@@ -41,6 +41,9 @@ const useDeleteNodeEndpointGroup = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_NODE_ENDPOINT_GROUP,
     MESSAGE.DELETE_NODE_ENDPOINT_GROUP_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteNodeEndpointGroup = (listId: number[]) =>
     execute({ data: listId });
@@ -54,12 +57,9 @@ const useUpdateNodeEndpointGroup = () => {
     MESSAGE.UPDATE_NODE_ENDPOINT_GROUP_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR) {
-          message.error(translate("dataDuplicate"));
-          return;
-        }
         dispatch(actSaveUpdateNodeEndpointGroup(payload.data));
       },
+      onError: (error) => message.error(error || translate("dataDuplicate")),
     },
   );
   const updateNodeEndpointGroup = (data: INodeEndpointGroup) =>
@@ -74,12 +74,9 @@ const useCreateNodeEndpointGroup = () => {
     MESSAGE.CREATE_NODE_ENDPOINT_GROUP_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR) {
-          message.error(translate("dataDuplicate"));
-          return;
-        }
         dispatch(actSaveCreateNodeEndpointGroup(payload.data));
       },
+      onError: (error) => message.error(error || translate("dataDuplicate")),
     },
   );
   const createNodeEndpointGroup = (data: INodeEndpointGroup) =>

@@ -42,9 +42,7 @@ const useDeleteResourceGroup = () => {
     MESSAGE.DELETE_RESOURCE_GROUP,
     MESSAGE.DELETE_RESOURCE_GROUP_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) message.error(error);
-      },
+      onError: (error) => message.error(error),
     },
   );
   const deleteResourceGroup = (listGroupId: number[]) =>
@@ -59,6 +57,7 @@ const useUpdateResourceGroup = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateResourceGroup(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateResourceGroup = (data: IResourceGroup) => execute({ data });
@@ -72,6 +71,7 @@ const useCreateResourceGroup = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveCreateResourceGroup(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const createResourceGroup = (data: IResourceGroup) => execute({ data });
@@ -84,13 +84,10 @@ const useExportResourceGroupConfig = () => {
     MESSAGE.EXPORT_RESOURCE_GROUP,
     MESSAGE.EXPORT_RESOURCE_GROUP_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message?.error(error);
-        } else {
-          message.success(translate("hook.exportDataDone"));
-        }
+      onSuccess: () => {
+        message.success(translate("hook.exportDataDone"));
       },
+      onError: (error) => message?.error(error),
     },
   );
   const exportResourceGroupConfig = ({
@@ -111,13 +108,10 @@ const useImportResourceGroupConfig = () => {
     MESSAGE.IMPORT_RESOURCE_GROUP,
     MESSAGE.IMPORT_RESOURCE_GROUP_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message?.error(error);
-        } else {
-          message.success(translate("hook.importDataDone"));
-        }
+      onSuccess: () => {
+        message.success(translate("hook.importDataDone"));
       },
+      onError: (error) => message?.error(error),
     },
   );
   const importResourceGroupConfig = (

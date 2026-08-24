@@ -1,13 +1,4 @@
 export {
-  createWalletGroupTool,
-  generateWalletsForGroupTool,
-  createResourceGroupTool,
-  listResourceGroupsTool,
-  bulkAddResourcesTool,
-  bulkUpdateResourcesTool,
-  queryResourcesTool,
-} from "./dataManagement";
-export {
   getSolanaTokenBalanceTool,
   getEvmTokenBalanceTool,
   getTokenPriceTool,

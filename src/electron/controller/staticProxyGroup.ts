@@ -84,7 +84,7 @@ export const staticProxyGroupController = () => {
       let [res, err] =
         await staticProxyDB.deleteStaticProxyInGroup(listGroupId);
       if (err) {
-        event.reply(MESSAGE.DELETE_RESOURCE_GROUP_RES, {
+        event.reply(MESSAGE.DELETE_PROXY_GROUP_RES, {
           error: err?.message,
         });
         return;
