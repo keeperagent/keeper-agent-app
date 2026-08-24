@@ -33,14 +33,11 @@ const useCreateAgentSkill = () => {
     MESSAGE.CREATE_AGENT_SKILL_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.error) {
-          message.error(payload.error);
-          return;
-        }
         if (payload?.data) {
           dispatch(actSaveCreateAgentSkill(payload.data));
         }
       },
+      onError: (error) => message.error(error),
     },
   );
   const createAgentSkill = (data: Partial<IAgentSkill>) => execute({ data });
@@ -53,12 +50,9 @@ const useUpdateAgentSkill = () => {
     MESSAGE.UPDATE_AGENT_SKILL_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.error) {
-          message.error(payload.error);
-          return;
-        }
         dispatch(actSaveUpdateAgentSkill(payload?.data));
       },
+      onError: (error) => message.error(error),
     },
   );
   const updateAgentSkill = (data: IAgentSkill) => execute({ data });
@@ -77,6 +71,7 @@ const useDeleteAgentSkill = () => {
           pendingIdRef.current = null;
         }
       },
+      onError: (error) => message.error(error),
     },
   );
   const deleteAgentSkill = (id: number) => {

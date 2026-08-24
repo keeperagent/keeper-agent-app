@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { message } from "antd";
 import {
   MESSAGE,
   RESPONSE_CODE,
@@ -31,6 +32,9 @@ const useDeleteExtension = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_EXTENSION,
     MESSAGE.DELETE_EXTENSION_RES,
+    {
+      onError: (error) => message?.error(error),
+    },
   );
   const deleteExtension = (listId: number[]) => {
     setListDeletedId(listId);
@@ -170,6 +174,7 @@ const useCreateBaseProfileExtension = () => {
     {
       onSuccess: (payload) =>
         setIsCreateBaseSuccess(payload?.isCreateBaseSuccess || false),
+      onError: (error) => message?.error(error),
     },
   );
   return {

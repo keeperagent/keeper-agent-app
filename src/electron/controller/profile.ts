@@ -156,7 +156,13 @@ export const profileController = () => {
         }
       }
 
-      await profileDB.createBulkProfile(listUniqueProfile);
+      const createErr = await profileDB.createBulkProfile(listUniqueProfile);
+      if (createErr) {
+        event.reply(MESSAGE.CREATE_PROFILE_RES, {
+          error: createErr?.message || "Failed to create profiles",
+        });
+        return;
+      }
       event.reply(MESSAGE.CREATE_PROFILE_RES, {
         data: { isDone: true },
       });

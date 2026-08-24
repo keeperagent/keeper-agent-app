@@ -68,27 +68,31 @@ const useUpdateCampaignProfile = () => {
       _campaignProfileUnsubscribe = window?.electron?.on(
         MESSAGE.UPDATE_CAMPAIGN_PROFILE_RES,
         (_event: any, payload: any) => {
-          const { requestId, data } = payload;
+          const { requestId } = payload;
           responseManager.saveResponse(
             responseManager.getKey(
               MESSAGE.UPDATE_CAMPAIGN_PROFILE_RES,
               requestId,
             ),
-            data,
+            payload,
           );
         },
       );
       isUpdateCampaignProfileRegistered = true;
     }
 
-    const profile = await responseManager.getResponse(
+    const payload = await responseManager.getResponse(
       responseManager.getKey(
         MESSAGE.UPDATE_CAMPAIGN_PROFILE_RES,
         uniqRequestId,
       ),
     );
-    dispatch(actSaveUpdateCampaignProfile(profile));
-    return profile;
+    if (payload?.error) {
+      message?.error(payload.error);
+      return payload?.data;
+    }
+    dispatch(actSaveUpdateCampaignProfile(payload?.data));
+    return payload?.data;
   };
 
   return { updateCampaignProfile };
@@ -98,6 +102,9 @@ const useUpdateListCampaignProfile = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.UPDATE_LIST_CAMPAIGN_PROFILE,
     MESSAGE.UPDATE_LIST_CAMPAIGN_PROFILE_RES,
+    {
+      onError: (error) => message?.error(error),
+    },
   );
   const updateListCampaignProfile = ({
     listID,

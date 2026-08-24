@@ -47,9 +47,9 @@ export const perferenceController = () => {
     async (event, payload) => {
       const { requestId, data, recreateAgents } = payload;
       const [res, err] = await preferenceService.updatePreference(data);
-
       if (err) {
         event.reply(MESSAGE.UPDATE_PREFERENCE_RES, {
+          error: err?.message || "Failed to update preference",
           code: RESPONSE_CODE.DUPLICATE_ERROR,
           requestId,
         });

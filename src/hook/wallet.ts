@@ -48,13 +48,10 @@ const useExportWallet = () => {
     MESSAGE.EXPORT_WALLET,
     MESSAGE.EXPORT_WALLET_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          message.error(error);
-        } else {
-          message.success(translate("hook.exportDataDone"));
-        }
+      onSuccess: () => {
+        message.success(translate("hook.exportDataDone"));
       },
+      onError: (error) => message.error(error),
     },
   );
   const exportWallet = ({
@@ -80,16 +77,13 @@ const useDeleteWallet = () => {
     MESSAGE.DELETE_WALLET,
     MESSAGE.DELETE_WALLET_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) {
-          const errMessage = error?.message;
-          if (errMessage === SQL_FOREIGNKEY_ERROR) {
-            message.error(translate("wallet.canNotDeleteWallet"));
-            setHasDependencyError(true);
-          } else {
-            message.error(errMessage);
-            setHasDependencyError(false);
-          }
+      onError: (error) => {
+        if (error === SQL_FOREIGNKEY_ERROR) {
+          message.error(translate("wallet.canNotDeleteWallet"));
+          setHasDependencyError(true);
+        } else {
+          message.error(error);
+          setHasDependencyError(false);
         }
       },
     },
@@ -111,6 +105,7 @@ const useUpdateWallet = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateWallet(payload.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateWallet = (data: IWallet, encryptKey: string) =>
@@ -125,6 +120,7 @@ const useCreateWallet = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveCreateWallet(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const createWallet = (data: IWallet, encryptKey?: string) =>

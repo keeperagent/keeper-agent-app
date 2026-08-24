@@ -66,7 +66,11 @@ export const mcpTokenController = () => {
       for (const tokenId of listId) {
         keeperMcpServer.stopConnectionsByTokenId(tokenId);
       }
-      const [count] = await mcpTokenService.deleteMcpToken(listId);
+      const [count, err] = await mcpTokenService.deleteMcpToken(listId);
+      if (err) {
+        event.reply(MESSAGE.DELETE_MCP_TOKEN_RES, { error: err.message });
+        return;
+      }
       event.reply(MESSAGE.DELETE_MCP_TOKEN_RES, { data: count });
     },
   );

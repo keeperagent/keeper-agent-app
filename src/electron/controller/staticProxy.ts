@@ -33,7 +33,7 @@ export const staticProxyController = () => {
       const err = await staticProxyDB.createBulkStaticProxy(payload?.data);
 
       event.reply(MESSAGE.CREATE_PROXY_RES, {
-        error: err,
+        error: err?.message,
       });
     },
   );
@@ -46,6 +46,7 @@ export const staticProxyController = () => {
       if (err) {
         event.reply(MESSAGE.UPDATE_PROXY_RES, {
           code: RESPONSE_CODE.DUPLICATE_ERROR,
+          error: err?.message,
         });
         return;
       }

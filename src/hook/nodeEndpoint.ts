@@ -28,6 +28,9 @@ const useDeleteNodeEndpoint = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_NODE_ENDPOINT,
     MESSAGE.DELETE_NODE_ENDPOINT_RES,
+    {
+      onError: (error) => message?.error(error),
+    },
   );
   const deleteNodeEndpoint = (listId: number[]) => execute({ data: listId });
   return { deleteNodeEndpoint, loading, isSuccess };
@@ -40,6 +43,7 @@ const useUpdateNodeEndpoint = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateNodeEndpoint(payload?.data)),
+      onError: (error) => message?.error(error),
     },
   );
   const updateNodeEndpoint = (data: INodeEndpoint) => execute({ data });
@@ -51,9 +55,7 @@ const useCreateNodeEndpoint = () => {
     MESSAGE.CREATE_NODE_ENDPOINT,
     MESSAGE.CREATE_NODE_ENDPOINT_RES,
     {
-      onSuccess: ({ error }: any) => {
-        if (error) message.error(error?.message);
-      },
+      onError: (error) => message?.error(error),
     },
   );
   const createNodeEndpoint = (data: INodeEndpoint[]) => execute({ data });

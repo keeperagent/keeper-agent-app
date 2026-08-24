@@ -1,5 +1,5 @@
 import { message } from "antd";
-import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
+import { MESSAGE } from "@/electron/constant";
 import {
   actSaveCreateStaticProxyGroup,
   actSaveGetListStaticProxyGroup,
@@ -17,13 +17,9 @@ const useGetListStaticProxyGroup = () => {
       MESSAGE.GET_LIST_PROXY_GROUP,
       MESSAGE.GET_LIST_PROXY_GROUP_RES,
       {
-        onSuccess: (payload, dispatch) => {
-          if (payload?.error) {
-            message.error(payload?.error);
-            return;
-          }
-          dispatch(actSaveGetListStaticProxyGroup(payload?.data));
-        },
+        onSuccess: (payload, dispatch) =>
+          dispatch(actSaveGetListStaticProxyGroup(payload?.data)),
+        onError: (error) => message.error(error),
       },
     );
   return { loading, getListStaticProxyGroup };
@@ -46,6 +42,9 @@ const useDeleteStaticProxyGroup = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_PROXY_GROUP,
     MESSAGE.DELETE_PROXY_GROUP_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteStaticProxyGroup = (listId: number[]) =>
     execute({ data: listId });
@@ -59,6 +58,7 @@ const useUpdateStaticProxyGroup = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateStaticProxyGroup(payload?.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateStaticProxyGroup = (data: IStaticProxyGroup) => execute({ data });
@@ -72,12 +72,9 @@ const useCreateStaticProxyGroup = () => {
     MESSAGE.CREATE_PROXY_GROUP_RES,
     {
       onSuccess: (payload, dispatch) => {
-        if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR) {
-          message.error(translate("dataDuplicate"));
-          return;
-        }
         dispatch(actSaveCreateStaticProxyGroup(payload.data));
       },
+      onError: (error) => message.error(error || translate("dataDuplicate")),
     },
   );
   const createStaticProxyGroup = (data: IStaticProxyGroup) => execute({ data });

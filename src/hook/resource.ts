@@ -77,6 +77,9 @@ const useDeleteResource = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_RESOURCE,
     MESSAGE.DELETE_RESOURCE_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteResource = (listId: number[]) => execute({ data: listId });
   return { deleteResource, loading, isSuccess };
@@ -89,6 +92,7 @@ const useUpdateResource = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveUpdateResource(payload.data)),
+      onError: (error) => message.error(error),
     },
   );
   const updateResource = (data: IResource, encryptKey?: string) =>

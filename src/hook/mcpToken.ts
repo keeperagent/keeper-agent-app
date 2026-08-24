@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import { IMcpToken, IMcpConnection } from "@/electron/type";
 import type {
@@ -53,6 +54,7 @@ const useCreateMcpToken = () => {
       MESSAGE.CREATE_MCP_TOKEN_RES,
       {
         onSuccess: (payload) => setCreatedToken(payload?.data || null),
+        onError: (error) => message.error(error),
       },
     );
 
@@ -75,6 +77,9 @@ const useDeleteMcpToken = () => {
     useIpcAction<IpcDeleteMcpTokenPayload>(
       MESSAGE.DELETE_MCP_TOKEN,
       MESSAGE.DELETE_MCP_TOKEN_RES,
+      {
+        onError: (error) => message.error(error),
+      },
     );
 
   const deleteMcpToken = (ids: number[]) => execute({ data: ids });

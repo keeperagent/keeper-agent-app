@@ -29,6 +29,9 @@ const useDeleteCampaign = () => {
   const { execute, loading, isSuccess } = useIpcAction(
     MESSAGE.DELETE_CAMPAIGN,
     MESSAGE.DELETE_CAMPAIGN_RES,
+    {
+      onError: (error) => message.error(error),
+    },
   );
   const deleteCampaign = (listId: number[]) => execute({ data: listId });
   return { deleteCampaign, loading, isSuccess };
@@ -82,6 +85,7 @@ const useUpdateCampaign = () => {
         dispatch(actSaveUpdateCampaign(payload?.data));
         setUpdatedData(payload?.data);
       },
+      onError: (error) => message?.error(error),
     },
   );
   const updateCampaign = (data: ICampaign) => execute({ data });
@@ -95,6 +99,7 @@ const useCreateCampaign = () => {
     {
       onSuccess: (payload, dispatch) =>
         dispatch(actSaveCreateCampaign(payload?.data)),
+      onError: (error) => message?.error(error),
     },
   );
   const createCampaign = (data: ICampaign) => execute({ data });

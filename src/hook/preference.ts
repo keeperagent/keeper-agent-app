@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { message } from "antd";
 import { uid } from "uid/secure";
 import { MESSAGE, RESPONSE_CODE } from "@/electron/constant";
 import {
@@ -53,6 +54,7 @@ const useUpdatePreference = () => {
         setLoading(false);
         if (payload?.code === RESPONSE_CODE.DUPLICATE_ERROR || !payload?.data) {
           setIsSuccess(false);
+          message?.error(payload?.error || "Failed to update preference");
           resolve();
           return;
         }
