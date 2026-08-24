@@ -6,7 +6,7 @@ const TopBarWrapper = styled.div`
   max-width: 100vw;
   padding: 1.1rem 3rem;
   font-size: 1.5rem;
-  border-bottom: 1px solid
+  border-bottom: 0.5px solid
     ${({ theme }: { theme: ITheme }) => theme.colorBorder};
   display: flex;
   justify-content: space-between;

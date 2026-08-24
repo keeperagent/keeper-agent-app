@@ -47,7 +47,7 @@ const lightTheme: ITheme = {
   colorBgTransparentLight: "rgba(0, 0, 0, 0.02)",
   colorBgNested: "rgba(99, 102, 241, 0.05)",
   colorBgTag: "#f2f2f2",
-  colorBorder: "#e8e8e8",
+  colorBorder: "#e0e0e0",
   colorBorderInput: "#c0c2c4",
   colorBorderDarkMode: "transparent",
   menuLabelActiveColor: "rgb(79, 70, 229)",
@@ -82,7 +82,7 @@ const lightTheme: ITheme = {
 };
 
 const darkTheme: ITheme = {
-  colorBgPrimary: "hsl(220 20% 4%)",
+  colorBgPrimary: "rgb(20, 20, 20)",
   colorBgSecondary: "rgb(20, 20, 20)",
   colorBgTransparent: "rgba(0, 0, 0, 0.7)",
   colorBgTransparentLight: "rgba(0, 0, 0, 0.3)",
@@ -118,7 +118,7 @@ const darkTheme: ITheme = {
   colorBgUserMessage: "rgb(45, 45, 45)",
   colorBgCard: "rgb(45, 45, 45)",
   colorBorderHover: "rgba(140, 140, 140, 0.8)",
-  colorBgPage: "hsl(220 20% 4%)",
+  colorBgPage: "rgb(20, 20, 20)",
   colorBgHistoryBody: "rgba(255, 255, 255, 0.04)",
 };
 

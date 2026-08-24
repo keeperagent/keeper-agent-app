@@ -13,7 +13,8 @@ const SidebarWrapper = styled.div`
   justify-content: flex-start;
   box-sizing: border-box;
   z-index: 2;
-  border-right: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+  border-right: 0.5px solid
+    ${({ theme }: { theme: ITheme }) => theme.colorBorder};
 
   & a {
     text-decoration: none;
@@ -73,7 +74,8 @@ const SidebarWrapper = styled.div`
     justify-content: center;
     align-items: center;
     padding: 1.5rem;
-    border-top: 1px solid ${({ theme }: { theme: ITheme }) => theme.colorBorder};
+    border-top: 0.5px solid
+      ${({ theme }: { theme: ITheme }) => theme.colorBorder};
     cursor: pointer;
 
     .icon {
