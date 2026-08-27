@@ -714,17 +714,23 @@ export class OnChainWorkflow {
       });
 
       if (txHash && walletAddress) {
-        await this.recordTransferActivity({
-          config,
-          tokenType,
-          tokenAddress,
-          listNodeProvider,
-          txHash,
-          walletAddress,
-          toAddress,
-          amount,
-          flowProfile,
-        });
+        try {
+          await this.recordTransferActivity({
+            config,
+            tokenType,
+            tokenAddress,
+            listNodeProvider,
+            txHash,
+            walletAddress,
+            toAddress,
+            amount,
+            flowProfile,
+          });
+        } catch (error: any) {
+          logEveryWhere({
+            message: `recordTransferActivity() error: ${error?.message}`,
+          });
+        }
       }
 
       const newListVariable = updateVariable(listVariable, {

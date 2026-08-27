@@ -190,12 +190,22 @@ const WalletActivityView = (props: any) => {
   }, [searchText, page, pageSize, walletGroupId]);
 
   const onPageChange = (nextPage: number, nextPageSize: number) => {
-    if (nextPage !== page) {
-      onSetPage(nextPage);
-    }
     if (nextPageSize !== pageSize) {
       props.actSetPageSize(nextPageSize);
+      onSetPage(1);
+    } else if (nextPage !== page) {
+      onSetPage(nextPage);
     }
+  };
+
+  const onChangeSearchText = (value: string) => {
+    onSetPage(1);
+    onSetSearchText(value);
+  };
+
+  const onChangeWalletGroupId = (value?: number) => {
+    onSetPage(1);
+    setWalletGroupId(value);
   };
 
   const onShowTotalData = () => {
@@ -208,7 +218,7 @@ const WalletActivityView = (props: any) => {
       <WalletActivityViewWrapper>
         <div className="heading">
           <SearchInput
-            onChange={onSetSearchText}
+            onChange={onChangeSearchText}
             value={searchText}
             placeholder={translate("walletActivity.searchPlaceholder")}
             style={{ width: "34rem" }}
@@ -219,7 +229,7 @@ const WalletActivityView = (props: any) => {
             size="large"
             style={{ width: "20rem" }}
             value={walletGroupId}
-            onChange={setWalletGroupId}
+            onChange={onChangeWalletGroupId}
             allowClear
             placeholder={translate("walletActivity.allWalletGroup")}
             options={listWalletGroup?.map((group: IWalletGroup) => ({

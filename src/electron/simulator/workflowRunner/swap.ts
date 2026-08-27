@@ -42,6 +42,7 @@ import { SwapOnJupiterManager } from "@/electron/simulator/category/onchain/jupi
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import { getSolanaProvider } from "@/electron/inject";
 import { recordActivity } from "@/electron/service/walletActivity";
+import { logEveryWhere } from "@/electron/service/util";
 import { WorkflowRunnerArgs, NodeHandler } from "./index";
 
 export class SwapWorkflow {
@@ -173,57 +174,63 @@ export class SwapWorkflow {
       }
 
       if (txHash && flowProfile.profile?.wallet?.address) {
-        const chainKey = getEvmChainKeyFromChainId(swapInput.chainId);
-        if (chainKey) {
-          const evmProvider = new EVMProvider();
-          const [[inputTokenContract], [outputTokenContract]] =
-            await Promise.all([
-              swapInput.isInputNativeToken
-                ? [null, null]
-                : evmProvider.getTokenContract(
-                    listNodeProvider,
-                    swapInput.inputTokenAddress,
-                  ),
-              swapInput.isOutputNativeToken
-                ? [null, null]
-                : evmProvider.getTokenContract(
-                    listNodeProvider,
-                    swapInput.outputTokenAddress,
-                  ),
-            ]);
+        try {
+          const chainKey = getEvmChainKeyFromChainId(swapInput.chainId);
+          if (chainKey) {
+            const evmProvider = new EVMProvider();
+            const [[inputTokenContract], [outputTokenContract]] =
+              await Promise.all([
+                swapInput.isInputNativeToken
+                  ? [null, null]
+                  : evmProvider.getTokenContract(
+                      listNodeProvider,
+                      swapInput.inputTokenAddress,
+                    ),
+                swapInput.isOutputNativeToken
+                  ? [null, null]
+                  : evmProvider.getTokenContract(
+                      listNodeProvider,
+                      swapInput.outputTokenAddress,
+                    ),
+              ]);
 
-          await recordActivity(
-            {
-              walletId: flowProfile.profile?.walletId,
-              walletGroupId: flowProfile.profile?.walletGroupId,
-              walletAddress: flowProfile.profile.wallet.address,
-              chain: chainKey,
-              txHash,
-              actionType: WALLET_ACTIVITY_ACTION_TYPE.SWAP,
-              protocol: config?.isUniswap
-                ? WALLET_ACTIVITY_PROTOCOL.UNISWAP
-                : WALLET_ACTIVITY_PROTOCOL.PANCAKESWAP,
-              source: WALLET_ACTIVITY_SOURCE.WORKFLOW,
-              token0Address: swapInput.inputTokenAddress,
-              token0Symbol:
-                inputTokenContract?.symbol ||
-                (swapInput.isInputNativeToken
-                  ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[chainKey]
-                  : undefined),
-              token0Amount: amount,
-              token1Address: swapInput.outputTokenAddress,
-              token1Symbol:
-                outputTokenContract?.symbol ||
-                (swapInput.isOutputNativeToken
-                  ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[chainKey]
-                  : undefined),
-              token1Amount: outputAmount || undefined,
-            },
-            {
-              isToken0Native: swapInput.isInputNativeToken,
-              isToken1Native: swapInput.isOutputNativeToken,
-            },
-          );
+            await recordActivity(
+              {
+                walletId: flowProfile.profile?.walletId,
+                walletGroupId: flowProfile.profile?.walletGroupId,
+                walletAddress: flowProfile.profile.wallet.address,
+                chain: chainKey,
+                txHash,
+                actionType: WALLET_ACTIVITY_ACTION_TYPE.SWAP,
+                protocol: config?.isUniswap
+                  ? WALLET_ACTIVITY_PROTOCOL.UNISWAP
+                  : WALLET_ACTIVITY_PROTOCOL.PANCAKESWAP,
+                source: WALLET_ACTIVITY_SOURCE.WORKFLOW,
+                token0Address: swapInput.inputTokenAddress,
+                token0Symbol:
+                  inputTokenContract?.symbol ||
+                  (swapInput.isInputNativeToken
+                    ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[chainKey]
+                    : undefined),
+                token0Amount: amount,
+                token1Address: swapInput.outputTokenAddress,
+                token1Symbol:
+                  outputTokenContract?.symbol ||
+                  (swapInput.isOutputNativeToken
+                    ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[chainKey]
+                    : undefined),
+                token1Amount: outputAmount || undefined,
+              },
+              {
+                isToken0Native: swapInput.isInputNativeToken,
+                isToken1Native: swapInput.isOutputNativeToken,
+              },
+            );
+          }
+        } catch (error: any) {
+          logEveryWhere({
+            message: `recordActivity() error: ${error?.message}`,
+          });
         }
       }
 
@@ -345,61 +352,66 @@ export class SwapWorkflow {
       }
 
       if (txHash && flowProfile.profile?.wallet?.address) {
-        const evmProvider = new EVMProvider();
-        const [[inputTokenContract], [outputTokenContract]] = await Promise.all(
-          [
-            swapInput.isInputNativeToken
-              ? [null, null]
-              : evmProvider.getTokenContract(
-                  listNodeProvider,
-                  swapInput.inputTokenAddress,
-                ),
-            swapInput.isOutputNativeToken
-              ? [null, null]
-              : evmProvider.getTokenContract(
-                  listNodeProvider,
-                  swapInput.outputTokenAddress,
-                ),
-          ],
-        );
-        const token1Amount = swapTxData?.amountOut
-          ? new Big(swapTxData.amountOut)
-              .div(new Big(10).pow(swapInput.outputTokenDecimal || 18))
-              .toString()
-          : undefined;
+        try {
+          const evmProvider = new EVMProvider();
+          const [[inputTokenContract], [outputTokenContract]] =
+            await Promise.all([
+              swapInput.isInputNativeToken
+                ? [null, null]
+                : evmProvider.getTokenContract(
+                    listNodeProvider,
+                    swapInput.inputTokenAddress,
+                  ),
+              swapInput.isOutputNativeToken
+                ? [null, null]
+                : evmProvider.getTokenContract(
+                    listNodeProvider,
+                    swapInput.outputTokenAddress,
+                  ),
+            ]);
+          const token1Amount = swapTxData?.amountOut
+            ? new Big(swapTxData.amountOut)
+                .div(new Big(10).pow(swapInput.outputTokenDecimal || 18))
+                .toString()
+            : undefined;
 
-        await recordActivity(
-          {
-            walletId: flowProfile.profile?.walletId,
-            walletGroupId: flowProfile.profile?.walletGroupId,
-            walletAddress: flowProfile.profile.wallet.address,
-            chain: swapInput.chainKey,
-            txHash,
-            actionType: WALLET_ACTIVITY_ACTION_TYPE.SWAP,
-            protocol: WALLET_ACTIVITY_PROTOCOL.KYBERSWAP,
-            source: WALLET_ACTIVITY_SOURCE.WORKFLOW,
-            token0Address: swapInput.inputTokenAddress,
-            token0Symbol:
-              inputTokenContract?.symbol ||
-              (swapInput.isInputNativeToken
-                ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[swapInput.chainKey]
-                : undefined),
-            token0Amount: amount,
-            token0UsdValue: swapTxData?.amountInUsd || undefined,
-            token1Address: swapInput.outputTokenAddress,
-            token1Symbol:
-              outputTokenContract?.symbol ||
-              (swapInput.isOutputNativeToken
-                ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[swapInput.chainKey]
-                : undefined),
-            token1Amount,
-            token1UsdValue: swapTxData?.amountOutUsd || undefined,
-          },
-          {
-            isToken0Native: swapInput.isInputNativeToken,
-            isToken1Native: swapInput.isOutputNativeToken,
-          },
-        );
+          await recordActivity(
+            {
+              walletId: flowProfile.profile?.walletId,
+              walletGroupId: flowProfile.profile?.walletGroupId,
+              walletAddress: flowProfile.profile.wallet.address,
+              chain: swapInput.chainKey,
+              txHash,
+              actionType: WALLET_ACTIVITY_ACTION_TYPE.SWAP,
+              protocol: WALLET_ACTIVITY_PROTOCOL.KYBERSWAP,
+              source: WALLET_ACTIVITY_SOURCE.WORKFLOW,
+              token0Address: swapInput.inputTokenAddress,
+              token0Symbol:
+                inputTokenContract?.symbol ||
+                (swapInput.isInputNativeToken
+                  ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[swapInput.chainKey]
+                  : undefined),
+              token0Amount: amount,
+              token0UsdValue: swapTxData?.amountInUsd || undefined,
+              token1Address: swapInput.outputTokenAddress,
+              token1Symbol:
+                outputTokenContract?.symbol ||
+                (swapInput.isOutputNativeToken
+                  ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[swapInput.chainKey]
+                  : undefined),
+              token1Amount,
+              token1UsdValue: swapTxData?.amountOutUsd || undefined,
+            },
+            {
+              isToken0Native: swapInput.isInputNativeToken,
+              isToken1Native: swapInput.isOutputNativeToken,
+            },
+          );
+        } catch (error: any) {
+          logEveryWhere({
+            message: `recordActivity() error: ${error?.message}`,
+          });
+        }
       }
 
       const newListVariable = updateVariable(listVariable, {
