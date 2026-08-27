@@ -38,7 +38,7 @@
     "@uniswap/universal-router-sdk": "^4.19.6",
     "@uniswap/v2-sdk": "^4.15.2",
     "@uniswap/v3-sdk": "^3.25.2",
-    "@uniswap/v4-sdk": "^1.21.4",
+    "@uniswap/v4-sdk": "^2.3.2",
     "@vscode/sqlite3": "^5.1.12-vscode",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "@xenova/transformers": "^2.17.2",

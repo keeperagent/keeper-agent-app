@@ -238,6 +238,11 @@ export type IpcUpdateResourcePayload = {
   encryptKey?: string;
 };
 
+export type IpcGetListWalletActivityPayload = IpcPagePayload & {
+  walletAddress?: string;
+  walletGroupId?: number;
+};
+
 export type IpcImportResourcePayload = {
   groupId: number;
   listFilePath: string[];

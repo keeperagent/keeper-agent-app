@@ -44,7 +44,13 @@ import {
   WORKFLOW_TYPE,
   SELECT_CHAIN_OUTPUT,
   SELECT_TOKEN_OUTPUT,
+  TOKEN_TYPE,
+  WALLET_ACTIVITY_ACTION_TYPE,
+  WALLET_ACTIVITY_SOURCE,
+  MAP_CHAIN_KEY_TO_NATIVE_SYMBOL,
+  getEvmChainKeyFromChainId,
 } from "@/electron/constant";
+import { recordActivity } from "@/electron/service/walletActivity";
 import { Pricing } from "@/electron/simulator/category/pricing";
 import { logEveryWhere } from "@/electron/service/util";
 import {
@@ -707,6 +713,20 @@ export class OnChainWorkflow {
         message: `transferToken() for wallet ${walletAddress}, transaction hash: ${txHash}`,
       });
 
+      if (txHash && walletAddress) {
+        await this.recordTransferActivity({
+          config,
+          tokenType,
+          tokenAddress,
+          listNodeProvider,
+          txHash,
+          walletAddress,
+          toAddress,
+          amount,
+          flowProfile,
+        });
+      }
+
       const newListVariable = updateVariable(listVariable, {
         variable: config?.variable || "",
         value: txHash,
@@ -728,6 +748,106 @@ export class OnChainWorkflow {
       taskName: "transferToken",
       withoutBrowser: true,
     });
+  };
+
+  private recordTransferActivity = async ({
+    config,
+    tokenType,
+    tokenAddress,
+    listNodeProvider,
+    txHash,
+    walletAddress,
+    toAddress,
+    amount,
+    flowProfile,
+  }: {
+    config: ITransferTokenNodeConfig;
+    tokenType: string;
+    tokenAddress: string;
+    listNodeProvider: string[];
+    txHash: string;
+    walletAddress: string;
+    toAddress: string;
+    amount: string;
+    flowProfile: IFlowProfile;
+  }): Promise<void> => {
+    const isNative = tokenType === TOKEN_TYPE.NATIVE_TOKEN;
+    let chain: string | undefined;
+    let tokenSymbol: string | undefined;
+
+    if (config?.chainType === CHAIN_TYPE.SOLANA) {
+      chain = "solana";
+      if (!isNative) {
+        const [connection] =
+          this.solanaProvider.getNextProvider(listNodeProvider);
+        if (connection) {
+          tokenSymbol = await this.solanaProvider.getTokenSymbol(
+            tokenAddress,
+            connection,
+          );
+        }
+      }
+    } else if (config?.chainType === CHAIN_TYPE.EVM) {
+      const [provider] = this.evmProvider.getNextProvider(listNodeProvider);
+      if (provider) {
+        const network = await provider.getNetwork();
+        chain = getEvmChainKeyFromChainId(network.chainId);
+      }
+      if (!isNative && chain) {
+        const [tokenContract] = await this.evmProvider.getTokenContract(
+          listNodeProvider,
+          tokenAddress,
+        );
+        tokenSymbol = tokenContract?.symbol;
+      }
+    } else if (config?.chainType === CHAIN_TYPE.APTOS) {
+      chain = "aptos";
+      if (!isNative) {
+        const [provider] = this.aptosProvider.getNextProvider(listNodeProvider);
+        if (provider) {
+          tokenSymbol = await this.aptosProvider.getTokenSymbol(
+            tokenAddress,
+            provider,
+          );
+        }
+      }
+    } else if (config?.chainType === CHAIN_TYPE.SUI) {
+      chain = "sui";
+      if (!isNative) {
+        const [provider] = this.suiProvider.getNextProvider(listNodeProvider);
+        if (provider) {
+          tokenSymbol = await this.suiProvider.getTokenSymbol(
+            tokenAddress,
+            provider,
+          );
+        }
+      }
+    }
+
+    if (!chain) {
+      return;
+    }
+
+    if (!tokenSymbol && isNative) {
+      tokenSymbol = MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[chain];
+    }
+
+    await recordActivity(
+      {
+        walletId: flowProfile.profile?.walletId,
+        walletGroupId: flowProfile.profile?.walletGroupId,
+        walletAddress,
+        chain,
+        txHash,
+        actionType: WALLET_ACTIVITY_ACTION_TYPE.TRANSFER,
+        source: WALLET_ACTIVITY_SOURCE.WORKFLOW,
+        receiverAddress: toAddress,
+        token0Address: isNative ? undefined : tokenAddress,
+        token0Symbol: tokenSymbol,
+        token0Amount: amount,
+      },
+      { isToken0Native: isNative },
+    );
   };
 
   approveRevokeTokenEVM = async (

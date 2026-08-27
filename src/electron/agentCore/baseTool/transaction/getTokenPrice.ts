@@ -2,8 +2,10 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import {
   CUSTOM_CHAIN_ID,
-  KYBERSWAP_CHAIN_KEY,
   SOL_MINT_ADDRESS,
+  EVM_CHAIN_ID,
+  MAP_CHAIN_KEY_TO_NATIVE_COINGECKO_ID,
+  MAP_CHAIN_KEY_TO_NATIVE_SYMBOL,
 } from "@/electron/constant";
 import {
   safeStringify,
@@ -15,112 +17,17 @@ import { TOOL_KEYS } from "@/electron/constant";
 import { logEveryWhere } from "@/electron/service/util";
 import { ToolContext } from "@/electron/agentCore/toolContext";
 
-// Map chainKey to chainId for DexScreener
-const mapChainKeyToChainId: Record<string, number> = {
-  solana: CUSTOM_CHAIN_ID.SOLANA,
-  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: 1,
-  [KYBERSWAP_CHAIN_KEY.BSC]: 56,
-  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: 42161,
-  [KYBERSWAP_CHAIN_KEY.POLYGON]: 137,
-  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: 43114,
-  [KYBERSWAP_CHAIN_KEY.BASE]: 8453,
-  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: 10,
-  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: 324,
-  [KYBERSWAP_CHAIN_KEY.LINEA]: 59144,
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: 534352,
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: 5000,
-  [KYBERSWAP_CHAIN_KEY.BLAST]: 81457,
-  [KYBERSWAP_CHAIN_KEY.SONIC]: 146,
-  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: 130,
-  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: 80094,
-  [KYBERSWAP_CHAIN_KEY.RONIN]: 2020,
-  [KYBERSWAP_CHAIN_KEY.MONAD]: 143,
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: 9745,
-  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: 999,
-};
-
-// Map chainKey to CoinGecko ID for native tokens
-const mapChainKeyToNativeTokenCoingekoId: Record<string, string> = {
-  // Solana
-  solana: "solana",
-
-  // Ethereum and EVM chains that use ETH
-  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.BASE]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.LINEA]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.BLAST]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ethereum",
-
-  // BSC/BNB Chain
-  [KYBERSWAP_CHAIN_KEY.BSC]: "binancecoin",
-
-  // Polygon
-  [KYBERSWAP_CHAIN_KEY.POLYGON]: "polygon-ecosystem-token",
-
-  // Avalanche
-  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "avalanche-2",
-
-  // Mantle
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: "mantle",
-
-  // Sonic
-  [KYBERSWAP_CHAIN_KEY.SONIC]: "sonic-3",
-
-  // Berachain
-  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "berachain-bera",
-
-  // Ronin
-  [KYBERSWAP_CHAIN_KEY.RONIN]: "ronin",
-
-  // Monad
-  [KYBERSWAP_CHAIN_KEY.MONAD]: "monad",
-
-  // Plasma
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: "plasma",
-
-  // HyperEVM
-  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "hyperliquid",
-};
-
-// Map chainKey to native token symbol
-const mapChainKeyToNativeTokenSymbol: Record<string, string> = {
-  solana: "SOL",
-  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.BASE]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.LINEA]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.BLAST]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.BSC]: "BNB",
-  [KYBERSWAP_CHAIN_KEY.POLYGON]: "MATIC",
-  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "AVAX",
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: "MNT",
-  [KYBERSWAP_CHAIN_KEY.SONIC]: "SONIC",
-  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "BERA",
-  [KYBERSWAP_CHAIN_KEY.RONIN]: "RON",
-  [KYBERSWAP_CHAIN_KEY.MONAD]: "MON",
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: "XPL",
-  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "HYPE",
-};
-
 // Helper function to get native token CoinGecko ID for current chainKey
 // Returns CoinGecko ID if chainKey is valid, null otherwise
 const getNativeTokenCoingeckoIdForChain = (chainKey: string): string | null => {
   const normalizedChainKey = chainKey.toLowerCase().trim();
-  return mapChainKeyToNativeTokenCoingekoId[normalizedChainKey] || null;
+  return MAP_CHAIN_KEY_TO_NATIVE_COINGECKO_ID[normalizedChainKey] || null;
 };
 
 // Helper function to get native token symbol for current chainKey
 const getNativeTokenSymbolForChain = (chainKey: string): string | null => {
   const normalizedChainKey = chainKey.toLowerCase().trim();
-  return mapChainKeyToNativeTokenSymbol[normalizedChainKey] || null;
+  return MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[normalizedChainKey] || null;
 };
 
 const DEFAULT_TIMEOUT_MS = 10000;
@@ -248,7 +155,10 @@ export const getTokenPriceTool = (toolContext?: ToolContext) => {
         }
 
         // Use DexScreener for non-native tokens - requires chainId
-        const chainId = mapChainKeyToChainId[normalizedChainKey];
+        const chainId =
+          normalizedChainKey === "solana"
+            ? CUSTOM_CHAIN_ID.SOLANA
+            : EVM_CHAIN_ID[normalizedChainKey];
 
         if (chainId === undefined) {
           return safeStringify({

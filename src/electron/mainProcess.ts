@@ -45,6 +45,7 @@ import { agentProfileController } from "./controller/agentProfile";
 import { mcpTokenController } from "./controller/mcpToken";
 import { agentTaskController } from "./controller/agentTask";
 import { appLogController } from "./controller/appLog";
+import { walletActivityController } from "./controller/walletActivity";
 import { agentTaskDispatcher } from "./service/agentTaskDispatcher";
 import { licenseService } from "./service/licenseService";
 import { keeperMcpServer } from "./mcpServer";
@@ -94,6 +95,7 @@ const runMainProcess = () => {
   mcpTokenController();
   agentTaskController();
   appLogController();
+  walletActivityController();
 
   scheduleManager.start();
   whatsappService.start();

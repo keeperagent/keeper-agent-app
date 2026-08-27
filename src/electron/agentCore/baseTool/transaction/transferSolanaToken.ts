@@ -1,13 +1,19 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import Big from "big.js";
-import { TOKEN_TYPE } from "@/electron/constant";
+import {
+  TOKEN_TYPE,
+  WALLET_ACTIVITY_ACTION_TYPE,
+  WALLET_ACTIVITY_SOURCE,
+  MAP_CHAIN_KEY_TO_NATIVE_SYMBOL,
+} from "@/electron/constant";
 import { ICampaignProfile, IWallet } from "@/electron/type";
 import { safeStringify } from "@/electron/agentCore/utils";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { decryptWallet } from "@/electron/service/wallet";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
+import { recordActivity } from "@/electron/service/walletActivity";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
 import {
   redistributeToCapacity,
@@ -326,6 +332,36 @@ export const transferSolanaTokenTool = (toolContext?: ToolContext) =>
               amount: transferAmount,
               txHash: txHash,
             });
+
+            if (txHash && sourceEntry.wallet.address) {
+              const [connection] =
+                solanaProvider.getNextProvider(listNodeProvider);
+              const tokenSymbol = isNative
+                ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL.solana
+                : connection
+                  ? await solanaProvider.getTokenSymbol(
+                      tokenAddress!.trim(),
+                      connection,
+                    )
+                  : undefined;
+
+              await recordActivity(
+                {
+                  walletId: sourceEntry.wallet.id,
+                  walletGroupId: sourceEntry.wallet.groupId,
+                  walletAddress: sourceEntry.wallet.address,
+                  chain: "solana",
+                  txHash,
+                  actionType: WALLET_ACTIVITY_ACTION_TYPE.TRANSFER,
+                  source: WALLET_ACTIVITY_SOURCE.AGENT,
+                  receiverAddress: target.address,
+                  token0Address: isNative ? undefined : tokenAddress!.trim(),
+                  token0Symbol: tokenSymbol,
+                  token0Amount: transferAmount.toString(),
+                },
+                { isToken0Native: isNative },
+              );
+            }
           }
         } catch (err: any) {
           results.push({

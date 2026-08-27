@@ -9,10 +9,12 @@ import { useTranslation } from "@/hook";
 import { WalletPageWrapper } from "./style";
 import WalletGroup from "./WalletGroup";
 import ManageWallet from "./ManageWallet";
+import WalletActivityView from "./WalletActivityView";
 
 export const VIEW_MODE = {
   WALLET: "WALLET",
   WALLET_GROUP: "WALLET_GROUP",
+  WALLET_ACTIVITY: "WALLET_ACTIVITY",
 };
 
 const WalletPage = (props: any) => {
@@ -29,7 +31,7 @@ const WalletPage = (props: any) => {
 
   useEffect(() => {
     setViewMode(
-      mode && mode !== "undefined" ? mode?.toString() : VIEW_MODE.WALLET_GROUP
+      mode && mode !== "undefined" ? mode?.toString() : VIEW_MODE.WALLET_GROUP,
     );
   }, [mode]);
 
@@ -51,16 +53,26 @@ const WalletPage = (props: any) => {
               key: VIEW_MODE.WALLET,
               label: translate("wallet.allWallet"),
             },
+            {
+              key: VIEW_MODE.WALLET_ACTIVITY,
+              label: translate("wallet.activity"),
+            },
           ]}
           onChange={onChangeViewMode}
         />
       </div>
 
-      {viewMode === VIEW_MODE.WALLET ? <ManageWallet /> : <WalletGroup />}
+      {viewMode === VIEW_MODE.WALLET_ACTIVITY ? (
+        <WalletActivityView />
+      ) : viewMode === VIEW_MODE.WALLET ? (
+        <ManageWallet />
+      ) : (
+        <WalletGroup />
+      )}
     </WalletPageWrapper>
   );
 };
 
 export default connect((_state: RootState) => ({}), { actSetPageName })(
-  WalletPage
+  WalletPage,
 );

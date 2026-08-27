@@ -133,12 +133,16 @@ export class SwapOnPancakeswap {
     privateKey: string,
     timeout: number,
     logInfo: IStructuredLogPayload,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, string | null]> {
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     const wallet = new ethers.Wallet(privateKey, provider);
@@ -189,17 +193,17 @@ export class SwapOnPancakeswap {
     timeout: number,
     txIndex: number,
     logInfo: IStructuredLogPayload,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, string | null]> {
     try {
       const [poolType, poolTypeErr] = await this.poolProvider.getPoolType(
         input.poolAddress,
         provider,
       );
       if (poolTypeErr) {
-        return [null, poolTypeErr];
+        return [null, poolTypeErr, null];
       }
       if (!poolType) {
-        return [null, Error("can not get pool type")];
+        return [null, Error("can not get pool type"), null];
       }
 
       input = {
@@ -209,7 +213,7 @@ export class SwapOnPancakeswap {
 
       const validatedErr = await this.validateSwap(input, wallet);
       if (validatedErr) {
-        return [null, validatedErr];
+        return [null, validatedErr, null];
       }
 
       const [inputTokenContract] = await this.evmProvider.getTokenContract(
@@ -237,7 +241,7 @@ export class SwapOnPancakeswap {
         txIndex,
       );
       if (err) {
-        return [null, err];
+        return [null, err, null];
       }
 
       return this.executeSwap(
@@ -249,7 +253,7 @@ export class SwapOnPancakeswap {
         logInfo,
       );
     } catch (err: any) {
-      return [null, err];
+      return [null, err, null];
     }
   }
 
@@ -399,7 +403,7 @@ export class SwapOnPancakeswap {
     nonce: number,
     timeout: number,
     logInfo: IStructuredLogPayload,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, string | null]> {
     const [inputToken, outputToken] = this.getSwapToken(input);
     const amountIn = this.getAmountIn(input.amount, input.inputTokenDecimal);
 
@@ -424,7 +428,11 @@ export class SwapOnPancakeswap {
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     let tradeCommand: SmartRouterTrade<TradeType> | null = null;
@@ -436,7 +444,7 @@ export class SwapOnPancakeswap {
         provider,
       );
       if (v3PoolErr || !pool) {
-        return [null, v3PoolErr];
+        return [null, v3PoolErr, null];
       }
 
       tradeCommand = await this.getPancakeV3TradeCommand(
@@ -453,7 +461,7 @@ export class SwapOnPancakeswap {
         provider,
       );
       if (v2PoolErr || !pool) {
-        return [null, v2PoolErr];
+        return [null, v2PoolErr, null];
       }
 
       tradeCommand = this.getPancakeV2TradeCommand(
@@ -470,7 +478,7 @@ export class SwapOnPancakeswap {
         provider,
       );
       if (clPoolErr || !clPool) {
-        return [null, clPoolErr];
+        return [null, clPoolErr, null];
       }
       tradeCommand = await this.getInfinityClTradeCommand(
         tokenUsedAsInput,
@@ -486,7 +494,7 @@ export class SwapOnPancakeswap {
         provider,
       );
       if (binPoolErr || !binPool) {
-        return [null, binPoolErr];
+        return [null, binPoolErr, null];
       }
       tradeCommand = this.getInfinityBinTradeCommand(
         tokenUsedAsInput,
@@ -496,7 +504,7 @@ export class SwapOnPancakeswap {
       );
     }
     if (tradeCommand === null) {
-      return [null, Error("can not build trade")];
+      return [null, Error("can not build trade"), null];
     }
 
     const priceImpact = Math.abs(
@@ -513,6 +521,7 @@ export class SwapOnPancakeswap {
         Error(
           `Pancakeswap trade error, price impact is too high, max is ${input.priceImpact}%, current is ${priceImpact}%`,
         ),
+        null,
       ];
     }
 
@@ -532,7 +541,7 @@ export class SwapOnPancakeswap {
       provider,
     );
     if (errGasLimit) {
-      return [null, errGasLimit];
+      return [null, errGasLimit, null];
     }
     if (!input.isUseCustomGasLimit && estimatedGasLimit !== null) {
       gasLimit = estimatedGasLimit;
@@ -569,10 +578,12 @@ export class SwapOnPancakeswap {
       gasLimit,
     };
 
+    const outputAmount = tradeCommand.outputAmount.toExact();
+
     const startTime = new Date().getTime();
     const tx = await wallet.sendTransaction(txRequest);
     if (!input.shouldWaitTransactionComfirmed) {
-      return [tx.hash, null];
+      return [tx.hash, null, outputAmount];
     }
 
     await sendWithTimeout(tx.wait(), timeout);
@@ -586,7 +597,7 @@ export class SwapOnPancakeswap {
         (endTime - startTime) / 1000
       } seconds`,
     });
-    return [tx.hash, null];
+    return [tx.hash, null, outputAmount];
   }
 
   private getPancakeV2TradeCommand(

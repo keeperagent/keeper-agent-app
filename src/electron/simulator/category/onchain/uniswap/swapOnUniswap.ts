@@ -14,6 +14,7 @@ import {
   SwapRouter,
   UNIVERSAL_ROUTER_ADDRESS,
   UniversalRouterVersion,
+  Permit2Permit,
 } from "@uniswap/universal-router-sdk";
 import {
   Pool as V4Pool,
@@ -23,7 +24,6 @@ import {
 import { Pool, Trade as V3Trade, Route as V3Route } from "@uniswap/v3-sdk";
 import { Trade as V2Trade, Route as V2Route, Pair } from "@uniswap/v2-sdk";
 import { Trade as RouterTrade } from "@uniswap/router-sdk";
-import { Permit2Permit } from "@uniswap/universal-router-sdk/dist/utils/inputTokens";
 import {
   permit2Address,
   AllowanceProvider,
@@ -136,12 +136,16 @@ export class SwapOnUniswap {
     privateKey: string,
     timeout: number,
     logInfo: IStructuredLogPayload,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, string | null]> {
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     if (input.inputTokenAddress === nullAddress) {
@@ -199,17 +203,17 @@ export class SwapOnUniswap {
     timeout: number,
     txIndex: number,
     logInfo: IStructuredLogPayload,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, string | null]> {
     try {
       const [poolType, poolTypeErr] = await this.poolProvider.getPoolType(
         input.poolAddress,
         provider,
       );
       if (poolTypeErr) {
-        return [null, poolTypeErr];
+        return [null, poolTypeErr, null];
       }
       if (!poolType) {
-        return [null, Error("can not get pool type")];
+        return [null, Error("can not get pool type"), null];
       }
 
       input = {
@@ -219,7 +223,7 @@ export class SwapOnUniswap {
 
       const validatedErr = await this.validateSwap(input, wallet);
       if (validatedErr) {
-        return [null, validatedErr];
+        return [null, validatedErr, null];
       }
 
       if (input.isInputNativeToken) {
@@ -263,7 +267,7 @@ export class SwapOnUniswap {
         txIndex,
       );
       if (err) {
-        return [null, err];
+        return [null, err, null];
       }
 
       return this.executeSwap(
@@ -275,7 +279,7 @@ export class SwapOnUniswap {
         logInfo,
       );
     } catch (err: any) {
-      return [null, err];
+      return [null, err, null];
     }
   }
 
@@ -426,7 +430,7 @@ export class SwapOnUniswap {
     nonce: number,
     timeout: number,
     logInfo: IStructuredLogPayload,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, string | null]> {
     const [inputToken, outputToken] = this.getSwapToken(input);
     const amountIn = this.getAmountIn(input.amount, input.inputTokenDecimal);
 
@@ -451,7 +455,11 @@ export class SwapOnUniswap {
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     let tradeCommand: UniswapTrade | null = null;
@@ -465,7 +473,7 @@ export class SwapOnUniswap {
         provider,
       );
       if (v3PoolErr || !pool) {
-        return [null, v3PoolErr];
+        return [null, v3PoolErr, null];
       }
 
       if (inputToken.address === pool.token1.address) {
@@ -487,7 +495,7 @@ export class SwapOnUniswap {
         provider,
       );
       if (v4PoolErr || !pool) {
-        return [null, v4PoolErr];
+        return [null, v4PoolErr, null];
       }
 
       const deltaDecimal = pool.token0.decimals - pool.token1.decimals;
@@ -501,6 +509,7 @@ export class SwapOnUniswap {
           Error(
             `can not get price before swap, sqrtRatioX96: ${pool.sqrtRatioX96.toString()}, deltaDecimal: ${deltaDecimal}`,
           ),
+          null,
         ];
       }
 
@@ -525,7 +534,7 @@ export class SwapOnUniswap {
         provider,
       );
       if (v2PoolErr || !pool) {
-        return [null, v2PoolErr];
+        return [null, v2PoolErr, null];
       }
 
       if (inputToken.address === pool.token1.address) {
@@ -541,7 +550,7 @@ export class SwapOnUniswap {
       );
     }
     if (tradeCommand === null) {
-      return [null, Error("can not build trade")];
+      return [null, Error("can not build trade"), null];
     }
 
     let priceImpact = Math.abs(
@@ -561,6 +570,7 @@ export class SwapOnUniswap {
           Error(
             `can not get price after swap, poolAddress: ${input.poolAddress}`,
           ),
+          null,
         ];
       }
 
@@ -584,6 +594,7 @@ export class SwapOnUniswap {
         Error(
           `Uniswap trade error, price impact is too high, max is ${input.priceImpact}%, current is ${priceImpact}%`,
         ),
+        null,
       ];
     }
 
@@ -606,7 +617,7 @@ export class SwapOnUniswap {
       provider,
     );
     if (errGasLimit) {
-      return [null, errGasLimit];
+      return [null, errGasLimit, null];
     }
     if (!input.isUseCustomGasLimit && estimatedGasLimit !== null) {
       gasLimit = estimatedGasLimit;
@@ -643,10 +654,12 @@ export class SwapOnUniswap {
       gasLimit,
     };
 
+    const outputAmount = tradeCommand.trade.outputAmount.toExact();
+
     const startTime = new Date().getTime();
     const tx = await wallet.sendTransaction(txRequest);
     if (!input.shouldWaitTransactionComfirmed) {
-      return [tx.hash, null];
+      return [tx.hash, null, outputAmount];
     }
 
     await sendWithTimeout(tx.wait(), timeout);
@@ -660,7 +673,7 @@ export class SwapOnUniswap {
         (endTime - startTime) / 1000
       } seconds`,
     });
-    return [tx.hash, null];
+    return [tx.hash, null, outputAmount];
   }
 
   private getUniV2TradeCommand(

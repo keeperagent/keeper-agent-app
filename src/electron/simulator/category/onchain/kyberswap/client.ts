@@ -7,7 +7,7 @@ import { TimeoutCache } from "@/electron/service/timeoutCache";
 
 const KYBER_BASE_URL = "https://aggregator-api.kyberswap.com";
 
-type ISwapTxData = {
+export type ISwapTxData = {
   amountIn: string;
   amountInUsd: number;
   amountOut: string;

@@ -26,15 +26,39 @@ import {
   sendSolanaTransactionWithRetry,
 } from "./util";
 
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+);
+
+const decodeMetaplexSymbol = (data: Buffer): string | undefined => {
+  try {
+    let offset = 1 + 32 + 32;
+    const nameLength = data.readUInt32LE(offset);
+    offset += 4 + nameLength;
+    const symbolLength = data.readUInt32LE(offset);
+    offset += 4;
+    const symbol = data
+      .subarray(offset, offset + symbolLength)
+      .toString("utf8")
+      .replace(/\0/g, "")
+      .trim();
+    return symbol || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export class SolanaProvider {
   private provider: { [key: string]: Connection };
   private mapListNodeEndpoint: { [key: string]: ListNodeEndpoint };
   private mapTokenDecimal: { [key: string]: number };
+  private mapTokenSymbol: { [key: string]: string | undefined };
 
   constructor() {
     this.provider = {};
     this.mapListNodeEndpoint = {};
     this.mapTokenDecimal = {};
+    this.mapTokenSymbol = {};
   }
 
   // generate uniq key from @listNodeEndpoint
@@ -219,6 +243,39 @@ export class SolanaProvider {
 
     this.mapTokenDecimal[this.formatKey(tokenAddress)] = metadata?.decimals;
     return metadata?.decimals;
+  }
+
+  // Reads symbol from the Metaplex Token Metadata PDA
+  async getTokenSymbol(
+    tokenAddress: string,
+    provider: Connection,
+  ): Promise<string | undefined> {
+    const cacheKey = this.formatKey(tokenAddress);
+    if (cacheKey in this.mapTokenSymbol) {
+      return this.mapTokenSymbol[cacheKey];
+    }
+
+    let symbol: string | undefined;
+    try {
+      const [metadataPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("metadata"),
+          TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+          new PublicKey(tokenAddress).toBuffer(),
+        ],
+        TOKEN_METADATA_PROGRAM_ID,
+      );
+
+      const accountInfo = await provider.getAccountInfo(metadataPda);
+      if (accountInfo?.data) {
+        symbol = decodeMetaplexSymbol(accountInfo.data);
+      }
+    } catch {
+      symbol = undefined;
+    }
+
+    this.mapTokenSymbol[cacheKey] = symbol;
+    return symbol;
   }
 
   getTokenBalance = async (

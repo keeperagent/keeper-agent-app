@@ -16,6 +16,7 @@ import { convertArgsToAbiTypesEVM } from "./util";
 type ERC20Contract = {
   contract: ethers.Contract;
   decimal: number;
+  symbol?: string;
 };
 
 export type ListNodeEndpoint = {
@@ -163,7 +164,9 @@ export class EVMProvider {
       );
       return [balanceFloat.toString(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `EVM getNativeBalance() error: ${err?.message}` });
+      logEveryWhere({
+        message: `EVM getNativeBalance() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };
@@ -204,7 +207,9 @@ export class EVMProvider {
       const balanceFloat = balanceBigInt.div(new Big(10).pow(decimal));
       return [balanceFloat.toString(), null];
     } catch (err: any) {
-      logEveryWhere({ message: `EVM getTokenBalance() error: ${err?.message}` });
+      logEveryWhere({
+        message: `EVM getTokenBalance() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };
@@ -350,13 +355,23 @@ export class EVMProvider {
 
     const contract = new ethers.Contract(contractAddress, ERC20_ABI, provider);
     const decimal = await contract?.decimals();
-    return [
-      {
-        contract,
-        decimal: Number(decimal),
-      },
-      null,
-    ];
+
+    let symbol: string | undefined;
+    try {
+      symbol = await contract?.symbol();
+    } catch {
+      symbol = undefined;
+    }
+
+    const erc20Contract: ERC20Contract = {
+      contract,
+      decimal: Number(decimal),
+      symbol,
+    };
+    this.mapERC20Token[this.formatKey(contractAddress + nodeEndpoint)] =
+      erc20Contract;
+
+    return [erc20Contract, null];
   };
 
   private getNFTContract = async (
@@ -627,7 +642,9 @@ export class EVMProvider {
       }
       return [result, null];
     } catch (err: any) {
-      logEveryWhere({ message: `EVM readFromContract() error: ${err?.message}` });
+      logEveryWhere({
+        message: `EVM readFromContract() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };
@@ -767,7 +784,9 @@ export class EVMProvider {
       await sendWithTimeout(tx.wait(), timeout);
       return [tx.hash, null];
     } catch (err: any) {
-      logEveryWhere({ message: `EVM writeToContract() error: ${err?.message}` });
+      logEveryWhere({
+        message: `EVM writeToContract() error: ${err?.message}`,
+      });
       return [null, err];
     }
   };

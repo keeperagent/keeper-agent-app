@@ -29,7 +29,7 @@ export class SwapOnCetus {
     swapInput: ICetusSwapInput,
     privateKey: string,
     numberOfTransaction: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<Error | null> => {
     const startTime = new Date().getTime();
     const wallet = Ed25519Keypair.fromSecretKey(fromHEX(privateKey));
@@ -58,8 +58,8 @@ export class SwapOnCetus {
   swapNormal = async (
     swapInput: ICetusSwapInput,
     privateKey: string,
-    logInfo: IStructuredLogPayload
-  ): Promise<[string | null, Error | null]> => {
+    logInfo: IStructuredLogPayload,
+  ): Promise<[string | null, Error | null, string | null]> => {
     const wallet = Ed25519Keypair.fromSecretKey(fromHEX(privateKey));
     return this.swap(swapInput, wallet, logInfo);
   };
@@ -67,8 +67,8 @@ export class SwapOnCetus {
   swap = async (
     swapInput: ICetusSwapInput,
     wallet: Ed25519Keypair,
-    logInfo: IStructuredLogPayload
-  ): Promise<[string | null, Error | null]> => {
+    logInfo: IStructuredLogPayload,
+  ): Promise<[string | null, Error | null, string | null]> => {
     const startTime = new Date().getTime();
     const {
       poolAddress,
@@ -79,10 +79,14 @@ export class SwapOnCetus {
     } = swapInput;
 
     const [client, , errProvider] = this.provider.getNextClient(
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (!client) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     client.senderAddress = wallet.toSuiAddress(); // sdk will raise error if senderAddress is not set
@@ -91,19 +95,19 @@ export class SwapOnCetus {
       inputTokenAddress,
       outputTokenAddress,
       poolAddress,
-      this.listNodeEndpoint
+      this.listNodeEndpoint,
     );
     if (errPool || !pool) {
-      return [null, errPool];
+      return [null, errPool, null];
     }
 
     const decimalsA = await this.suiProvider.getTokenDecimal(
       pool?.coinTypeA,
-      client.fullClient
+      client.fullClient,
     );
     const decimalsB = await this.suiProvider.getTokenDecimal(
       pool?.coinTypeB,
-      client.fullClient
+      client.fullClient,
     );
     const byAmountIn = true;
     const slippage = Percentage.fromDecimal(d(slippagePercentage));
@@ -129,12 +133,12 @@ export class SwapOnCetus {
     const beforePrice = TickMath.sqrtPriceX64ToPrice(
       currentSqrtPrice,
       decimalsA,
-      decimalsB
+      decimalsB,
     ).toNumber();
     const afterPrice = TickMath.sqrtPriceX64ToPrice(
       estimatedEndSqrtPrice,
       decimalsA,
-      decimalsB
+      decimalsB,
     ).toNumber();
     const priceImpact =
       (Math.abs(afterPrice - beforePrice) * 100) / beforePrice;
@@ -150,14 +154,20 @@ export class SwapOnCetus {
       return [
         null,
         Error(
-          `Cetus trade error, price impact is too high, max is ${swapInput.priceImpactPercentage}%, current is ${priceImpact}%`
+          `Cetus trade error, price impact is too high, max is ${swapInput.priceImpactPercentage}%, current is ${priceImpact}%`,
         ),
+        null,
       ];
     }
 
     const toAmount = byAmountIn
       ? new BN(res.estimatedAmountOut)
       : new BN(res.estimatedAmountIn);
+
+    const outputTokenDecimals = a2b ? decimalsB : decimalsA;
+    const outputAmount = new Big(res.estimatedAmountOut || 0)
+      .div(new Big(10).pow(outputTokenDecimals))
+      .toString();
 
     const amountLimit = adjustForSlippage(toAmount, slippage, !byAmountIn);
 
@@ -183,7 +193,7 @@ export class SwapOnCetus {
     const txHash = transactionBlockRes?.digest;
 
     if (!swapInput.shouldWaitTransactionComfirmed) {
-      return [txHash, null];
+      return [txHash, null, outputAmount];
     }
 
     await client.fullClient.waitForTransaction({ digest: txHash });
@@ -195,6 +205,6 @@ export class SwapOnCetus {
         (endTime - startTime) / 1000
       } seconds`,
     });
-    return [txHash, null];
+    return [txHash, null, outputAmount];
   };
 }

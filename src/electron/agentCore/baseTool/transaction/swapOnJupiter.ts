@@ -11,12 +11,16 @@ import {
   USDT_MINT_ADDRESS_ON_SOLANA,
   USD1_MINT_ADDRESS_ON_SOLANA,
   PRICE_DATA_SOURCE,
+  WALLET_ACTIVITY_ACTION_TYPE,
+  WALLET_ACTIVITY_SOURCE,
+  WALLET_ACTIVITY_PROTOCOL,
 } from "@/electron/constant";
 import { Pricing } from "@/electron/simulator/category/pricing";
 import { IJupiterSwapInput, IWallet } from "@/electron/type";
 import { safeStringify } from "@/electron/agentCore/utils";
 import { SolanaProvider } from "@/electron/simulator/category/onchain/solana";
 import { logEveryWhere } from "@/electron/service/util";
+import { recordActivity } from "@/electron/service/walletActivity";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
 import { TOOL_KEYS } from "@/electron/constant";
 import {
@@ -545,7 +549,7 @@ export const swapOnJupiterTool = (
         };
 
         try {
-          const [txHash, err] = await swapper.swapNormal(
+          const [txHash, err, outAmountRaw] = await swapper.swapNormal(
             swapInput,
             wallet?.privateKey || "",
             {
@@ -566,6 +570,66 @@ export const swapOnJupiterTool = (
                   ? swapAmountBig.times(new Big(solPrice.toString())).toNumber()
                   : effectiveAmount;
               totalAmountUsd += usdSpent;
+            }
+
+            if (wallet?.address) {
+              const [connection] =
+                solanaProvider.getNextProvider(listNodeProvider);
+              if (connection) {
+                const [tokenOutDecimals, token1Symbol, token0Symbol] =
+                  await Promise.all([
+                    solanaProvider.getTokenDecimal(
+                      swapInput.outputTokenAddress,
+                      connection,
+                    ),
+                    solanaProvider.getTokenSymbol(
+                      swapInput.outputTokenAddress,
+                      connection,
+                    ),
+                    solanaProvider.getTokenSymbol(
+                      swapInput.inputTokenAddress,
+                      connection,
+                    ),
+                  ]);
+                const token1Amount = outAmountRaw
+                  ? new Big(outAmountRaw)
+                      .div(new Big(10).pow(tokenOutDecimals || 0))
+                      .toString()
+                  : undefined;
+
+                await recordActivity(
+                  {
+                    walletId: wallet.id,
+                    walletGroupId: wallet.groupId,
+                    walletAddress: wallet.address,
+                    chain: "solana",
+                    txHash,
+                    actionType: WALLET_ACTIVITY_ACTION_TYPE.SWAP,
+                    protocol: WALLET_ACTIVITY_PROTOCOL.JUPITER,
+                    source: WALLET_ACTIVITY_SOURCE.AGENT,
+                    token0Address: swapInput.inputTokenAddress,
+                    token0Symbol:
+                      token0Symbol ||
+                      (swapInput.inputTokenAddress === SOL_MINT_ADDRESS
+                        ? "SOL"
+                        : undefined),
+                    token0Amount: swapInput.amount,
+                    token1Address: swapInput.outputTokenAddress,
+                    token1Symbol:
+                      token1Symbol ||
+                      (swapInput.outputTokenAddress === SOL_MINT_ADDRESS
+                        ? "SOL"
+                        : undefined),
+                    token1Amount,
+                  },
+                  {
+                    isToken0Native:
+                      swapInput.inputTokenAddress === SOL_MINT_ADDRESS,
+                    isToken1Native:
+                      swapInput.outputTokenAddress === SOL_MINT_ADDRESS,
+                  },
+                );
+              }
             }
           }
 

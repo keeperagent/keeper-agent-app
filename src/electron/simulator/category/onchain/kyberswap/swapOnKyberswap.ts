@@ -14,7 +14,7 @@ import { ISwapKyberswapInput } from "@/electron/type";
 import { sendWithTimeout } from "@/electron/simulator/util";
 import { logEveryWhere } from "@/electron/service/util";
 import type { IStructuredLogPayload } from "@/electron/type";
-import { KyberSwapClient } from "./client";
+import { KyberSwapClient, ISwapTxData } from "./client";
 
 export const zero = ethers.BigNumber.from(0);
 
@@ -98,12 +98,16 @@ export class SwapOnKyberswap {
     timeout: number,
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, ISwapTxData | null]> {
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     const wallet = new ethers.Wallet(privateKey, provider);
@@ -148,11 +152,11 @@ export class SwapOnKyberswap {
     timeout: number,
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, ISwapTxData | null]> {
     try {
       const validatedErr = await this.validateSwap(input, wallet);
       if (validatedErr) {
-        return [null, validatedErr];
+        return [null, validatedErr, null];
       }
 
       if (input.isInputNativeToken) {
@@ -177,7 +181,7 @@ export class SwapOnKyberswap {
 
       return this.executeSwap(input, wallet, nonce, timeout, logInfo, proxy);
     } catch (err: any) {
-      return [null, err];
+      return [null, err, null];
     }
   }
 
@@ -257,7 +261,7 @@ export class SwapOnKyberswap {
     return [spotPriceImpact, null];
   };
 
-  // return [txHash, error]
+  // return [txHash, error, swapTxData]
   private async executeSwap(
     input: ISwapKyberswapInput,
     wallet: Wallet,
@@ -265,14 +269,14 @@ export class SwapOnKyberswap {
     timeout: number,
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null, ISwapTxData | null]> {
     const [routeSummary, priceImpactFromUsd, err] =
       await this.kyberswapClient.getSwapRoute(input, proxy);
     if (err) {
-      return [null, err];
+      return [null, err, null];
     }
     if (!routeSummary) {
-      return [null, Error("can not get swap route")];
+      return [null, Error("can not get swap route"), null];
     }
 
     const [priceImpact, priceImpactErr] = await this.resolvePriceImpact(
@@ -282,7 +286,7 @@ export class SwapOnKyberswap {
       proxy,
     );
     if (priceImpactErr) {
-      return [null, priceImpactErr];
+      return [null, priceImpactErr, null];
     }
 
     const priceImpactDisplay =
@@ -303,6 +307,7 @@ export class SwapOnKyberswap {
         Error(
           `Kyberswap trade error, price impact is too high, max is ${input.priceImpact}%, current is ${priceImpact.toFixed(2)}%`,
         ),
+        null,
       ];
     }
 
@@ -314,10 +319,10 @@ export class SwapOnKyberswap {
         proxy,
       );
     if (errSwapTxData) {
-      return [null, errSwapTxData];
+      return [null, errSwapTxData, null];
     }
     if (!swapTxData) {
-      return [null, Error("can not get swap tx data")];
+      return [null, Error("can not get swap tx data"), null];
     }
     if (
       swapTxData?.routerAddress?.toLowerCase() !==
@@ -330,6 +335,7 @@ export class SwapOnKyberswap {
             swapTxData?.routerAddress
           }, expect ${MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN[input.chainKey]}`,
         ),
+        null,
       ];
     }
 
@@ -338,7 +344,11 @@ export class SwapOnKyberswap {
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     let gasLimit = input.gasLimit;
@@ -352,7 +362,7 @@ export class SwapOnKyberswap {
       provider,
     );
     if (errGasLimit) {
-      return [null, errGasLimit];
+      return [null, errGasLimit, null];
     }
     if (
       (!input.isUseCustomGasLimit || gasLimit.toString() === "0") &&
@@ -396,7 +406,7 @@ export class SwapOnKyberswap {
     const startTime = new Date().getTime();
     const tx = await wallet.sendTransaction(txRequest);
     if (!input.shouldWaitTransactionComfirmed) {
-      return [tx.hash, null];
+      return [tx.hash, null, swapTxData];
     }
 
     await sendWithTimeout(tx.wait(), timeout);
@@ -410,7 +420,7 @@ export class SwapOnKyberswap {
         (endTime - startTime) / 1000
       } seconds`,
     });
-    return [tx.hash, null];
+    return [tx.hash, null, swapTxData];
   }
 
   private async getGasLimit(
