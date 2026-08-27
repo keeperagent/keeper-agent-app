@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import { Empty, Pagination, Select, Spin } from "antd";
+import { Empty, Select, Table, Tooltip } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { WalletAddress, TotalData } from "@/component";
@@ -32,8 +32,10 @@ const ACTION_LABEL: Partial<Record<string, string>> = {
 const capitalize = (text: string) =>
   text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 
-const ellipsisHash = (hash: string) =>
-  hash.length > 14 ? `${hash.slice(0, 6)}...${hash.slice(-4)}` : hash;
+const ellipsisText = (text: string, headLength = 6, tailLength = 4) =>
+  text.length > headLength + tailLength + 3
+    ? `${text.slice(0, headLength)}...${text.slice(-tailLength)}`
+    : text;
 
 const renderTokenLine = (
   sign: "-" | "+",
@@ -48,51 +50,50 @@ const renderTokenLine = (
   const label = symbol || (address ? `${address.slice(0, 6)}...` : "");
 
   return (
-    <div
-      className={sign === "-" ? "token-line negative" : "token-line positive"}
-    >
-      {sign}
-      {amount} {label}
-      {usdValue ? ` ($${usdValue.toFixed(2)})` : ""}
+    <div className="token-line">
+      <span className={sign === "-" ? "amount negative" : "amount positive"}>
+        {sign}
+        {amount} {label}
+      </span>
+      {usdValue ? (
+        <span className="usd-value">${usdValue.toFixed(2)}</span>
+      ) : null}
     </div>
   );
 };
 
-const WalletActivityRow = ({
-  record,
-  searchText,
-}: {
-  record: IWalletActivity;
-  searchText: string;
-}) => {
-  const explorerUrl = getExplorerTxUrl(record.chain, record.txHash);
+const buildColumns = (searchText: string) => [
+  {
+    key: "time",
+    width: 200,
+    render: (_: any, record: IWalletActivity) => {
+      const explorerUrl = getExplorerTxUrl(record.chain, record.txHash);
 
-  return (
-    <div className="activity-row">
-      <div className="cell time-cell">
-        <span className="time">{formatTimeToDate(record.createAt || 0)}</span>
-        {record.txHash ? (
-          explorerUrl ? (
-            <span
-              className="tx-hash link"
-              onClick={() => sendOpenExternalLink(explorerUrl)}
-            >
-              {ellipsisHash(record.txHash)}
-            </span>
-          ) : (
-            <span className="tx-hash">{ellipsisHash(record.txHash)}</span>
-          )
-        ) : null}
-      </div>
-
-      <div className="cell wallet-cell">
-        <WalletAddress
-          address={record.walletAddress || ""}
-          searchText={searchText}
-          hideQRCode
-        />
-      </div>
-
+      return (
+        <div className="cell time-cell">
+          <span className="time">{formatTimeToDate(record.createAt || 0)}</span>
+          {record.txHash ? (
+            <Tooltip title={record.txHash}>
+              {explorerUrl ? (
+                <span
+                  className="hash-text link"
+                  onClick={() => sendOpenExternalLink(explorerUrl)}
+                >
+                  {ellipsisText(record.txHash)}
+                </span>
+              ) : (
+                <span className="hash-text">{ellipsisText(record.txHash)}</span>
+              )}
+            </Tooltip>
+          ) : null}
+        </div>
+      );
+    },
+  },
+  {
+    key: "action",
+    width: 140,
+    render: (_: any, record: IWalletActivity) => (
       <div className="cell action-cell">
         <span className="action-label">
           {ACTION_LABEL[record.actionType || ""] || record.actionType}
@@ -101,7 +102,12 @@ const WalletActivityRow = ({
           <span className="protocol-label">{capitalize(record.protocol)}</span>
         )}
       </div>
-
+    ),
+  },
+  {
+    key: "token",
+    width: 260,
+    render: (_: any, record: IWalletActivity) => (
       <div className="cell token-cell">
         {renderTokenLine(
           "-",
@@ -118,9 +124,33 @@ const WalletActivityRow = ({
           record.token1UsdValue,
         )}
       </div>
-    </div>
-  );
-};
+    ),
+  },
+  {
+    key: "wallet",
+    width: 400,
+    render: (_: any, record: IWalletActivity) => (
+      <div className="cell wallet-cell">
+        <WalletAddress
+          address={record.walletAddress || ""}
+          searchText={searchText}
+          hideQRCode
+        />
+        {record.actionType === WALLET_ACTIVITY_ACTION_TYPE.TRANSFER &&
+        record.receiverAddress ? (
+          <Tooltip title={record.receiverAddress}>
+            <span className="hash-text receiver">
+              to {ellipsisText(record.receiverAddress)}
+            </span>
+          </Tooltip>
+        ) : null}
+      </div>
+    ),
+  },
+  {
+    key: "spacer",
+  },
+];
 
 const WalletActivityView = (props: any) => {
   const {
@@ -168,6 +198,11 @@ const WalletActivityView = (props: any) => {
     }
   };
 
+  const onShowTotalData = () => {
+    const text = `${translate("total")} ${totalData} ${translate("data")}`;
+    return <TotalData text={text} />;
+  };
+
   return (
     <Fragment>
       <WalletActivityViewWrapper>
@@ -192,44 +227,40 @@ const WalletActivityView = (props: any) => {
               value: group.id,
             }))}
           />
-
-          {totalData > 0 && (
-            <span style={{ marginLeft: "auto" }}>
-              <TotalData text={`${translate("total")} ${totalData}`} />
-            </span>
-          )}
         </div>
 
-        <Spin spinning={loading}>
-          {listWalletActivity?.length ? (
-            <div className="activity-list">
-              {listWalletActivity?.map((record: IWalletActivity) => (
-                <WalletActivityRow
-                  key={record.id}
-                  record={record}
-                  searchText={searchText}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="empty">
-              <Empty description={translate("walletActivity.noActivity")} />
-            </div>
-          )}
-
-          {totalData > pageSize && (
-            <div className="pagination-wrap">
-              <Pagination
-                current={page}
-                pageSize={pageSize}
-                total={totalData}
-                pageSizeOptions={TABLE_PAGE_OPTION}
-                showSizeChanger
-                onChange={onPageChange}
-              />
-            </div>
-          )}
-        </Spin>
+        <Table
+          className="activity-table"
+          showHeader={false}
+          rowKey={(record) => record.id!}
+          dataSource={listWalletActivity}
+          // @ts-ignore
+          columns={buildColumns(searchText)}
+          loading={loading}
+          pagination={{
+            total: totalData,
+            pageSize,
+            current: page,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          onChange={(pagination) =>
+            onPageChange(
+              pagination.current || 1,
+              pagination.pageSize || pageSize,
+            )
+          }
+          locale={{
+            emptyText: (
+              <div className="empty">
+                <Empty description={translate("walletActivity.noActivity")} />
+              </div>
+            ),
+          }}
+        />
       </WalletActivityViewWrapper>
     </Fragment>
   );

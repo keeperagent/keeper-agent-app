@@ -19,12 +19,6 @@ const WalletActivityViewWrapper = styled.div`
     flex-shrink: 0;
   }
 
-  .activity-list {
-    max-height: calc(100vh - 28rem);
-    overflow-y: auto;
-    overflow-x: auto;
-  }
-
   .empty {
     display: flex;
     align-items: center;
@@ -40,18 +34,31 @@ const WalletActivityViewWrapper = styled.div`
     }
   }
 
-  .activity-row {
-    display: grid;
-    grid-template-columns: 170px 220px 150px 1fr;
-    align-items: center;
-    gap: 1.6rem;
-    padding: 1.4rem 0.8rem;
-    min-width: 900px;
-    border-bottom: 1px solid
-      ${(props: { theme: ITheme }) => props.theme.colorTableBorder};
-    transition: background-color 0.15s ease;
+  .activity-table {
+    .ant-table {
+      background: transparent;
+    }
 
-    &:hover {
+    .ant-table-tbody > tr > td {
+      padding: 1.2rem 1rem;
+      border-bottom: 1px solid
+        ${(props: { theme: ITheme }) => props.theme.colorBorderSubtle};
+    }
+
+    .ant-table-tbody > tr > td:first-child {
+      padding-left: 0;
+    }
+
+    .ant-table-tbody > tr > td:last-child {
+      padding-right: 0;
+    }
+
+    .ant-table-tbody > tr:last-child > td {
+      border-bottom: none;
+    }
+
+    .ant-table-tbody > tr > td.ant-table-cell-row-hover,
+    .ant-table-tbody > tr:hover > td {
       background: ${(props: { theme: ITheme }) => props.theme.colorBgNested};
     }
   }
@@ -59,64 +66,68 @@ const WalletActivityViewWrapper = styled.div`
   .cell {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.3rem;
     min-width: 0;
+  }
+
+  .hash-text {
+    font-size: 1.2rem;
+    font-family: monospace;
+    color: ${(props: { theme: ITheme }) => props.theme.colorTextSecondary};
+    width: fit-content;
+  }
+
+  .hash-text.link {
+    cursor: pointer;
+
+    &:hover {
+      color: ${(props: { theme: ITheme }) => props.theme.colorPrimary};
+    }
   }
 
   .time-cell {
     .time {
-      color: ${(props: { theme: ITheme }) => props.theme.colorTextPrimary};
-    }
-
-    .tx-hash {
       font-size: 1.3rem;
-      font-family: monospace;
-      color: ${(props: { theme: ITheme }) => props.theme.colorTextSecondary};
-    }
-
-    .tx-hash.link {
-      cursor: pointer;
-      text-decoration: underline dotted;
-      text-underline-offset: 0.2rem;
-      width: fit-content;
-
-      &:hover {
-        color: ${(props: { theme: ITheme }) => props.theme.colorPrimary};
-      }
+      color: ${(props: { theme: ITheme }) => props.theme.colorTextPrimary};
     }
   }
 
   .action-cell {
     .action-label {
+      font-size: 1.3rem;
       color: ${(props: { theme: ITheme }) => props.theme.colorTextPrimary};
       font-weight: 500;
     }
 
     .protocol-label {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       color: ${(props: { theme: ITheme }) => props.theme.colorTextSecondary};
     }
   }
 
   .token-cell {
+    gap: 0.4rem;
+
     .token-line {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-size: 1.3rem;
       font-variant-numeric: tabular-nums;
     }
 
-    .token-line.negative {
-      color: #f5222d;
+    .amount.negative {
+      color: #e5484d;
     }
 
-    .token-line.positive {
-      color: #52c41a;
+    .amount.positive {
+      color: #3ba55d;
     }
-  }
 
-  .pagination-wrap {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: flex-end;
-    padding-top: var(--margin-top);
+    .usd-value {
+      font-size: 1.2rem;
+      color: ${(props: { theme: ITheme }) => props.theme.colorTextSecondary};
+    }
   }
 `;
 
