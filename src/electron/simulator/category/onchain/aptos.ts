@@ -23,12 +23,14 @@ export class AptosProvider {
   private provider: { [key: string]: Aptos };
   private mapListNodeEndpoint: { [key: string]: ListNodeEndpoint };
   private mapTokenDecimal: { [key: string]: number };
+  private mapTokenSymbol: { [key: string]: string | undefined };
   private gasPriceCache: TimeoutCache<string>;
 
   constructor() {
     this.provider = {};
     this.mapListNodeEndpoint = {};
     this.mapTokenDecimal = {};
+    this.mapTokenSymbol = {};
     this.gasPriceCache = new TimeoutCache(5000);
   }
 
@@ -191,6 +193,31 @@ export class AptosProvider {
 
     this.mapTokenDecimal[this.formatKey(coinType)] = metadata?.decimals;
     return metadata?.decimals;
+  }
+
+  // Cosmetic only — never blocks a caller on failure. Cached with `in` so a
+  // token with no metadata (symbol genuinely unknown) isn't refetched forever.
+  async getTokenSymbol(
+    coinType: string,
+    provider: Aptos,
+  ): Promise<string | undefined> {
+    const cacheKey = this.formatKey(coinType);
+    if (cacheKey in this.mapTokenSymbol) {
+      return this.mapTokenSymbol[cacheKey];
+    }
+
+    let symbol: string | undefined;
+    try {
+      const metadata = await provider.getFungibleAssetMetadataByAssetType({
+        assetType: coinType,
+      });
+      symbol = metadata?.symbol || undefined;
+    } catch {
+      symbol = undefined;
+    }
+
+    this.mapTokenSymbol[cacheKey] = symbol;
+    return symbol;
   }
 
   async getTokenBalance(

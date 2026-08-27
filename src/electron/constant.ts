@@ -245,6 +245,9 @@ export const MESSAGE = {
   DELETE_APP_LOG: "DELETE_APP_LOG",
   DELETE_APP_LOG_RES: "DELETE_APP_LOG_RES",
 
+  GET_LIST_WALLET_ACTIVITY: "GET_LIST_WALLET_ACTIVITY",
+  GET_LIST_WALLET_ACTIVITY_RES: "GET_LIST_WALLET_ACTIVITY_RES",
+
   // Window
   ENTER_FULL_SCREEN: "ENTER_FULL_SCREEN",
   EXIT_FULL_SCREEN: "EXIT_FULL_SCREEN",
@@ -783,6 +786,26 @@ export enum SET_ATTRIBUTE_MODE {
   ADVANCED = "ADVANCED",
 }
 
+export enum WALLET_ACTIVITY_ACTION_TYPE {
+  SWAP = "SWAP",
+  TRANSFER = "TRANSFER",
+  ADD_LIQUIDITY = "ADD_LIQUIDITY",
+  REMOVE_LIQUIDITY = "REMOVE_LIQUIDITY",
+}
+
+export enum WALLET_ACTIVITY_SOURCE {
+  WORKFLOW = "WORKFLOW",
+  AGENT = "AGENT",
+}
+
+export enum WALLET_ACTIVITY_PROTOCOL {
+  JUPITER = "jupiter",
+  KYBERSWAP = "kyberswap",
+  UNISWAP = "uniswap",
+  PANCAKESWAP = "pancakeswap",
+  CETUS = "cetus",
+}
+
 export enum CHAIN_TYPE {
   EVM = "EVM",
   APTOS = "APTOS",
@@ -1147,6 +1170,99 @@ export const EVM_CHAIN_ID: Record<string, number> = {
   [KYBERSWAP_CHAIN_KEY.MONAD]: 143,
   [KYBERSWAP_CHAIN_KEY.PLASMA]: 9745,
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: 999,
+};
+
+export const getEvmChainKeyFromChainId = (
+  chainId: number,
+): string | undefined =>
+  Object.entries(EVM_CHAIN_ID).find(([, id]) => id === chainId)?.[0];
+
+// Block explorer tx-detail URL per chain — {hash} is replaced with the tx hash.
+export const MAP_CHAIN_KEY_TO_EXPLORER_TX_URL: Record<string, string> = {
+  solana: "https://solscan.io/tx/{hash}",
+  sui: "https://suivision.xyz/txblock/{hash}",
+  aptos: "https://explorer.aptoslabs.com/txn/{hash}?network=mainnet",
+  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: "https://etherscan.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.BSC]: "https://bscscan.com/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: "https://arbiscan.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.POLYGON]: "https://polygonscan.com/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "https://optimistic.etherscan.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "https://snowtrace.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.BASE]: "https://basescan.org/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "https://explorer.zksync.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.LINEA]: "https://lineascan.build/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.SCROLL]: "https://scrollscan.com/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.MANTLE]: "https://mantlescan.xyz/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.BLAST]: "https://blastscan.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.SONIC]: "https://sonicscan.org/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "https://uniscan.xyz/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "https://berascan.com/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.RONIN]: "https://explorer.roninchain.com/tx/{hash}",
+  // Monad's mainnet explorer domain is unconfirmed as of this writing — verify
+  [KYBERSWAP_CHAIN_KEY.MONAD]: "https://explorer.monad.xyz/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.PLASMA]: "https://plasmascan.to/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "https://hyperevmscan.io/tx/{hash}",
+};
+
+export const getExplorerTxUrl = (
+  chain: string | undefined,
+  txHash: string | undefined,
+): string | undefined => {
+  if (!chain || !txHash) {
+    return undefined;
+  }
+  const template = MAP_CHAIN_KEY_TO_EXPLORER_TX_URL[chain];
+  return template ? template.replace("{hash}", txHash) : undefined;
+};
+
+export const MAP_CHAIN_KEY_TO_NATIVE_COINGECKO_ID: Record<string, string> = {
+  solana: "solana",
+  sui: "sui",
+  aptos: "aptos",
+  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.BASE]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.LINEA]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.BLAST]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ethereum",
+  [KYBERSWAP_CHAIN_KEY.BSC]: "binancecoin",
+  [KYBERSWAP_CHAIN_KEY.POLYGON]: "polygon-ecosystem-token",
+  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "avalanche-2",
+  [KYBERSWAP_CHAIN_KEY.MANTLE]: "mantle",
+  [KYBERSWAP_CHAIN_KEY.SONIC]: "sonic-3",
+  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "berachain-bera",
+  [KYBERSWAP_CHAIN_KEY.RONIN]: "ronin",
+  [KYBERSWAP_CHAIN_KEY.MONAD]: "monad",
+  [KYBERSWAP_CHAIN_KEY.PLASMA]: "plasma",
+  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "hyperliquid",
+};
+
+export const MAP_CHAIN_KEY_TO_NATIVE_SYMBOL: Record<string, string> = {
+  solana: "SOL",
+  sui: "SUI",
+  aptos: "APT",
+  [KYBERSWAP_CHAIN_KEY.ETHEREUM]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.ARBITRUM]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.BASE]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.LINEA]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.BLAST]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ETH",
+  [KYBERSWAP_CHAIN_KEY.BSC]: "BNB",
+  [KYBERSWAP_CHAIN_KEY.POLYGON]: "POL",
+  [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "AVAX",
+  [KYBERSWAP_CHAIN_KEY.MANTLE]: "MNT",
+  [KYBERSWAP_CHAIN_KEY.SONIC]: "SONIC",
+  [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "BERA",
+  [KYBERSWAP_CHAIN_KEY.RONIN]: "RON",
+  [KYBERSWAP_CHAIN_KEY.MONAD]: "MON",
+  [KYBERSWAP_CHAIN_KEY.PLASMA]: "XPL",
+  [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "HYPE",
 };
 
 export enum EvmStableCoinSymbol {

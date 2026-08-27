@@ -30,6 +30,7 @@ import nodeSecretFactory from "./model/nodeSecret";
 import agentProfileFactory from "./model/agentProfile";
 import agentTaskFactory from "./model/agentTask";
 import appLogFactory from "./model/appLog";
+import walletActivityFactory from "./model/walletActivity";
 
 logEveryWhere({ message: `DB_PATH: ${getDbPath()}` });
 const db = new Sequelize({
@@ -66,6 +67,7 @@ export const NodeSecretModel = nodeSecretFactory(db);
 export const AgentProfileModel = agentProfileFactory(db);
 export const AgentTaskModel = agentTaskFactory(db);
 export const AppLogModel = appLogFactory(db);
+export const WalletActivityModel = walletActivityFactory(db);
 
 // @CampaignModel -> @ProfileGroupModel
 CampaignModel.belongsTo(ProfileGroupModel, {

@@ -6,12 +6,12 @@ export interface ISwapOnEVM {
     privateKey: string,
     numberOfTransaction: number,
     timeout: number,
-    logInfo: IStructuredLogPayload
+    logInfo: IStructuredLogPayload,
   ): Promise<Error | null>;
   swapNormal(
     input: ISwapEVMInput,
     privateKey: string,
     timeout: number,
-    logInfo: IStructuredLogPayload
-  ): Promise<[string | null, Error | null]>;
+    logInfo: IStructuredLogPayload,
+  ): Promise<[string | null, Error | null, string | null]>;
 }

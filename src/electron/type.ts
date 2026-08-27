@@ -102,6 +102,33 @@ export type IWalletGroup = {
   listProfileGroup?: IProfileGroup[];
 };
 
+export type IWalletActivity = {
+  id?: number;
+  walletId?: number;
+  walletGroupId?: number;
+  walletAddress?: string;
+
+  chain?: string; // chainKey — e.g. "solana", KYBERSWAP_CHAIN_KEY.ETHEREUM
+  txHash?: string;
+  actionType?: string; // WALLET_ACTIVITY_ACTION_TYPE
+  protocol?: string; // jupiter | kyberswap | uniswap | ...
+  source?: string; // WALLET_ACTIVITY_SOURCE
+  receiverAddress?: string; // set for TRANSFER — the recipient wallet
+
+  token0Address?: string;
+  token0Symbol?: string;
+  token0Amount?: string; // human-readable, kept as string for precision
+  token0UsdValue?: number;
+
+  token1Address?: string;
+  token1Symbol?: string;
+  token1Amount?: string;
+  token1UsdValue?: number;
+
+  createAt?: number;
+  updateAt?: number;
+};
+
 export type IProfile = {
   id?: number;
   name?: string;

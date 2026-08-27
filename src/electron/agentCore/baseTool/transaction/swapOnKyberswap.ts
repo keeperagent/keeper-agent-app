@@ -12,10 +12,15 @@ import {
   mapEvmStableCoinAddress,
   EvmStableCoinSymbol,
   PRICE_DATA_SOURCE,
+  WALLET_ACTIVITY_ACTION_TYPE,
+  WALLET_ACTIVITY_SOURCE,
+  WALLET_ACTIVITY_PROTOCOL,
+  MAP_CHAIN_KEY_TO_NATIVE_SYMBOL,
 } from "@/electron/constant";
 import { ISwapKyberswapInput, IWallet } from "@/electron/type";
 import { EVMProvider } from "@/electron/simulator/category/onchain/evm";
 import { logEveryWhere, sleep } from "@/electron/service/util";
+import { recordActivity } from "@/electron/service/walletActivity";
 import { ToolContext, PlanState } from "@/electron/agentCore/toolContext";
 import { safeStringify } from "@/electron/agentCore/utils";
 import { Pricing } from "@/electron/simulator/category/pricing";
@@ -719,12 +724,76 @@ export const swapOnKyberswapTool = (
             workflowId: 0,
           };
 
-          const [txHash, err] = await kyberswap.swapNormal(
+          const [txHash, err, swapTxData] = await kyberswap.swapNormal(
             swapInput,
             wallet?.privateKey || "",
             15000,
             logInfo,
           );
+
+          if (txHash && !err && wallet?.address) {
+            try {
+              const evmProvider = new EVMProvider();
+              const [[inputTokenContract], [outputTokenContract]] =
+                await Promise.all([
+                  swapInput.isInputNativeToken
+                    ? [null, null]
+                    : evmProvider.getTokenContract(
+                        listNodeProvider,
+                        swapInput.inputTokenAddress,
+                      ),
+                  swapInput.isOutputNativeToken
+                    ? [null, null]
+                    : evmProvider.getTokenContract(
+                        listNodeProvider,
+                        swapInput.outputTokenAddress,
+                      ),
+                ]);
+              const token1Amount = swapTxData?.amountOut
+                ? new Big(swapTxData.amountOut)
+                    .div(new Big(10).pow(swapInput.outputTokenDecimal || 18))
+                    .toString()
+                : undefined;
+
+              await recordActivity(
+                {
+                  walletId: wallet.id,
+                  walletGroupId: wallet.groupId,
+                  walletAddress: wallet.address,
+                  chain: swapInput.chainKey,
+                  txHash,
+                  actionType: WALLET_ACTIVITY_ACTION_TYPE.SWAP,
+                  protocol: WALLET_ACTIVITY_PROTOCOL.KYBERSWAP,
+                  source: WALLET_ACTIVITY_SOURCE.AGENT,
+                  token0Address: swapInput.inputTokenAddress,
+                  token0Symbol:
+                    inputTokenContract?.symbol ||
+                    (swapInput.isInputNativeToken
+                      ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[swapInput.chainKey]
+                      : undefined),
+                  token0Amount: swapInput.amount,
+                  token0UsdValue: swapTxData?.amountInUsd || undefined,
+                  token1Address: swapInput.outputTokenAddress,
+                  token1Symbol:
+                    outputTokenContract?.symbol ||
+                    (swapInput.isOutputNativeToken
+                      ? MAP_CHAIN_KEY_TO_NATIVE_SYMBOL[swapInput.chainKey]
+                      : undefined),
+                  token1Amount,
+                  token1UsdValue: swapTxData?.amountOutUsd || undefined,
+                },
+                {
+                  isToken0Native: swapInput.isInputNativeToken,
+                  isToken1Native: swapInput.isOutputNativeToken,
+                },
+              );
+            } catch (error: any) {
+              logEveryWhere({
+                message: `recordActivity() error: ${error?.message}`,
+              });
+            }
+          }
+
           results.push({
             wallet: wallet?.address || "",
             amount: effectiveAmount,

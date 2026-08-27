@@ -39,6 +39,7 @@ import settingReducer from "./setting";
 import agentProfileReducer from "./agentProfile";
 import agentTaskReducer from "./agentTask";
 import appLogReducer from "./appLog";
+import walletActivityReducer from "./walletActivity";
 
 const reducers = combineReducers({
   Auth: authReducer,
@@ -73,6 +74,7 @@ const reducers = combineReducers({
   AgentProfile: agentProfileReducer,
   AgentTask: agentTaskReducer,
   AppLog: appLogReducer,
+  WalletActivity: walletActivityReducer,
 });
 
 const stripSensitiveListTransform = createTransform(

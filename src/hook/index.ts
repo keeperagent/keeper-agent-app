@@ -207,4 +207,5 @@ export {
   useInstallToClaudeCode,
 } from "./mcpToken";
 export { useGetListAppLog, useDeleteAppLog, useCreateAppLog } from "./appLog";
+export { useGetListWalletActivity } from "./walletActivity";
 export { useCheckModelCapability } from "./useCheckModelCapability";

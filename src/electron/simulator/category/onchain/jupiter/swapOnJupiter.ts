@@ -1,10 +1,6 @@
 import Big from "big.js";
 import { AxiosProxyConfig } from "axios";
-import {
-  Keypair,
-  PublicKey,
-  VersionedTransaction,
-} from "@solana/web3.js";
+import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { logEveryWhere } from "@/electron/service/util";
 import type { IStructuredLogPayload } from "@/electron/type";
@@ -146,10 +142,10 @@ export class SwapOnJupiter {
     privateKey: string,
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
-  ): Promise<[string | null, Error | null]> => {
+  ): Promise<[string | null, Error | null, string | null]> => {
     const [wallet, errWallet] = getKeypairFromPrivateKey(privateKey);
     if (!wallet || errWallet) {
-      return [null, errWallet];
+      return [null, errWallet, null];
     }
     return this.swap(swapInput, wallet, logInfo, proxy);
   };
@@ -159,12 +155,16 @@ export class SwapOnJupiter {
     wallet: Keypair,
     logInfo: IStructuredLogPayload,
     proxy?: AxiosProxyConfig,
-  ): Promise<[string | null, Error | null]> => {
+  ): Promise<[string | null, Error | null, string | null]> => {
     const [provider, , errProvider] = this.provider.getNextProvider(
       this.listNodeEndpoint,
     );
     if (!provider || errProvider) {
-      return [null, Error("can not get provider " + errProvider?.message)];
+      return [
+        null,
+        Error("can not get provider " + errProvider?.message),
+        null,
+      ];
     }
 
     const decimals = await this.provider.getTokenDecimal(
@@ -193,6 +193,7 @@ export class SwapOnJupiter {
         Error(
           "Jupiter API key is not found, please set it in the Settings page",
         ),
+        null,
       ];
     }
 
@@ -224,6 +225,7 @@ export class SwapOnJupiter {
       return [
         null,
         Error("Swap on Jupiter error, can not get quote " + errQuote?.message),
+        null,
       ];
     }
 
@@ -241,6 +243,7 @@ export class SwapOnJupiter {
         Error(
           `Jupiter trade error, price impact is too high, max is ${swapInput.maxPriceImpactPercentage}%, current is ${priceImpactPercentage}%`,
         ),
+        null,
       ];
     }
 
@@ -254,7 +257,7 @@ export class SwapOnJupiter {
         proxy,
       );
     if (errBuildTx) {
-      return [null, errBuildTx];
+      return [null, errBuildTx, null];
     }
 
     if (swapResponse.simulationError) {
@@ -263,6 +266,7 @@ export class SwapOnJupiter {
         Error(
           `Simulation failed: ${swapResponse.simulationError.error || swapResponse.simulationError.errorCode}`,
         ),
+        null,
       ];
     }
 
@@ -282,7 +286,7 @@ export class SwapOnJupiter {
       skipPreflight: true,
     });
     if (!swapInput.shouldWaitTransactionComfirmed) {
-      return [signature, null];
+      return [signature, null, quote?.outAmount ?? null];
     }
 
     const confirmErr = await sendSolanaTransactionWithRetry(
@@ -293,7 +297,7 @@ export class SwapOnJupiter {
       lastValidBlockHeight,
     );
     if (confirmErr) {
-      return [signature, confirmErr];
+      return [signature, confirmErr, quote?.outAmount ?? null];
     }
 
     const endTime = new Date().getTime();
@@ -304,7 +308,6 @@ export class SwapOnJupiter {
         (endTime - startTime) / 1000
       } seconds`,
     });
-    return [signature, null];
+    return [signature, null, quote?.outAmount ?? null];
   };
-
 }
