@@ -6,11 +6,17 @@ import suiImg from "@/asset/chain/sui.png";
 import aptosImg from "@/asset/chain/aptos.png";
 import ethImg from "@/asset/chain/eth.png";
 import solImg from "@/asset/chain/sol.svg";
+import uniswapImg from "@/asset/uniswap.png";
+import pancakeswapImg from "@/asset/pancakeswap.png";
+import cetusImg from "@/asset/cetus.webp";
+import kyberswapImg from "@/asset/kyberswap.webp";
+import jupiterImg from "@/asset/jupiter.webp";
 import {
   CHAIN_TYPE,
   PORTFOLIO_APP,
   PORTFOLIO_APP_URL,
   CHAIN_TYPE_NAME_EN,
+  WALLET_ACTIVITY_PROTOCOL,
 } from "@/electron/constant";
 import { LOCALE } from "@/language";
 
@@ -178,6 +184,23 @@ const getChainImg = (chainType: string): string => {
   return image;
 };
 
+const getProtocolImg = (protocol?: string): string => {
+  let image = "";
+  if (protocol === WALLET_ACTIVITY_PROTOCOL.JUPITER) {
+    image = jupiterImg;
+  } else if (protocol === WALLET_ACTIVITY_PROTOCOL.KYBERSWAP) {
+    image = kyberswapImg;
+  } else if (protocol === WALLET_ACTIVITY_PROTOCOL.UNISWAP) {
+    image = uniswapImg;
+  } else if (protocol === WALLET_ACTIVITY_PROTOCOL.PANCAKESWAP) {
+    image = pancakeswapImg;
+  } else if (protocol === WALLET_ACTIVITY_PROTOCOL.CETUS) {
+    image = cetusImg;
+  }
+
+  return image;
+};
+
 const getPortfolioAppImg = (portfolioApp: string): string => {
   let image = "";
   if (portfolioApp === PORTFOLIO_APP.DEBANK) {
@@ -289,4 +312,5 @@ export {
   getPortfolioAppUrl,
   getChainImg,
   getChainConfig,
+  getProtocolImg,
 };

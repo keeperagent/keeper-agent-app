@@ -129,6 +129,74 @@ export type IWalletActivity = {
   updateAt?: number;
 };
 
+export type ITradeDetail = {
+  timestamp: number;
+  isBuy: boolean;
+  inputAmount: number;
+  inputUsd?: number;
+  inputSymbol?: string;
+  outputAmount: number;
+  outputUsd?: number;
+  outputSymbol?: string;
+  txHash?: string;
+};
+
+// PnL for one wallet's position in one token, folded from its own SWAP history only
+export type IWalletTrade = {
+  walletAddress: string;
+  chain: string;
+  tokenAddress: string;
+  tokenSymbol?: string;
+  quantity: number;
+  boughtUsd: number;
+  soldUsd: number;
+  averageBuyPrice: number;
+  averageSellPrice: number;
+  // soldUsd - boughtUsd + quantity * currentPrice; undefined when no current price could be resolved
+  total?: number;
+  trades: number;
+  firstTimestamp: number;
+  lastTimestamp: number;
+  tradeDetails: ITradeDetail[];
+  excludedActivityCount: number;
+};
+
+export type IReplayPoint = {
+  timestamp: number;
+  price: number;
+  quantity: number;
+  total: number;
+  boughtUsd: number;
+  soldUsd: number;
+  trades: number;
+};
+
+export type IWalletTradeReplay = IWalletTrade & {
+  candles: ICandle[];
+  replay: IReplayPoint[];
+  timeframe: "second" | "minute" | "hour" | "day";
+  aggregate: number;
+  intervalSeconds: number;
+  candlesError?: string;
+};
+
+export type ICandle = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+export type ITokenCandles = {
+  candles: ICandle[];
+  intervalSeconds: number;
+  timeframe: "second" | "minute" | "hour" | "day";
+  aggregate: number;
+  network: string;
+};
+
 export type IProfile = {
   id?: number;
   name?: string;

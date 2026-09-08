@@ -13,10 +13,17 @@ type IWalletAddressProps = {
   address: string;
   searchText?: string;
   hideQRCode?: boolean;
+  trim?: boolean;
 };
 
+const ellipsisAddress = (address: string, headLength = 6, tailLength = 4) =>
+  address.length > headLength + tailLength + 3
+    ? `${address.slice(0, headLength)}...${address.slice(-tailLength)}`
+    : address;
+
 const WalletAddress = (props: IWalletAddressProps) => {
-  const { address, searchText = "", hideQRCode } = props;
+  const { address, searchText = "", hideQRCode, trim } = props;
+  const displayAddress = trim ? ellipsisAddress(address) : address;
   const { translate } = useTranslation();
   const [isModalOpen, setModalOpen] = useState(false);
   const [isCopied, setCopied] = useState(false);
@@ -38,7 +45,7 @@ const WalletAddress = (props: IWalletAddressProps) => {
     <WalletAddressWrapper>
       <div className="text">
         <Highlighter
-          textToHighlight={address}
+          textToHighlight={displayAddress}
           searchWords={[removeSpecialCharacter(searchText)]}
           highlightClassName="highlight"
         />

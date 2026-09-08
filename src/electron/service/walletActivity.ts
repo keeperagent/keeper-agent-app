@@ -3,7 +3,10 @@ import { logEveryWhere } from "@/electron/service/util";
 import { IWalletActivity } from "@/electron/type";
 import { getUsdValue } from "@/electron/service/tokenPrice";
 
-const normalizeAddress = (address: string | undefined, chain: string) => {
+export const normalizeAddress = (
+  address: string | undefined,
+  chain: string,
+) => {
   if (!address) {
     return address;
   }
