@@ -138,7 +138,7 @@ const detailTargetOf = (record: IWalletActivity): ITradedToken | null => {
 
 const buildColumns = (
   searchText: string,
-  onOpenTokenPnl: (token: ITradedToken) => void,
+  onOpenTrade: (token: ITradedToken) => void,
   translate: (key: string) => string,
   locale: string,
   mapWalletGroupIdToPortfolioApp: Record<number, string>,
@@ -284,7 +284,7 @@ const buildColumns = (
         return null;
       }
       return (
-        <Button size="small" onClick={() => onOpenTokenPnl(detailTarget)}>
+        <Button size="small" onClick={() => onOpenTrade(detailTarget)}>
           {translate("walletActivity.detail")}
         </Button>
       );
@@ -355,7 +355,7 @@ const WalletActivityView = (props: any) => {
     return <TotalData text={text} />;
   };
 
-  const onOpenTokenPnl = (token: ITradedToken) => {
+  const onOpenTrade = (token: ITradedToken) => {
     setSelectedTradedToken(token);
   };
 
@@ -407,7 +407,7 @@ const WalletActivityView = (props: any) => {
           // @ts-ignore
           columns={buildColumns(
             searchText,
-            onOpenTokenPnl,
+            onOpenTrade,
             translate,
             locale,
             mapWalletGroupIdToPortfolioApp,

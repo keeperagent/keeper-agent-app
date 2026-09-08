@@ -41,14 +41,6 @@ const WalletActivityViewWrapper = styled.div`
     width: fit-content;
   }
 
-  .hash-text.link {
-    cursor: pointer;
-
-    &:hover {
-      color: ${(props: { theme: ITheme }) => props.theme.colorPrimary};
-    }
-  }
-
   .hash-line {
     display: flex;
     align-items: center;
