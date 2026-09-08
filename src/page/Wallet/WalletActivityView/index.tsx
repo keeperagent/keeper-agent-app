@@ -1,16 +1,24 @@
 import { Fragment, useEffect, useState } from "react";
-import { Empty, Select, Table, Tooltip } from "antd";
+import { Button, Empty, Select, Table, Tooltip } from "antd";
 import { connect } from "react-redux";
 import { RootState } from "@/redux/store";
 import { WalletAddress, TotalData } from "@/component";
 import { SearchInput } from "@/component/Input";
-import { IWalletActivity, IWalletGroup } from "@/electron/type";
+import { ITradeDetail, IWalletActivity, IWalletGroup } from "@/electron/type";
 import {
   WALLET_ACTIVITY_ACTION_TYPE,
+  CHAIN_TYPE,
+  PORTFOLIO_APP_NAME,
   getExplorerTxUrl,
 } from "@/electron/constant";
-import { formatTimeToDate } from "@/service/util";
-import { TABLE_PAGE_OPTION } from "@/config/constant";
+import {
+  formatTime,
+  getChainImg,
+  getPortfolioAppImg,
+  getPortfolioAppUrl,
+  getProtocolImg,
+} from "@/service/util";
+import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import {
   useGetListWalletActivity,
   useGetListWalletGroup,
@@ -18,7 +26,17 @@ import {
   sendOpenExternalLink,
 } from "@/hook";
 import { actSetPageSize } from "@/redux/walletActivity";
-import { WalletActivityViewWrapper } from "./style";
+import { WalletActivityViewWrapper, PortfolioAppWrapper } from "./style";
+import ModalWalletTradeReplay from "./ModalWalletTradeReplay";
+
+type ITradedToken = {
+  walletAddress: string;
+  chain: string;
+  tokenAddress: string;
+  tokenSymbol?: string;
+  // The single trade the "Detail" button was clicked on — lets the modal isolate PnL for just this trade instead of the whole position
+  selectedTradeDetail?: ITradeDetail;
+};
 
 let searchTimeOut: any = null;
 
@@ -36,6 +54,19 @@ const ellipsisText = (text: string, headLength = 6, tailLength = 4) =>
   text.length > headLength + tailLength + 3
     ? `${text.slice(0, headLength)}...${text.slice(-tailLength)}`
     : text;
+
+const chainKeyToChainType = (chain?: string): CHAIN_TYPE => {
+  if (chain === "solana") {
+    return CHAIN_TYPE.SOLANA;
+  }
+  if (chain === "sui") {
+    return CHAIN_TYPE.SUI;
+  }
+  if (chain === "aptos") {
+    return CHAIN_TYPE.APTOS;
+  }
+  return CHAIN_TYPE.EVM;
+};
 
 const renderTokenLine = (
   sign: "-" | "+",
@@ -62,28 +93,85 @@ const renderTokenLine = (
   );
 };
 
-const buildColumns = (searchText: string) => [
+const tradeDetailFromRecord = (
+  record: IWalletActivity,
+  tokenAddress: string,
+): ITradeDetail => {
+  const isBuy = record.token1Address === tokenAddress;
+  return {
+    timestamp: Math.floor((record.createAt || 0) / 1000),
+    isBuy,
+    inputAmount: Math.abs(Number(record.token0Amount)) || 0,
+    inputUsd: record.token0UsdValue,
+    inputSymbol: record.token0Symbol,
+    outputAmount: Math.abs(Number(record.token1Amount)) || 0,
+    outputUsd: record.token1UsdValue,
+    outputSymbol: record.token1Symbol,
+    txHash: record.txHash,
+  };
+};
+
+// The token side a "Detail" button opens PnL for
+const detailTargetOf = (record: IWalletActivity): ITradedToken | null => {
+  if (record.actionType !== WALLET_ACTIVITY_ACTION_TYPE.SWAP) {
+    return null;
+  }
+  if (!record.walletAddress || !record.chain) {
+    return null;
+  }
+
+  const tokenAddress = record.token1Address || record.token0Address;
+  const tokenSymbol = record.token1Address
+    ? record.token1Symbol
+    : record.token0Symbol;
+  if (!tokenAddress) {
+    return null;
+  }
+  return {
+    walletAddress: record.walletAddress,
+    chain: record.chain,
+    tokenAddress,
+    tokenSymbol,
+    selectedTradeDetail: tradeDetailFromRecord(record, tokenAddress),
+  };
+};
+
+const buildColumns = (
+  searchText: string,
+  onOpenTokenPnl: (token: ITradedToken) => void,
+  translate: (key: string) => string,
+  locale: string,
+  mapWalletGroupIdToPortfolioApp: Record<number, string>,
+  onViewPortfolio: (walletAddress: string, portfolioApp: string) => void,
+) => [
   {
     key: "time",
+    title: translate("walletActivity.time"),
     width: 200,
     render: (_: any, record: IWalletActivity) => {
       const explorerUrl = getExplorerTxUrl(record.chain, record.txHash);
+      const chainImg = getChainImg(chainKeyToChainType(record.chain));
 
       return (
-        <div className="cell time-cell">
-          <span className="time">{formatTimeToDate(record.createAt || 0)}</span>
+        <div className="time-cell">
+          <span className="time">
+            {formatTime(record.createAt || 0, locale)}
+          </span>
           {record.txHash ? (
             <Tooltip title={record.txHash}>
-              {explorerUrl ? (
-                <span
-                  className="hash-text link"
-                  onClick={() => sendOpenExternalLink(explorerUrl)}
-                >
-                  {ellipsisText(record.txHash)}
-                </span>
-              ) : (
-                <span className="hash-text">{ellipsisText(record.txHash)}</span>
-              )}
+              <span
+                className={explorerUrl ? "hash-line link" : "hash-line"}
+                onClick={
+                  explorerUrl
+                    ? () => sendOpenExternalLink(explorerUrl)
+                    : undefined
+                }
+              >
+                {chainImg ? (
+                  <img className="chain-icon" src={chainImg} alt="" />
+                ) : null}
+                {ellipsisText(record.txHash)}
+              </span>
             </Tooltip>
           ) : null}
         </div>
@@ -92,23 +180,34 @@ const buildColumns = (searchText: string) => [
   },
   {
     key: "action",
-    width: 140,
-    render: (_: any, record: IWalletActivity) => (
-      <div className="cell action-cell">
-        <span className="action-label">
-          {ACTION_LABEL[record.actionType || ""] || record.actionType}
-        </span>
-        {record.protocol && (
-          <span className="protocol-label">{capitalize(record.protocol)}</span>
-        )}
-      </div>
-    ),
+    title: translate("walletActivity.action"),
+    width: 120,
+    render: (_: any, record: IWalletActivity) => {
+      const protocolImg = getProtocolImg(record.protocol);
+
+      return (
+        <div className="action-cell">
+          <span className="action-label">
+            {ACTION_LABEL[record.actionType || ""] || record.actionType}
+          </span>
+          {record.protocol && (
+            <span className="protocol-label">
+              {protocolImg ? (
+                <img className="protocol-icon" src={protocolImg} alt="" />
+              ) : null}
+              {capitalize(record.protocol)}
+            </span>
+          )}
+        </div>
+      );
+    },
   },
   {
     key: "token",
-    width: 260,
+    title: translate("walletActivity.token"),
+    width: 250,
     render: (_: any, record: IWalletActivity) => (
-      <div className="cell token-cell">
+      <div className="token-cell">
         {renderTokenLine(
           "-",
           record.token0Amount,
@@ -128,13 +227,15 @@ const buildColumns = (searchText: string) => [
   },
   {
     key: "wallet",
-    width: 400,
+    title: translate("walletActivity.wallet"),
+    width: 150,
     render: (_: any, record: IWalletActivity) => (
-      <div className="cell wallet-cell">
+      <Fragment>
         <WalletAddress
           address={record.walletAddress || ""}
           searchText={searchText}
           hideQRCode
+          trim
         />
         {record.actionType === WALLET_ACTIVITY_ACTION_TYPE.TRANSFER &&
         record.receiverAddress ? (
@@ -144,11 +245,50 @@ const buildColumns = (searchText: string) => [
             </span>
           </Tooltip>
         ) : null}
-      </div>
+      </Fragment>
     ),
   },
   {
-    key: "spacer",
+    key: "portfolio",
+    title: translate("portfolio"),
+    width: 110,
+    render: (_: any, record: IWalletActivity) => {
+      const portfolioApp =
+        record.walletGroupId !== undefined
+          ? mapWalletGroupIdToPortfolioApp[record.walletGroupId]
+          : undefined;
+      if (!portfolioApp || !record.walletAddress) {
+        return EMPTY_STRING;
+      }
+      return (
+        <PortfolioAppWrapper
+          onClick={() => onViewPortfolio(record.walletAddress!, portfolioApp)}
+        >
+          <div className="icon">
+            <img src={getPortfolioAppImg(portfolioApp)} alt="" />
+          </div>
+          <Tooltip title={translate("wallet.viewPortfolio")}>
+            <span className="text">{PORTFOLIO_APP_NAME[portfolioApp]}</span>
+          </Tooltip>
+        </PortfolioAppWrapper>
+      );
+    },
+  },
+  {
+    key: "detail",
+    width: 100,
+    align: "center",
+    render: (_: any, record: IWalletActivity) => {
+      const detailTarget = detailTargetOf(record);
+      if (!detailTarget) {
+        return null;
+      }
+      return (
+        <Button size="small" onClick={() => onOpenTokenPnl(detailTarget)}>
+          {translate("walletActivity.detail")}
+        </Button>
+      );
+    },
   },
 ];
 
@@ -160,12 +300,14 @@ const WalletActivityView = (props: any) => {
     listWalletGroup,
   } = props;
 
-  const { translate } = useTranslation();
+  const { translate, locale } = useTranslation();
   const [page, onSetPage] = useState(1);
   const [searchText, onSetSearchText] = useState("");
   const [walletGroupId, setWalletGroupId] = useState<number | undefined>(
     undefined,
   );
+  const [selectedTradedToken, setSelectedTradedToken] =
+    useState<ITradedToken | null>(null);
 
   const { getListWalletActivity, loading } = useGetListWalletActivity();
   const { getListWalletGroup } = useGetListWalletGroup();
@@ -213,6 +355,26 @@ const WalletActivityView = (props: any) => {
     return <TotalData text={text} />;
   };
 
+  const onOpenTokenPnl = (token: ITradedToken) => {
+    setSelectedTradedToken(token);
+  };
+
+  const onCloseReplayModal = () => {
+    setSelectedTradedToken(null);
+  };
+
+  const mapWalletGroupIdToPortfolioApp: Record<number, string> = {};
+  for (const group of listWalletGroup || []) {
+    if (group.id !== undefined && group.portfolioApp) {
+      mapWalletGroupIdToPortfolioApp[group.id] = group.portfolioApp;
+    }
+  }
+
+  const onViewPortfolio = (walletAddress: string, portfolioApp: string) => {
+    const url = getPortfolioAppUrl(walletAddress, portfolioApp);
+    sendOpenExternalLink(url);
+  };
+
   return (
     <Fragment>
       <WalletActivityViewWrapper>
@@ -240,12 +402,17 @@ const WalletActivityView = (props: any) => {
         </div>
 
         <Table
-          className="activity-table"
-          showHeader={false}
           rowKey={(record) => record.id!}
-          dataSource={listWalletActivity}
+          dataSource={listWalletActivity || []}
           // @ts-ignore
-          columns={buildColumns(searchText)}
+          columns={buildColumns(
+            searchText,
+            onOpenTokenPnl,
+            translate,
+            locale,
+            mapWalletGroupIdToPortfolioApp,
+            onViewPortfolio,
+          )}
           loading={loading}
           pagination={{
             total: totalData,
@@ -270,8 +437,21 @@ const WalletActivityView = (props: any) => {
               </div>
             ),
           }}
+          size="middle"
         />
       </WalletActivityViewWrapper>
+
+      {selectedTradedToken ? (
+        <ModalWalletTradeReplay
+          open={Boolean(selectedTradedToken)}
+          onClose={onCloseReplayModal}
+          walletAddress={selectedTradedToken.walletAddress}
+          chain={selectedTradedToken.chain}
+          tokenAddress={selectedTradedToken.tokenAddress}
+          tokenSymbol={selectedTradedToken.tokenSymbol}
+          selectedTradeDetail={selectedTradedToken.selectedTradeDetail}
+        />
+      ) : null}
     </Fragment>
   );
 };

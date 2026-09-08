@@ -23,6 +23,7 @@ import type {
   IWorkflow,
   IWorkflowVariable,
   ISorter,
+  ITradeDetail,
   IWallet,
   IWalletGroup,
   LLMProvider,
@@ -241,6 +242,14 @@ export type IpcUpdateResourcePayload = {
 export type IpcGetListWalletActivityPayload = IpcPagePayload & {
   walletAddress?: string;
   walletGroupId?: number;
+};
+
+export type IpcGetWalletTradeReplayPayload = {
+  walletAddress: string;
+  chain: string;
+  tokenAddress: string;
+  // Computes PnL from just this one trade instead of querying the DB
+  singleTradeDetail?: ITradeDetail;
 };
 
 export type IpcImportResourcePayload = {

@@ -34,42 +34,6 @@ const WalletActivityViewWrapper = styled.div`
     }
   }
 
-  .activity-table {
-    .ant-table {
-      background: transparent;
-    }
-
-    .ant-table-tbody > tr > td {
-      padding: 1.2rem 1rem;
-      border-bottom: 1px solid
-        ${(props: { theme: ITheme }) => props.theme.colorBorderSubtle};
-    }
-
-    .ant-table-tbody > tr > td:first-child {
-      padding-left: 0;
-    }
-
-    .ant-table-tbody > tr > td:last-child {
-      padding-right: 0;
-    }
-
-    .ant-table-tbody > tr:last-child > td {
-      border-bottom: none;
-    }
-
-    .ant-table-tbody > tr > td.ant-table-cell-row-hover,
-    .ant-table-tbody > tr:hover > td {
-      background: ${(props: { theme: ITheme }) => props.theme.colorBgNested};
-    }
-  }
-
-  .cell {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    min-width: 0;
-  }
-
   .hash-text {
     font-size: 1.2rem;
     font-family: monospace;
@@ -85,7 +49,34 @@ const WalletActivityViewWrapper = styled.div`
     }
   }
 
+  .hash-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-family: monospace;
+    color: ${(props: { theme: ITheme }) => props.theme.colorTextSecondary};
+    width: fit-content;
+
+    .chain-icon {
+      width: 1.4rem;
+      height: 1.4rem;
+    }
+  }
+
+  .hash-line.link {
+    cursor: pointer;
+
+    &:hover {
+      color: ${(props: { theme: ITheme }) => props.theme.colorPrimary};
+    }
+  }
+
   .time-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
     .time {
       font-size: 1.3rem;
       color: ${(props: { theme: ITheme }) => props.theme.colorTextPrimary};
@@ -93,6 +84,10 @@ const WalletActivityViewWrapper = styled.div`
   }
 
   .action-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
     .action-label {
       font-size: 1.3rem;
       color: ${(props: { theme: ITheme }) => props.theme.colorTextPrimary};
@@ -100,12 +95,23 @@ const WalletActivityViewWrapper = styled.div`
     }
 
     .protocol-label {
-      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
       color: ${(props: { theme: ITheme }) => props.theme.colorTextSecondary};
+
+      .protocol-icon {
+        width: 1.3rem;
+        height: 1.3rem;
+        border-radius: 50%;
+      }
     }
   }
 
   .token-cell {
+    display: flex;
+    flex-direction: column;
     gap: 0.4rem;
 
     .token-line {
@@ -131,4 +137,28 @@ const WalletActivityViewWrapper = styled.div`
   }
 `;
 
-export { WalletActivityViewWrapper };
+const PortfolioAppWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 0.7rem;
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .text {
+    font-size: 1.2rem;
+  }
+`;
+
+export { WalletActivityViewWrapper, PortfolioAppWrapper };

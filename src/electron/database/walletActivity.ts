@@ -54,6 +54,39 @@ class WalletActivityDB {
     }
   }
 
+  async getTokenActivityForWallet(
+    walletAddress: string,
+    chain: string,
+    tokenAddress: string,
+  ): Promise<[IWalletActivity[] | null, Error | null]> {
+    try {
+      const listData = await WalletActivityModel.findAll({
+        order: [["createAt", "DESC"]],
+        limit: 100,
+        where: {
+          [Op.and]: [
+            { walletAddress },
+            { chain },
+            {
+              [Op.or]: [
+                { token0Address: tokenAddress },
+                { token1Address: tokenAddress },
+              ],
+            },
+          ],
+        },
+        raw: true,
+      });
+
+      return [(listData as unknown as IWalletActivity[]).reverse(), null];
+    } catch (err: any) {
+      logEveryWhere({
+        message: `getTokenActivityForWallet() error: ${err?.message}`,
+      });
+      return [null, err];
+    }
+  }
+
   async createWalletActivity(
     data: IWalletActivity,
   ): Promise<[IWalletActivity | null, Error | null]> {
