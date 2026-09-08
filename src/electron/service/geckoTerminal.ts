@@ -120,6 +120,8 @@ export class GeckoTerminal {
             currency: "usd",
             limit: Math.min(limit, 1000),
             before_timestamp: beforeTimestamp,
+            // Without this, GeckoTerminal omits zero-volume intervals entirely, breaking replayPnl's assumption that consecutive candles are exactly intervalSeconds apart.
+            include_empty_intervals: true,
           },
           timeout: 10_000,
         },
@@ -143,7 +145,6 @@ export class GeckoTerminal {
     }
   };
 
-  // Single call, capped at 1,000 bars
   getTokenCandles = async (
     chain: string,
     tokenAddress: string,
@@ -178,22 +179,65 @@ export class GeckoTerminal {
       return [null, poolErr || new Error("No pool found for this token")];
     }
 
-    const limit = Math.min(1000, Math.ceil(spanSeconds / intervalSeconds) + 5);
-    const [candles, ohlcvErr] = await this.fetchOhlcv(
-      network,
-      poolAddress,
-      tokenAddress,
-      timeframe,
-      aggregate,
-      toTimestamp,
-      limit,
-    );
-    if (ohlcvErr || !candles) {
+    const totalCandlesNeeded = Math.ceil(spanSeconds / intervalSeconds) + 5;
+    const pageCap = 1000;
+    // Bounds how many round trips a pathologically long span can trigger — 20 pages already covers 20,000 daily candles (~54 years).
+    const maxPages = 20;
+
+    const candles: ICandle[] = [];
+    let beforeTimestamp = toTimestamp;
+    let ohlcvErr: Error | null = null;
+
+    for (let page = 0; page < maxPages; page += 1) {
+      const remaining = totalCandlesNeeded - candles.length;
+      if (remaining <= 0) {
+        break;
+      }
+      const pageLimit = Math.min(pageCap, remaining);
+      const [pageCandles, pageErr] = await this.fetchOhlcv(
+        network,
+        poolAddress,
+        tokenAddress,
+        timeframe,
+        aggregate,
+        beforeTimestamp,
+        pageLimit,
+      );
+      if (pageErr || !pageCandles) {
+        ohlcvErr = pageErr;
+        break;
+      }
+      if (pageCandles.length === 0) {
+        break; // no older history available from the pool
+      }
+      candles.unshift(...pageCandles);
+      const earliestFetched = pageCandles[0].timestamp;
+      if (earliestFetched <= fromTimestamp || pageCandles.length < pageLimit) {
+        break; // window covered, or the API ran out of history before covering it
+      }
+      beforeTimestamp = earliestFetched;
+    }
+
+    if (candles.length === 0) {
       return [null, ohlcvErr || new Error("Failed to load candles")];
     }
 
-    this.candleCache.set(cacheKey, candles);
-    return [{ candles, intervalSeconds, timeframe, aggregate, network }, null];
+    // Pages are fetched newest-first and prepended; dedupe defensively in case a page boundary overlaps by one bar.
+    const dedupedCandles = Array.from(
+      new Map(candles.map((candle) => [candle.timestamp, candle])).values(),
+    ).sort((a, b) => a.timestamp - b.timestamp);
+
+    this.candleCache.set(cacheKey, dedupedCandles);
+    return [
+      {
+        candles: dedupedCandles,
+        intervalSeconds,
+        timeframe,
+        aggregate,
+        network,
+      },
+      null,
+    ];
   };
 }
 

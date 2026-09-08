@@ -96,15 +96,27 @@ const renderTokenLine = (
 const tradeDetailFromRecord = (
   record: IWalletActivity,
   tokenAddress: string,
-): ITradeDetail => {
+): ITradeDetail | null => {
   const isBuy = record.token1Address === tokenAddress;
+  const inputAmount = Math.abs(Number(record.token0Amount));
+  const outputAmount = Math.abs(Number(record.token1Amount));
+  const trackedAmount = isBuy ? outputAmount : inputAmount;
+  const trackedUsd = isBuy ? record.token1UsdValue : record.token0UsdValue;
+  if (
+    !trackedAmount ||
+    !Number.isFinite(trackedAmount) ||
+    trackedUsd === undefined ||
+    trackedUsd === null
+  ) {
+    return null;
+  }
   return {
     timestamp: Math.floor((record.createAt || 0) / 1000),
     isBuy,
-    inputAmount: Math.abs(Number(record.token0Amount)) || 0,
+    inputAmount,
     inputUsd: record.token0UsdValue,
     inputSymbol: record.token0Symbol,
-    outputAmount: Math.abs(Number(record.token1Amount)) || 0,
+    outputAmount,
     outputUsd: record.token1UsdValue,
     outputSymbol: record.token1Symbol,
     txHash: record.txHash,
@@ -127,12 +139,16 @@ const detailTargetOf = (record: IWalletActivity): ITradedToken | null => {
   if (!tokenAddress) {
     return null;
   }
+  const selectedTradeDetail = tradeDetailFromRecord(record, tokenAddress);
+  if (!selectedTradeDetail) {
+    return null;
+  }
   return {
     walletAddress: record.walletAddress,
     chain: record.chain,
     tokenAddress,
     tokenSymbol,
-    selectedTradeDetail: tradeDetailFromRecord(record, tokenAddress),
+    selectedTradeDetail,
   };
 };
 

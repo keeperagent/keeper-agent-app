@@ -301,7 +301,7 @@ export const getWalletTradeReplay = async (
 
   const [tokenCandles, candlesErr] = await geckoTerminal.getTokenCandles(
     chain,
-    tokenAddress,
+    pnl.tokenAddress,
     fromTimestamp,
     toTimestamp,
   );
