@@ -23,7 +23,7 @@ import { IProfileGroup, IResourceGroup } from "@/electron/type";
 import { actSaveSelectedProfileGroup } from "@/redux/profileGroup";
 import ProfileConfigChart from "../../ProfileConfigChart";
 import { ModalWrapper } from "./style";
-import { VIEW_MODE } from "../../index";
+import { VIEW_MODE } from "../../constant";
 
 type IModalProfileProps = {
   isModalOpen: boolean;

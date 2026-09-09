@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { TableFillWrapper } from "@/style/layout";
 
 const WalletActivityViewWrapper = styled.div`
   width: 100%;
@@ -153,4 +154,6 @@ const PortfolioAppWrapper = styled.div`
   }
 `;
 
-export { WalletActivityViewWrapper, PortfolioAppWrapper };
+const TableSectionWrapper = styled(TableFillWrapper)``;
+
+export { WalletActivityViewWrapper, PortfolioAppWrapper, TableSectionWrapper };

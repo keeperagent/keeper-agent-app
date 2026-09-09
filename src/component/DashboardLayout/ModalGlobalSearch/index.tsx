@@ -20,9 +20,9 @@ import {
 } from "@/electron/type";
 import SearchResult from "./SearchResult";
 import { CAMPAIGN_VIEW_MODE, EMPTY_STRING } from "@/config/constant";
-import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
-import { VIEW_MODE as WALLET_VIEW_MODE } from "@/page/Wallet";
-import { VIEW_MODE as RESOURCE_VIEW_MODE } from "@/page/Resource";
+import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile/constant";
+import { VIEW_MODE as WALLET_VIEW_MODE } from "@/page/Wallet/constant";
+import { VIEW_MODE as RESOURCE_VIEW_MODE } from "@/page/Resource/constant";
 
 interface IProps {
   isModalGlobalSearchOpen: boolean;

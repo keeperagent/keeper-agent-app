@@ -27,6 +27,7 @@ import {
   useDeleteWalletGroup,
   useTranslation,
   useGetWalletGroupDependency,
+  useTableScrollHeight,
 } from "@/hook";
 import {
   actSaveSelectedWalletGroup,
@@ -39,7 +40,7 @@ import { actSaveGetListWallet } from "@/redux/wallet";
 import { IProfileGroup, ISorter, IWalletGroup } from "@/electron/type";
 import { PORTFOLIO_APP_NAME, SORT_ORDER } from "@/electron/constant";
 import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
-import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
+import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile/constant";
 import ModalWalletGroup from "./ModalWalletGroup";
 import {
   WalletGroupWrapper,
@@ -48,8 +49,9 @@ import {
   ExpandRowWrapper,
   LinkHoverWrapper,
   OptionWrapper,
+  TableSectionWrapper,
 } from "./style";
-import { VIEW_MODE } from "../index";
+import { VIEW_MODE } from "../constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -238,6 +240,8 @@ const WalletGroup = (props: any) => {
   } = useDeleteWalletGroup();
   const { getWalletGroupDependency, loading: getDependencyLoading } =
     useGetWalletGroupDependency();
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({ deps: [totalData] });
 
   useEffect(() => {
     if (hasDependencyError && selectedRowKeys?.length > 0) {
@@ -449,39 +453,41 @@ const WalletGroup = (props: any) => {
         </Popconfirm>
       </div>
 
-      <Table
-        rowSelection={{
-          selectedRowKeys,
-          onChange: onRowSelectionChange,
-        }}
-        rowKey={(data) => data?.id!}
-        dataSource={dataSource}
-        columns={renderColumns(
-          onEditWalletGroup,
-          onViewGroup,
-          searchText,
-          translate,
-          locale,
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: { items_per_page: `/ ${translate("page")}` },
-        }}
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-        }}
-        scroll={{ x: 900, y: "70vh" }}
-        loading={getDataLoading}
-        onChange={onTableChange}
-        size="middle"
-      />
+      <TableSectionWrapper ref={tableSectionRef}>
+        <Table
+          rowSelection={{
+            selectedRowKeys,
+            onChange: onRowSelectionChange,
+          }}
+          rowKey={(data) => data?.id!}
+          dataSource={dataSource}
+          columns={renderColumns(
+            onEditWalletGroup,
+            onViewGroup,
+            searchText,
+            translate,
+            locale,
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+          }}
+          scroll={{ x: 900, y: tableScrollHeight }}
+          loading={getDataLoading}
+          onChange={onTableChange}
+          size="middle"
+        />
+      </TableSectionWrapper>
 
       <ModalDeleteDependency />
       <ModalWalletGroup isModalOpen={isModalOpen} setModalOpen={setModalOpen} />

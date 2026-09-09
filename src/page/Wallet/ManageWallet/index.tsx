@@ -35,6 +35,7 @@ import {
   useUpdateWallet,
   useGetWalletGroupDependency,
   useOpenExternalLink,
+  useTableScrollHeight,
 } from "@/hook";
 import {
   formatTime,
@@ -57,9 +58,10 @@ import {
   PortfolioAppWrapper,
   OptionWrapper,
   IconWrapper,
+  TableSectionWrapper,
 } from "./style";
 import ModalExportWallet from "./ModalExportWallet";
-import { VIEW_MODE } from "../index";
+import { VIEW_MODE } from "../constant";
 
 const { Option } = Select;
 
@@ -199,6 +201,8 @@ const ManageWallet = (props: any) => {
     useGetOneWalletGroup();
   const { updateWallet } = useUpdateWallet();
   const { openExternalLink } = useOpenExternalLink();
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({ bottomSpacingPx: 70, deps: [totalData] });
 
   useEffect(() => {
     if (
@@ -567,44 +571,46 @@ const ManageWallet = (props: any) => {
         </Popconfirm>
       </div>
 
-      <Table
-        virtual
-        rowSelection={rowSelection}
-        rowKey={(data) => data?.id!}
-        dataSource={isStaleData ? [] : dataSource}
-        // @ts-ignore
-        columns={renderColumns(
-          onEditWallet,
-          selectedWalletGroup?.portfolioApp,
-          onViewPortfolio,
-          searchText,
-          translate,
-          onUpdateColor,
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: {
-            items_per_page: `/ ${translate("page")}`,
-          },
-        }}
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-          expandedRowKeys,
-          columnWidth: 30,
-        }}
-        scroll={{ x: 700, y: 600 }}
-        loading={getDataLoading || isStaleData}
-        onChange={onTableChange}
-        size="middle"
-        bordered
-      />
+      <TableSectionWrapper ref={tableSectionRef}>
+        <Table
+          virtual
+          rowSelection={rowSelection}
+          rowKey={(data) => data?.id!}
+          dataSource={isStaleData ? [] : dataSource}
+          // @ts-ignore
+          columns={renderColumns(
+            onEditWallet,
+            selectedWalletGroup?.portfolioApp,
+            onViewPortfolio,
+            searchText,
+            translate,
+            onUpdateColor,
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: {
+              items_per_page: `/ ${translate("page")}`,
+            },
+          }}
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+            expandedRowKeys,
+            columnWidth: 30,
+          }}
+          scroll={{ x: 700, y: tableScrollHeight }}
+          loading={getDataLoading || isStaleData}
+          onChange={onTableChange}
+          size="middle"
+          bordered
+        />
+      </TableSectionWrapper>
 
       <ModalImportWallet
         isModalOpen={isModalImportOpen}

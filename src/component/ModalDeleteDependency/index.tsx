@@ -9,7 +9,7 @@ import { NewTabIcon } from "@/component/Icon";
 import { useGetWalletGroupDependency, useTranslation } from "@/hook";
 import { ICampaign, IProfileGroup, IWalletGroup } from "@/electron/type";
 import { EMPTY_STRING } from "@/config/constant";
-import { VIEW_MODE } from "@/page/Profile";
+import { VIEW_MODE } from "@/page/Profile/constant";
 import { Wrapper, IconWrapper } from "./style";
 
 const ModalDeleteDependency = (props: any) => {

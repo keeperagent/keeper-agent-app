@@ -1,8 +1,13 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { TableFillWrapper } from "@/style/layout";
 
 const ManageWalletWrapper = styled.div`
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 
   .ant-table-column-has-sorters {
     .ant-table-column-title {
@@ -20,6 +25,7 @@ const ManageWalletWrapper = styled.div`
 
   .heading {
     width: 100%;
+    flex-shrink: 0;
     margin-bottom: var(--margin-bottom-large);
     display: flex;
     align-items: center;
@@ -188,6 +194,8 @@ const IconWrapper = styled.span`
   }
 `;
 
+const TableSectionWrapper = styled(TableFillWrapper)``;
+
 export {
   ManageWalletWrapper,
   ExpandIconWrapper,
@@ -195,4 +203,5 @@ export {
   PortfolioAppWrapper,
   OptionWrapper,
   IconWrapper,
+  TableSectionWrapper,
 };

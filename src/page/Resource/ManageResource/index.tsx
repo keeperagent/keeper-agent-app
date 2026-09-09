@@ -19,6 +19,7 @@ import {
   useGetOneResourceGroup,
   useGetListResourceGroup,
   useTranslation,
+  useTableScrollHeight,
 } from "@/hook";
 import { actSaveSelectedResourceGroup } from "@/redux/resourceGroup";
 import { getResourceColumn } from "@/service/tableView";
@@ -30,6 +31,7 @@ import {
   ExpandIconWrapper,
   ExpandRowWrapper,
   OptionWrapper,
+  TableSectionWrapper,
 } from "./style";
 import ModalExportResource from "./ModalExportResource";
 
@@ -110,6 +112,8 @@ const ManageResource = (props: any) => {
   const { getOneResourceGroup, loading: isSelectLoading } =
     useGetOneResourceGroup();
   const { getListResourceGroup } = useGetListResourceGroup();
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({ bottomSpacingPx: 70, deps: [totalData] });
 
   useEffect(() => {
     if (!selectedResourceGroup && listResourceGroup?.length > 0) {
@@ -379,38 +383,40 @@ const ManageResource = (props: any) => {
         </Popconfirm>
       </div>
 
-      <Table
-        virtual
-        rowSelection={rowSelection}
-        rowKey={(data) => data?.id!}
-        dataSource={isStaleData ? [] : dataSource}
-        columns={renderColumns(
-          listColumn,
-          onOpenModalResource,
-          searchText,
-          translate,
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: { items_per_page: `/ ${translate("page")}` },
-        }}
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-          columnWidth: 30,
-        }}
-        scroll={{ x: 700, y: 600 }}
-        loading={getDataLoading || isStaleData}
-        onChange={onTableChange}
-        size="middle"
-        bordered
-      />
+      <TableSectionWrapper ref={tableSectionRef}>
+        <Table
+          virtual
+          rowSelection={rowSelection}
+          rowKey={(data) => data?.id!}
+          dataSource={isStaleData ? [] : dataSource}
+          columns={renderColumns(
+            listColumn,
+            onOpenModalResource,
+            searchText,
+            translate,
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+            columnWidth: 30,
+          }}
+          scroll={{ x: 700, y: tableScrollHeight }}
+          loading={getDataLoading || isStaleData}
+          onChange={onTableChange}
+          size="middle"
+          bordered
+        />
+      </TableSectionWrapper>
 
       <ModalImportResource
         isModalOpen={isModalImportOpen}
