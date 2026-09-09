@@ -227,7 +227,7 @@ const ProfileGroup = (props: any) => {
     useGetListProfileGroup();
   const { isSuccess, loading, deleteProfileGroup } = useDeleteProfileGroup();
   const { tableSectionRef, scrollHeight: tableScrollHeight } =
-    useTableScrollHeight({ deps: [totalData] });
+    useTableScrollHeight({ deps: [totalData, viewMode] });
 
   useEffect(() => {
     setViewMode(
