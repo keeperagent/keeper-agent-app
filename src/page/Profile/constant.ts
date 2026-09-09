@@ -1,0 +1,4 @@
+export const VIEW_MODE = {
+  PROFILE: "PROFILE",
+  PROFILE_GROUP: "PROFILE_GROUP",
+};

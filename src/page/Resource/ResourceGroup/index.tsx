@@ -27,6 +27,7 @@ import {
   useGetListResourceGroup,
   useDeleteResourceGroup,
   useTranslation,
+  useTableScrollHeight,
 } from "@/hook";
 import {
   actSaveSelectedResourceGroup,
@@ -42,7 +43,7 @@ import {
 } from "@/electron/type";
 import { EMPTY_STRING, TABLE_PAGE_OPTION } from "@/config/constant";
 import { SORT_ORDER } from "@/electron/constant";
-import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile";
+import { VIEW_MODE as PROFILE_VIEW_MODE } from "@/page/Profile/constant";
 import ModalResourceGroup from "./ModalResourceGroup";
 import {
   PageWrapper,
@@ -50,8 +51,9 @@ import {
   ExpandRowWrapper,
   LinkHoverWrapper,
   OptionWrapper,
+  TableSectionWrapper,
 } from "./style";
-import { VIEW_MODE } from "../index";
+import { VIEW_MODE } from "../constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -224,6 +226,8 @@ const ResourceGroup = (props: any) => {
   const { getListResourceGroup, loading: getDataLoading } =
     useGetListResourceGroup();
   const { isSuccess, loading, deleteResourceGroup } = useDeleteResourceGroup();
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({ deps: [totalData] });
 
   useEffect(() => {
     props?.actSaveSelectedResourceGroup(null);
@@ -417,39 +421,41 @@ const ResourceGroup = (props: any) => {
         </Popconfirm>
       </div>
 
-      <Table
-        rowSelection={{
-          selectedRowKeys,
-          onChange: onRowSelectionChange,
-        }}
-        rowKey={(data) => data?.id!}
-        dataSource={dataSource}
-        columns={renderColumns(
-          onEditResourceGroup,
-          onViewGroup,
-          searchText,
-          translate,
-          locale,
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: { items_per_page: `/ ${translate("page")}` },
-        }}
-        scroll={{ x: 900, y: "70vh" }}
-        loading={getDataLoading}
-        onChange={onTableChange}
-        size="middle"
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-        }}
-      />
+      <TableSectionWrapper ref={tableSectionRef}>
+        <Table
+          rowSelection={{
+            selectedRowKeys,
+            onChange: onRowSelectionChange,
+          }}
+          rowKey={(data) => data?.id!}
+          dataSource={dataSource}
+          columns={renderColumns(
+            onEditResourceGroup,
+            onViewGroup,
+            searchText,
+            translate,
+            locale,
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          scroll={{ x: 900, y: tableScrollHeight }}
+          loading={getDataLoading}
+          onChange={onTableChange}
+          size="middle"
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+          }}
+        />
+      </TableSectionWrapper>
 
       <ModalResourceGroup
         isModalOpen={isModalOpen}

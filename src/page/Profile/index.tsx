@@ -7,13 +7,9 @@ import { actSetPageName } from "@/redux/layout";
 import { RootState } from "@/redux/store";
 import { useTranslation } from "@/hook";
 import { PageWrapper } from "./style";
+import { VIEW_MODE } from "./constant";
 import ProfileGroup from "./ProfileGroup";
 import ManageProfile from "./ManageProfile";
-
-export const VIEW_MODE = {
-  PROFILE: "PROFILE",
-  PROFILE_GROUP: "PROFILE_GROUP",
-};
 
 const ProfilePage = (props: any) => {
   const [viewMode, setViewMode] = useState(VIEW_MODE.PROFILE_GROUP);
@@ -31,13 +27,13 @@ const ProfilePage = (props: any) => {
 
   useEffect(() => {
     setViewMode(
-      mode && mode !== "undefined" ? mode?.toString() : VIEW_MODE.PROFILE_GROUP
+      mode && mode !== "undefined" ? mode?.toString() : VIEW_MODE.PROFILE_GROUP,
     );
   }, [mode]);
 
   const onChangeViewMode = (mode: any) => {
     navigate(
-      `/dashboard/profile?group=${groupID}&mode=${mode}&groupMode=${groupMode}`
+      `/dashboard/profile?group=${groupID}&mode=${mode}&groupMode=${groupMode}`,
     );
   };
 
@@ -62,11 +58,13 @@ const ProfilePage = (props: any) => {
         />
       </div>
 
-      {viewMode === VIEW_MODE.PROFILE ? <ManageProfile /> : <ProfileGroup />}
+      <div className="tab-content">
+        {viewMode === VIEW_MODE.PROFILE ? <ManageProfile /> : <ProfileGroup />}
+      </div>
     </PageWrapper>
   );
 };
 
 export default connect((_state: RootState) => ({}), { actSetPageName })(
-  ProfilePage
+  ProfilePage,
 );

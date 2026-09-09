@@ -17,7 +17,7 @@ import { IProfileGroup } from "@/electron/type";
 import InfoForm from "./InfoForm";
 import ConfigForm from "./ConfigForm";
 import { ModalWrapper } from "./style";
-import { VIEW_MODE } from "../../index";
+import { VIEW_MODE } from "../../constant";
 
 type IModalProps = {
   isModalOpen: boolean;

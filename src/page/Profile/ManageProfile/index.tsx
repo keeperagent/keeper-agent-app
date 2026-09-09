@@ -27,6 +27,7 @@ import {
   useGetOneProfileGroup,
   useGetListProfileGroup,
   useTranslation,
+  useTableScrollHeight,
 } from "@/hook";
 import { actSaveSelectedProfileGroup } from "@/redux/profileGroup";
 import {
@@ -44,6 +45,7 @@ import {
   ProfileNameWrapper,
   OptionWrapper,
   IconWrapper,
+  TableSectionWrapper,
 } from "./style";
 import ModalExportProfile from "./ModalExportProfile";
 
@@ -403,6 +405,12 @@ const ManageProfile = (props: any) => {
     return width;
   }, [listResourceColumn]);
 
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({
+      bottomSpacingPx: 70,
+      deps: [listResourceColumn, totalData],
+    });
+
   const onOpenModalExport = () => {
     setModalExportOpen(true);
   };
@@ -504,40 +512,42 @@ const ManageProfile = (props: any) => {
         />
       </div>
 
-      <Table
-        virtual
-        rowSelection={rowSelection}
-        rowKey={(data) => data?.id!}
-        dataSource={isStaleData ? [] : dataSource}
-        columns={renderColumns(
-          listResourceColumn,
-          typeof selectedProfileGroup?.walletGroupId === "number",
-          searchText,
-          translate,
-          onOpenModalProfileName,
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: { items_per_page: `/ ${translate("page")}` },
-        }}
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-          expandedRowKeys,
-          columnWidth: 30,
-        }}
-        scroll={{ x: tableWidth, y: 600 }}
-        loading={getDataLoading || isStaleData}
-        onChange={onTableChange}
-        size="middle"
-        bordered
-      />
+      <TableSectionWrapper ref={tableSectionRef}>
+        <Table
+          virtual
+          rowSelection={rowSelection}
+          rowKey={(data) => data?.id!}
+          dataSource={isStaleData ? [] : dataSource}
+          columns={renderColumns(
+            listResourceColumn,
+            typeof selectedProfileGroup?.walletGroupId === "number",
+            searchText,
+            translate,
+            onOpenModalProfileName,
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+            expandedRowKeys,
+            columnWidth: 30,
+          }}
+          scroll={{ x: tableWidth, y: tableScrollHeight }}
+          loading={getDataLoading || isStaleData}
+          onChange={onTableChange}
+          size="middle"
+          bordered
+        />
+      </TableSectionWrapper>
 
       <ModalProfile
         isModalOpen={isModalOpen}

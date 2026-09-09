@@ -9,11 +9,7 @@ import { useTranslation } from "@/hook";
 import ResourceGroup from "./ResourceGroup";
 import ManageResource from "./ManageResource";
 import { PageWrapper } from "./style";
-
-export const VIEW_MODE = {
-  RESOURCE: "RESOURCE",
-  RESOURCE_GROUP: "RESOURCE_GROUP",
-};
+import { VIEW_MODE } from "./constant";
 
 const WalletPage = (props: any) => {
   const { translate } = useTranslation();
@@ -29,7 +25,9 @@ const WalletPage = (props: any) => {
 
   useEffect(() => {
     setViewMode(
-      mode && mode !== "undefined" ? mode?.toString() : VIEW_MODE.RESOURCE_GROUP
+      mode && mode !== "undefined"
+        ? mode?.toString()
+        : VIEW_MODE.RESOURCE_GROUP,
     );
   }, [mode]);
 
@@ -58,11 +56,17 @@ const WalletPage = (props: any) => {
         />
       </div>
 
-      {viewMode === VIEW_MODE.RESOURCE ? <ManageResource /> : <ResourceGroup />}
+      <div className="tab-content">
+        {viewMode === VIEW_MODE.RESOURCE ? (
+          <ManageResource />
+        ) : (
+          <ResourceGroup />
+        )}
+      </div>
     </PageWrapper>
   );
 };
 
 export default connect((_state: RootState) => ({}), { actSetPageName })(
-  WalletPage
+  WalletPage,
 );

@@ -1,12 +1,14 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { FillHeightPage, TableFillWrapper } from "@/style/layout";
 
-const PageWrapper = styled.div`
+const PageWrapper = styled(FillHeightPage)`
   width: 100%;
   margin-top: var(--margin-bottom-large);
 
   .heading {
     width: 100%;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -288,6 +290,7 @@ const CloseIconWrapper = styled.span`
 const StatisticWrapper = styled.div`
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   margin-top: var(--margin-top);
 
   .toggle {
@@ -396,6 +399,10 @@ const StatisticWrapper = styled.div`
   }
 `;
 
+const TableSectionWrapper = styled(TableFillWrapper)`
+  margin-top: var(--margin-top);
+`;
+
 export {
   PageWrapper,
   ExpandIconWrapper,
@@ -407,4 +414,5 @@ export {
   CloseButtonWrapper,
   CloseIconWrapper,
   StatisticWrapper,
+  TableSectionWrapper,
 };

@@ -1,0 +1,4 @@
+export const VIEW_MODE = {
+  RESOURCE: "RESOURCE",
+  RESOURCE_GROUP: "RESOURCE_GROUP",
+};

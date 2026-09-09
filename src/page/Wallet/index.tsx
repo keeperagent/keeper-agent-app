@@ -7,15 +7,10 @@ import { RootState } from "@/redux/store";
 import { actSetPageName } from "@/redux/layout";
 import { useTranslation } from "@/hook";
 import { WalletPageWrapper } from "./style";
+import { VIEW_MODE } from "./constant";
 import WalletGroup from "./WalletGroup";
 import ManageWallet from "./ManageWallet";
 import WalletActivityView from "./WalletActivityView";
-
-export const VIEW_MODE = {
-  WALLET: "WALLET",
-  WALLET_GROUP: "WALLET_GROUP",
-  WALLET_ACTIVITY: "WALLET_ACTIVITY",
-};
 
 const WalletPage = (props: any) => {
   const [viewMode, setViewMode] = useState(VIEW_MODE.WALLET_GROUP);
@@ -62,13 +57,15 @@ const WalletPage = (props: any) => {
         />
       </div>
 
-      {viewMode === VIEW_MODE.WALLET_ACTIVITY ? (
-        <WalletActivityView />
-      ) : viewMode === VIEW_MODE.WALLET ? (
-        <ManageWallet />
-      ) : (
-        <WalletGroup />
-      )}
+      <div className="tab-content">
+        {viewMode === VIEW_MODE.WALLET_ACTIVITY ? (
+          <WalletActivityView />
+        ) : viewMode === VIEW_MODE.WALLET ? (
+          <ManageWallet />
+        ) : (
+          <WalletGroup />
+        )}
+      </div>
     </WalletPageWrapper>
   );
 };

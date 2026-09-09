@@ -30,6 +30,7 @@ import {
   useGetListProfileGroup,
   useDeleteProfileGroup,
   useTranslation,
+  useTableScrollHeight,
 } from "@/hook";
 import {
   actSaveSelectedProfileGroup,
@@ -50,8 +51,9 @@ import {
   ExpandRowWrapper,
   ExpandIconWrapper,
   OptionWrapper,
+  TableSectionWrapper,
 } from "./style";
-import { VIEW_MODE } from "../index";
+import { VIEW_MODE } from "../constant";
 
 const Highlighter = HighlighterLib as ComponentType<HighlighterProps>;
 
@@ -224,6 +226,8 @@ const ProfileGroup = (props: any) => {
   const { getListProfileGroup, loading: getDataLoading } =
     useGetListProfileGroup();
   const { isSuccess, loading, deleteProfileGroup } = useDeleteProfileGroup();
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({ deps: [totalData, viewMode] });
 
   useEffect(() => {
     setViewMode(
@@ -463,39 +467,41 @@ const ProfileGroup = (props: any) => {
       {viewMode === GROUP_VIEW_MODE.CHART ? (
         <ProfileGroupChart />
       ) : (
-        <Table
-          rowSelection={{
-            selectedRowKeys,
-            onChange: onRowSelectionChange,
-          }}
-          rowKey={(data) => data?.id!}
-          dataSource={dataSource}
-          columns={renderColumns(
-            onEditProfileGroup,
-            onViewGroup,
-            searchText,
-            translate,
-            locale,
-          )}
-          pagination={{
-            total: totalData,
-            pageSize,
-            pageSizeOptions: TABLE_PAGE_OPTION,
-            current: page,
-            showSizeChanger: true,
-            size: "small",
-            showTotal: onShowTotalData,
-            locale: { items_per_page: `/ ${translate("page")}` },
-          }}
-          expandable={{
-            expandedRowRender,
-            expandIcon: renderExpandIcon,
-          }}
-          scroll={{ x: 900, y: "70vh" }}
-          loading={getDataLoading}
-          onChange={onTableChange}
-          size="middle"
-        />
+        <TableSectionWrapper ref={tableSectionRef}>
+          <Table
+            rowSelection={{
+              selectedRowKeys,
+              onChange: onRowSelectionChange,
+            }}
+            rowKey={(data) => data?.id!}
+            dataSource={dataSource}
+            columns={renderColumns(
+              onEditProfileGroup,
+              onViewGroup,
+              searchText,
+              translate,
+              locale,
+            )}
+            pagination={{
+              total: totalData,
+              pageSize,
+              pageSizeOptions: TABLE_PAGE_OPTION,
+              current: page,
+              showSizeChanger: true,
+              size: "small",
+              showTotal: onShowTotalData,
+              locale: { items_per_page: `/ ${translate("page")}` },
+            }}
+            expandable={{
+              expandedRowRender,
+              expandIcon: renderExpandIcon,
+            }}
+            scroll={{ x: 900, y: tableScrollHeight }}
+            loading={getDataLoading}
+            onChange={onTableChange}
+            size="middle"
+          />
+        </TableSectionWrapper>
       )}
 
       <ModalProfileGroup

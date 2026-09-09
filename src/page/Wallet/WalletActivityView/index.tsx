@@ -24,9 +24,14 @@ import {
   useGetListWalletGroup,
   useTranslation,
   sendOpenExternalLink,
+  useTableScrollHeight,
 } from "@/hook";
 import { actSetPageSize } from "@/redux/walletActivity";
-import { WalletActivityViewWrapper, PortfolioAppWrapper } from "./style";
+import {
+  WalletActivityViewWrapper,
+  PortfolioAppWrapper,
+  TableSectionWrapper,
+} from "./style";
 import ModalWalletTradeReplay from "./ModalWalletTradeReplay";
 
 type ITradedToken = {
@@ -327,6 +332,8 @@ const WalletActivityView = (props: any) => {
 
   const { getListWalletActivity, loading } = useGetListWalletActivity();
   const { getListWalletGroup } = useGetListWalletGroup();
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({ deps: [totalData] });
 
   useEffect(() => {
     getListWalletGroup({ page: 1, pageSize: 500 });
@@ -417,44 +424,47 @@ const WalletActivityView = (props: any) => {
           />
         </div>
 
-        <Table
-          rowKey={(record) => record.id!}
-          dataSource={listWalletActivity || []}
-          // @ts-ignore
-          columns={buildColumns(
-            searchText,
-            onOpenTrade,
-            translate,
-            locale,
-            mapWalletGroupIdToPortfolioApp,
-            onViewPortfolio,
-          )}
-          loading={loading}
-          pagination={{
-            total: totalData,
-            pageSize,
-            current: page,
-            pageSizeOptions: TABLE_PAGE_OPTION,
-            showSizeChanger: true,
-            size: "small",
-            showTotal: onShowTotalData,
-            locale: { items_per_page: `/ ${translate("page")}` },
-          }}
-          onChange={(pagination) =>
-            onPageChange(
-              pagination.current || 1,
-              pagination.pageSize || pageSize,
-            )
-          }
-          locale={{
-            emptyText: (
-              <div className="empty">
-                <Empty description={translate("walletActivity.noActivity")} />
-              </div>
-            ),
-          }}
-          size="middle"
-        />
+        <TableSectionWrapper ref={tableSectionRef}>
+          <Table
+            rowKey={(record) => record.id!}
+            dataSource={listWalletActivity || []}
+            // @ts-ignore
+            columns={buildColumns(
+              searchText,
+              onOpenTrade,
+              translate,
+              locale,
+              mapWalletGroupIdToPortfolioApp,
+              onViewPortfolio,
+            )}
+            loading={loading}
+            pagination={{
+              total: totalData,
+              pageSize,
+              current: page,
+              pageSizeOptions: TABLE_PAGE_OPTION,
+              showSizeChanger: true,
+              size: "small",
+              showTotal: onShowTotalData,
+              locale: { items_per_page: `/ ${translate("page")}` },
+            }}
+            onChange={(pagination) =>
+              onPageChange(
+                pagination.current || 1,
+                pagination.pageSize || pageSize,
+              )
+            }
+            locale={{
+              emptyText: (
+                <div className="empty">
+                  <Empty description={translate("walletActivity.noActivity")} />
+                </div>
+              ),
+            }}
+            scroll={{ y: tableScrollHeight }}
+            size="middle"
+          />
+        </TableSectionWrapper>
       </WalletActivityViewWrapper>
 
       {selectedTradedToken ? (

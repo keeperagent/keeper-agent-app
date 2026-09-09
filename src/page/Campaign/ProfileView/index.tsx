@@ -93,6 +93,7 @@ import {
   useGetCampaignProfileColumnStats,
   useGetCacheEncryptKey,
   useSetCacheEncryptKey,
+  useTableScrollHeight,
 } from "@/hook";
 import {
   GroupColumnConfig,
@@ -127,6 +128,7 @@ import {
   CloseButtonWrapper,
   CloseIconWrapper,
   StatisticWrapper,
+  TableSectionWrapper,
 } from "./style";
 import ModalCalculate from "./ModalCalculate";
 import { renderListWorkflowTooltip } from "../CampaignView/util";
@@ -881,6 +883,12 @@ const ManageCampaignProfile = (props: IProps) => {
     return width;
   }, [listResourceColumn, listAdditionalColumn]);
 
+  const { tableSectionRef, scrollHeight: tableScrollHeight } =
+    useTableScrollHeight({
+      bottomSpacingPx: 70,
+      deps: [listResourceColumn, listAdditionalColumn, totalData],
+    });
+
   const isIncludeWallet = useMemo(() => {
     return typeof selectedCampaign?.profileGroup?.walletGroupId === "number";
   }, [selectedCampaign]);
@@ -1185,53 +1193,51 @@ const ManageCampaignProfile = (props: IProps) => {
         </Tooltip>
       </StatisticWrapper>
 
-      <Table
-        virtual
-        rowSelection={rowSelection}
-        rowKey={(data) => data?.id!}
-        dataSource={isStaleData ? [] : dataSource}
-        columns={renderColumns(
-          listResourceColumn,
-          listAdditionalColumn,
-          isIncludeWallet,
-          Boolean(selectedCampaign?.isUseProxy),
-          searchText,
-          onOpenCampaignProfileInBrowser,
-          onCloseCampaignProfileInBrowser,
-          translate,
-          onOpenModalProfileName,
-          onToggleActiveStatus,
-          onViewPortfolio,
-          selectedCampaign?.numberOfRound || -1,
-          mapOpenProfileId,
-          onUpdateColor,
-        )}
-        pagination={{
-          total: totalData,
-          pageSize,
-          pageSizeOptions: TABLE_PAGE_OPTION,
-          current: page,
-          showSizeChanger: true,
-          size: "small",
-          showTotal: onShowTotalData,
-          locale: { items_per_page: `/ ${translate("page")}` },
-        }}
-        expandable={{
-          expandedRowRender,
-          expandIcon: renderExpandIcon,
-          expandedRowKeys,
-          columnWidth: 30,
-        }}
-        scroll={{ x: tableWidth, y: 650 }}
-        loading={getDataLoading || isStaleData}
-        onChange={onTableChange}
-        size="middle"
-        bordered
-        style={{
-          marginBottom: "var(--margin-bottom-large)",
-          marginTop: "var(--margin-top)",
-        }}
-      />
+      <TableSectionWrapper ref={tableSectionRef}>
+        <Table
+          virtual
+          rowSelection={rowSelection}
+          rowKey={(data) => data?.id!}
+          dataSource={isStaleData ? [] : dataSource}
+          columns={renderColumns(
+            listResourceColumn,
+            listAdditionalColumn,
+            isIncludeWallet,
+            Boolean(selectedCampaign?.isUseProxy),
+            searchText,
+            onOpenCampaignProfileInBrowser,
+            onCloseCampaignProfileInBrowser,
+            translate,
+            onOpenModalProfileName,
+            onToggleActiveStatus,
+            onViewPortfolio,
+            selectedCampaign?.numberOfRound || -1,
+            mapOpenProfileId,
+            onUpdateColor,
+          )}
+          pagination={{
+            total: totalData,
+            pageSize,
+            pageSizeOptions: TABLE_PAGE_OPTION,
+            current: page,
+            showSizeChanger: true,
+            size: "small",
+            showTotal: onShowTotalData,
+            locale: { items_per_page: `/ ${translate("page")}` },
+          }}
+          expandable={{
+            expandedRowRender,
+            expandIcon: renderExpandIcon,
+            expandedRowKeys,
+            columnWidth: 30,
+          }}
+          scroll={{ x: tableWidth, y: tableScrollHeight }}
+          loading={getDataLoading || isStaleData}
+          onChange={onTableChange}
+          size="middle"
+          bordered
+        />
+      </TableSectionWrapper>
 
       <ModalConfig isModalOpen={isModalOpen} setModalOpen={setModalOpen} />
       <ModalResetCampaignProfile

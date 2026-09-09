@@ -1,14 +1,17 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { TableFillWrapper } from "@/style/layout";
 
 const ProfileGroupWrapper = styled.div`
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  overflow: hidden;
 
   .heading {
     width: 100%;
+    flex-shrink: 0;
     margin-bottom: var(--margin-bottom-large);
     display: flex;
     align-items: center;
@@ -159,6 +162,8 @@ const OptionWrapper = styled.div`
   }
 `;
 
+const TableSectionWrapper = styled(TableFillWrapper)``;
+
 export {
   ProfileGroupWrapper,
   IconWrapper,
@@ -166,4 +171,5 @@ export {
   ExpandRowWrapper,
   ExpandIconWrapper,
   OptionWrapper,
+  TableSectionWrapper,
 };

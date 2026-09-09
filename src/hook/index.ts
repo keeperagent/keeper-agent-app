@@ -210,3 +210,4 @@ export { useGetListAppLog, useDeleteAppLog, useCreateAppLog } from "./appLog";
 export { useGetListWalletActivity } from "./walletActivity";
 export { useGetWalletTradeReplay } from "./walletTrade";
 export { useCheckModelCapability } from "./useCheckModelCapability";
+export { useTableScrollHeight } from "./useTableScrollHeight";

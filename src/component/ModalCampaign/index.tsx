@@ -201,8 +201,8 @@ const ModalCampaign = (props: IProps) => {
         isFullScreen,
         profileType,
         listCampaignProfileId,
-        sortField: "round",
-        sortOrder: SORT_ORDER.ASC,
+        sortField: selectedCampaign?.sortField || "round",
+        sortOrder: selectedCampaign?.sortOrder || SORT_ORDER.ASC,
       };
 
       if (selectedCampaign) {
