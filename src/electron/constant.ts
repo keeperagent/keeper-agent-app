@@ -1119,16 +1119,12 @@ export const MAP_KYBER_ROUTER_ADDRESS_BY_CHAIN: { [key: string]: string } = {
   base: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   zksync: "0x3f95ef3f2eaca871858dbe20a93c01daf6c2e923",
   linea: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
-  scroll: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
-  mantle: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
-  blast: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   sonic: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   unichain: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   berachain: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
-  ronin: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   monad: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
-  plasma: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
   hyperevm: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+  robinhood: "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
 };
 
 export enum KYBERSWAP_CHAIN_KEY {
@@ -1141,16 +1137,12 @@ export enum KYBERSWAP_CHAIN_KEY {
   BASE = "base",
   ZKSYNC = "zksync",
   LINEA = "linea",
-  SCROLL = "scroll",
-  MANTLE = "mantle",
-  BLAST = "blast",
   SONIC = "sonic",
   UNICHAIN = "unichain",
   BERACHAIN = "berachain",
-  RONIN = "ronin",
   MONAD = "monad",
-  PLASMA = "plasma",
   HYPEREVM = "hyperevm",
+  ROBINHOOD = "robinhood",
 }
 
 export const EVM_CHAIN_ID: Record<string, number> = {
@@ -1163,16 +1155,12 @@ export const EVM_CHAIN_ID: Record<string, number> = {
   [KYBERSWAP_CHAIN_KEY.BASE]: 8453,
   [KYBERSWAP_CHAIN_KEY.ZKSYNC]: 324,
   [KYBERSWAP_CHAIN_KEY.LINEA]: 59144,
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: 534352,
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: 5000,
-  [KYBERSWAP_CHAIN_KEY.BLAST]: 81457,
   [KYBERSWAP_CHAIN_KEY.SONIC]: 146,
   [KYBERSWAP_CHAIN_KEY.UNICHAIN]: 130,
   [KYBERSWAP_CHAIN_KEY.BERACHAIN]: 80094,
-  [KYBERSWAP_CHAIN_KEY.RONIN]: 2020,
   [KYBERSWAP_CHAIN_KEY.MONAD]: 143,
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: 9745,
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: 999,
+  [KYBERSWAP_CHAIN_KEY.ROBINHOOD]: 4663,
 };
 
 export const getEvmChainKeyFromChainId = (
@@ -1194,17 +1182,13 @@ export const MAP_CHAIN_KEY_TO_EXPLORER_TX_URL: Record<string, string> = {
   [KYBERSWAP_CHAIN_KEY.BASE]: "https://basescan.org/tx/{hash}",
   [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "https://explorer.zksync.io/tx/{hash}",
   [KYBERSWAP_CHAIN_KEY.LINEA]: "https://lineascan.build/tx/{hash}",
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: "https://scrollscan.com/tx/{hash}",
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: "https://mantlescan.xyz/tx/{hash}",
-  [KYBERSWAP_CHAIN_KEY.BLAST]: "https://blastscan.io/tx/{hash}",
   [KYBERSWAP_CHAIN_KEY.SONIC]: "https://sonicscan.org/tx/{hash}",
   [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "https://uniscan.xyz/tx/{hash}",
   [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "https://berascan.com/tx/{hash}",
-  [KYBERSWAP_CHAIN_KEY.RONIN]: "https://explorer.roninchain.com/tx/{hash}",
   // Monad's mainnet explorer domain is unconfirmed as of this writing — verify
   [KYBERSWAP_CHAIN_KEY.MONAD]: "https://explorer.monad.xyz/tx/{hash}",
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: "https://plasmascan.to/tx/{hash}",
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "https://hyperevmscan.io/tx/{hash}",
+  [KYBERSWAP_CHAIN_KEY.ROBINHOOD]: "https://robin.etherscan.io/tx/{hash}",
 };
 
 export const getExplorerTxUrl = (
@@ -1228,19 +1212,15 @@ export const MAP_CHAIN_KEY_TO_NATIVE_COINGECKO_ID: Record<string, string> = {
   [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ethereum",
   [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ethereum",
   [KYBERSWAP_CHAIN_KEY.LINEA]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ethereum",
-  [KYBERSWAP_CHAIN_KEY.BLAST]: "ethereum",
   [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ethereum",
   [KYBERSWAP_CHAIN_KEY.BSC]: "binancecoin",
   [KYBERSWAP_CHAIN_KEY.POLYGON]: "polygon-ecosystem-token",
   [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "avalanche-2",
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: "mantle",
   [KYBERSWAP_CHAIN_KEY.SONIC]: "sonic-3",
   [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "berachain-bera",
-  [KYBERSWAP_CHAIN_KEY.RONIN]: "ronin",
   [KYBERSWAP_CHAIN_KEY.MONAD]: "monad",
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: "plasma",
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "hyperliquid",
+  [KYBERSWAP_CHAIN_KEY.ROBINHOOD]: "ethereum",
 };
 
 export const MAP_CHAIN_KEY_TO_NATIVE_SYMBOL: Record<string, string> = {
@@ -1253,19 +1233,15 @@ export const MAP_CHAIN_KEY_TO_NATIVE_SYMBOL: Record<string, string> = {
   [KYBERSWAP_CHAIN_KEY.OPTIMISM]: "ETH",
   [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "ETH",
   [KYBERSWAP_CHAIN_KEY.LINEA]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: "ETH",
-  [KYBERSWAP_CHAIN_KEY.BLAST]: "ETH",
   [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "ETH",
   [KYBERSWAP_CHAIN_KEY.BSC]: "BNB",
   [KYBERSWAP_CHAIN_KEY.POLYGON]: "POL",
   [KYBERSWAP_CHAIN_KEY.AVALANCHE]: "AVAX",
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: "MNT",
   [KYBERSWAP_CHAIN_KEY.SONIC]: "SONIC",
   [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "BERA",
-  [KYBERSWAP_CHAIN_KEY.RONIN]: "RON",
   [KYBERSWAP_CHAIN_KEY.MONAD]: "MON",
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: "XPL",
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "HYPE",
+  [KYBERSWAP_CHAIN_KEY.ROBINHOOD]: "ETH",
 };
 
 export const MAP_CHAIN_KEY_TO_GECKOTERMINAL_NETWORK: Partial<
@@ -1283,16 +1259,12 @@ export const MAP_CHAIN_KEY_TO_GECKOTERMINAL_NETWORK: Partial<
   [KYBERSWAP_CHAIN_KEY.BASE]: "base",
   [KYBERSWAP_CHAIN_KEY.ZKSYNC]: "zksync",
   [KYBERSWAP_CHAIN_KEY.LINEA]: "linea",
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: "scroll",
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: "mantle",
-  [KYBERSWAP_CHAIN_KEY.BLAST]: "blast",
   [KYBERSWAP_CHAIN_KEY.SONIC]: "sonic",
   [KYBERSWAP_CHAIN_KEY.UNICHAIN]: "unichain",
   [KYBERSWAP_CHAIN_KEY.BERACHAIN]: "berachain",
-  [KYBERSWAP_CHAIN_KEY.RONIN]: "ronin",
   [KYBERSWAP_CHAIN_KEY.MONAD]: "monad",
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: "plasma",
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: "hyperevm",
+  [KYBERSWAP_CHAIN_KEY.ROBINHOOD]: "robinhood",
 };
 
 export enum EvmStableCoinSymbol {
@@ -1355,18 +1327,6 @@ export const mapEvmStableCoinAddress: Record<
     [EvmStableCoinSymbol.USDT]: "0xA219439258ca9da29E9Cc4cE5596924745e12B93",
     [EvmStableCoinSymbol.DAI]: "0x4AF15ec2A0BD43Db75dd04E62FAA3B8EF36b00d5",
   },
-  [KYBERSWAP_CHAIN_KEY.SCROLL]: {
-    [EvmStableCoinSymbol.USDC]: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4",
-    [EvmStableCoinSymbol.USDT]: "0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df",
-    [EvmStableCoinSymbol.DAI]: "0xcA77eB3fEFe3725Dc33bccB54eDEFc3D9f764f97",
-  },
-  [KYBERSWAP_CHAIN_KEY.MANTLE]: {
-    [EvmStableCoinSymbol.USDC]: "0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9",
-    [EvmStableCoinSymbol.USDT]: "0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE",
-  },
-  [KYBERSWAP_CHAIN_KEY.BLAST]: {
-    [EvmStableCoinSymbol.USDB]: "0x4300000000000000000000000000000000000003",
-  },
   [KYBERSWAP_CHAIN_KEY.SONIC]: {
     [EvmStableCoinSymbol.USDC]: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
     [EvmStableCoinSymbol.USDT]: "0x6047828dc181963ba44974801FF68e538dA5eaF9",
@@ -1379,15 +1339,9 @@ export const mapEvmStableCoinAddress: Record<
     [EvmStableCoinSymbol.USDC]: "0x549943e04f40284185054145c6E4e9568C1D3241",
     [EvmStableCoinSymbol.USDT]: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
   },
-  [KYBERSWAP_CHAIN_KEY.RONIN]: {
-    [EvmStableCoinSymbol.USDC]: "0x0b7007c13325c48911f73a2dad5fa5dcbf808adc",
-  },
   [KYBERSWAP_CHAIN_KEY.MONAD]: {
     [EvmStableCoinSymbol.USDC]: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
     [EvmStableCoinSymbol.USDT]: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
-  },
-  [KYBERSWAP_CHAIN_KEY.PLASMA]: {
-    [EvmStableCoinSymbol.USDT]: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
   },
   [KYBERSWAP_CHAIN_KEY.HYPEREVM]: {
     [EvmStableCoinSymbol.USDC]: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",

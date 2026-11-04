@@ -46,6 +46,16 @@ import type { IStructuredLogPayload } from "@/electron/type";
 export const zero = ethers.BigNumber.from(0);
 const nullAddress = "0x0000000000000000000000000000000000000000";
 
+const ROBINHOOD_CHAIN_ID = 4663;
+
+/* The Universal Router version actually deployed varies per chain — V2_0 is
+the default this codebase was built around, but Robinhood Chain only has
+V2_1_1/V2_1_2 deployed (no V2_0 at all) */
+const getUniversalRouterVersion = (chainId: number): UniversalRouterVersion =>
+  chainId === ROBINHOOD_CHAIN_ID
+    ? UniversalRouterVersion.V2_1_1
+    : UniversalRouterVersion.V2_0;
+
 export class SwapOnUniswap {
   private chainId: number;
   private listNodeEndpoint: string[];
@@ -307,7 +317,10 @@ export class SwapOnUniswap {
     } = await allowanceProvider.getAllowanceData(
       input.inputTokenAddress,
       wallet?.address,
-      UNIVERSAL_ROUTER_ADDRESS(UniversalRouterVersion.V2_0, this.chainId),
+      UNIVERSAL_ROUTER_ADDRESS(
+        getUniversalRouterVersion(this.chainId),
+        this.chainId,
+      ),
     );
 
     if (permitAmount.eq(0) || new Date().getTime() / 1000 > expiration) {
@@ -328,7 +341,7 @@ export class SwapOnUniswap {
           nonce: nonce + txIndex, // use with @txIndex to prevent duplicate @nonce in permit approval
         },
         spender: UNIVERSAL_ROUTER_ADDRESS(
-          UniversalRouterVersion.V2_0,
+          getUniversalRouterVersion(this.chainId),
           this.chainId,
         ),
         sigDeadline: this.toDeadline(input.dealineInSecond),
@@ -449,6 +462,7 @@ export class SwapOnUniswap {
       deadlineOrPreviousBlockhash: this.toDeadline(input.dealineInSecond),
       recipient: wallet?.address,
       inputTokenPermit,
+      urVersion: getUniversalRouterVersion(this.chainId),
     };
 
     const [provider, , errProvider] = this.evmProvider.getNextProvider(
@@ -598,15 +612,14 @@ export class SwapOnUniswap {
       ];
     }
 
+    const urVersion = getUniversalRouterVersion(this.chainId);
     const params = SwapRouter.swapCallParameters(tradeCommand.trade, {
       slippageTolerance: options.slippageTolerance,
       deadlineOrPreviousBlockhash: options?.deadlineOrPreviousBlockhash,
+      urVersion,
     });
 
-    const toAddress = UNIVERSAL_ROUTER_ADDRESS(
-      UniversalRouterVersion.V2_0,
-      this.chainId,
-    );
+    const toAddress = UNIVERSAL_ROUTER_ADDRESS(urVersion, this.chainId);
     let gasLimit = input.gasLimit;
     const transactionValue = input.isInputNativeToken ? amountIn : zero;
     const [estimatedGasLimit, errGasLimit] = await this.getGasLimit(

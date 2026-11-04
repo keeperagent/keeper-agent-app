@@ -12,61 +12,15 @@ const mapChainIdToName: { [key: number]: string } = {
   43114: "avalanche",
   8453: "base",
   10: "optimism",
-  369: "pulsechain",
-  81457: "blast",
-  7700: "canto",
   324: "zksync",
-  5000: "mantle",
-  250: "fantom",
-  25: "cronos",
-  169: "manta",
-  534352: "scroll",
   59144: "linea",
-  1088: "metis",
-  1284: "moonbeam",
-  295: "hedera",
-  42220: "celo",
-  1313161554: "aurora",
-  1030: "conflux",
-  34443: "mode",
-  4337: "beam",
-  1101: "polygonzkevm",
-  2000: "dogechain",
-  787: "acala",
-  7000: "zetachain",
-  4689: "iotex",
-  592: "astar",
   204: "opbnb",
-  288: "boba",
-  42170: "arbitrumnova",
-  1116: "core",
-  1285: "moonriver",
-  42766: "zkfair",
-  9001: "evmos",
-  416: "sxnetwork",
-  106: "velas",
-  14: "flare",
-  108: "thundercore",
-  40: "telos",
-  888: "wanchain",
-  314: "filecoin",
-  1666600000: "harmony",
-  10000: "smartbch",
-  321: "kcc",
-  20: "elastos",
-  6969: "tombchain",
-  109: "shibarium",
-  245022934: "neonevm",
-  82: "meter",
-  42262: "oasisemerald",
-  9980: "combo",
-  122: "fuse",
-  1234: "stepnetwork",
-  61: "ethereumclassic",
-  39797: "energi",
-  57: "syscoin",
-  32520: "bitgert",
-  2611: "redlightchain",
+  146: "sonic",
+  130: "unichain",
+  80094: "berachain",
+  143: "monad",
+  999: "hyperevm",
+  4663: "robinhood",
   [CUSTOM_CHAIN_ID.SOLANA]: "solana",
   [CUSTOM_CHAIN_ID.SUI]: "sui",
   [CUSTOM_CHAIN_ID.APTOS]: "aptos",
@@ -102,6 +56,14 @@ export class Dexsceener {
     proxy?: AxiosProxyConfig,
   ): Promise<[number | null, Error | null]> {
     try {
+      const chainName = mapChainIdToName[chainId];
+      if (!chainName) {
+        return [
+          null,
+          new Error(`Dexscreener does not support chain ${chainId}`),
+        ];
+      }
+
       const cacheKey = `price_dexscreener_${chainId}_${tokenAddress}`;
       const cachedPrice = this.timeoutCache.get(cacheKey);
       if (cachedPrice !== null) {
@@ -132,7 +94,6 @@ export class Dexsceener {
         ) {
           continue;
         }
-        const chainName = mapChainIdToName[chainId];
         if (chainName !== pool.chainId) {
           continue;
         }
@@ -177,6 +138,14 @@ export class Dexsceener {
     proxy?: AxiosProxyConfig,
   ): Promise<[IPriceAndMarketcap | null, Error | null]> => {
     try {
+      const chainName = mapChainIdToName[chainId];
+      if (!chainName) {
+        return [
+          null,
+          new Error(`Dexscreener does not support chain ${chainId}`),
+        ];
+      }
+
       const cacheKey = `marketcap_dexscreener_${chainId}_${tokenAddress}`;
       const cachedMarketcap = this.timeoutCache.get(cacheKey);
       if (cachedMarketcap !== null) {
@@ -208,7 +177,6 @@ export class Dexsceener {
         ) {
           continue;
         }
-        const chainName = mapChainIdToName[chainId];
         if (chainName !== pool.chainId) {
           continue;
         }
