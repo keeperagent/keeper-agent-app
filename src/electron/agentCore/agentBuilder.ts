@@ -109,7 +109,7 @@ const EXPLORER_CHAIN_MAP =
   "ethereum→etherscan.io; bsc→bscscan.com; arbitrum→arbiscan.io; " +
   "polygon→polygonscan.com; optimism→optimistic.etherscan.io; " +
   "avalanche→snowtrace.io; base→basescan.org; zksync→explorer.zksync.io; " +
-  "linea→lineascan.build; scroll→scrollscan.com; blast→blastscan.io. " +
+  "linea→lineascan.build. " +
   "EVM: wallet=/address/, tx=/tx/. Unknown chainKey: plain text, no link.";
 
 const EXPLORER_TRADE_TRANSFER_FORMAT =

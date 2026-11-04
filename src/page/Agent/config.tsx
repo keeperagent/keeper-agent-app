@@ -7,17 +7,13 @@ import zksyncImg from "@/asset/chain/zksync.png";
 import polygonImg from "@/asset/chain/polygon.webp";
 import bnbImg from "@/asset/chain/bnb.png";
 import avaxImg from "@/asset/chain/avax.png";
-import blastImg from "@/asset/chain/blast.webp";
-import mantleImg from "@/asset/chain/mantle.png";
 import berachainImg from "@/asset/chain/berachain.png";
 import lineaImg from "@/asset/chain/linea.png";
 import sonicImg from "@/asset/chain/sonic.png";
-import scrollImg from "@/asset/chain/scroll.png";
-import roninImg from "@/asset/chain/ronin.png";
 import unichainImg from "@/asset/chain/unichain.png";
 import hyperevmImg from "@/asset/chain/hyperevm.svg";
 import monadImg from "@/asset/chain/monad.svg";
-import plasmaImg from "@/asset/chain/plasma.svg";
+import robinhoodImg from "@/asset/chain/robinhood.png";
 import { KYBERSWAP_CHAIN_KEY } from "@/electron/constant";
 
 export type IChainDetail = {
@@ -122,33 +118,6 @@ export const listChainConfig: IChainDetail[] = [
     isSolana: false,
   },
   {
-    chainName: "Scroll",
-    logo: scrollImg,
-    dexscreenerKey: "scroll",
-    kyberwapKey: KYBERSWAP_CHAIN_KEY.SCROLL,
-    chainId: 534352,
-    isEvm: true,
-    isSolana: false,
-  },
-  {
-    chainName: "Mantle",
-    logo: mantleImg,
-    dexscreenerKey: "mantle",
-    kyberwapKey: KYBERSWAP_CHAIN_KEY.MANTLE,
-    chainId: 5000,
-    isEvm: true,
-    isSolana: false,
-  },
-  {
-    chainName: "Blast",
-    logo: blastImg,
-    dexscreenerKey: "blast",
-    kyberwapKey: KYBERSWAP_CHAIN_KEY.BLAST,
-    chainId: 81457,
-    isEvm: true,
-    isSolana: false,
-  },
-  {
     chainName: "Sonic",
     logo: sonicImg,
     dexscreenerKey: "sonic",
@@ -176,15 +145,6 @@ export const listChainConfig: IChainDetail[] = [
     isSolana: false,
   },
   {
-    chainName: "Ronin",
-    logo: roninImg,
-    dexscreenerKey: "ronin",
-    kyberwapKey: KYBERSWAP_CHAIN_KEY.RONIN,
-    chainId: 2020,
-    isEvm: true,
-    isSolana: false,
-  },
-  {
     chainName: "Monad",
     logo: monadImg,
     dexscreenerKey: "monad",
@@ -194,20 +154,20 @@ export const listChainConfig: IChainDetail[] = [
     isSolana: false,
   },
   {
-    chainName: "Plasma",
-    logo: plasmaImg,
-    dexscreenerKey: "plasma",
-    kyberwapKey: KYBERSWAP_CHAIN_KEY.PLASMA,
-    chainId: 9745,
-    isEvm: true,
-    isSolana: false,
-  },
-  {
     chainName: "HyperEVM",
     logo: hyperevmImg,
     dexscreenerKey: "hyperevm",
     kyberwapKey: KYBERSWAP_CHAIN_KEY.HYPEREVM,
     chainId: 999,
+    isEvm: true,
+    isSolana: false,
+  },
+  {
+    chainName: "Robinhood",
+    logo: robinhoodImg,
+    dexscreenerKey: "robinhood",
+    kyberwapKey: KYBERSWAP_CHAIN_KEY.ROBINHOOD,
+    chainId: 4663,
     isEvm: true,
     isSolana: false,
   },

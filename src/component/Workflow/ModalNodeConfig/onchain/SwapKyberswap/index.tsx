@@ -142,7 +142,7 @@ const SwapKyberswap = (props: Props) => {
     setActiveTab(TAB.DETAIL);
     setIsInputNativeToken(Boolean(config?.swapInput?.isInputNativeToken));
     setIsOutputNativeToken(Boolean(config?.swapInput?.isOutputNativeToken));
-    setChainKey(config?.swapInput?.chainKey || "");
+    setChainKey(config?.swapInput?.chainKey || "ethereum");
   }, [isModalOpen, config, form]);
 
   const onChange = (key: string) => {
