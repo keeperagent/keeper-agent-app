@@ -33,6 +33,7 @@ const mapUniV4StateView: { [key: number]: string } = {
   1868: "0x76fd297e2d437cd7f76d50f01afe6160f86e9990",
   43114: "0xc3c9e198c735a4b97e3e683f391ccbdd60b69286",
   56: "0xd13dd3d6e93f276fafc9db9e6bb47c1180aee0c4",
+  4663: "0xf3334192d15450cdd385c8b70e03f9a6bd9e673b",
 };
 
 const mapUniV4PositionManager: { [key: number]: string } = {
@@ -49,6 +50,7 @@ const mapUniV4PositionManager: { [key: number]: string } = {
   1868: "0x1b35d13a2e2528f192637f14b05f0dc0e7deb566",
   43114: "0xb74b1f14d2754acfcbbe1a221023a5cf50ab8acd",
   56: "0x7a4a5c919ae2541aed11041a1aeee68f1287f95b",
+  4663: "0x58daec3116aae6d93017baaea7749052e8a04fa7",
 };
 
 export class PoolProvider {

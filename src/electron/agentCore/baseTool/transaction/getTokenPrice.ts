@@ -163,7 +163,7 @@ export const getTokenPriceTool = (toolContext?: ToolContext) => {
         if (chainId === undefined) {
           return safeStringify({
             success: false,
-            error: `Unsupported chain: ${effectiveChainKey}. Supported chains: solana, ethereum, bsc, arbitrum, polygon, optimism, avalanche, base, zksync, linea`,
+            error: `Unsupported chain: ${effectiveChainKey}. Supported chains: solana, ethereum, bsc, arbitrum, polygon, optimism, avalanche, base, zksync, linea, sonic, unichain, berachain, monad, hyperevm, robinhood`,
             price: null,
           });
         }

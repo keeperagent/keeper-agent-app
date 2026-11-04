@@ -56,6 +56,14 @@ export class Dexsceener {
     proxy?: AxiosProxyConfig,
   ): Promise<[number | null, Error | null]> {
     try {
+      const chainName = mapChainIdToName[chainId];
+      if (!chainName) {
+        return [
+          null,
+          new Error(`Dexscreener does not support chain ${chainId}`),
+        ];
+      }
+
       const cacheKey = `price_dexscreener_${chainId}_${tokenAddress}`;
       const cachedPrice = this.timeoutCache.get(cacheKey);
       if (cachedPrice !== null) {
@@ -86,7 +94,6 @@ export class Dexsceener {
         ) {
           continue;
         }
-        const chainName = mapChainIdToName[chainId];
         if (chainName !== pool.chainId) {
           continue;
         }
@@ -131,6 +138,14 @@ export class Dexsceener {
     proxy?: AxiosProxyConfig,
   ): Promise<[IPriceAndMarketcap | null, Error | null]> => {
     try {
+      const chainName = mapChainIdToName[chainId];
+      if (!chainName) {
+        return [
+          null,
+          new Error(`Dexscreener does not support chain ${chainId}`),
+        ];
+      }
+
       const cacheKey = `marketcap_dexscreener_${chainId}_${tokenAddress}`;
       const cachedMarketcap = this.timeoutCache.get(cacheKey);
       if (cachedMarketcap !== null) {
@@ -162,7 +177,6 @@ export class Dexsceener {
         ) {
           continue;
         }
-        const chainName = mapChainIdToName[chainId];
         if (chainName !== pool.chainId) {
           continue;
         }
