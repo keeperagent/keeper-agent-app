@@ -635,8 +635,8 @@ export type IpcGlobalSearchPayload = {
   searchText: string;
 };
 
-// RelationshipGraph
-export type IpcGetRelationshipGraphPayload = {
+// RelationshipGraph — only the wallets call takes a payload (encryptKey)
+export type IpcGetRelationshipGraphWalletsPayload = {
   encryptKey?: string;
 };
 

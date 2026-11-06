@@ -2,22 +2,67 @@ import { useState } from "react";
 import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import type { IRelationshipGraphData } from "@/electron/type";
-import type { IpcGetRelationshipGraphPayload } from "@/electron/ipcTypes";
+import type { IpcGetRelationshipGraphWalletsPayload } from "@/electron/ipcTypes";
 import { useIpcAction } from "./useIpcAction";
 
+const mergeGraphData = (
+  core: IRelationshipGraphData | null,
+  wallets: IRelationshipGraphData | null,
+): IRelationshipGraphData | null => {
+  if (!core && !wallets) {
+    return null;
+  }
+  return {
+    nodes: [...(core?.nodes || []), ...(wallets?.nodes || [])],
+    edges: [...(core?.edges || []), ...(wallets?.edges || [])],
+  };
+};
+
+// Fires the cheap "core" and expensive "wallets" calls together, merging
+// only once both resolve
 const useGetRelationshipGraph = () => {
-  const [relationshipGraph, setRelationshipGraph] =
-    useState<IRelationshipGraphData | null>(null);
+  const [coreData, setCoreData] = useState<IRelationshipGraphData | null>(null);
+  const [walletsData, setWalletsData] = useState<IRelationshipGraphData | null>(
+    null,
+  );
 
-  const { execute, loading } = useIpcAction<
-    IpcGetRelationshipGraphPayload,
+  const { execute: executeCore, loading: coreLoading } = useIpcAction<
+    undefined,
     { data?: IRelationshipGraphData }
-  >(MESSAGE.GET_RELATIONSHIP_GRAPH, MESSAGE.GET_RELATIONSHIP_GRAPH_RES, {
-    onSuccess: (payload) => setRelationshipGraph(payload?.data || null),
-    onError: (error) => message.error(error),
-  });
+  >(
+    MESSAGE.GET_RELATIONSHIP_GRAPH_CORE,
+    MESSAGE.GET_RELATIONSHIP_GRAPH_CORE_RES,
+    {
+      onSuccess: (payload) => setCoreData(payload?.data || null),
+      onError: (error) => message.error(error),
+    },
+  );
 
-  return { relationshipGraph, loading, getRelationshipGraph: execute };
+  const { execute: executeWallets, loading: walletsLoading } = useIpcAction<
+    IpcGetRelationshipGraphWalletsPayload,
+    { data?: IRelationshipGraphData }
+  >(
+    MESSAGE.GET_RELATIONSHIP_GRAPH_WALLETS,
+    MESSAGE.GET_RELATIONSHIP_GRAPH_WALLETS_RES,
+    {
+      onSuccess: (payload) => setWalletsData(payload?.data || null),
+      onError: (error) => message.error(error),
+    },
+  );
+
+  const getRelationshipGraph = (
+    payload?: IpcGetRelationshipGraphWalletsPayload,
+  ) => {
+    executeCore();
+    executeWallets(payload);
+  };
+
+  return {
+    relationshipGraph:
+      coreData && walletsData ? mergeGraphData(coreData, walletsData) : null,
+    loading: coreLoading || walletsLoading,
+    getRelationshipGraph,
+  };
 };
 
 export { useGetRelationshipGraph };
