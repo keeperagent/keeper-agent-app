@@ -1,6 +1,7 @@
 import { relationshipGraphDB } from "@/electron/database/relationshipGraph";
 import { logEveryWhere } from "@/electron/service/util";
 import { encryptionService } from "@/electron/service/encrypt";
+import { getOrFetch } from "@/electron/service/ttlCache";
 import {
   IRelationshipGraphData,
   IGraphEdge,
@@ -33,37 +34,7 @@ const decryptWalletAddress = (
   return decrypted || address;
 };
 
-// Caches RAW query results (not the decrypted graph), so a key change can
-// skip the DB round-trip; also de-dupes concurrent callers onto one request.
 const RAW_DATA_CACHE_TTL_MS = 20000;
-
-const withTtlCache = <T>(
-  fetcher: () => Promise<[T | null, Error | null]>,
-  ttlMs: number,
-) => {
-  let cached: { data: T; fetchedAt: number } | null = null;
-  let pending: Promise<[T | null, Error | null]> | null = null;
-
-  return async (): Promise<[T | null, Error | null]> => {
-    if (cached && Date.now() - cached.fetchedAt < ttlMs) {
-      return [cached.data, null];
-    }
-    if (pending) {
-      return pending;
-    }
-    pending = fetcher()
-      .then(([data, err]): [T | null, Error | null] => {
-        if (!err && data) {
-          cached = { data, fetchedAt: Date.now() };
-        }
-        return [data, err];
-      })
-      .finally(() => {
-        pending = null;
-      });
-    return pending;
-  };
-};
 
 type ICoreRawData = {
   walletGroups: any[];
@@ -79,71 +50,81 @@ type ICoreRawData = {
   scheduleJobLinks: any[];
 };
 
-const fetchCoreRawData = withTtlCache<ICoreRawData>(async () => {
-  const [
-    [walletGroups, walletGroupsErr],
-    [campaigns, campaignsErr],
-    [workflows, workflowsErr],
-    [agentProfiles, agentProfilesErr],
-    [agentTasks, agentTasksErr],
-    [schedules, schedulesErr],
-    [mcpServers, mcpServersErr],
-    [agentSkills, agentSkillsErr],
-    [campaignProfileWalletLinks, campaignProfileWalletLinksErr],
-    [campaignWorkflowLinks, campaignWorkflowLinksErr],
-    [scheduleJobLinks, scheduleJobLinksErr],
-  ] = await Promise.all([
-    relationshipGraphDB.getAllWalletGroups(),
-    relationshipGraphDB.getAllCampaigns(),
-    relationshipGraphDB.getAllWorkflows(),
-    relationshipGraphDB.getAllAgentProfiles(),
-    relationshipGraphDB.getAllAgentTasks(),
-    relationshipGraphDB.getAllSchedules(),
-    relationshipGraphDB.getAllMcpServers(),
-    relationshipGraphDB.getAllAgentSkills(),
-    relationshipGraphDB.getCampaignProfileWalletLinks(),
-    relationshipGraphDB.getCampaignWorkflowLinks(),
-    relationshipGraphDB.getScheduleJobLinks(),
-  ]);
+const fetchCoreRawData = () =>
+  getOrFetch<ICoreRawData>(
+    "relationshipGraph:core",
+    RAW_DATA_CACHE_TTL_MS,
+    async () => {
+      const [
+        [walletGroups, walletGroupsErr],
+        [campaigns, campaignsErr],
+        [workflows, workflowsErr],
+        [agentProfiles, agentProfilesErr],
+        [agentTasks, agentTasksErr],
+        [schedules, schedulesErr],
+        [mcpServers, mcpServersErr],
+        [agentSkills, agentSkillsErr],
+        [campaignProfileWalletLinks, campaignProfileWalletLinksErr],
+        [campaignWorkflowLinks, campaignWorkflowLinksErr],
+        [scheduleJobLinks, scheduleJobLinksErr],
+      ] = await Promise.all([
+        relationshipGraphDB.getAllWalletGroups(),
+        relationshipGraphDB.getAllCampaigns(),
+        relationshipGraphDB.getAllWorkflows(),
+        relationshipGraphDB.getAllAgentProfiles(),
+        relationshipGraphDB.getAllAgentTasks(),
+        relationshipGraphDB.getAllSchedules(),
+        relationshipGraphDB.getAllMcpServers(),
+        relationshipGraphDB.getAllAgentSkills(),
+        relationshipGraphDB.getCampaignProfileWalletLinks(),
+        relationshipGraphDB.getCampaignWorkflowLinks(),
+        relationshipGraphDB.getScheduleJobLinks(),
+      ]);
 
-  const firstError =
-    walletGroupsErr ||
-    campaignsErr ||
-    workflowsErr ||
-    agentProfilesErr ||
-    agentTasksErr ||
-    schedulesErr ||
-    mcpServersErr ||
-    agentSkillsErr ||
-    campaignProfileWalletLinksErr ||
-    campaignWorkflowLinksErr ||
-    scheduleJobLinksErr;
-  if (firstError) {
-    return [null, firstError];
-  }
+      const firstError =
+        walletGroupsErr ||
+        campaignsErr ||
+        workflowsErr ||
+        agentProfilesErr ||
+        agentTasksErr ||
+        schedulesErr ||
+        mcpServersErr ||
+        agentSkillsErr ||
+        campaignProfileWalletLinksErr ||
+        campaignWorkflowLinksErr ||
+        scheduleJobLinksErr;
+      if (firstError) {
+        return [null, firstError];
+      }
 
-  return [
-    {
-      walletGroups: walletGroups || [],
-      campaigns: campaigns || [],
-      workflows: workflows || [],
-      agentProfiles: agentProfiles || [],
-      agentTasks: agentTasks || [],
-      schedules: schedules || [],
-      mcpServers: mcpServers || [],
-      agentSkills: agentSkills || [],
-      campaignProfileWalletLinks: campaignProfileWalletLinks || [],
-      campaignWorkflowLinks: campaignWorkflowLinks || [],
-      scheduleJobLinks: scheduleJobLinks || [],
+      return [
+        {
+          walletGroups: walletGroups || [],
+          campaigns: campaigns || [],
+          workflows: workflows || [],
+          agentProfiles: agentProfiles || [],
+          agentTasks: agentTasks || [],
+          schedules: schedules || [],
+          mcpServers: mcpServers || [],
+          agentSkills: agentSkills || [],
+          campaignProfileWalletLinks: campaignProfileWalletLinks || [],
+          campaignWorkflowLinks: campaignWorkflowLinks || [],
+          scheduleJobLinks: scheduleJobLinks || [],
+        },
+        null,
+      ];
     },
-    null,
-  ];
-}, RAW_DATA_CACHE_TTL_MS);
+  );
 
-const fetchWalletsRawData = withTtlCache<any[]>(async () => {
-  const [wallets, err] = await relationshipGraphDB.getAllWallets();
-  return [wallets || [], err];
-}, RAW_DATA_CACHE_TTL_MS);
+const fetchWalletsRawData = () =>
+  getOrFetch<any[]>(
+    "relationshipGraph:wallets",
+    RAW_DATA_CACHE_TTL_MS,
+    async () => {
+      const [wallets, err] = await relationshipGraphDB.getAllWallets();
+      return [wallets || [], err];
+    },
+  );
 
 // Everything except WALLET nodes/MEMBER_OF edges — low-cardinality and
 // encryptKey-independent, so it's fetched and cached separately from wallets.
