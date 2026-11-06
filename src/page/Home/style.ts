@@ -30,6 +30,11 @@ const Wrapper = styled.div`
     margin-bottom: 3rem;
   }
 
+  .relationship-graph {
+    width: 100%;
+    margin-bottom: 3rem;
+  }
+
   .file-statistic {
     display: flex;
     flex-direction: column;

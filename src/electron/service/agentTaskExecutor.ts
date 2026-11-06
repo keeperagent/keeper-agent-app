@@ -343,6 +343,7 @@ class AgentTaskExecutor {
       this.cancelledTasks.delete(taskId);
       this.pausedTasks.delete(taskId);
       sendToRenderer(MESSAGE.AGENT_TASK_CHANGED);
+      sendToRenderer(MESSAGE.AGENT_TASK_FINISHED, { taskId, agentId });
       onComplete?.();
     }
   };

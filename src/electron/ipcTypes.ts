@@ -635,6 +635,11 @@ export type IpcGlobalSearchPayload = {
   searchText: string;
 };
 
+// RelationshipGraph
+export type IpcGetRelationshipGraphPayload = {
+  encryptKey?: string;
+};
+
 // EncryptKeyCache
 export type IpcGetEncryptKeyCachePayload = {
   campaignId: number;

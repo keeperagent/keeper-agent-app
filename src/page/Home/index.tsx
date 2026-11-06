@@ -10,6 +10,7 @@ import {
 } from "@/hook";
 import { IStatistic } from "@/electron/type";
 import AgentAnalytic from "@/component/AgentAnalytic";
+import RelationshipGraph from "@/component/RelationshipGraph";
 import { actSetPageName } from "@/redux/layout";
 import { COLORS, FOLDER_TYPE } from "@/config/constant";
 import { IFolderPath, IFolderState } from "@/redux/folder";
@@ -106,6 +107,10 @@ const HomePage = (props: IProps) => {
           label={translate("home.numberAgentSkill")}
           value={statistic?.totalAgentSkill || 0}
         />
+      </div>
+
+      <div className="relationship-graph">
+        <RelationshipGraph />
       </div>
 
       <div className="chart">

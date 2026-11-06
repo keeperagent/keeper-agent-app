@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, Fragment } from "react";
 import { connect } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import { RootState } from "@/redux/store";
 import {
   useTranslation,
@@ -48,6 +49,9 @@ const ChatView = (props: any) => {
     useGetOneAgentProfile();
   const searchProfileTimeoutRef = useRef<any>(null);
   const hasValidatedRef = useRef(false);
+  const [searchParams] = useSearchParams();
+  const agentProfileIdFromUrl =
+    Number(searchParams.get("agentProfileId")) || null;
 
   useEffect(() => {
     getListAgentProfile({ page: 1, pageSize: 30, isActive: true });
@@ -62,6 +66,11 @@ const ChatView = (props: any) => {
       return;
     }
     hasValidatedRef.current = true;
+
+    if (agentProfileIdFromUrl) {
+      getOneAgentProfile(agentProfileIdFromUrl);
+      return;
+    }
 
     if (selectedAgentProfile?.id) {
       const isInList = listAgentProfile.some(
