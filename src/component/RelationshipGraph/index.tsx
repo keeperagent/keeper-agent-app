@@ -814,16 +814,18 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
           <PasswordInput
             name="relationshipGraphEncryptKey"
             placeholder={translate("wallet.encryptKey")}
-            width="14rem"
+            width="16rem"
             extendClass="relationship-graph"
             onChange={onChangeEncryptKey}
             initialValue={encryptKeyInputValue}
             shouldHideValue
           />
+
           <SearchInput
             value={searchText}
             onChange={setSearchText}
-            placeholder={translate("relationshipGraph.searchPlaceholder")}
+            placeholder={translate("button.search")}
+            style={{ width: "25rem" }}
           />
         </div>
       </div>

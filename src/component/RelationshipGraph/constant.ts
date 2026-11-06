@@ -12,28 +12,30 @@ export type ICategoryConfig = {
 export const CATEGORY_LIST: ICategoryConfig[] = [
   {
     type: "WALLET",
-    labelKey: "relationshipGraph.category.wallet",
+    labelKey: "home.numberWallet",
     colorLight: "#e641ec",
     colorDark: "#dc16e3",
   },
   {
     type: "WALLET_GROUP",
-    labelKey: "relationshipGraph.category.walletGroup",
+    labelKey: "home.numberWalletGroup",
     colorLight: "#ee4f9d",
     colorDark: "#ea2a88",
   },
   {
     type: "CAMPAIGN",
-    labelKey: "relationshipGraph.category.campaign",
+    labelKey: "home.numberCampaign",
     colorLight: "#ee5b53",
     colorDark: "#eb3d33",
   },
   {
     type: "WORKFLOW",
-    labelKey: "relationshipGraph.category.workflow",
+    labelKey: "home.numberWorkflow",
     colorLight: "#c37c13",
     colorDark: "#b07111",
   },
+  // No existing "Agent"/"Agent Task"/"Schedule" entity-name label elsewhere
+  // in the app (checked en.json) — these stay their own keys.
   {
     type: "AGENT",
     labelKey: "relationshipGraph.category.agent",
@@ -54,13 +56,13 @@ export const CATEGORY_LIST: ICategoryConfig[] = [
   },
   {
     type: "MCP_SERVER",
-    labelKey: "relationshipGraph.category.mcpServer",
+    labelKey: "home.numberMcpServer",
     colorLight: "#1594d1",
     colorDark: "#1386be",
   },
   {
     type: "AGENT_SKILL",
-    labelKey: "relationshipGraph.category.agentSkill",
+    labelKey: "home.numberAgentSkill",
     colorLight: "#5d6fef",
     colorDark: "#6174ef",
   },

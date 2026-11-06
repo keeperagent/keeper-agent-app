@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { message } from "antd";
 import { MESSAGE } from "@/electron/constant";
 import type { IRelationshipGraphData } from "@/electron/type";
@@ -57,9 +57,14 @@ const useGetRelationshipGraph = () => {
     executeWallets(payload);
   };
 
-  return {
-    relationshipGraph:
+  const relationshipGraph = useMemo(
+    () =>
       coreData && walletsData ? mergeGraphData(coreData, walletsData) : null,
+    [coreData, walletsData],
+  );
+
+  return {
+    relationshipGraph,
     loading: coreLoading || walletsLoading,
     getRelationshipGraph,
   };
