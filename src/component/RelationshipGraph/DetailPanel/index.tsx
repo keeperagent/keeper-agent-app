@@ -15,7 +15,6 @@ type IProps = {
   nodesById: Record<string, IGraphNode>;
   edges: IGraphEdge[];
   isLightMode: boolean;
-  hasEncryptKey: boolean;
   nodeDisplayColor: (node: IGraphNode) => string;
   onClose: () => void;
 };
@@ -27,7 +26,6 @@ const DetailPanel = ({
   nodesById,
   edges,
   isLightMode,
-  hasEncryptKey,
   nodeDisplayColor,
   onClose,
 }: IProps) => {
@@ -111,8 +109,7 @@ const DetailPanel = ({
     if (!portfolioApp) {
       return null;
     }
-    const isEncrypted = Boolean(walletNode.meta?.isEncrypted);
-    if (isEncrypted && !hasEncryptKey) {
+    if (!walletNode.meta?.isDecrypted) {
       return null;
     }
     return {
@@ -152,11 +149,13 @@ const DetailPanel = ({
           </div>
         ) : null}
 
-        {renderCtaRow(
-          translate("relationshipGraph.panel.openTradeHistory"),
-          () => onOpenTradeHistory(node.label),
-          "primary",
-        )}
+        {node.meta?.isDecrypted
+          ? renderCtaRow(
+              translate("relationshipGraph.panel.openTradeHistory"),
+              () => onOpenTradeHistory(node.label),
+              "primary",
+            )
+          : null}
         {renderCtaRow(
           translate("relationshipGraph.panel.manageEntity"),
           () => onManageEntity(node),

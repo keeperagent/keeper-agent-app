@@ -26,12 +26,17 @@ const decryptWalletAddress = (
   address: string,
   isEncrypted: boolean,
   encryptKey?: string,
-): string => {
-  if (!isEncrypted || !encryptKey) {
-    return address;
+): { label: string; isDecrypted: boolean } => {
+  if (!isEncrypted) {
+    return { label: address, isDecrypted: true };
+  }
+  if (!encryptKey) {
+    return { label: address, isDecrypted: false };
   }
   const decrypted = encryptionService.decryptData(address, encryptKey);
-  return decrypted || address;
+  return decrypted
+    ? { label: decrypted, isDecrypted: true }
+    : { label: address, isDecrypted: false };
 };
 
 const RAW_DATA_CACHE_TTL_MS = 20000;
@@ -242,17 +247,21 @@ export const getRelationshipGraphCore = async (): Promise<
 
     const campaignWalletGroupPairs = new Set<string>();
     campaignProfileWalletLinks.forEach((campaignProfile: any) => {
-      if (!campaignProfile.walletGroupId) {
+      // walletGroupId first; a profile pinned to a single wallet (no group
+      // set directly) still resolves via that wallet's own groupId.
+      const resolvedWalletGroupId =
+        campaignProfile.walletGroupId || campaignProfile.wallet?.groupId;
+      if (!resolvedWalletGroupId) {
         return;
       }
-      const pairKey = `${campaignProfile.campaignId}:${campaignProfile.walletGroupId}`;
+      const pairKey = `${campaignProfile.campaignId}:${resolvedWalletGroupId}`;
       if (campaignWalletGroupPairs.has(pairKey)) {
         return;
       }
       campaignWalletGroupPairs.add(pairKey);
       edges.push({
         source: nodeId("CAMPAIGN", campaignProfile.campaignId),
-        target: nodeId("WALLET_GROUP", campaignProfile.walletGroupId),
+        target: nodeId("WALLET_GROUP", resolvedWalletGroupId),
         type: "USES_WALLET_GROUP",
       });
     });
@@ -317,15 +326,16 @@ export const getRelationshipGraphWallets = async (
     const edges: IGraphEdge[] = [];
 
     (wallets || []).forEach((wallet) => {
+      const { label, isDecrypted } = decryptWalletAddress(
+        wallet.address,
+        Boolean(wallet.isEncrypted),
+        encryptKey,
+      );
       nodes.push({
         id: nodeId("WALLET", wallet.id),
         type: "WALLET",
-        label: decryptWalletAddress(
-          wallet.address,
-          Boolean(wallet.isEncrypted),
-          encryptKey,
-        ),
-        meta: { isEncrypted: Boolean(wallet.isEncrypted) },
+        label,
+        meta: { isEncrypted: Boolean(wallet.isEncrypted), isDecrypted },
       });
       if (wallet.groupId) {
         edges.push({

@@ -346,10 +346,8 @@ const WalletActivityView = (props: any) => {
     const { searchText: searchTextQuery } = qs.parse(search, {
       ignoreQueryPrefix: true,
     });
-    if (typeof searchTextQuery === "string" && searchTextQuery) {
-      onSetPage(1);
-      onSetSearchText(searchTextQuery);
-    }
+    onSetPage(1);
+    onSetSearchText(typeof searchTextQuery === "string" ? searchTextQuery : "");
   }, [search]);
 
   const fetchData = () => {

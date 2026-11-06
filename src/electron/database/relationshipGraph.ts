@@ -30,6 +30,8 @@ const findAssociationAlias = (
   return alias;
 };
 
+const AGENT_TASK_GRAPH_LIMIT = 200;
+
 class RelationshipGraphDB {
   async getAllWallets(): Promise<[any[] | null, Error | null]> {
     try {
@@ -128,6 +130,8 @@ class RelationshipGraphDB {
     try {
       const agentTasks = await AgentTaskModel.findAll({
         attributes: ["id", "title", "assignedAgentId"],
+        order: [["createAt", "DESC"]],
+        limit: AGENT_TASK_GRAPH_LIMIT,
         raw: true,
       });
       return [agentTasks, null];
@@ -154,7 +158,9 @@ class RelationshipGraphDB {
     try {
       const campaignProfiles = await CampaignProfileModel.findAll({
         attributes: ["campaignId", "walletId", "walletGroupId"],
-        raw: true,
+        include: [
+          { model: WalletModel, attributes: ["groupId"], as: "wallet" },
+        ],
       });
       return [campaignProfiles, null];
     } catch (err: any) {

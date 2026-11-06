@@ -203,13 +203,22 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
     setActiveCategories(next);
   };
 
+  const markUserTookCameraControl = () => {
+    lastUserCameraInteractionAtRef.current = Date.now();
+    userHasTakenCameraControlRef.current = true;
+    if (settleIntervalIdRef.current) {
+      clearInterval(settleIntervalIdRef.current);
+      settleIntervalIdRef.current = null;
+    }
+  };
+
   const onZoomToCategory = (type: string) => {
     const graph = graphRef.current;
     const indices = categoryIndicesRef.current[type];
     if (!graph || !indices || indices.length === 0) {
       return;
     }
-    lastUserCameraInteractionAtRef.current = Date.now();
+    markUserTookCameraControl();
     graph.fitViewByPointIndices(indices, 700, 0.2);
   };
 
@@ -218,7 +227,7 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
     if (!graph) {
       return;
     }
-    lastUserCameraInteractionAtRef.current = Date.now();
+    markUserTookCameraControl();
     graph.setZoomLevel(graph.getZoomLevel() * 1.4, 250);
   };
 
@@ -227,7 +236,7 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
     if (!graph) {
       return;
     }
-    lastUserCameraInteractionAtRef.current = Date.now();
+    markUserTookCameraControl();
     graph.setZoomLevel(graph.getZoomLevel() / 1.4, 250);
   };
 
@@ -236,7 +245,7 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
     if (!graph) {
       return;
     }
-    lastUserCameraInteractionAtRef.current = Date.now();
+    markUserTookCameraControl();
     graph.fitView(500, 0.08);
   };
 
@@ -283,12 +292,21 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
     });
 
     const labelGap = 4;
-    const placedRects: {
-      left: number;
-      top: number;
-      right: number;
-      bottom: number;
-    }[] = [];
+    type IRect = { left: number; top: number; right: number; bottom: number };
+
+    const GRID_CELL_SIZE = 200;
+    const placedRectsByCell = new Map<string, IRect[]>();
+    const forEachTouchedCell = (rect: IRect, visit: (key: string) => void) => {
+      const minCellX = Math.floor(rect.left / GRID_CELL_SIZE);
+      const maxCellX = Math.floor(rect.right / GRID_CELL_SIZE);
+      const minCellY = Math.floor(rect.top / GRID_CELL_SIZE);
+      const maxCellY = Math.floor(rect.bottom / GRID_CELL_SIZE);
+      for (let cellX = minCellX; cellX <= maxCellX; cellX += 1) {
+        for (let cellY = minCellY; cellY <= maxCellY; cellY += 1) {
+          visit(`${cellX}:${cellY}`);
+        }
+      }
+    };
 
     candidates.forEach(({ node, screenX, screenY }) => {
       const labelElement = labelElementRefs.current[node.id];
@@ -301,27 +319,48 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
       const estimatedHeight = 18;
       const left = screenX + 10;
       const top = screenY - 6;
-      const rect = {
+      const rect: IRect = {
         left,
         top,
         right: left + estimatedWidth,
         bottom: top + estimatedHeight,
       };
 
-      const overlapsPlacedLabel = placedRects.some(
-        (placedRect) =>
-          rect.left < placedRect.right + labelGap &&
-          rect.right + labelGap > placedRect.left &&
-          rect.top < placedRect.bottom + labelGap &&
-          rect.bottom + labelGap > placedRect.top,
-      );
+      let overlapsPlacedLabel = false;
+      forEachTouchedCell(rect, (key) => {
+        if (overlapsPlacedLabel) {
+          return;
+        }
+        const bucket = placedRectsByCell.get(key);
+        if (!bucket) {
+          return;
+        }
+        if (
+          bucket.some(
+            (placedRect) =>
+              rect.left < placedRect.right + labelGap &&
+              rect.right + labelGap > placedRect.left &&
+              rect.top < placedRect.bottom + labelGap &&
+              rect.bottom + labelGap > placedRect.top,
+          )
+        ) {
+          overlapsPlacedLabel = true;
+        }
+      });
 
       if (overlapsPlacedLabel) {
         labelElement.style.display = "none";
         return;
       }
 
-      placedRects.push(rect);
+      forEachTouchedCell(rect, (key) => {
+        const bucket = placedRectsByCell.get(key);
+        if (bucket) {
+          bucket.push(rect);
+        } else {
+          placedRectsByCell.set(key, [rect]);
+        }
+      });
       labelElement.style.display = "";
       labelElement.style.transform = `translate(${screenX}px, ${screenY}px)`;
     });
@@ -419,7 +458,22 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
 
   useEffect(() => {
     const graph = graphRef.current;
-    if (!graph || nodes.length === 0) {
+    if (!graph) {
+      return;
+    }
+    if (nodes.length === 0) {
+      graph.setPointPositions(new Float32Array(0));
+      graph.setPointColors(new Float32Array(0));
+      graph.setPointSizes(new Float32Array(0));
+      graph.setPointClusters([]);
+      graph.setClusterPositions([]);
+      graph.setLinks(new Float32Array(0));
+      graph.setLinkColors(new Float32Array(0));
+      graph.render();
+      layoutNodesRef.current = [];
+      clusterAssignmentRef.current = null;
+      categoryIndicesRef.current = {};
+      baseColorsRef.current = null;
       return;
     }
 
@@ -963,7 +1017,6 @@ const RelationshipGraph = ({ isLightMode }: IProps) => {
             nodesById={nodesById}
             edges={edges}
             isLightMode={isLightMode}
-            hasEncryptKey={hasEncryptKey}
             nodeDisplayColor={nodeDisplayColor}
             onClose={() => setSelectedNodeId(null)}
           />

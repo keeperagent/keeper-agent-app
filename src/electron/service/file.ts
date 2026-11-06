@@ -50,22 +50,23 @@ const fetchFolderStatisticRaw = (folderPath: string, limit: number) =>
           }
 
           totalFolder += 1;
+          const subFolderPath = path.join(folderPath, file?.name);
+
+          const [folderSize, sizeErr] = await getFolderSize(subFolderPath);
+          if (sizeErr || folderSize === null) {
+            continue;
+          }
+          totalSize += folderSize;
+
           if (listFolder.length >= limit) {
             continue;
           }
 
-          const subFolderPath = path.join(folderPath, file?.name);
-          const [lastEditTime, err] =
+          const [lastEditTime, editErr] =
             await getLastEditTimeOfFolder(subFolderPath);
-          if (err || !lastEditTime) {
+          if (editErr || !lastEditTime) {
             continue;
           }
-
-          const [folderSize, err1] = await getFolderSize(subFolderPath);
-          if (err1 || folderSize === null) {
-            continue;
-          }
-          totalSize += folderSize;
           listFolder.push({
             name: file?.name,
             path: subFolderPath,

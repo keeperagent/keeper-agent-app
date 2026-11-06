@@ -46,7 +46,10 @@ const useGetRelationshipGraph = () => {
     MESSAGE.GET_RELATIONSHIP_GRAPH_WALLETS_RES,
     {
       onSuccess: (payload) => setWalletsData(payload?.data || null),
-      onError: (error) => message.error(error),
+      onError: (error) => {
+        setWalletsData(null);
+        message.error(error);
+      },
     },
   );
 
