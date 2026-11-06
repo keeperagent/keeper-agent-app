@@ -3,6 +3,15 @@ import path from "path";
 import { getDbPath } from "@/electron/database/common";
 import { IFolder, IFile } from "@/electron/type";
 import { logEveryWhere } from "./util";
+import { getOrFetch } from "./ttlCache";
+
+const FOLDER_STATISTIC_CACHE_TTL_MS = 30000;
+
+type IFolderStatisticRaw = {
+  listFolder: IFolder[];
+  totalFolder: number;
+  totalSize: number;
+};
 
 const getDatabaseFileStatistic = async (): Promise<
   [IFile | null, Error | null]
@@ -16,56 +25,75 @@ const getDatabaseFileStatistic = async (): Promise<
 
     return [fileInfo, null];
   } catch (err: any) {
-    logEveryWhere({ message: `getDatabaseFileStatistic() error: ${err?.message}` });
+    logEveryWhere({
+      message: `getDatabaseFileStatistic() error: ${err?.message}`,
+    });
     return [null, err];
   }
 };
+
+const fetchFolderStatisticRaw = (folderPath: string, limit: number) =>
+  getOrFetch<IFolderStatisticRaw>(
+    `folderStatistic:${folderPath}:${limit}`,
+    FOLDER_STATISTIC_CACHE_TTL_MS,
+    async () => {
+      try {
+        const listFolder: IFolder[] = [];
+        let totalFolder = 0;
+        const files = await fs.readdir(folderPath, { withFileTypes: true });
+        let totalSize = 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (!file.isDirectory()) {
+            continue;
+          }
+
+          totalFolder += 1;
+          const subFolderPath = path.join(folderPath, file?.name);
+
+          const [folderSize, sizeErr] = await getFolderSize(subFolderPath);
+          if (sizeErr || folderSize === null) {
+            continue;
+          }
+          totalSize += folderSize;
+
+          if (listFolder.length >= limit) {
+            continue;
+          }
+
+          const [lastEditTime, editErr] =
+            await getLastEditTimeOfFolder(subFolderPath);
+          if (editErr || !lastEditTime) {
+            continue;
+          }
+          listFolder.push({
+            name: file?.name,
+            path: subFolderPath,
+            lastEdit: lastEditTime,
+            size: folderSize,
+          });
+        }
+
+        return [{ listFolder, totalFolder, totalSize }, null];
+      } catch (err: any) {
+        logEveryWhere({
+          message: `getFolderStatistic() error: ${err?.message}`,
+        });
+        return [null, err];
+      }
+    },
+  );
 
 const getFolderStatistic = async (
   folderPath: string,
   limit: number,
 ): Promise<[IFolder[], number | null, number | null, Error | null]> => {
-  try {
-    const listFolder: IFolder[] = [];
-    let totalFolder = 0;
-    const files = await fs.readdir(folderPath, { withFileTypes: true });
-    let totalSize = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (!file.isDirectory()) {
-        continue;
-      }
-
-      totalFolder += 1;
-      if (listFolder.length >= limit) {
-        continue;
-      }
-
-      const subFolderPath = path.join(folderPath, file?.name);
-      const [lastEditTime, err] = await getLastEditTimeOfFolder(subFolderPath);
-      if (err || !lastEditTime) {
-        continue;
-      }
-
-      const [folderSize, err1] = await getFolderSize(subFolderPath);
-      if (err1 || folderSize === null) {
-        continue;
-      }
-      totalSize += folderSize;
-      listFolder.push({
-        name: file?.name,
-        path: subFolderPath,
-        lastEdit: lastEditTime,
-        size: folderSize,
-      });
-    }
-
-    return [listFolder, totalFolder, totalSize, null];
-  } catch (err: any) {
-    logEveryWhere({ message: `getFolderStatistic() error: ${err?.message}` });
+  const [raw, err] = await fetchFolderStatisticRaw(folderPath, limit);
+  if (err || !raw) {
     return [[], null, null, err];
   }
+  return [raw.listFolder, raw.totalFolder, raw.totalSize, null];
 };
 
 const getLastEditTimeOfFolder = async (
@@ -75,7 +103,9 @@ const getLastEditTimeOfFolder = async (
     const stats = await fs.stat(folderPath);
     return [stats?.mtime.getTime(), null];
   } catch (err: any) {
-    logEveryWhere({ message: `getLastEditTimeOfFolder() error: ${err?.message}` });
+    logEveryWhere({
+      message: `getLastEditTimeOfFolder() error: ${err?.message}`,
+    });
     return [null, err];
   }
 };

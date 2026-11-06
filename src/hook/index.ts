@@ -209,5 +209,6 @@ export {
 export { useGetListAppLog, useDeleteAppLog, useCreateAppLog } from "./appLog";
 export { useGetListWalletActivity } from "./walletActivity";
 export { useGetWalletTradeReplay } from "./walletTrade";
+export { useGetRelationshipGraph } from "./relationshipGraph";
 export { useCheckModelCapability } from "./useCheckModelCapability";
 export { useTableScrollHeight } from "./useTableScrollHeight";

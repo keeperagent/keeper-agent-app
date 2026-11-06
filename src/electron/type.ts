@@ -2632,6 +2632,47 @@ export type IStatistic = {
   totalAgentSkill: number;
 };
 
+// Dashboard relationship graph
+export type IGraphNodeType =
+  | "WALLET"
+  | "WALLET_GROUP"
+  | "CAMPAIGN"
+  | "WORKFLOW"
+  | "AGENT"
+  | "AGENT_TASK"
+  | "SCHEDULE"
+  | "MCP_SERVER"
+  | "AGENT_SKILL";
+
+export type IGraphNode = {
+  id: string;
+  type: IGraphNodeType;
+  label: string;
+  meta?: Record<string, any>;
+};
+
+export type IGraphEdgeType =
+  | "MEMBER_OF"
+  | "USES_WALLET_GROUP"
+  | "RUNS_WORKFLOW"
+  | "TRIGGERED_BY"
+  | "EXECUTES_TASK"
+  | "USES_MCP_SERVER"
+  | "USES_SKILL";
+
+export type IGraphEdge = {
+  source: string;
+  target: string;
+  type: IGraphEdgeType;
+  weight?: number;
+  meta?: Record<string, any>;
+};
+
+export type IRelationshipGraphData = {
+  nodes: IGraphNode[];
+  edges: IGraphEdge[];
+};
+
 export type IFolder = {
   name: string;
   path: string;

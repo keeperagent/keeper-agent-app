@@ -47,6 +47,7 @@ import { agentTaskController } from "./controller/agentTask";
 import { appLogController } from "./controller/appLog";
 import { walletActivityController } from "./controller/walletActivity";
 import { walletTradeController } from "./controller/walletTrade";
+import { relationshipGraphController } from "./controller/relationshipGraph";
 import { agentTaskDispatcher } from "./service/agentTaskDispatcher";
 import { licenseService } from "./service/licenseService";
 import { keeperMcpServer } from "./mcpServer";
@@ -98,6 +99,7 @@ const runMainProcess = () => {
   appLogController();
   walletActivityController();
   walletTradeController();
+  relationshipGraphController();
 
   scheduleManager.start();
   whatsappService.start();

@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useState } from "react";
 import { Button, Empty, Select, Table, Tooltip } from "antd";
 import { connect } from "react-redux";
+import { useLocation } from "react-router-dom";
+import qs from "qs";
 import { RootState } from "@/redux/store";
 import { WalletAddress, TotalData } from "@/component";
 import { SearchInput } from "@/component/Input";
@@ -338,6 +340,15 @@ const WalletActivityView = (props: any) => {
   useEffect(() => {
     getListWalletGroup({ page: 1, pageSize: 500 });
   }, []);
+
+  const { search } = useLocation();
+  useEffect(() => {
+    const { searchText: searchTextQuery } = qs.parse(search, {
+      ignoreQueryPrefix: true,
+    });
+    onSetPage(1);
+    onSetSearchText(typeof searchTextQuery === "string" ? searchTextQuery : "");
+  }, [search]);
 
   const fetchData = () => {
     getListWalletActivity({
