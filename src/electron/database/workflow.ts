@@ -1,7 +1,7 @@
-import { Op, Model } from "sequelize";
+import { Op, Model, Sequelize } from "sequelize";
 import _ from "lodash";
 import { IWorkflow, IGetListResponse, ISorter } from "@/electron/type";
-import { WorkflowModel } from "./index";
+import { WorkflowModel, WorkflowGroupModel } from "./index";
 import { formatWorkflow } from "@/electron/service/formatData";
 import { logEveryWhere } from "@/electron/service/util";
 import { SORT_ORDER } from "@/electron/constant";
@@ -20,17 +20,21 @@ class WorkflowDB {
     pageSize: number,
     searchText?: string,
     sortField?: ISorter,
+    groupId?: number,
   ): Promise<[IGetListResponse<IWorkflow> | null, Error | null]> {
     try {
       const condition = {
-        [Op.and]: searchText
-          ? {
-              [Op.or]: [
-                { name: { [Op.like]: `%${searchText}%` } },
-                { note: { [Op.like]: `%${searchText}%` } },
-              ],
-            }
-          : {},
+        [Op.and]: [
+          searchText
+            ? {
+                [Op.or]: [
+                  { name: { [Op.like]: `%${searchText}%` } },
+                  { note: { [Op.like]: `%${searchText}%` } },
+                ],
+              }
+            : {},
+          groupId ? { groupId } : {},
+        ],
       };
 
       const sortOrder = sortField?.order === SORT_ORDER.DESC ? "DESC" : "ASC";
@@ -45,6 +49,13 @@ class WorkflowDB {
         limit: pageSize,
         offset: (page - 1) * pageSize,
         where: condition,
+        include: [
+          {
+            model: WorkflowGroupModel,
+            as: "group",
+            attributes: ["id", "name"],
+          },
+        ],
         raw: false,
       });
 
@@ -74,7 +85,9 @@ class WorkflowDB {
 
       return [listData, null];
     } catch (err: any) {
-      logEveryWhere({ message: `getListWorkflowById() error: ${err?.message}` });
+      logEveryWhere({
+        message: `getListWorkflowById() error: ${err?.message}`,
+      });
       return [[], err];
     }
   }
@@ -83,6 +96,13 @@ class WorkflowDB {
     try {
       const data = await WorkflowModel.findOne({
         where: { id },
+        include: [
+          {
+            model: WorkflowGroupModel,
+            as: "group",
+            attributes: ["id", "name"],
+          },
+        ],
         raw: false,
       });
       if (!data) {
@@ -109,7 +129,7 @@ class WorkflowDB {
         { raw: false },
       );
 
-      return [formatWorkflow(workflow), null];
+      return this.getOneWorkflow((workflow as any)?.id!);
     } catch (err: any) {
       logEveryWhere({ message: `createWorkflow() error: ${err?.message}` });
       return [null, err];
@@ -160,13 +180,48 @@ class WorkflowDB {
     }
   }
 
-  async deleteWorkflow(listID: number[]): Promise<[number | null, Error | null]> {
+  async deleteWorkflow(
+    listID: number[],
+  ): Promise<[number | null, Error | null]> {
     try {
       const data = await WorkflowModel.destroy({ where: { id: listID } });
       return [data, null];
     } catch (err: any) {
       logEveryWhere({ message: `deleteWorkflow() error: ${err?.message}` });
       return [null, err];
+    }
+  }
+
+  async countTotalWorkflow(
+    listGroupID: number[],
+  ): Promise<[any[], Error | null]> {
+    try {
+      const data = await WorkflowModel.findAll({
+        group: ["groupId"],
+        attributes: ["groupId", [Sequelize.fn("COUNT", "groupId"), "count"]],
+        where: { groupId: { [Op.in]: listGroupID } },
+        raw: true,
+      });
+
+      return [data, null];
+    } catch (err: any) {
+      logEveryWhere({ message: `countTotalWorkflow() error: ${err?.message}` });
+      return [[], err];
+    }
+  }
+
+  async unassignWorkflowGroup(listGroupID: number[]): Promise<Error | null> {
+    try {
+      await WorkflowModel.update(
+        { groupId: null },
+        { where: { groupId: { [Op.in]: listGroupID } } },
+      );
+      return null;
+    } catch (err: any) {
+      logEveryWhere({
+        message: `unassignWorkflowGroup() error: ${err?.message}`,
+      });
+      return err;
     }
   }
 }

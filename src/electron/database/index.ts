@@ -7,6 +7,7 @@ import { getDbPath } from "./common";
 // Static imports for model factories
 import campaignFactory from "./model/campaign";
 import workflowFactory from "./model/workflow";
+import workflowGroupFactory from "./model/workflowGroup";
 import profileGroupFactory from "./model/profileGroup";
 import campaignProfileFactory from "./model/campaignProfile";
 import resourceFactory from "./model/resource";
@@ -44,6 +45,7 @@ const db = new Sequelize({
 // Initialize models with db instance
 export const CampaignModel = campaignFactory(db);
 export const WorkflowModel = workflowFactory(db);
+export const WorkflowGroupModel = workflowGroupFactory(db);
 export const ProfileGroupModel = profileGroupFactory(db);
 export const CampaignProfileModel = campaignProfileFactory(db);
 export const ResourceModel = resourceFactory(db);
@@ -273,6 +275,15 @@ ResourceModel.belongsTo(ResourceGroupModel, {
   as: "group",
   constraints: true,
   onDelete: "CASCADE",
+});
+
+// @WorkflowModel
+// groupId is optional and left unset on delete, unlike the other groups above
+WorkflowModel.belongsTo(WorkflowGroupModel, {
+  foreignKey: { name: "groupId", allowNull: true },
+  as: "group",
+  constraints: true,
+  onDelete: "SET NULL",
 });
 
 // @WalletModel

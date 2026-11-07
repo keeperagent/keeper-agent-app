@@ -23,12 +23,13 @@ export const runWorkflowController = () => {
     MESSAGE.GET_LIST_WORKFLOW,
     MESSAGE.GET_LIST_WORKFLOW_RES,
     async (event, payload) => {
-      const { page, pageSize, searchText, sortField } = payload;
+      const { page, pageSize, searchText, sortField, groupId } = payload;
       let [res] = await workflowDB.getListWorkflow(
         page,
         pageSize,
         searchText,
         sortField,
+        groupId,
       );
 
       const listWorkflow = res?.data || [];

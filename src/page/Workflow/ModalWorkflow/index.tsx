@@ -35,14 +35,21 @@ const ModalWorkflow = (props: any) => {
   } = useCreateWorkflow();
 
   useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
     form.setFieldsValue({
       name: selectedWorkflow?.name || "",
       note: selectedWorkflow?.note || "",
+      groupId: selectedWorkflow?.groupId || null,
     });
     setCurrentStep(0);
   }, [isModalOpen, form, selectedWorkflow]);
 
   useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
     if (!selectedWorkflow) {
       setListVariable(emptyListVariable);
     }
@@ -81,20 +88,31 @@ const ModalWorkflow = (props: any) => {
 
   const onSubmitForm = async () => {
     try {
-      const { name, note } = await form.validateFields(["name", "note"]);
+      const { name, note, groupId } = await form.validateFields([
+        "name",
+        "note",
+        "groupId",
+      ]);
       setBtnLoading(true);
 
       if (selectedWorkflow) {
         await updateWorkflow({
           name,
           note,
+          groupId: groupId || null,
           listVariable,
           id: selectedWorkflow?.id,
         });
       } else {
-        await createWorkflow({ name, note, listVariable, isFullScreen: true });
+        await createWorkflow({
+          name,
+          note,
+          groupId: groupId || null,
+          listVariable,
+          isFullScreen: true,
+        });
       }
-    } catch { }
+    } catch {}
   };
 
   const goBackStep = () => {
@@ -105,7 +123,7 @@ const ModalWorkflow = (props: any) => {
     try {
       await form.validateFields(["name", "note"]);
       setCurrentStep(currentStep + 1);
-    } catch { }
+    } catch {}
   };
 
   const onChangeVariable = (variable: IWorkflowVariable, index: number) => {

@@ -26,6 +26,7 @@ import type {
   ITradeDetail,
   IWallet,
   IWalletGroup,
+  IWorkflowGroup,
   LLMProvider,
 } from "./type";
 
@@ -110,7 +111,9 @@ export type IpcGetWalletGroupDependencyPayload = {
 };
 
 // Workflow
-export type IpcGetListWorkflowPayload = IpcSortedPagePayload;
+export type IpcGetListWorkflowPayload = IpcSortedPagePayload & {
+  groupId?: number;
+};
 export type IpcCreateWorkflowPayload = {
   requestId?: string;
   data: IWorkflow;
@@ -126,6 +129,15 @@ export type IpcExportWorkflowPayload = IpcExportFilePayload & {
 
 export type IpcImportWorkflowPayload = {
   listFilePath: string[];
+};
+
+// WorkflowGroup
+export type IpcGetListWorkflowGroupPayload = IpcSortedPagePayload;
+export type IpcCreateWorkflowGroupPayload = {
+  data: IWorkflowGroup;
+};
+export type IpcUpdateWorkflowGroupPayload = {
+  data: IWorkflowGroup;
 };
 
 // Campaign

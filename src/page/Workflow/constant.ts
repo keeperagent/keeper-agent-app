@@ -1,0 +1,4 @@
+export const VIEW_MODE = {
+  WORKFLOW: "WORKFLOW",
+  WORKFLOW_GROUP: "WORKFLOW_GROUP",
+};

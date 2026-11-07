@@ -1,5 +1,25 @@
 import styled from "styled-components";
 import { ITheme } from "@/style/theme";
+import { FillHeightPage } from "@/style/layout";
+
+const WorkflowPageWrapper = styled(FillHeightPage)`
+  font-size: 1.6rem;
+
+  .tab {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .tab-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+`;
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -9,7 +29,6 @@ const PageWrapper = styled.div`
   justify-content: flex-start;
   align-items: center;
   font-size: 1.6rem;
-  margin-top: var(--margin-top);
 
   .heading {
     width: 100%;
@@ -154,6 +173,7 @@ const ExpandRowWrapper = styled.div`
 `;
 
 export {
+  WorkflowPageWrapper,
   PageWrapper,
   IconHighlightWrapper,
   LinkHoverWrapper,
