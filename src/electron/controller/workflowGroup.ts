@@ -15,12 +15,18 @@ export const runWorkflowGroupController = () => {
     MESSAGE.GET_LIST_WORKFLOW_GROUP_RES,
     async (event, payload) => {
       const { page, pageSize, searchText, sortField } = payload;
-      const [res] = await workflowGroupDB.getListWorkflowGroup(
+      const [res, err] = await workflowGroupDB.getListWorkflowGroup(
         page,
         pageSize,
         searchText,
         sortField,
       );
+      if (err) {
+        event.reply(MESSAGE.GET_LIST_WORKFLOW_GROUP_RES, {
+          error: err?.message,
+        });
+        return;
+      }
 
       event.reply(MESSAGE.GET_LIST_WORKFLOW_GROUP_RES, {
         data: res,
@@ -33,7 +39,13 @@ export const runWorkflowGroupController = () => {
     MESSAGE.GET_ONE_WORKFLOW_GROUP_RES,
     async (event, payload) => {
       const { id } = payload;
-      const [res] = await workflowGroupDB.getOneWorkflowGroup(id);
+      const [res, err] = await workflowGroupDB.getOneWorkflowGroup(id);
+      if (err) {
+        event.reply(MESSAGE.GET_ONE_WORKFLOW_GROUP_RES, {
+          error: err?.message,
+        });
+        return;
+      }
 
       event.reply(MESSAGE.GET_ONE_WORKFLOW_GROUP_RES, {
         data: res,

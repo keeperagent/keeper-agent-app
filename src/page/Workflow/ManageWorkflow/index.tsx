@@ -280,6 +280,7 @@ const ManageWorkflow = (props: any) => {
   }, []);
 
   const onChangeWorkflowGroup = (newGroupId: number) => {
+    onSetSelectedRowKeys([]);
     navigate(
       newGroupId
         ? `${pathname}?group=${newGroupId}&mode=${VIEW_MODE.WORKFLOW}`
