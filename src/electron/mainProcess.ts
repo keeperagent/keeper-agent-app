@@ -3,6 +3,7 @@ import { runWalletController } from "./controller/wallet";
 import { runStatisticController } from "./controller/statistic";
 import { runWorkflowRunnerController } from "./controller/workflowRunner";
 import { runWorkflowController } from "./controller/workflow";
+import { runWorkflowGroupController } from "./controller/workflowGroup";
 import { runResourceGroupController } from "./controller/resourceGroup";
 import { resourceController } from "./controller/resource";
 import { staticProxyController } from "./controller/staticProxy";
@@ -63,6 +64,7 @@ const runMainProcess = () => {
   runStatisticController();
   runWorkflowRunnerController();
   runWorkflowController();
+  runWorkflowGroupController();
   runResourceGroupController();
   resourceController();
   staticProxyController();

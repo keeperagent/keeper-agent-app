@@ -19,6 +19,7 @@ import profileGroupReducer from "./profileGroup";
 import extensionReducer from "./extension";
 import workflowRunnerReducer from "./workflowRunner";
 import workflowReducer from "./workflow";
+import workflowGroupReducer from "./workflowGroup";
 import campaignReducer from "./campaign";
 import campaignProfileReducer from "./campaignProfile";
 import preferenceReducer from "./preference";
@@ -55,6 +56,7 @@ const reducers = combineReducers({
   Extension: extensionReducer,
   WorkflowRunner: workflowRunnerReducer,
   Workflow: workflowReducer,
+  WorkflowGroup: workflowGroupReducer,
   Campaign: campaignReducer,
   CampaignProfile: campaignProfileReducer,
   Preference: preferenceReducer,
@@ -116,6 +118,7 @@ const persistedReducer = persistReducer(
       "ProfileGroup",
       "Proxy",
       "Workflow",
+      "WorkflowGroup",
       "Campaign",
       "Schedule",
       "SystemLog",

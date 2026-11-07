@@ -227,6 +227,8 @@ export type IWorkflow = {
   id?: number;
   name?: string;
   note?: string;
+  groupId?: number;
+  group?: IWorkflowGroup;
   data?: string;
   numberOfThread?: number;
   numberOfRound?: number;
@@ -240,6 +242,15 @@ export type IWorkflow = {
   createAt?: number;
   updateAt?: number;
   listVariable?: IWorkflowVariable[];
+};
+
+export type IWorkflowGroup = {
+  id?: number;
+  name?: string;
+  note?: string;
+  createAt?: number;
+  updateAt?: number;
+  totalWorkflow?: number;
 };
 
 export enum ResourceGroupSource {

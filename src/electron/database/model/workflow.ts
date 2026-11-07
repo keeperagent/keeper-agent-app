@@ -18,6 +18,11 @@ export default (db: Sequelize) =>
         type: DataTypes.STRING,
         defaultValue: null,
       },
+      groupId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+      },
       data: {
         type: DataTypes.TEXT,
         defaultValue: "",
