@@ -153,8 +153,6 @@ export const SCRIPT_NAME_EN = {
   [WORKFLOW_TYPE.SWAP_CETUS]: "Swap Cetus",
   [WORKFLOW_TYPE.SWAP_KYBERSWAP]: "Swap Kyberswap",
   [WORKFLOW_TYPE.SWAP_JUPITER]: "Swap Jupiter",
-
-  [WORKFLOW_TYPE.SAVE_LOG]: "Save log",
 };
 
 export const NODE_CATEGORY_LABEL_EN = {

@@ -24,8 +24,6 @@ import {
   IRandomOnOffNodeConfig,
   ICalculateNodeConfig,
   IUpdateProfileNodeConfig,
-  ISaveLogNodeConfig,
-  AppLogType,
   IExecuteCodeNodeConfig,
   IOnOffProfileNodeConfig,
   ICheckResourceNodeConfig,
@@ -50,7 +48,6 @@ import {
 import { workflowDB } from "@/electron/database/workflow";
 import { resourceGroupDB } from "@/electron/database/resourceGroup";
 import { walletDB } from "@/electron/database/wallet";
-import { appLogDB } from "@/electron/database/appLog";
 import { campaignProfileDB } from "@/electron/database/campaignProfile";
 import { resourceDB } from "@/electron/database/resource";
 import { nodeSecretDB } from "@/electron/database/nodeSecret";
@@ -598,50 +595,6 @@ export class OtherWorkflow {
     } catch (err: any) {
       logEveryWhere({
         message: `selectResource() error: ${err?.message}`,
-        campaignId: flowProfile.campaignConfig?.campaignId,
-        workflowId: flowProfile.campaignConfig?.workflowId,
-      });
-      return [flowProfile, err];
-    }
-  };
-
-  saveLog = async (
-    flowProfile: IFlowProfile,
-  ): Promise<[IFlowProfile | null, Error | null]> => {
-    try {
-      const script = async (
-        page: Page,
-        config: ISaveLogNodeConfig,
-        listVariable: IWorkflowVariable[],
-      ): Promise<IFlowProfile> => {
-        if (processSkipSetting(config, listVariable)) {
-          return flowProfile;
-        }
-
-        const content = getActualValue(config?.content || "", listVariable);
-        const [, err1] = await appLogDB.createAppLog({
-          logType: AppLogType.WORKFLOW,
-          message: content,
-          workflowId: flowProfile?.campaignConfig?.workflowId,
-          campaignId: flowProfile?.campaignConfig?.campaignId,
-        });
-        if (err1) {
-          throw err1;
-        }
-        return flowProfile;
-      };
-
-      return this.threadManager.runNormalTask<ISaveLogNodeConfig>({
-        flowProfile,
-        taskFn: script,
-        timeout:
-          ((flowProfile?.config as ISaveLogNodeConfig)?.timeout || 0) * 1000,
-        taskName: "saveLog",
-        withoutBrowser: true,
-      });
-    } catch (err: any) {
-      logEveryWhere({
-        message: `saveLog() error: ${err?.message}`,
         campaignId: flowProfile.campaignConfig?.campaignId,
         workflowId: flowProfile.campaignConfig?.workflowId,
       });
@@ -1232,7 +1185,6 @@ export const registerOtherHandlers = (
   handlers.set(WORKFLOW_TYPE.CHECK_RESOURCE, s.selectResource);
   handlers.set(WORKFLOW_TYPE.UPDATE_PROFILE, s.updateCampaignProfile);
   handlers.set(WORKFLOW_TYPE.ON_OFF_PROFILE, s.onOffProfile);
-  handlers.set(WORKFLOW_TYPE.SAVE_LOG, s.saveLog);
   handlers.set(WORKFLOW_TYPE.HTTP_REQUEST, s.httpRequest);
   handlers.set(WORKFLOW_TYPE.EXECUTE_CODE, s.executeCode);
   handlers.set(WORKFLOW_TYPE.CHECKPOINT, s.checkpoint);

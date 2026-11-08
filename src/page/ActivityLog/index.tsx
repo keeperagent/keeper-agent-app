@@ -21,7 +21,6 @@ import remarkGfm from "remark-gfm";
 import { connect } from "react-redux";
 import { AppLogType, IAppLog } from "@/electron/type";
 import { formatTimeToDate } from "@/service/util";
-import { normalizeAgentMessageContent } from "@/service/agentMessageContent";
 import { DeleteButton } from "@/component/Button";
 import { SearchInput, TotalData } from "@/component";
 import { SettingIcon } from "@/component/Icon";
@@ -66,12 +65,10 @@ const formatDuration = (startedAt?: number, finishedAt?: number): string => {
 };
 
 const LOG_TYPE_TAG_COLOR: Partial<Record<AppLogType, string>> = {
-  [AppLogType.WORKFLOW]: "purple",
   [AppLogType.MCP]: "orange",
 };
 
 const LOG_TYPE_TAG_LABEL: Partial<Record<AppLogType, string>> = {
-  [AppLogType.WORKFLOW]: "Workflow",
   [AppLogType.MCP]: "MCP",
 };
 
@@ -134,13 +131,7 @@ const renderDetails = (log: IAppLog, searchText: string) => {
   let secondaryMono = false;
   let fullContent = "";
 
-  if (log.logType === AppLogType.WORKFLOW) {
-    primary = log.message || EMPTY_STRING;
-    secondary = [log.campaign?.name, log.workflow?.name]
-      .filter(Boolean)
-      .join(" › ");
-    fullContent = normalizeAgentMessageContent(log.message || "");
-  } else if (log.logType === AppLogType.MCP) {
+  if (log.logType === AppLogType.MCP) {
     primary = log.action || "tool_call";
     secondary = log.message || EMPTY_STRING;
     secondaryMono = true;
@@ -197,9 +188,6 @@ const resolveActorName = (log: IAppLog): string => {
   if (log.actorName || log.actorType) {
     return log.actorName || log.actorType || EMPTY_STRING;
   }
-  if (log.logType === AppLogType.WORKFLOW) {
-    return log.campaign?.name || log.workflow?.name || EMPTY_STRING;
-  }
   return EMPTY_STRING;
 };
 
@@ -236,7 +224,6 @@ const renderTimeCell = (log: IAppLog) => {
 
 const LOG_TYPE_OPTIONS = [
   { label: "All types", value: "" },
-  { label: "Workflow", value: AppLogType.WORKFLOW },
   { label: "MCP", value: AppLogType.MCP },
 ];
 

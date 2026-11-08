@@ -27,7 +27,6 @@ import {
   ToggleIcon,
   CalculatorIcon,
   RocketIcon,
-  LookupIcon,
   SliderIcon,
   NetworkCircleIcon,
   SensorIcon,
@@ -335,7 +334,6 @@ export const mapNodeIcon: { [key: string]: ReactElement } = {
     <ObjectUnGroupIcon color="var(--color-primary)" />
   ),
   [WORKFLOW_TYPE.STOP_SCRIPT]: <StopCircle color="var(--color-primary)" />,
-  [WORKFLOW_TYPE.SAVE_LOG]: <LookupIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.CHECKPOINT]: <SaveIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.UPDATE_PROFILE]: <RocketIcon color="var(--color-primary)" />,
   [WORKFLOW_TYPE.LOOP]: <ShuffleIcon color="var(--color-primary)" />,
@@ -865,18 +863,6 @@ export const getListNode = (): INodeGroup[] => {
     {
       label: NODE_CATEGORY_LABEL.ADVANCED,
       children: [
-        {
-          type: NODE_TYPE.CUSTOM_NODE,
-          icon: mapNodeIcon[WORKFLOW_TYPE.SAVE_LOG],
-          config: {
-            ...commonNodeConfig,
-            sleep: DEFAULT_SLEEP_TIME,
-            name: SCRIPT_NAME[WORKFLOW_TYPE.SAVE_LOG],
-            workflowType: WORKFLOW_TYPE.SAVE_LOG,
-            status: NODE_STATUS.INVALID,
-          },
-          version: "v1.1",
-        },
         {
           type: NODE_TYPE.CUSTOM_NODE,
           icon: mapNodeIcon[WORKFLOW_TYPE.CHECK_CONDITION],

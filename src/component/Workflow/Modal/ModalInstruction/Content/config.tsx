@@ -459,20 +459,6 @@ const getNodeContent = (workflowType: string, translate?: any) => {
     }
 
     // Adnvanced
-    case WORKFLOW_TYPE.SAVE_LOG: {
-      return {
-        description: (
-          <DescriptionWrapper>
-            <div>{translate("guide.saveHistory.title")}</div>
-
-            <div className="example">
-              {translate("guide.saveHistory.example")}
-            </div>
-          </DescriptionWrapper>
-        ),
-      };
-    }
-
     case WORKFLOW_TYPE.CHECK_CONDITION: {
       return {
         description: (

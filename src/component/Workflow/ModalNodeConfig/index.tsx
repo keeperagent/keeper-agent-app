@@ -47,7 +47,6 @@ import CheckElementExist from "./browser/CheckElementExist";
 import RandomOnOff from "./flow/RandomOnOff";
 import Calculate from "./flow/Calculate";
 import UpdateProfile from "./other/UpdateProfile";
-import SaveLog from "./other/SaveLog";
 import MartianWalletImport from "./wallet/MartianWalletImport";
 import MartianWalletApprove from "./wallet/MartianWalletApprove";
 import MartianWalletUnlock from "./wallet/MartianWalletUnlock";
@@ -312,9 +311,6 @@ const ModalNodeConfig = (props: IModalProps) => {
 
       case WORKFLOW_TYPE.UPDATE_PROFILE:
         return <UpdateProfile {...propsNodeConfig} />;
-
-      case WORKFLOW_TYPE.SAVE_LOG:
-        return <SaveLog {...propsNodeConfig} />;
 
       case WORKFLOW_TYPE.IMPORT_MARTIAN_WALLET:
         return <MartianWalletImport {...propsNodeConfig} />;
