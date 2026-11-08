@@ -207,7 +207,6 @@ class ScheduleManager {
       const currentDate = new Date().getTime();
       const logTypes = [
         { age: this.preference.maxLogAge, type: AppLogType.SCHEDULE },
-        { age: this.preference.maxHistoryLogAge, type: AppLogType.WORKFLOW },
       ];
       for (const { age, type } of logTypes) {
         if (!age || age <= 0) {

@@ -20,11 +20,6 @@ const NodeProviderInstruction = (_props: IProps) => {
         have similar activities, thereby adjusting and rearranging how to run
         the Workflow to avoid wallets being marked as Sybil.
       </div>
-
-      <div className="item" style={{ marginTop: "1rem" }}>
-        This function needs to be used in conjunction with Processor{" "}
-        <span className="highlight-text bold">Save log</span> in Workflow:
-      </div>
     </Wrapper>
   );
 
@@ -35,5 +30,5 @@ export default connect(
   (state: RootState) => ({
     isLightMode: state?.Layout?.isLightMode,
   }),
-  {}
+  {},
 )(NodeProviderInstruction);

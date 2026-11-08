@@ -1434,23 +1434,6 @@ export type ISnipeTelegramNodeConfig = {
   profileMode?: TELEGRAM_SNIPER_MODE; // profile mode to snipe telegram messages
 };
 
-// SAVE_LOG @workflowType
-export type ISaveLogNodeConfig = {
-  workflowType?: WORKFLOW_TYPE; // type of the workflow
-  status?: NODE_STATUS; // status of the node
-  name: string; // name of the node
-  onError?: NODE_ACTION; // action to perform when error occurs
-  onSuccess?: NODE_ACTION; // action to perform when success
-  sleep: number; // sleep time between each node
-  timeout?: number; // timeout for the node
-  retry?: number; // number of retries on failure
-  maxConcurrency?: number; // max concurrent threads for this node
-  skipSetting?: ISkipSetting; // skip setting for the node
-  alertTelegramWhenError?: boolean; // alert telegram when error
-
-  content?: string; // content to save
-};
-
 // RELOAD_PAGE @workflowType
 export type IReloadPageNodeConfig = {
   workflowType?: WORKFLOW_TYPE; // type of the workflow
@@ -2783,7 +2766,6 @@ export interface IExecutionSession {
 }
 
 export enum AppLogType {
-  WORKFLOW = "WORKFLOW",
   SCHEDULE = "SCHEDULE",
   TASK = "TASK",
   MCP = "MCP",
